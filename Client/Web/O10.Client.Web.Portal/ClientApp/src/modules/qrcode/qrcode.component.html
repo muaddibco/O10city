@@ -1,0 +1,4 @@
+<div style="display: inline-block; text-align: center;">
+  <qrcode [qrdata]="stringContent" [size]="size" [level]="level" (click)="copyQR()"></qrcode>
+  <p style="font-size:small; text-align:center" *ngIf="showTip"> Click to copy</p>
+</div>

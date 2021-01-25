@@ -1,0 +1,21 @@
+<div mat-dialog-title>Add Allowed Signer</div>
+<div mat-dialog-content>
+  <mat-form-field>
+    <mat-select [(value)]="data.selectedServiceProvider" placeholder="Select Service Provider" required>
+      <mat-option *ngFor="let item of data.spRelationGroups" [value]="item">
+        {{item.alias}}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field *ngIf="data.selectedServiceProvider && data.selectedServiceProvider !== null">
+    <mat-select [(value)]="data.selectedRelationGroup" placeholder="Select Relation Group" required>
+      <mat-option *ngFor="let item of data.selectedServiceProvider.relationGroups" [value]="item">
+        {{item.name}}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+</div>
+<div mat-dialog-actions>
+  <button mat-button [mat-dialog-close]="data">Submit</button>
+  <button mat-button (click)="onCancelClick()">Cancel</button>
+</div>

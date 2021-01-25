@@ -1,0 +1,3 @@
+﻿## Add new migration command
+
+       Add-Migration -Name "<Migration Name>" -StartupProject "O10.Server.SamlIdp" -Project "O10.IdentityProvider.DataLayer.SqlServer" -Context "O10.IdentityProvider.DataLayer.SqlServer.SqlServerDataContext"

@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>O10.Gateway.Common</AssemblyName>
+    <RootNamespace>O10.Gateway.Common</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Flurl" Version="2.8.2" />
+    <PackageReference Include="Flurl.Http" Version="2.4.2" />
+    <PackageReference Include="Google.Protobuf" Version="3.12.2" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="3.1.4" />
+    <PackageReference Include="Microsoft.Azure.CognitiveServices.Vision.Face" Version="2.3.0-preview" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.6.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.CodeAnalysis.Metrics" Version="3.0.0" />
+    <PackageReference Include="Microsoft.DotNet.PlatformAbstractions" Version="3.1.4" />
+    <PackageReference Include="System.Memory" Version="4.5.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\O10.Transactions.Core\O10.Transactions.Core.csproj" />
+    <ProjectReference Include="..\..\Common\Crypto\Chaos.NaCl\Chaos.NaCl.csproj" />
+    <ProjectReference Include="..\..\Common\Crypto\HashLib\CoreHashLib\CoreHashLib.csproj" />
+    <ProjectReference Include="..\..\Common\Crypto\O10.Crypto\O10.Crypto.csproj" />
+    <ProjectReference Include="..\..\Common\O10.Core\O10.Core.csproj" />
+    <ProjectReference Include="..\O10.Gateway.DataLayer\O10.Gateway.DataLayer.csproj" />
+  </ItemGroup>
+
+</Project>

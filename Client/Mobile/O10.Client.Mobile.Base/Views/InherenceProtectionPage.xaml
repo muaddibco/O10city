@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:d="http://xamarin.com/schemas/2014/forms/design"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ios="clr-namespace:Xamarin.Forms.PlatformConfiguration.iOSSpecific;assembly=Xamarin.Forms.Core"
+             xmlns:andr="clr-namespace:Xamarin.Forms.PlatformConfiguration.AndroidSpecific;assembly=Xamarin.Forms.Core"
+             xmlns:ext="clr-namespace:O10.Client.Mobile.Base.Extensions"
+             xmlns:conv="clr-namespace:O10.Client.Mobile.Base.Converters"
+             mc:Ignorable="d"
+             x:Class="O10.Client.Mobile.Base.Views.InherenceProtectionPage"
+             Visual="Material" Title="{ext:Translate CAP_INHERENCE_PROTECTION_TITLE}">
+    <ContentPage.Resources>
+        <conv:InvertedBoolConverter x:Key="InvertedBoolConverter"/>
+    </ContentPage.Resources>
+    <ContentPage.Content>
+        <Grid>
+            <ActivityIndicator 
+                    IsVisible="{Binding IsLoading}" 
+                    IsRunning="{Binding IsLoading}" 
+                    HeightRequest="40" 
+                    VerticalOptions="CenterAndExpand" 
+                    HorizontalOptions="CenterAndExpand" >
+                <ActivityIndicator.WidthRequest>
+                    <OnPlatform x:TypeArguments="x:Double" iOS="100" Android="100" WinPhone="400" />
+                </ActivityIndicator.WidthRequest>
+                <ActivityIndicator.Color>
+                    <OnPlatform x:TypeArguments="Color"
+                      iOS="#2499CE" WinPhone="#2499CE" />
+                </ActivityIndicator.Color>
+            </ActivityIndicator>
+            <StackLayout>
+                <ListView ItemsSource="{Binding InherenceVerifiers}" 
+                          VerticalOptions="Start" HorizontalOptions="FillAndExpand" 
+                          HasUnevenRows="True" SeparatorVisibility="None" 
+                          BackgroundColor="Transparent" SelectionMode="None">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <ViewCell ios:Cell.DefaultBackgroundColor="Transparent">
+                                <StackLayout Orientation="Horizontal"
+                                             VerticalOptions="CenterAndExpand" HorizontalOptions="FillAndExpand">
+                                    <StackLayout Orientation="Vertical" VerticalOptions="FillAndExpand" HorizontalOptions="FillAndExpand">
+                                        <Label Text="{Binding Alias}" FontAttributes="Bold" Margin="10" VerticalOptions="CenterAndExpand" HorizontalOptions="Start"/>
+                                        <Label Text="{Binding Description}" Margin="10, 0, 10, 10" VerticalOptions="CenterAndExpand" HorizontalOptions="StartAndExpand"/>
+                                    </StackLayout>
+                                    <Button Text="{ext:Translate CAP_REGISTER}"
+                                            Margin="10"
+                                            VerticalOptions="Center"
+                                            HorizontalOptions="End"
+                                            Command="{Binding RegisterAtVerifierCommand}" 
+                                            IsVisible="{Binding IsRegistered, Converter={StaticResource InvertedBoolConverter}}"/>
+                                    <Button Text="{ext:Translate CAP_UNREGISTER}"
+                                            Margin="10"
+                                            VerticalOptions="Center"
+                                            HorizontalOptions="End"
+                                            Command="{Binding UnregisterAtVerifierCommand}" 
+                                            IsVisible="{Binding IsRegistered}"/>
+                                </StackLayout>
+                            </ViewCell>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </StackLayout>
+        </Grid>
+    </ContentPage.Content>
+</ContentPage>

@@ -1,0 +1,14 @@
+<p *ngIf="!isLoaded"><em>Loading...</em></p>
+
+<div *ngIf="isLoaded" style="display: block; width: 100%; border: 1px solid lightgray">
+  <div style="display: block; width: 100%; line-height: 100px; height: 100px; background: aliceblue; border-bottom: 1px solid lightgray">
+    <div style="display: inline-block; vertical-align: middle; margin-left: 20px"><h1>{{ title }}</h1></div>
+  </div>
+  <div style="display: block; padding: 20px; background: ghostwhite">
+    <h2>Dear Guest, welcome to the portal of "{{ title }}"</h2>
+    <h4>Please scan the QR code below with your Identity Wallet for requesting Digital Identity Proofs</h4>
+    <div style="display: block; height: 300px; width: 300px; margin-top: 50px;">
+      <app-qrcode [stringContent]="qrCode" style="float: left" level="L"></app-qrcode>
+    </div>
+  </div>
+</div>

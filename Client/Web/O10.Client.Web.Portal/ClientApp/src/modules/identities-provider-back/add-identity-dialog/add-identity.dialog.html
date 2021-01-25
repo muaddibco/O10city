@@ -1,0 +1,24 @@
+<div mat-dialog-title>Add new Identity</div>
+<div mat-dialog-content>
+  <div style="display:flex; flex-direction:column; width:100%">
+    <mat-form-field appearance="outline">
+      <input matInput type="text" placeholder="Description" [(ngModel)]="data.description"/>
+    </mat-form-field>
+    <div *ngFor="let attributeDefinition of data.attributeDefinitions">
+      <mat-form-field *ngIf="attributeDefinition.valueType !== 'Image'">
+        <input matInput type="text" placeholder="{{attributeDefinition.alias}}" [(ngModel)]="attributeDefinition.value" *ngIf="attributeDefinition.valueType === 'Any'" />
+        <input matInput type="number" placeholder="{{attributeDefinition.alias}}" [(ngModel)]="attributeDefinition.value" *ngIf="attributeDefinition.valueType === 'Numeric'" />
+        <input matInput type="date" placeholder="{{attributeDefinition.alias}}" [(ngModel)]="attributeDefinition.value" *ngIf="attributeDefinition.valueType === 'Date'" />
+        <input matInput type="email" placeholder="{{attributeDefinition.alias}}" [(ngModel)]="attributeDefinition.value" *ngIf="attributeDefinition.valueType === 'Email'" />
+        <input matInput type="password" placeholder="{{attributeDefinition.alias}}" [(ngModel)]="attributeDefinition.value" *ngIf="attributeDefinition.valueType === 'Password'" />
+      </mat-form-field>
+      <input type="file" placeholder="{{attributeDefinition.alias}}" [(ngModel)]="attributeDefinition.value" *ngIf="attributeDefinition.valueType === 'Image'" />
+    </div>
+  </div>
+</div>
+<div mat-dialog-actions>
+  <div class="form-group">
+    <button mat-button [mat-dialog-close]="data">Submit</button>
+    <button mat-button (click)="onCancelClick()">Cancel</button>
+  </div>
+</div>

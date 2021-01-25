@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package >
+  <metadata>
+    <id>O10.Core</id>
+    <version>1.0.0</version>
+    <title>O10 Core</title>
+    <authors>O10</authors>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <license type="expression">MIT</license>
+    <description>O10 Core</description>
+    <releaseNotes></releaseNotes>
+    <copyright></copyright>
+    <tags>O10</tags>
+  </metadata>
+</package>

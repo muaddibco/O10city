@@ -1,0 +1,28 @@
+<div mat-dialog-title>Add new attribute definition</div>
+<div mat-dialog-content>
+  <div style="display:flex; flex-direction:column; width:100%">
+    <mat-form-field>
+      <mat-label>Attribute Scheme</mat-label>
+      <mat-select (selectionChange)="onSelectionChange($event)" required>
+        <mat-option *ngFor="let item of data.schemeItems" [value]="item">
+          <div><span>{{item.name}}</span><span>({{item.description}})</span><span> : {{item.valueType}}</span></div>
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field>
+      <input matInput placeholder="Attribute Name" [formControl]="attributeName" required [(ngModel)]="data.attributeDefinition.attributeName" />
+      <mat-error *ngIf="attributeName.invalid">this is mandatory item</mat-error>
+    </mat-form-field>
+    <mat-form-field>
+      <input matInput placeholder="Alias" [formControl]="attributeAlias" required [(ngModel)]="data.attributeDefinition.alias" />
+      <mat-error *ngIf="attributeAlias.invalid">this is mandatory item</mat-error>
+    </mat-form-field>
+    <mat-form-field>
+      <input matInput placeholder="Description" [(ngModel)]="data.attributeDefinition.description" />
+    </mat-form-field>
+  </div>
+</div>
+<div mat-dialog-actions>
+  <button mat-button [mat-dialog-close]="data" [disabled]="attributeName.invalid  || attributeAlias.invalid">Submit</button>
+  <button mat-button (click)="onCancelClick()">Cancel</button>
+</div>

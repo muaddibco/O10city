@@ -1,0 +1,8 @@
+<p *ngIf="!isLoaded"><em>Logging out...</em></p>
+
+<div #samlFormContainer>
+  <form method="post" [action]="samlRedirectUri" hidden #samlForm>
+    <input type="hidden" name="samlResponse" id="samlResponse" #samlResponse/>
+    <input type="hidden" name="relayState" id="relayState" #relayState/>
+  </form>
+</div>

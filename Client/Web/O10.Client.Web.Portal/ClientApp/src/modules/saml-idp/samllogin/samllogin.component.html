@@ -1,0 +1,14 @@
+<p *ngIf="!isLoaded"><em>Loading...</em></p>
+
+<div *ngIf="isLoaded">
+  <div style="display: inline-block; height: 300px; width: 300px; margin-top: 50px;">
+    <app-qrcode [stringContent]="qrCode"></app-qrcode>
+  </div>
+</div>
+
+<div #samlFormContainer>
+  <form method="post" [action]="samlRedirectUri" hidden #samlForm>
+    <input type="hidden" name="samlResponse" id="samlResponse" #samlResponse/>
+    <input type="hidden" name="relayState" id="relayState" #relayState/>
+  </form>
+</div>

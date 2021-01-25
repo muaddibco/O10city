@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:d="http://xamarin.com/schemas/2014/forms/design"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             x:Class="O10.Client.Mobile.Base.Views.O10SamlIdpPage"
+             xmlns:ext="clr-namespace:O10.Client.Mobile.Base.Extensions"
+             xmlns:conv="clr-namespace:O10.Client.Mobile.Base.Converters"
+             xmlns:prism="clr-namespace:Prism.Mvvm;assembly=Prism.Forms"
+             prism:ViewModelLocator.AutowireViewModel="True"
+             Visual="Material">
+    <ContentPage.Resources>
+        <conv:InvertedBoolConverter x:Key="InvertedBoolConverter"/>
+        <conv:MultiBoolConjunctiveConverter x:Key="MultiBoolConjunctiveConverter"/>
+    </ContentPage.Resources>
+    <ContentPage.Content>
+        <Grid>
+            <StackLayout Spacing="20" Padding="10,50" VerticalOptions="Center">
+                <Label Text="{ext:Translate CAP_INVITATION_AUTH}" VerticalOptions="Start" HorizontalOptions="FillAndExpand" IsVisible="{Binding IsRegistered}"/>
+                <Picker Title="{ext:Translate CAP_SELECT_ATTR_INVITATION}" ItemsSource="{Binding RootAttributes}" ItemDisplayBinding="{Binding Content}" SelectedItem="{Binding SelectedAttribute, Mode=TwoWay}"/>
+                <Entry Placeholder="{ext:Translate CAP_PASSWORD_CONTENT}" IsPassword="True" Text="{Binding Password, Mode=TwoWay}"/>
+                <Label Text="{ext:Translate CAP_CONFIRM_WITH_PHOTO}" HorizontalOptions="FillAndExpand" IsVisible="{Binding IsBiometryRequired}"/>
+                <Grid VerticalOptions="End" HorizontalOptions="FillAndExpand">
+                    <Button Text="{ext:Translate CAP_AUTHENTICATE}" VerticalOptions="End" HorizontalOptions="FillAndExpand" Command="{Binding ConfirmCommand}" IsVisible="{Binding IsBiometryRequired, Converter={StaticResource InvertedBoolConverter}}"/>
+                    <Button Text="{ext:Translate CAP_AUTHENTICATE}" VerticalOptions="Start" HorizontalOptions="FillAndExpand" Command="{Binding TakePhotoCommand}" IsVisible="{Binding IsBiometryRequired}"/>
+                </Grid>
+            </StackLayout>
+            <BoxView VerticalOptions="FillAndExpand" HorizontalOptions="FillAndExpand" BackgroundColor="White" Opacity="0.8" IsVisible="{Binding IsLoading}"/>
+            <StackLayout VerticalOptions="CenterAndExpand" HorizontalOptions="CenterAndExpand"  IsVisible="{Binding IsLoading}">
+                <Label Text="{Binding ActionDescription}" FontSize="Large" TextColor="DarkGray" VerticalOptions="Start" HorizontalOptions="FillAndExpand" HorizontalTextAlignment="Center"/>
+                <ActivityIndicator IsRunning="{Binding IsLoading}" VerticalOptions="End" HorizontalOptions="CenterAndExpand" HeightRequest="40" />
+            </StackLayout>
+        </Grid>
+    </ContentPage.Content>
+</ContentPage>

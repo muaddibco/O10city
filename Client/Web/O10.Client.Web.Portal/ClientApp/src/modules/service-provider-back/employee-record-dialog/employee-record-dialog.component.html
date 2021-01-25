@@ -1,0 +1,29 @@
+<div mat-dialog-title>{{ data.isAdding ? "Add New" : "Update" }} Employee</div>
+<div mat-dialog-content>
+  <mat-card *ngIf="!data.isAdding">
+    <mat-card-title>
+      <span>#</span>
+      <span>{{data.employeeId}}</span>
+      <span>: </span>
+      <span>{{data.rawRootAttribute}}</span>
+    </mat-card-title>
+  </mat-card>
+  <mat-form-field *ngIf="data.isAdding">
+    <input matInput type="text" placeholder="Root Attribute" style="width: 100%" [(ngModel)]="data.rawRootAttribute"/>
+  </mat-form-field>
+  <mat-form-field *ngIf="data.isAdding">
+    <input matInput type="text" placeholder="Description" style="width: 100%" [(ngModel)]="data.description" />
+  </mat-form-field>
+  <mat-form-field>
+    <mat-label>Group</mat-label>
+    <mat-select [(value)]="data.groupId">
+      <mat-option *ngFor="let group of data.groups" [value]="group.groupId">
+        {{group.groupName}}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+</div>
+<div mat-dialog-actions>
+  <button mat-button [mat-dialog-close]="data">Submit</button>
+  <button mat-button (click)="onCancelClick()">Cancel</button>
+</div>

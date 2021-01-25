@@ -1,0 +1,13 @@
+<p>issuer-details-list works!</p>
+
+<table class='table table-striped' *ngIf="issuers.length > 0">
+    <tbody>
+        <tr *ngFor="let issuer of issuers">
+            <td><div style="max-width: 250px; text-overflow:ellipsis; white-space:nowrap; overflow:hidden">{{ issuer.Alias }}</div></td>
+            <td><div style="max-width: 500px; text-overflow:ellipsis; white-space:nowrap; overflow:hidden">{{ issuer.Address }}</div></td>
+        </tr>
+    </tbody>
+</table>
+
+<button class="btn btn-primary" (click)="onRegister()">Register New Issuer</button>
+<button class="btn btn-primary" (click)="onSetScheme()">Set Scheme</button>

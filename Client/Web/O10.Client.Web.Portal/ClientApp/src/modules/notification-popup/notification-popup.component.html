@@ -1,0 +1,7 @@
+<div mat-dialog-title>{{data.title}}</div>
+<div mat-dialog-content>
+  <p *ngFor="let msg of data.messages">{{msg}}</p>
+</div>
+<div mat-dialog-actions>
+  <button mat-button [mat-dialog-close]="data">Submit</button>
+</div>

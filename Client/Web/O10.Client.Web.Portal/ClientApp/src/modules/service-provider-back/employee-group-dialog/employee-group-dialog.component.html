@@ -1,0 +1,10 @@
+<div mat-dialog-title>Add new Employee Group</div>
+<div mat-dialog-content>
+  <mat-form-field>
+    <input matInput type="text" placeholder="specify group name" style="width: 100%" [(ngModel)]="data.groupName" />
+  </mat-form-field>
+</div>
+<div mat-dialog-actions>
+  <button mat-button [mat-dialog-close]="data">Submit</button>
+  <button mat-button (click)="onCancelClick()">Cancel</button>
+</div>

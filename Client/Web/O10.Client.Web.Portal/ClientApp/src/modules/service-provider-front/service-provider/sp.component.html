@@ -1,0 +1,72 @@
+<p *ngIf="!isLoaded"><em>Loading...</em></p>
+
+<div *ngIf="isLoaded" style="display: inline-block; width: 100%; border: 1px solid lightgray">
+  <div style="display: inline-block; width: 100%; background: aliceblue; border-bottom: 1px solid lightgray; padding: 20px;">
+    <div style="display: inline-block; line-height: 100px">
+      <div style="display: inline-block; vertical-align: middle">
+        <h1>{{ pageTitle }}</h1>
+      </div>
+    </div>
+    <div style="display: inline-block; float: right">
+      <img src="./images/peltarion-29255_1280.png" style="width:100px;" />
+    </div>
+  </div>
+
+  <mat-tab-group>
+    <mat-tab label="Login/Register" *ngIf="isLoaded">
+      <div style="padding: 20px; text-align: center">
+        <h2>Welcome to the home page of {{pageTitle}}</h2>
+        <h4>For registration or login please scan the QR code with your Identity Wallet</h4>
+        <div style="display: inline-block; height: 300px; width: 300px; margin-top: 50px;">
+          <app-qrcode [stringContent]="qrCodeContent" *ngIf="isQrGenerated" level="L"></app-qrcode>
+        </div>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Relations" *ngIf="isLoaded">
+      <div style="padding: 20px; text-align: center">
+        <h2>Welcome to the home page of {{pageTitle}}</h2>
+        <h4>For creating relation please scan the QR code with your Identity Wallet</h4>
+        <div style="display: inline-block; height: 300px; width: 300px; margin-top: 50px;">
+          <app-qrcode [stringContent]="qrCode2Content" *ngIf="isQrGenerated" level="L"></app-qrcode>
+        </div>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Document sign" *ngIf="isDocumentsLoaded">
+      <div style="padding: 20px">
+        <mat-accordion>
+          <mat-expansion-panel *ngFor="let doc of documents">
+            <mat-expansion-panel-header>
+              <mat-panel-title>{{doc.model.documentName}}</mat-panel-title>
+              <mat-panel-description style="display: block">
+                <div style="float: right">{{doc.model.hash}}</div>
+              </mat-panel-description>
+            </mat-expansion-panel-header>
+            <app-qrcode [stringContent]="doc.qrContent" level="L"></app-qrcode>
+          </mat-expansion-panel>
+        </mat-accordion>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Signatures" *ngIf="isDocumentsLoaded">
+      <div style="padding: 20px">
+        <mat-accordion>
+          <mat-expansion-panel *ngFor="let doc of documents">
+            <mat-expansion-panel-header>
+              <mat-panel-title>{{doc.model.documentName}}</mat-panel-title>
+              <mat-panel-description style="display: block">
+                <div style="float: right">{{doc.model.hash}}</div>
+              </mat-panel-description>
+            </mat-expansion-panel-header>
+            <mat-grid-list cols="2">
+              <mat-grid-tile *ngFor="let signature of doc.signatures">
+                <app-qrcode [stringContent]="signature.qrContent" level="L"></app-qrcode>
+              </mat-grid-tile>
+            </mat-grid-list>
+          </mat-expansion-panel>
+        </mat-accordion>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

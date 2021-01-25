@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:d="http://xamarin.com/schemas/2014/forms/design"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             x:Class="O10.Client.Mobile.Base.Views.RootAttributeRequestPage"
+             xmlns:ext="clr-namespace:O10.Client.Mobile.Base.Extensions"
+             Visual="Material">
+    <ContentPage.Content>
+        <ScrollView>
+            <StackLayout Spacing="20" Padding="10,50" VerticalOptions="Center">
+                <Entry Placeholder="{ext:Translate CAP_IDCARD_CONTENT}" Text="{Binding Content, Mode=TwoWay}"/>
+                <Entry Placeholder="{ext:Translate CAP_PASSWORD_CONTENT}" IsPassword="true" Text="{Binding Password, Mode=TwoWay}"/>
+                <Entry Placeholder="{ext:Translate CAP_PASSWORD_RETYPE}" IsPassword="true" Text="{Binding PasswordConfirm, Mode=TwoWay}"/>
+                <!--<Image Source="{Binding Photo}" VerticalOptions="Start" HorizontalOptions="FillAndExpand"/>-->
+                <Label Text="{ext:Translate CAP_CONFIRM_REQUEST}" HorizontalOptions="FillAndExpand"/>
+                <StackLayout Orientation="Horizontal" VerticalOptions="End" HorizontalOptions="FillAndExpand">
+                    <Button Text="{ext:Translate CAP_TAKE_PHOTO_AND_REQUEST}" VerticalOptions="Start" HorizontalOptions="FillAndExpand" Command="{Binding TakePhotoCommand}"/>
+                    <Button Text="{ext:Translate CAP_REQUEST_ROOT_ATTR}" VerticalOptions="End" HorizontalOptions="FillAndExpand" Command="{Binding RequestCommand}"/>
+                </StackLayout>
+            </StackLayout>
+        </ScrollView>
+    </ContentPage.Content>
+</ContentPage>

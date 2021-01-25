@@ -1,0 +1,35 @@
+<div mat-dialog-title>Relation validation results</div>
+<div mat-dialog-content>
+  <mat-card style="margin: 5px; background-color: aliceblue">
+    <mat-card-header *ngIf="data.imageContent">
+      <img mat-card-avatar src="data:image/JPEG;base64,{{data.imageContent}}">
+    </mat-card-header>
+    <mat-card-content>
+      <table style="margin: 10px 0px">
+        <tbody>
+          <tr>
+            <td>
+              <img src="./images/icons8-verified-account-48.png" width="24px" *ngIf="!data.isCompromised" />
+              <img src="./images/icons8-hacker-50.png" width="24px" *ngIf="data.isCompromised" />
+            </td>
+            <td>Fraud check</td>
+          </tr>
+          <tr>
+            <td>
+              <img src="./images/icons8-good-pincode-48.png" width="24px" *ngIf="data.isKnowledgeFactorCorrect" />
+              <img src="./images/icons8-wrong-pincode-48.png" width="24px" *ngIf="!data.isKnowledgeFactorCorrect" />
+            </td>
+            <td>Knowledge factor</td>
+          </tr>
+          <tr *ngFor="let validationResult of data.validationResults">
+            <td>
+              <img src="./images/icons8-receipt-approved-24.png" width="24px" *ngIf="validationResult.isRelationCorrect" />
+              <img src="./images/icons8-receipt-declined-24.png" width="24px" *ngIf="!validationResult.isRelationCorrect" />
+            </td>
+            <td style="padding: 0px 10px">{{validationResult.relatedAttributeContent}}, {{validationResult.relatedAttributeOwner}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </mat-card-content>
+  </mat-card>
+</div>

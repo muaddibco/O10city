@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Settings xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <!-- Add your custom configuration sections and parameters here -->
+  <!--
+  <Section Name="MyConfigSection">
+    <Parameter Name="MyParameter" Value="Value1" />
+  </Section>
+  -->
+  <Section Name="nodeWebApp">
+    <Parameter Name="AzureADCertThumbprint" Value="C6983EFCE83725C847FFF6191BDAC84FE4A22997" />
+    <Parameter Name="KeyVaultName" Value="O10DemoKeyVault" />
+    <Parameter Name="AzureADApplicationId" Value="ee32819e-7d57-4d64-9446-28cc42c6714b" />
+  </Section>
+  <Section Name="identity">
+    <Parameter Name="Provider" Value="Default" />
+  </Section>
+  <Section Name="node">
+    <Parameter Name="Modules" Value="CommonModule, CentralizedModule" />
+    <Parameter Name="CommunicationServices" Value="generalTcpCommunication, generalUdpCommunication" />
+  </Section>
+  <Section Name="dataLayer">
+    <!--<Parameter Name="connectionType" Value="SQLite" />
+    <Parameter Name="connectionString" Value="Filename=core.dat" />-->
+    <Parameter Name="ConnectionType" Value="SqlServer" />
+    <!--<Parameter Name="ConnectionString" Value="Server=tcp:o10node.database.windows.net,1433;Initial Catalog=core;Persist Security Info=False;User ID=O10NodeAdmin;Password=5UCr!K5jay#ql#rApr86;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;" />-->
+    <Parameter Name="connectionString" Value="Server=.\\SQLEXPRESS;Database=core;Trusted_Connection=True;MultipleActiveResultSets=true;" />
+  </Section>
+  <Section Name="interaction">
+    <Parameter Name="Port" Value="21050" />
+  </Section>
+  <Section Name="generalTcpCommunication">
+    <Parameter Name="CommunicationServiceName" Value="GenericTcp" />
+    <Parameter Name="MaxConnections" Value="10" />
+    <Parameter Name="ReceiveBufferSize" Value="1024" />
+    <Parameter Name="ListeningPort" Value="22071" />
+  </Section>
+  <Section Name="generalUdpCommunication">
+    <Parameter Name="CommunicationServiceName" Value="GenericUdp" />
+    <Parameter Name="MaxConnections" Value="1" />
+    <Parameter Name="ReceiveBufferSize" Value="1024" />
+    <Parameter Name="ListeningPort" Value="22072" />
+  </Section>
+  <Section Name="sync">
+    <Parameter Name="CommunicationServiceName" Value="GenericTcp" />
+    <Parameter Name="TotalNodes" Value="1" />
+    <Parameter Name="Position" Value="0" />
+  </Section>
+  <Section Name="registry">
+    <Parameter Name="TcpServiceName" Value="GenericTcp" />
+    <Parameter Name="TotalNodes" Value="1" />
+    <Parameter Name="Position" Value="0" />
+    <Parameter Name="ShardId" Value="0" />
+  </Section>
+  <Section Name="logging">
+    <!--<Parameter Name="LoggerName" Value="O10.Node.Worker.WorkerLogger" />
+    <Parameter Name="LoggerName" Value="O10.Tracking.ApplicationInsights.ApplicationInsightsLogger" />-->
+    <Parameter Name="LoggerName" Value="O10.Core.Logging.Log4NetLogger" />
+    <Parameter Name="LogConfigurationFile" Value="log4net.xml" />
+  </Section>
+  <Section Name="tracking">
+    <Parameter Name="TrackingReporterNames" Value="ApplicationInsights" />
+  </Section>
+  <Section Name="applicationInsights">
+    <Parameter Name="InstrumentationKey" Value="6cd34bcb-3a4a-4fa1-8fa7-a749f62ef054" />
+  </Section>
+</Settings>

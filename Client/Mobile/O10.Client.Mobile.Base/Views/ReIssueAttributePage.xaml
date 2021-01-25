@@ -1,0 +1,62 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:d="http://xamarin.com/schemas/2014/forms/design"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             x:Class="O10.Client.Mobile.Base.Views.ReIssueAttributePage"
+             xmlns:prism="clr-namespace:Prism.Mvvm;assembly=Prism.Forms"
+             xmlns:conv="clr-namespace:O10.Client.Mobile.Base.Converters"
+             prism:ViewModelLocator.AutowireViewModel="True"
+             xmlns:ext="clr-namespace:O10.Client.Mobile.Base.Extensions"
+             Visual="Material">
+    <ContentPage.Resources>
+        <conv:InvertedBoolConverter x:Key="InvertedBoolConverter"/>
+    </ContentPage.Resources>
+    <ContentPage.Content>
+        <Grid>
+            <ActivityIndicator 
+                    IsVisible="{Binding IsLoading}" 
+                    IsRunning="{Binding IsLoading}" 
+                    HeightRequest="40" 
+                    VerticalOptions="CenterAndExpand" 
+                    HorizontalOptions="CenterAndExpand" >
+                <ActivityIndicator.WidthRequest>
+                    <OnPlatform x:TypeArguments="x:Double" iOS="100" Android="100" WinPhone="400" />
+                </ActivityIndicator.WidthRequest>
+                <ActivityIndicator.Color>
+                    <OnPlatform x:TypeArguments="Color"
+                      iOS="#2499CE" WinPhone="#2499CE" />
+                </ActivityIndicator.Color>
+            </ActivityIndicator>
+            <StackLayout Spacing="20" Padding="10,50" VerticalOptions="FillAndExpand" HorizontalOptions="FillAndExpand" IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}">
+                <ScrollView VerticalOptions="FillAndExpand" HorizontalOptions="FillAndExpand">
+                    <StackLayout Orientation="Vertical" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
+                        <Label VerticalOptions="Start" HorizontalOptions="StartAndExpand">
+                            <Label.FormattedText>
+                                <FormattedString>
+                                    <Span Text="Requesting Root Attribute from "/>
+                                    <Span Text="{Binding IssuerAlias}" FontAttributes="Bold"/>
+                                </FormattedString>
+                            </Label.FormattedText>
+                        </Label>
+                        <Entry Placeholder="{ext:Translate CAP_PROVIDE_ROOT_ATTRIBUTE_VALUE}" Text="{Binding Content, Mode=TwoWay}"/>
+                        <Entry 
+                            IsVisible="{Binding NeedPhoto}"
+                            Placeholder="{ext:Translate CAP_PASSWORD_CONTENT}" 
+                            IsPassword="True"
+                            Text="{Binding Password, Mode=TwoWay}"/>
+                        <Entry 
+                            IsVisible="{Binding NeedPhoto, Converter={StaticResource InvertedBoolConverter}}"
+                            Placeholder="{ext:Translate CAP_PASSWORD_CONTENT}" 
+                            IsPassword="True" ReturnCommand="{Binding RequestCommand}"
+                            Text="{Binding Password, Mode=TwoWay}"/>
+                        <Image Source="{Binding Photo}" HeightRequest="300" WidthRequest="300" HorizontalOptions="Center"/>
+                    </StackLayout>
+                </ScrollView>
+                <Button Text="{ext:Translate CAP_TAKE_PHOTO}" IsVisible="{Binding NeedPhoto}" VerticalOptions="End" HorizontalOptions="FillAndExpand" Command="{Binding TakePhotoCommand}"/>
+                <Button Text="{ext:Translate CAP_SEND_REQUEST}" VerticalOptions="End" HorizontalOptions="FillAndExpand" Command="{Binding RequestCommand}"/>
+            </StackLayout>
+        </Grid>
+    </ContentPage.Content>
+</ContentPage>

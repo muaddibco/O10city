@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "1054573176003",
+    "firebase_url": "https://o10-26078.firebaseio.com",
+    "project_id": "o10-26078",
+    "storage_bucket": "o10-26078.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1054573176003:android:6d62d5eb2e03d01d9aee76",
+        "android_client_info": {
+          "package_name": "com.O10.Wallet"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1054573176003-ck6j4adbv094934i1hu66aba142v7rse.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB4lqlLdjx2kAohmoLt_6YPnIlLwc1_8u4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1054573176003-ck6j4adbv094934i1hu66aba142v7rse.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

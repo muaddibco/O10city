@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Application xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Name="fabric:/O10.Node.ServiceFabric" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <Parameters>
+    <Parameter Name="O10.Node.ServiceFabric.WebApp_ConnectionString" Value="Server=tcp:o10node.database.windows.net,1433;Initial Catalog=core;Persist Security Info=False;User ID=O10NodeAdmin;Password=5UCr!K5jay#ql#rApr86;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;" />
+    <Parameter Name="O10.Node.ServiceFabric.WebApp_ConnectionType" Value="SqlServer" />
+    <Parameter Name="O10.Node.ServiceFabric.WebApp_AzureADCertThumbprint" Value="" />
+  </Parameters>
+</Application>

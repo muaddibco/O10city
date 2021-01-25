@@ -1,0 +1,7 @@
+<p *ngIf="!isLoaded"><em>Loading...</em></p>
+
+<div *ngIf="isLoaded">
+  <div style="display: inline-block; height: 300px; width: 300px; margin-top: 50px;">
+    <app-qrcode [stringContent]="qrCode"></app-qrcode>
+  </div>
+</div>

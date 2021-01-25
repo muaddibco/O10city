@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<popup:PopupPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:d="http://xamarin.com/schemas/2014/forms/design"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ext="clr-namespace:O10.Client.Mobile.Base.Extensions"
+             xmlns:popup="clr-namespace:Rg.Plugins.Popup.Pages;assembly=Rg.Plugins.Popup"
+             xmlns:prism="clr-namespace:Prism.Mvvm;assembly=Prism.Forms" 
+             mc:Ignorable="d"
+             x:Class="O10.Client.Mobile.Base.Views.AuthenticationDialog"
+             prism:ViewModelLocator.AutowireViewModel="True"
+             BackgroundColor="Transparent" Visual="Material">
+    <popup:PopupPage.Content>
+        <Frame CornerRadius="10"  
+               OutlineColor="Gray" Padding="0"
+               HorizontalOptions="Center" 
+                VerticalOptions="Center"
+                MinimumWidthRequest="300" WidthRequest="300"
+                MinimumHeightRequest="300">
+            <Grid>
+                <StackLayout 
+                BackgroundColor="AliceBlue" Padding="20">
+                    <Label Text="{ext:Translate CAP_AUTHENTICATION_INVITATION}"/>
+                    <Entry Placeholder="{ext:Translate CAP_PASSWORD}"  IsPassword="true" Text="{Binding Password, Mode=TwoWay}" ReturnCommand="{Binding AuthenticateCommand}"/>
+                    <Button Text="{ext:Translate CAP_AUTHENTICATE}" Command="{Binding AuthenticateCommand}" />
+                </StackLayout>
+                <StackLayout VerticalOptions="CenterAndExpand" HorizontalOptions="CenterAndExpand"  IsVisible="{Binding IsLoading}">
+                    <Label Text="{Binding ActionDescription}" FontSize="Large" TextColor="DarkGray" VerticalOptions="Start" HorizontalOptions="FillAndExpand" HorizontalTextAlignment="Center"/>
+                    <ActivityIndicator IsRunning="{Binding IsLoading}" VerticalOptions="End" HorizontalOptions="CenterAndExpand" HeightRequest="40" />
+                </StackLayout>
+            </Grid>
+        </Frame>
+    </popup:PopupPage.Content>
+</popup:PopupPage>

@@ -1,0 +1,211 @@
+<mat-card>
+  <mat-card-header>
+    <div>
+      <img src="./images/icons8-museum-50.png" style="display:table-cell; margin-right:20px" />
+    </div>
+    <mat-card-title>Service Provider Administration Page</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <p *ngIf="!areRegistrationsLoaded || !areValidationsLoaded"><em>Loading...</em></p>
+    <div style="display:flow-root">
+      <div style="float:left">
+        <h2>{{ pageTitle }}</h2>
+      </div>
+    </div>
+  </mat-card-content>
+  <mat-card-actions>
+    <button mat-raised-button color="primary" (click)="onShowQrClick()" *ngIf="isQrCodeLoaded">Show QR</button>
+  </mat-card-actions>
+</mat-card>
+
+
+<mat-tab-group style="margin-top: 30px">
+  <mat-tab label="Registrations" *ngIf="areRegistrationsLoaded">
+    <p *ngIf="registrations.length == 0"><em>No registrations yet...</em></p>
+    <div *ngIf="registrations.length > 0">
+      <table class='table table-striped'>
+        <thead>
+          <tr>
+            <th>Id</th>
+            <th>Commitment</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let registration of registrations">
+            <td>{{ registration.serviceProviderRegistrationId }}</td>
+            <td>{{ registration.commitment }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </mat-tab>
+
+  <mat-tab label="User Transactions" *ngIf="areRegistrationTransactionsLoaded">
+    <mat-accordion *ngIf="registrationTransactions && registrationTransactions.length > 0">
+      <mat-expansion-panel *ngFor="let transactions of registrationTransactions">
+        <p *ngIf="!transactions.userTransactions || transactions.userTransactions.length === 0"><em>No Transactions created yet...</em></p>
+        <table class='table table-striped' *ngIf="transactions.userTransactions && transactions.userTransactions.length > 0">
+          <thead>
+            <tr>
+              <th>Transaction Id</th>
+              <th>Is Confirmed</th>
+              <th>Is Compromised</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let userTransaction of transactions.userTransactions">
+              <td>{{userTransaction.transactionId}}</td>
+              <td>
+                <img src="./images/icons8-receipt-approved-24.png" width="24px" *ngIf="userTransaction.isProcessed && userTransaction.isConfirmed" />
+                <img src="./images/icons8-receipt-declined-24.png" width="24px" *ngIf="userTransaction.isProcessed && !userTransaction.isConfirmed" />
+              </td>
+              <td>
+                <img src="./images/icons8-receipt-approved-24.png" width="24px" *ngIf="userTransaction.isProcessed && !userTransaction.isCompromised" />
+                <img src="./images/icons8-receipt-declined-24.png" width="24px" *ngIf="userTransaction.isProcessed && userTransaction.isCompromised" />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div>
+          <button mat-raised-button color="primary" (click)="onAddTransaction(transactions.serviceProviderRegistrationId)">Add Transaction</button>
+        </div>
+      </mat-expansion-panel>
+    </mat-accordion>
+  </mat-tab>
+
+  <mat-tab label="Validations required for on-boarding" *ngIf="areValidationsLoaded">
+    <p *ngIf="identityAttributeValidationDefinitions.length === 0"><em>No Identity Attributes Validations defined yet...</em></p>
+    <div *ngIf="identityAttributeValidationDefinitions.length > 0">
+      <table class='table table-striped'>
+        <thead>
+          <tr>
+            <th>Attribute Type</th>
+            <th>Validation Type</th>
+            <th>Criterion Value</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let validation of identityAttributeValidationDefinitions">
+            <td>{{validation.schemeAlias}}</td>
+            <td>{{validation.validationTypeName}}</td>
+            <td>{{validation.criterionValue}}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <button class="btn btn-primary" (click)="openAddValidationDialog()" style="margin-right:10px">Add Validation</button>
+    <button class="btn btn-primary" (click)="onUpdateValidations()" *ngIf="isIdentityAttributeValidationDefinitionsDirty">Save Changes</button>
+
+  </mat-tab>
+
+  <mat-tab label="Relation Categories" *ngIf="areEmployeesGroupsLoaded">
+    <p *ngIf="employeeGroups.length == 0"><em>No Relation Categories were defined yet...</em></p>
+    <div *ngIf="employeeGroups.length > 0">
+      <table class='table table-striped'>
+        <thead>
+          <tr>
+            <th>Id</th>
+            <th>Category Name</th>
+            <th>#</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let employeeGroup of employeeGroups">
+            <td width="1%">{{employeeGroup.groupId}}</td>
+            <td >{{employeeGroup.groupName}}</td>
+            <td width="1%">
+              <img src="./images/icons8-trash-32.png" width="24px" style="cursor: pointer;" (click)="removeEmployeeGroup(employeeGroup)" />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <button mat-raised-button color="primary" (click)="openAddEmployeeGroupDialog()">Add Relation Category</button>
+  </mat-tab>
+
+  <mat-tab label="Relations" *ngIf="areEmployeesLoaded">
+    <p *ngIf="employees.length == 0"><em>No Relations were registered yet...</em></p>
+    <div *ngIf="employees.length > 0">
+      <table class='table table-striped'>
+        <thead>
+          <tr>
+            <th>Id</th>
+            <th>Description</th>
+            <th>Root Attribute</th>
+            <th>Category</th>
+            <th>#</th>
+            <th>#</th>
+            <th>#</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let employee of employees">
+            <td width="1%">{{employee.employeeId}}</td>
+            <td>{{employee.description}}</td>
+            <td>{{employee.rawRootAttribute}}</td>
+            <td>{{getGroupName(employee.groupId)}}</td>
+            <td>
+              <img src="./images/icons8-good-pincode-50.png" width="24px" *ngIf="employee.registrationCommitment" />
+              <img src="./images/icons8-not-applicable-50.png" width="24px" *ngIf="!employee.registrationCommitment" />
+            </td>
+            <td>
+              <img src="./images/icons8-pencil-50.png" width="24px" style="cursor: pointer;" (click)="editEmployee(employee)" />
+            </td>
+            <td width="1%">
+              <img src="./images/icons8-trash-32.png" width="24px" style="cursor: pointer;" (click)="removeEmployee(employee)" />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <button mat-raised-button color="primary" (click)="newEmployee()">Add Relation</button>
+  </mat-tab>
+
+  <mat-tab label="Documents" *ngIf="areDocumentsLoaded">
+    <div style="margin-top: 20px">
+      <mat-accordion>
+        <mat-expansion-panel *ngFor="let doc of documents">
+          <mat-expansion-panel-header>
+            <mat-panel-title>{{doc.documentName}}</mat-panel-title>
+            <mat-panel-description style="display: block">
+              <div style="float: right">{{doc.hash}}</div>
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+          <p *ngIf="!doc.allowedSigners || doc.allowedSigners.length == 0"><em>No allowed categories were defined yet...</em></p>
+          <table class='table table-striped' *ngIf="doc.allowedSigners && doc.allowedSigners.length > 0">
+            <thead>
+              <tr>
+                <th>Id</th>
+                <th>Category Owner</th>
+                <th>Category Name</th>
+                <th>#</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let signer of doc.allowedSigners">
+                <td width="1%">{{signer.allowedSignerId}}</td>
+                <td>{{signer.groupOwner}}</td>
+                <td>{{signer.groupName}}</td>
+                <td width="1%">
+                  <img src="./images/icons8-trash-32.png" width="24px" style="cursor: pointer;" (click)="removeAllowedSigner(doc, signer)" />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div>
+            <button mat-raised-button color="primary" (click)="openAddAllowedSignerDialog(doc)">Add Allowed Signer</button>
+          </div>
+        </mat-expansion-panel>
+      </mat-accordion>
+    </div>
+
+    <button mat-raised-button color="primary" (click)="openAddNewDocumentDialog()" style="margin-top: 20px">Add Document</button>
+
+  </mat-tab>
+
+</mat-tab-group>
+

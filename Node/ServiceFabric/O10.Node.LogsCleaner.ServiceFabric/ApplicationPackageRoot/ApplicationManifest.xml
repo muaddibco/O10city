@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ApplicationManifest ApplicationTypeName="O10.Node.LogsCleaner.ServiceFabricType"
+                     ApplicationTypeVersion="1.0.0"
+                     xmlns="http://schemas.microsoft.com/2011/01/fabric"
+                     xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Parameters>
+    <Parameter Name="FolderToDelete" DefaultValue="D:\SvcFab\Log\Traces" />
+    <Parameter Name="FolderToDelete2" DefaultValue="D:\SvcFab\Log\QueryTraces" />
+    <Parameter Name="FolderToDelete3" DefaultValue="D:\SvcFab\Log\PerformanceCountersBinary" />
+    <Parameter Name="FolderToDelete4" DefaultValue="D:\SvcFab\Log\CrashDumps" />
+    <Parameter Name="SleepInterval" DefaultValue="300" />
+  </Parameters>
+  <!-- Import the ServiceManifest from the ServicePackage. The ServiceManifestName and ServiceManifestVersion 
+       should match the Name and Version attributes of the ServiceManifest element defined in the 
+       ServiceManifest.xml file. -->
+  <ServiceManifestImport>
+    <ServiceManifestRef ServiceManifestName="LogsCleanerPkg" ServiceManifestVersion="1.0.0" />
+    <EnvironmentOverrides CodePackageRef="Code">
+      <EnvironmentVariable Name="FolderToDelete" Value="[FolderToDelete]" />
+      <EnvironmentVariable Name="FolderToDelete2" Value="[FolderToDelete2]" />
+      <EnvironmentVariable Name="FolderToDelete3" Value="[FolderToDelete3]" />
+      <EnvironmentVariable Name="FolderToDelete4" Value="[FolderToDelete4]" />
+      <EnvironmentVariable Name="SleepInterval" Value="[SleepInterval]" />
+    </EnvironmentOverrides>
+    <Policies>
+      <RunAsPolicy CodePackageRef="Code" UserRef="RootUser" EntryPointType="Main" />
+      <!-- Required to pass mount options-->
+    </Policies>
+  </ServiceManifestImport>
+  <Principals>
+    <Users>
+      <User Name="RootUser" AccountType="LocalSystem">
+      </User>
+    </Users>
+  </Principals>
+</ApplicationManifest>

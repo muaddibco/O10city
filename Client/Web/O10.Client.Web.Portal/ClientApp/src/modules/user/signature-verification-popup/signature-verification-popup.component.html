@@ -1,0 +1,84 @@
+<table>
+  <tbody>
+    <tr>
+      <td>
+        <img src="./images/icons8-receipt-approved-24.png" width="24px" *ngIf="data.documentRecordTransactionFound" />
+        <img src="./images/icons8-receipt-declined-24.png" width="24px" *ngIf="!data.documentRecordTransactionFound" />
+      </td>
+      <td>
+        <span *ngIf="data.documentRecordTransactionFound">Document Record transaction found</span>
+        <span *ngIf="!data.documentRecordTransactionFound">Document Record transaction not found</span>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <img src="./images/icons8-receipt-approved-24.png" width="24px" *ngIf="data.signatureTransactionFound" />
+        <img src="./images/icons8-receipt-declined-24.png" width="24px" *ngIf="!data.signatureTransactionFound" />
+      </td>
+      <td>
+        <span *ngIf="data.signatureTransactionFound">Signature transaction found</span>
+        <span *ngIf="!data.signatureTransactionFound">Signature transaction not found</span>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <img src="./images/icons8-receipt-approved-24.png" width="24px" *ngIf="data.documentHashMatch" />
+        <img src="./images/icons8-receipt-declined-24.png" width="24px" *ngIf="!data.documentHashMatch" />
+      </td>
+      <td>
+        <span *ngIf="data.documentHashMatch">Document hash matches</span>
+        <span *ngIf="!data.documentHashMatch">Document hash doesn't match</span>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <img src="./images/icons8-receipt-approved-24.png" width="24px" *ngIf="data.signerSignatureMatch" />
+        <img src="./images/icons8-receipt-declined-24.png" width="24px" *ngIf="!data.signerSignatureMatch" />
+      </td>
+      <td>
+        <span *ngIf="data.signerSignatureMatch">Signer's signature is correct</span>
+        <span *ngIf="!data.signerSignatureMatch">Signer's signature is corrupted</span>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <img src="./images/icons8-receipt-approved-24.png" width="24px" *ngIf="data.eligibilityCorrect" />
+        <img src="./images/icons8-receipt-declined-24.png" width="24px" *ngIf="!data.eligibilityCorrect" />
+      </td>
+      <td>
+        <span *ngIf="data.eligibilityCorrect">Signer's eligibility is correct</span>
+        <span *ngIf="!data.eligibilityCorrect">Signer's eligibility is corrupted</span>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <img src="./images/icons8-receipt-approved-24.png" width="24px" *ngIf="data.allowedGroupRelation" />
+        <img src="./images/icons8-receipt-declined-24.png" width="24px" *ngIf="!data.allowedGroupRelation" />
+      </td>
+      <td>
+        <span *ngIf="data.allowedGroupRelation">Signer's group relation fits to requirements</span>
+        <span *ngIf="!data.allowedGroupRelation">Signer's group relation doesn't fit to requirements</span>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <img src="./images/icons8-receipt-approved-24.png" width="24px" *ngIf="data.allowedGroupMatching" />
+        <img src="./images/icons8-receipt-declined-24.png" width="24px" *ngIf="!data.allowedGroupMatching" />
+      </td>
+      <td>
+        <span *ngIf="data.allowedGroupMatching">Signer's relation to group is approved</span>
+        <span *ngIf="!data.allowedGroupMatching">Signer's relation to group is not approved</span>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <img src="./images/icons8-receipt-approved-24.png" width="24px" *ngIf="data.isNotCompromised" />
+        <img src="./images/icons8-receipt-declined-24.png" width="24px" *ngIf="!data.isNotCompromised" />
+      </td>
+      <td>
+        <span *ngIf="data.isNotCompromised">Signer's signature is not compromised</span>
+        <span *ngIf="!data.isNotCompromised">Signer's signature is compromised</span>
+      </td>
+    </tr>
+  </tbody>
+</table>

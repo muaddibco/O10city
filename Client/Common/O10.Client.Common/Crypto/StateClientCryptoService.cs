@@ -1,0 +1,90 @@
+﻿using Chaos.NaCl;
+using O10.Client.Common.Interfaces;
+using O10.Core;
+using O10.Core.Architecture;
+
+using O10.Core.Cryptography;
+using O10.Core.ExtensionMethods;
+using O10.Core.HashCalculations;
+using O10.Core.Identity;
+using O10.Crypto;
+using O10.Crypto.ConfidentialAssets;
+
+namespace O10.Client.Common.Crypto
+{
+	[RegisterDefaultImplementation(typeof(IStateClientCryptoService), Lifetime = LifetimeManagement.Scoped)]
+	public class StateClientCryptoService : AccountSigningService, IStateClientCryptoService
+	{
+        private byte[] _blindingSecretKey;
+        private IKey _publicKey;
+
+		public StateClientCryptoService(IHashCalculationsRepository hashCalculationRepository, IIdentityKeyProvidersRegistry identityKeyProvidersRegistry) 
+			: base(hashCalculationRepository, identityKeyProvidersRegistry)
+		{
+		}
+
+		public byte[] DecodeCommitment(byte[] encodedCommitment, byte[] transactionKey)
+		{
+			return ConfidentialAssetsHelper.DecodeCommitment(encodedCommitment, transactionKey, _secretKey);
+		}
+
+		public void DecodeEcdhTuple(EcdhTupleCA ecdhTupleCA, byte[] transactionKey, out byte[] blindingFactor, out byte[] assetId)
+        {
+            ConfidentialAssetsHelper.DecodeEcdhTuple(ecdhTupleCA, transactionKey ?? PublicKeys[0].ArraySegment.Array, _secretKey, out blindingFactor, out assetId);
+        }
+
+		public void DecodeEcdhTuple(EcdhTupleIP ecdhTupleCA, byte[] transactionKey, out byte[] issuer, out byte[] payload)
+		{
+            //ConfidentialAssetsHelper.DecodeEcdhTuple(ecdhTupleCA, transactionKey, _secretKey, out blindingFactor, out assetId);
+
+            issuer = ecdhTupleCA.Issuer;
+            payload = ecdhTupleCA.Payload;
+		}
+
+		public void DecodeEcdhTuple(EcdhTupleProofs ecdhTuple, byte[] transactionKey, out byte[] blindingFactor, out byte[] assetId, out byte[] issuer, out byte[] payload)
+		{
+            //ConfidentialAssetsHelper.DecodeEcdhTuple(ecdhTuple, transactionKey, _secretKey, out blindingFactor, out assetId, out issuer, out payload);
+            blindingFactor = ecdhTuple.Mask;
+            assetId = ecdhTuple.AssetId;
+            issuer = ecdhTuple.AssetIssuer;
+            payload = ecdhTuple.Payload;
+		}
+
+		public EcdhTupleCA EncodeEcdhTuple(byte[] blindingFactor, byte[] assetId)
+		{
+			EcdhTupleCA ecdhTupleCA = ConfidentialAssetsHelper.CreateEcdhTupleCA(blindingFactor, assetId, _secretKey, PublicKeys[0].ArraySegment.Array);
+
+			return ecdhTupleCA;
+		}
+
+        /// <summary>
+        /// TODO - need to rename to update while this function retuns nothing and just updates out params
+        /// </summary>
+        /// <param name="assetId"></param>
+        /// <param name="assetCommitment"></param>
+        /// <param name="keyImage"></param>
+        /// <param name="ringSignature"></param>
+        public void GetBoundedCommitment(byte[] assetId, out byte[] assetCommitment, out byte[] keyImage, out RingSignature ringSignature)
+        {
+            keyImage = ConfidentialAssetsHelper.GenerateKeyImage(_blindingSecretKey);
+            byte[] nonBlindedCommitment = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(assetId);
+            assetCommitment = ConfidentialAssetsHelper.GetAssetCommitment(_blindingSecretKey, assetId);
+            byte[] pk = ConfidentialAssetsHelper.SubCommitments(assetCommitment, nonBlindedCommitment);
+			ringSignature = ConfidentialAssetsHelper.GenerateRingSignature(assetCommitment, keyImage, new byte[][] { pk }, _blindingSecretKey, 0)[0];
+        }
+
+        public IKey GetPublicKey()
+        {
+            return _publicKey;
+        }
+
+        public override void Initialize(params byte[][] secretKeys)
+        {
+            base.Initialize(secretKeys);
+
+            _publicKey = IdentityKeyProvider.GetKey(ConfidentialAssetsHelper.GetPublicKey(Ed25519.SecretKeyFromSeed(_secretKey)));
+            _blindingSecretKey = ConfidentialAssetsHelper.FastHash256(_secretKey);
+            _blindingSecretKey = ConfidentialAssetsHelper.ReduceScalar32(_blindingSecretKey);
+        }
+    }
+}

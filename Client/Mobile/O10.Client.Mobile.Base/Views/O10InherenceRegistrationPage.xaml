@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:d="http://xamarin.com/schemas/2014/forms/design"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ios="clr-namespace:Xamarin.Forms.PlatformConfiguration.iOSSpecific;assembly=Xamarin.Forms.Core"
+             xmlns:andr="clr-namespace:Xamarin.Forms.PlatformConfiguration.AndroidSpecific;assembly=Xamarin.Forms.Core"
+             xmlns:ext="clr-namespace:O10.Client.Mobile.Base.Extensions"
+             xmlns:conv="clr-namespace:O10.Client.Mobile.Base.Converters"
+             mc:Ignorable="d"
+             x:Class="O10.Client.Mobile.Base.Views.O10InherenceRegistrationPage"
+             Visual="Material">
+    <ContentPage.Resources>
+        <conv:InvertedBoolConverter x:Key="InvertedBoolConverter"/>
+    </ContentPage.Resources>
+    <ContentPage.Content>
+        <Grid>
+            <Grid IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Image Grid.Row="0" Source="{Binding Photo}" Aspect="AspectFit" HorizontalOptions="CenterAndExpand" VerticalOptions="CenterAndExpand"/>
+                <Button Grid.Row="1" IsVisible="{Binding IsLocked, Converter={StaticResource InvertedBoolConverter}}" 
+                        Text="{ext:Translate CAP_CHANGE_PHOTO}" 
+                        Command="{Binding TakePhotoCommand}" 
+                        Margin="10" VerticalOptions="Center" HorizontalOptions="FillAndExpand" />
+                <Entry Grid.Row="2" Margin="0,20,0,0" IsVisible="{Binding IsLocked, Converter={StaticResource InvertedBoolConverter}}"
+                    Placeholder="{ext:Translate CAP_PASSWORD_CONTENT}" 
+                    IsPassword="True" ReturnCommand="{Binding RegisterCommand}"
+                    Text="{Binding Password, Mode=TwoWay}"/>
+                <Button Grid.Row="3" 
+                        Text="{ext:Translate CAP_REGISTER}" 
+                        Command="{Binding RegisterCommand}" IsEnabled="{Binding IsRegisterEnabled, Mode=TwoWay}" 
+                        Margin="10" VerticalOptions="Center" HorizontalOptions="FillAndExpand" />
+            </Grid>
+            <ActivityIndicator 
+                    IsVisible="{Binding IsLoading}" 
+                    IsRunning="{Binding IsLoading}" 
+                    HeightRequest="40" 
+                    VerticalOptions="CenterAndExpand" 
+                    HorizontalOptions="CenterAndExpand" >
+                <ActivityIndicator.WidthRequest>
+                    <OnPlatform x:TypeArguments="x:Double" iOS="100" Android="100" WinPhone="400" />
+                </ActivityIndicator.WidthRequest>
+                <ActivityIndicator.Color>
+                    <OnPlatform x:TypeArguments="Color"
+                      iOS="#2499CE" WinPhone="#2499CE" />
+                </ActivityIndicator.Color>
+            </ActivityIndicator>
+        </Grid>
+    </ContentPage.Content>
+</ContentPage>

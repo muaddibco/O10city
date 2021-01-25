@@ -1,0 +1,107 @@
+<p *ngIf="!isAttributesLoaded || !isActionInfoLoaded"><em>Loading...</em></p>
+
+<div *ngIf="!isError && isAttributesLoaded && isActionInfoLoaded">
+  <div *ngIf="actionType === spActionTypeDocumentSign && relationAttributes.length === 0 || userAttributes.length === 0">
+    <p><em>Sorry, you are not allowed to perform this action</em></p>
+    <button mat-raised-button color="accent" (click)="onCancel()">Cancel</button>
+  </div>
+  <mat-vertical-stepper *ngIf="(actionType !== spActionTypeDocumentSign || relationAttributes.length > 0)">
+    <mat-step label="Take your selfie" *ngIf="isCameraAvailable && isBiometricMandatory">
+      <div style="border-width: 1px; border-style: solid; border-color: darkgrey; margin-bottom: 10px; padding: 10px; display: inline-flex">
+        <div *ngIf="!webcamImage">
+          <webcam [height]="400" [width]="400" [trigger]="triggerObservable" (imageCapture)="handleImage($event)"
+                  [allowCameraSwitch]="allowCameraSwitch" [switchCamera]="nextWebcamObservable"
+                  [videoOptions]="videoOptions"
+                  [imageQuality]="1"
+                  (cameraSwitched)="cameraWasSwitched($event)"
+                  (initError)="handleInitError($event)"></webcam>
+          <br />
+          <div style="display: table-row">
+            <div style="display: table-cell">
+              <button class="btn btn-primary" (click)="triggerSnapshot();">Take A Snapshot</button>
+            </div>
+          </div>
+        </div>
+        <div class="snapshot" *ngIf="webcamImage">
+          <div>
+            <img [src]="webcamImage.imageAsDataUrl" width="280px" height="200px" />
+          </div>
+          <button class="btn btn-primary" (click)="clearSnapshot();" style="margin-top: 10px">Clear Snapshot</button>
+        </div>
+
+        <h4 *ngIf="errors.length > 0">Messages:</h4>
+        <ul *ngFor="let error of errors">
+          <li>{{error | json}}</li>
+        </ul>
+      </div>
+      <div>
+        <button mat-button matStepperNext>Next</button>
+      </div>
+    </mat-step>
+    <mat-step label="Select root attribute for action" *ngIf="userAttributes && userAttributes.length > 1 && predefinedRootAttributeId === 0">
+      <mat-radio-group [(ngModel)]="selectedAttribute" (change)="onAttributeSelected($event)" style="display:flex; flex-flow:column; margin: 15px 0">
+        <mat-radio-button style="margin: 10px 0px" [value]="attribute" *ngFor="let attribute of userAttributes" [disabled]="!isAttributeEnabled(attribute)">
+          <span [ngClass]="{'strikethrough': attribute.isOverriden}">
+            {{attribute.content}} by {{attribute.issuerName}}
+          </span>
+        </mat-radio-button>
+      </mat-radio-group>
+      <button mat-button matStepperNext>Next</button>
+    </mat-step>
+    <mat-step label="Confirmation" *ngIf="userAttributes.length > 0">
+      <div *ngIf="withValidations">
+        <div *ngIf="actionType !== spActionTypeDocumentSign">
+          <p>Service Provider requires following attribute validations</p>
+          <p *ngFor="let validation of validationEntries"><em>{{validation}}</em></p>
+        </div>
+        <div *ngIf="actionType === spActionTypeDocumentSign">
+          <ng-container *ngIf="validationEntries.length === 1 && selectedGroupEntry">
+            <p>Service Provider requires that you'll reveal {{selectedGroupEntry.split('|')[1]}}</p>
+          </ng-container>
+          <ng-container *ngIf="validationEntries.length > 1">
+            <p>Service Provider requires that you'll reveal on of your relations</p>
+            <p>Please pick one of them:</p>
+            <mat-radio-group [(ngModel)]="selectedGroupEntry">
+              <mat-radio-button style="margin: 10px 0px" [value]="groupEntry.split('|')[0]" *ngFor="let groupEntry of validationEntries">{{groupEntry.split('|')[1]}}</mat-radio-button>
+            </mat-radio-group>
+          </ng-container>
+        </div>
+      </div>
+      <div *ngIf="actionType === spActionTypeConsent">
+        <div>
+          <em>Please make a decision about transaction with TransactionId {{extraInfo.split('|')[0]}}</em>
+        </div>
+        <div>
+          <span>Description:</span>
+        </div>
+        <div>
+          <i>{{extraInfo.split('|')[1]}}</i>
+        </div>
+        <mat-form-field>
+          <input matInput type="password" placeholder="Password" [(ngModel)]="password" />
+        </mat-form-field>
+        <div class="form-group">
+          <button mat-raised-button color="primary" [disabled]="submitClick" (click)="onSubmit()" style="margin-right:10px">Confirm</button>
+          <button mat-raised-button color="accent" [disabled]="submitClick" type="reset" (click)="onConsentDecline()">Decline</button>
+        </div>
+        <div *ngIf="error" class="alert alert-danger">{{error}}</div>
+      </div>
+      <div *ngIf="actionType !== spActionTypeConsent">
+        <p>Please confirm your consent by entering password and pressing on button "Submit"</p>
+        <mat-form-field>
+          <input matInput type="password" placeholder="Password" [(ngModel)]="password" />
+        </mat-form-field>
+        <div class="form-group">
+          <button mat-raised-button color="primary" [disabled]="submitClick" (click)="onSubmit()" style="margin-right:10px">Submit</button>
+          <button mat-raised-button color="accent" [disabled]="submitClick" type="reset" (click)="onCancel()">Cancel</button>
+        </div>
+        <div *ngIf="error" class="alert alert-danger">{{error}}</div>
+      </div>
+    </mat-step>
+  </mat-vertical-stepper>
+
+</div>
+<div *ngIf="isError" class="alert alert-danger">
+  <p>{{errorMsg}}</p>
+  <button class="btn" (click)="onCancel()">OK</button>
+</div>

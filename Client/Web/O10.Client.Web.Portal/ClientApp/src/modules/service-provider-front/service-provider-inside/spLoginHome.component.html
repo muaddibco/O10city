@@ -1,0 +1,166 @@
+<p *ngIf="!isLoaded"><em>Loading...</em></p>
+
+<h1 *ngIf="isLoaded">Welcome to {{ pageTitle }}</h1>
+
+<div class="form-group" *ngIf="isCompromised">
+  <div class="alert alert-danger" style="vertical-align:middle; font-size: xx-large">
+    <img src="./images/icons8-error-50.png" style="margin-right:10px; margin-top:-8px" /> Action is compromised!!! No further activity is permitted!!!
+  </div>
+</div>
+
+<div *ngIf="!isCompromised">
+  <mat-tab-group style="margin-top: 30px">
+    <mat-tab label="User Transactions" *ngIf="byRelation && areRegistrationTransactionsLoaded">
+      <div style="margin-top: 20px">
+        <mat-accordion *ngIf="registrationTransactions && registrationTransactions.length > 0">
+          <mat-expansion-panel *ngFor="let transactions of registrationTransactions">
+            <mat-expansion-panel-header>
+              <mat-panel-title>{{transactions.commitment}}</mat-panel-title>
+              <!--<mat-panel-description style="display: block">
+                <div style="float: right">{{doc.hash}}</div>
+              </mat-panel-description>-->
+            </mat-expansion-panel-header>
+            <p *ngIf="!transactions.transactions || transactions.transactions.length === 0"><em>No Transactions created yet...</em></p>
+            <table class='table table-striped' *ngIf="transactions.transactions && transactions.transactions.length > 0">
+              <thead>
+                <tr>
+                  <th>Transaction Id</th>
+                  <th>Is Confirmed</th>
+                  <th>Is Compromised</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let userTransaction of transactions.transactions">
+                  <td>{{userTransaction.transactionId}}</td>
+                  <td>
+                    <img src="./images/icons8-receipt-approved-24.png" width="24px" *ngIf="userTransaction.isProcessed && userTransaction.isConfirmed" />
+                    <img src="./images/icons8-receipt-declined-24.png" width="24px" *ngIf="userTransaction.isProcessed && !userTransaction.isConfirmed" />
+                  </td>
+                  <td>
+                    <img src="./images/icons8-receipt-approved-24.png" width="24px" *ngIf="userTransaction.isProcessed && !userTransaction.isCompromised" />
+                    <img src="./images/icons8-receipt-declined-24.png" width="24px" *ngIf="userTransaction.isProcessed && userTransaction.isCompromised" />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div>
+              <button mat-raised-button color="primary" (click)="onAddTransaction(transactions.serviceProviderRegistrationId)">Add Transaction</button>
+            </div>
+          </mat-expansion-panel>
+        </mat-accordion>
+      </div>
+    </mat-tab>
+
+    <mat-tab label="Documents" *ngIf="areDocumentsLoaded">
+      <div style="margin-top: 20px">
+        <mat-accordion>
+          <mat-expansion-panel *ngFor="let doc of documents">
+            <mat-expansion-panel-header>
+              <mat-panel-title>{{doc.documentName}}</mat-panel-title>
+              <mat-panel-description style="display: block">
+                <div style="float: right">{{doc.hash}}</div>
+              </mat-panel-description>
+            </mat-expansion-panel-header>
+            <p *ngIf="!doc.allowedSigners || doc.allowedSigners.length == 0"><em>No allowed categories were defined yet...</em></p>
+            <table class='table table-striped' *ngIf="doc.allowedSigners && doc.allowedSigners.length > 0">
+              <thead>
+                <tr>
+                  <th>Id</th>
+                  <th>Category Owner</th>
+                  <th>Category Name</th>
+                  <th>#</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let signer of doc.allowedSigners">
+                  <td width="1%">{{signer.allowedSignerId}}</td>
+                  <td>{{signer.groupOwner}}</td>
+                  <td>{{signer.groupName}}</td>
+                  <td width="1%">
+                    <img src="./images/icons8-trash-32.png" width="24px" style="cursor: pointer;" (click)="removeAllowedSigner(doc, signer)" />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div>
+              <button mat-raised-button color="primary" (click)="openAddAllowedSignerDialog(doc)">Add Allowed Signer</button>
+            </div>
+          </mat-expansion-panel>
+        </mat-accordion>
+      </div>
+      <button mat-raised-button color="primary" (click)="openAddNewDocumentDialog()" style="margin-top: 20px">Add Document</button>
+
+    </mat-tab>
+
+    <mat-tab label="Document Signatures" *ngIf="areDocumentsLoaded">
+      <div style="margin-top: 20px">
+        <mat-accordion>
+          <mat-expansion-panel *ngFor="let doc of documents">
+            <mat-expansion-panel-header>
+              <mat-panel-title>{{doc.documentName}}</mat-panel-title>
+              <mat-panel-description style="display: block">
+                <div style="float: right">{{doc.hash}}</div>
+              </mat-panel-description>
+            </mat-expansion-panel-header>
+            <p *ngIf="!doc.signatures || doc.signatures.length == 0"><em>No signatures yet...</em></p>
+            <table class='table table-striped' *ngIf="doc.signatures && doc.signatures.length > 0">
+              <thead>
+                <tr>
+                  <th>Id</th>
+                  <th>Record Height</th>
+                  <th>DT</th>
+                  <th>ST</th>
+                  <th>DH</th>
+                  <th>SSM</th>
+                  <th>EC</th>
+                  <th>AGR</th>
+                  <th>AGM</th>
+                  <th>SC</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let signature of doc.signatures">
+                  <td width="1%">{{signature.signatureId}}</td>
+                  <td>{{signature.signatureRecordHeight}}</td>
+                  <td>
+                    <img src="./images/icons8-receipt-approved-24.png" width="24px" *ngIf="signature.signatureVerification.documentRecordTransactionFound" />
+                    <img src="./images/icons8-receipt-declined-24.png" width="24px" *ngIf="!signature.signatureVerification.documentRecordTransactionFound" />
+                  </td>
+                  <td>
+                    <img src="./images/icons8-receipt-approved-24.png" width="24px" *ngIf="signature.signatureVerification.signatureTransactionFound" />
+                    <img src="./images/icons8-receipt-declined-24.png" width="24px" *ngIf="!signature.signatureVerification.signatureTransactionFound" />
+                  </td>
+                  <td>
+                    <img src="./images/icons8-receipt-approved-24.png" width="24px" *ngIf="signature.signatureVerification.documentHashMatch" />
+                    <img src="./images/icons8-receipt-declined-24.png" width="24px" *ngIf="!signature.signatureVerification.documentHashMatch" />
+                  </td>
+                  <td>
+                    <img src="./images/icons8-receipt-approved-24.png" width="24px" *ngIf="signature.signatureVerification.signerSignatureMatch" />
+                    <img src="./images/icons8-receipt-declined-24.png" width="24px" *ngIf="!signature.signatureVerification.signerSignatureMatch" />
+                  </td>
+                  <td>
+                    <img src="./images/icons8-receipt-approved-24.png" width="24px" *ngIf="signature.signatureVerification.eligibilityCorrect" />
+                    <img src="./images/icons8-receipt-declined-24.png" width="24px" *ngIf="!signature.signatureVerification.eligibilityCorrect" />
+                  </td>
+                  <td>
+                    <img src="./images/icons8-receipt-approved-24.png" width="24px" *ngIf="signature.signatureVerification.allowedGroupRelation" />
+                    <img src="./images/icons8-receipt-declined-24.png" width="24px" *ngIf="!signature.signatureVerification.allowedGroupRelation" />
+                  </td>
+                  <td>
+                    <img src="./images/icons8-receipt-approved-24.png" width="24px" *ngIf="signature.signatureVerification.allowedGroupMatching" />
+                    <img src="./images/icons8-receipt-declined-24.png" width="24px" *ngIf="!signature.signatureVerification.allowedGroupMatching" />
+                  </td>
+                  <td>
+                    <img src="./images/icons8-receipt-approved-24.png" width="24px" *ngIf="signature.signatureVerification.isNotCompromised" />
+                    <img src="./images/icons8-receipt-declined-24.png" width="24px" *ngIf="!signature.signatureVerification.isNotCompromised" />
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </mat-expansion-panel>
+        </mat-accordion>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

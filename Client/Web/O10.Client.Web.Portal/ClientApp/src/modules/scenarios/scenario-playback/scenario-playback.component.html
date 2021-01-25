@@ -1,0 +1,13 @@
+<p *ngIf="isLoading"><em>Loading...</em></p>
+<div *ngIf="!isLoading">
+  <div>
+    <span style="margin-right: 20px">Step {{scenario.currentStep}} out of {{scenario.steps.length}}</span>
+    <div style="display: inline; border-right-style: groove; border-right-width: 1px"></div>
+    <button mat-button color="primary" *ngIf="scenario.currentStep > 1" (click)="onPrevStep()" style="margin-right: 10px">< Prev</button>
+    <button mat-button color="primary" *ngIf="scenario.currentStep < scenario.steps.length" (click)="onNextStep()">Next ></button>
+    <button mat-button color="primary" (click)="reset()">Reset</button>
+  </div>
+  <mat-divider></mat-divider>
+  <div style="margin-top:16px"></div>
+  <markdown [data]="content"></markdown>
+</div>

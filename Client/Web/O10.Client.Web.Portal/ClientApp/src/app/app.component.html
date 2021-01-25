@@ -1,0 +1,6 @@
+<body>
+  <app-nav-menu *ngIf="showNavMenu"></app-nav-menu>
+  <div [ngClass]="{'container': !isMobile, 'o10-container-mobile': isMobile}">
+    <router-outlet></router-outlet>
+  </div>
+</body>

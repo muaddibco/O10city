@@ -1,0 +1,25 @@
+<p *ngIf="!isLoaded"><em>Loading...</em></p>
+
+<div *ngIf="isLoaded">
+  <p *ngIf="scenarios.length == 0"><em>No Scenarios defined yet. Please ask portal admin for support.</em></p>
+  <table class='table table-striped' *ngIf="scenarios.length > 0">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Status</th>
+        <th>Status Time</th>
+        <th>Step</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let scenario of scenarios" (click)="gotoScenario(scenario)" style="cursor:pointer">
+        <td>{{scenario.id}}</td>
+        <td>{{scenario.name}}</td>
+        <td>{{scenario.isActive ? 'In Progress' : 'New'}}</td>
+        <td>{{scenario.isActive ? scenario.startTime : ''}}</td>
+        <td>{{scenario.isActive ? scenario.currentStep : ''}}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

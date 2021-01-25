@@ -1,0 +1,176 @@
+<p *ngIf="!isLoaded"><em>Loading...</em></p>
+
+<div *ngIf="isMobile" style="margin-top:10px"></div>
+<div *ngIf="isLoaded" [ngClass]="{'user-component-container': !isMobile, 'user-component-container-mobile': isMobile}">
+  <!--<h1>Welcome, {{ pageTitle }}, to your Identity Wallet!</h1>-->
+  <div class="form-group" *ngIf="isCompromised && isAutoTheftProtection">
+    <div *ngIf="!isMobile">
+      <div class="alert alert-danger" style="vertical-align:middle; font-size: xx-large">
+        <img src="./images/icons8-error-50.png" style="margin-right:10px; margin-top:-8px" /> Account is compromised!!!
+        <button *ngIf="!isAutoTheftProtection" class="btn" (click)="sendCompromisedProofs()" style="border-width:1px;border-style:solid; border-color:darkgray; float:right; margin-top:2px"><img src="./images/icons8-spyware-50.png" width="30px" style="margin-right:10px" />Stop</button>
+      </div>
+    </div>
+    <div *ngIf="isMobile">
+      <div class="alert alert-danger" style="vertical-align:middle; font-size: x-large; text-align: center">
+        <div style="width: 100%; display: inline-block; margin-top: 10px; margin-bottom: 10px">
+          <img src="./images/icons8-error-50.png" style="margin-right:10px; margin-top:-8px" />
+          <span>Compromised!!!</span>
+        </div>
+        <div *ngIf="!isAutoTheftProtection">
+          <button class="btn" (click)="sendCompromisedProofs()" style="border-width:1px; border-style:solid; border-color:darkgray; margin-top:2px; width: 100%"><img src="./images/icons8-spyware-50.png" width="30px" style="margin-right:10px" />Stop last action</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <div *ngIf="!isMobile && !(isCompromised && isAutoTheftProtection)">
+      <label for="qrCodeReader">Scan QR Code for doing actions</label>
+      <input id="qrCodeReader" type="text" (paste)="onPaste($event)" class="form-control" (change)="onqrCodeReaderinputChanged($event)" />
+    </div>
+    <div *ngIf="isMobile && !(isCompromised && isAutoTheftProtection)">
+      <div *ngIf="!activateQrScanner">
+        <button class="btn btn-primary" style="width: 100%" (click)="activateQrScanner = true;">Scan QR...</button>
+      </div>
+      <div *ngIf="activateQrScanner" style="margin-bottom: 15px">
+        <button class="btn btn-primary" style="width: 50%" (click)="activateQrScanner = false;">Cancel QR scan</button>
+        <button class="btn btn-link" style="width: 50%" (click)="switchCamera()">Switch camera</button>
+      </div>
+    </div>
+    <zxing-scanner *ngIf="activateQrScanner" [formats]="['QR_CODE']" [device]="device" (scanSuccess)="scanSuccessHandler($event)" (camerasFound)="camerasFoundHandler($event)"></zxing-scanner>
+    <div *ngIf="isActionError" class="alert alert-danger">
+      {{ actionError }}
+    </div>
+  </div>
+
+  <h4>My Attributes</h4>
+  <p *ngIf="userAttributes.length == 0"><em>User did not receive any Root Attribute yet. Please request by scanning QR Code of appropriate Indentity Provider</em></p>
+  <div *ngIf="userAttributes.length > 0">
+    <mat-accordion>
+      <mat-expansion-panel style="margin: 5px 0px" *ngFor="let attribute of userAttributes">
+        <mat-expansion-panel-header>
+          <mat-panel-title>
+            <div style="display: table-row">
+              <div style="margin: 10px 0px; display: table-cell; vertical-align: middle">
+                <img src="./images/icons8-contact-green-50.png" width="24px" height="24px" *ngIf="attribute.status === 2" />
+                <img src="./images/icons8-contact-red-50.png" width="24px" height="24px" *ngIf="attribute.status === 1" />
+                <img src="./images/icons8-contact-gray-50.png" width="24px" height="24px" *ngIf="attribute.status === 0" />
+              </div>
+              <div style="display: table-cell; vertical-align: middle">
+                <div style="margin: 10px 20px;">{{attribute.content}}</div>
+              </div>
+              <div style="margin: 10px 0px; display: table-cell; vertical-align: middle">
+                By {{attribute.issuerName}}
+              </div>
+            </div>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <table class='table table-striped' *ngIf="attribute.rootAttributes.length > 0">
+          <tbody>
+            <tr *ngFor="let rootAttr of attribute.rootAttributes">
+              <td width="auto">
+                <img src="./images/icons8-contact-green-50.png" width="36px" *ngIf="!rootAttr.isOverriden && rootAttr.lastCommitment != '0000000000000000000000000000000000000000000000000000000000000000'" />
+                <img src="./images/icons8-contact-gray-50.png" width="36px" *ngIf="!rootAttr.isOverriden && rootAttr.lastCommitment == '0000000000000000000000000000000000000000000000000000000000000000'" />
+                <img src="./images/icons8-contact-red-50.png" width="36px" *ngIf="rootAttr.isOverriden" />
+              </td>
+              <td width="auto"><qrcode style="float:right" [qrdata]="rootAttr.lastCommitment" [size]="36" [level]="'M'" (click)="copyQR()" *ngIf="rootAttr.lastCommitment != '0000000000000000000000000000000000000000000000000000000000000000'"></qrcode></td>
+              <td width="100%">
+                <div *ngIf="rootAttr.content">
+                  <span>{{rootAttr.content}}</span>
+                </div>
+                <div *ngIf="!(rootAttr.content)" style="width: 100%">
+                  <input type="text" style="width: 100%" [(ngModel)]="rootAttr.dirtyContent"/>
+                </div>
+              </td>
+              <td width="1%">
+                <div *ngIf="!rootAttr.isOverriden && rootAttr.lastCommitment == '0000000000000000000000000000000000000000000000000000000000000000'">
+                  <img src="./images/icons8-trash-32.png" width="24px" style="cursor: pointer;" (click)="deleteUserAttribute(attribute, rootAttr.userAttributeId);" />
+                </div>
+                <div *ngIf="!(rootAttr.content)" style="margin-left: -10px; margin-right: -10px;">
+                  <button mat-button (click)="onSetUserRootAttributeContent(attribute, rootAttr)">Set</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="margin-top: 10px; border-width: 3px; border-style: solid; border-color: gray; background-color:ghostwhite" *ngIf="attribute.userAssociatedAttributes.length > 0">
+          <table style="width:100%; margin-top: 15px">
+            <tbody>
+              <tr>
+                <td width="auto" align="center" style="padding-left: 10px; padding-right: 10px; max-width: 30%" *ngIf="attribute.rootAttributes.length > 0">
+                  <div style="border-width: 1px; border-style: solid; border-color: gray; background-color:white" *ngIf="!attribute.attrPhoto">
+                    <img src="./images/icons8-name-100.png" />
+                  </div>
+                  <img *ngIf="attribute.attrPhoto" src="data:image/JPEG;base64,{{attribute.attrPhoto}}" style="width:100px; height:100px; border-width: 1px; border-style: solid; border-color: gray; background-color:white" />
+                </td>
+                <td width="100%" style="padding-left: 10px; padding-right: 10px">
+                  <div style="display:flex; flex-direction:column; width:100%">
+                    <div *ngFor="let associatedAttr of attribute.userAssociatedAttributes">
+                      <mat-form-field style="width: 100%">
+                        <input matInput type="text" placeholder="{{associatedAttr.alias}}" [(ngModel)]="associatedAttr.content" *ngIf="getAttributeValueType(associatedAttr.schemeName) === 'Any'" />
+                        <input matInput type="number" placeholder="{{associatedAttr.alias}}" [(ngModel)]="associatedAttr.content" *ngIf="getAttributeValueType(associatedAttr.schemeName) === 'Numeric'" />
+                        <input matInput type="date" placeholder="{{associatedAttr.alias}}" [(ngModel)]="associatedAttr.content" *ngIf="getAttributeValueType(associatedAttr.schemeName) === 'Date'" />
+                        <input matInput type="email" placeholder="{{associatedAttr.alias}}" [(ngModel)]="associatedAttr.content" *ngIf="getAttributeValueType(associatedAttr.schemeName) === 'Email'" />
+                      </mat-form-field>
+                    </div>
+                  </div>
+                  <div class="form-group" style="margin-top: 10px">
+                    <button mat-button style="width: 100%" (click)="onSubmitAssociatedAttributes(attribute)">Update</button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p></p>
+        <p>My relations</p>
+        <p *ngIf="attribute.groupRelations.length === 0"><em>No groups user relates to yet...</em></p>
+        <table class="table table-striped" *ngIf="attribute.groupRelations.length > 0">
+          <thead>
+            <tr>
+              <th>Service Provider</th>
+              <th>Group Name</th>
+              <th>#</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let groupRelation of attribute.groupRelations">
+              <td>{{groupRelation.groupOwnerName}}</td>
+              <td>{{groupRelation.groupName}}</td>
+              <td>
+                <img src="./images/icons8-trash-32.png" width="24px" style="cursor: pointer;" (click)="removeGroupRelation(attribute, groupRelation)" />
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </mat-expansion-panel>
+    </mat-accordion>
+
+  </div>
+
+  <div *ngIf="error" class="alert alert-danger">{{error}}</div>
+
+  <div style="width:100%; text-align:center">
+    <div style="margin:0 auto; display:block; width: 100%">
+      <button mat-stroked-button style="float: left; width: 48%" (click)="onShowQrClick()">
+        <img src="./images/icons8-qr-code-48.png" width="24px" />
+      </button>
+      <button mat-stroked-button style="float:right; width: 48%" (click)="onDiscloseSecrets()">
+        <img src="./images/icons8-key-2-50.png" width="24px" />
+      </button>
+    </div>
+  </div>
+
+  <div>
+    <button mat-stroked-button style="width: 100%; margin-top: 10px" (click)="stopEmulator()">Stop emulator</button>
+  </div>
+
+  <p></p>
+  <!--<div>
+    <a class="nav-link text-dark" [routerLink]='["/duplicate-user"]' style="width: 100%">Simulate Hack - duplicate User</a>
+  </div>-->
+  <div style="width: 100%" *ngIf="isCompromised && isAutoTheftProtection">
+    <button class="btn btn-light" style="width: 100%" (click)="resetCompromisedAccount()">Reset Compromised Account</button>
+  </div>
+</div>
+<div *ngIf="isMobile" style="margin-bottom:10px"></div>

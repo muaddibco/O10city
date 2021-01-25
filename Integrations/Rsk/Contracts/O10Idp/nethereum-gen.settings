@@ -1,0 +1,7 @@
+{
+    "projectName": "O10Idp",
+    "namespace": "O10Idp.Contracts",
+    "lang": 0,
+    "autoCodeGen": true,
+    "projectPath": "../../Wrappers/O10Idp"
+}

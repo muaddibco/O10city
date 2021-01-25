@@ -1,0 +1,146 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+            xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+            xmlns:views="clr-namespace:O10.Client.Mobile.Base.Views"
+            x:Class="O10.Client.Mobile.Base.Views.MainPage"
+            xmlns:pages="clr-namespace:Xamarin.Forms.Pages;assembly=Xamarin.Forms.Pages"
+            xmlns:ios="clr-namespace:Xamarin.Forms.PlatformConfiguration.iOSSpecific;assembly=Xamarin.Forms.Core"
+            xmlns:andr="clr-namespace:Xamarin.Forms.PlatformConfiguration.AndroidSpecific;assembly=Xamarin.Forms.Core"
+            xmlns:expandable="clr-namespace:Expandable;assembly=ExpandableView"
+            xmlns:ext="clr-namespace:O10.Client.Mobile.Base.Extensions"
+            xmlns:conv="clr-namespace:O10.Client.Mobile.Base.Converters"
+            xmlns:prism="clr-namespace:Prism.Mvvm;assembly=Prism.Forms"
+            prism:ViewModelLocator.AutowireViewModel="True"
+             Visual="Material" Title="{ext:Translate CAP_MY_ATTRIBUTES}">
+    <ContentPage.Resources>
+        <conv:CollectionCountToBoolConverter x:Key="CollectionCountToBoolConverter"/>
+        <conv:InvertedBoolConverter x:Key="InvertedBoolConverter"/>
+        <conv:AttributeStateToColorConverter x:Key="AttributeStateToColorConverter"/>
+        <conv:AttributeStateToBooleanConverter x:Key="AttributeStateToBooleanConverter"/>
+        <conv:DateTimeToStringConverter x:Key="DateTimeToStringConverter"/>
+        <conv:NotNullToBooleanConverter x:Key="NotNullToBooleanConverter"/>
+        <conv:HexStringToImageSourceConverter x:Key="HexStringToImageSourceConverter"/>
+        <conv:MultiBoolConjunctiveConverter x:Key="MultiBoolConjunctiveConverter"/>
+        <conv:StringToBoolConverter x:Key="StringToBoolConverter" />
+    </ContentPage.Resources>
+    <ContentPage.Content>
+        <Grid>
+            <Grid VerticalOptions="FillAndExpand" HorizontalOptions="FillAndExpand" Padding="10">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Label Grid.Row="0" Text="{ext:Translate CAP_NO_ROOT_ATTRIBUTES}" VerticalOptions="Start" HorizontalOptions="FillAndExpand">
+                    <Label.IsVisible>
+                        <ext:MultiBinding Converter="{StaticResource MultiBoolConjunctiveConverter}">
+                            <ext:MultiBinding.Bindings>
+                                <Binding Path="IdentitySchemes" Converter="{StaticResource CollectionCountToBoolConverter}" ConverterParameter="!"/>
+                                <Binding Path="IsLoading" Converter="{StaticResource InvertedBoolConverter}"/>
+                            </ext:MultiBinding.Bindings>
+                        </ext:MultiBinding>
+                    </Label.IsVisible>
+                </Label>
+                <ListView Grid.Row="1" ItemsSource="{Binding IdentitySchemes, Mode=TwoWay}" 
+                      VerticalOptions="Start" HorizontalOptions="FillAndExpand" HasUnevenRows="True" SeparatorVisibility="None" BackgroundColor="Transparent"
+                      IsVisible="{Binding IdentitySchemes, Converter={StaticResource CollectionCountToBoolConverter}}" 
+                      SelectionMode="None">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <ViewCell ios:Cell.DefaultBackgroundColor="Transparent">
+                                <StackLayout Orientation="Horizontal" 
+                                             Padding="0, 5" HorizontalOptions="FillAndExpand">
+                                    <StackLayout.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding ShowInfoCommand}"/>
+                                    </StackLayout.GestureRecognizers>
+                                    <BoxView VerticalOptions="FillAndExpand" Margin="0" WidthRequest="5" Color="{Binding State, Converter={StaticResource AttributeStateToColorConverter}}"/>
+                                    <StackLayout Orientation="Horizontal" HorizontalOptions="FillAndExpand" BackgroundColor="AliceBlue">
+                                        <StackLayout Orientation="Vertical" Margin="-6,0,0,0" Padding="10" HorizontalOptions="FillAndExpand">
+                                            <StackLayout Orientation="Horizontal">
+                                                <Label Text="{Binding IssuerName}" HorizontalOptions="StartAndExpand" VerticalOptions="Center" Margin="0,0"/>
+                                                <Image Source="ic_inherence" HorizontalOptions="End" VerticalOptions="Center" HeightRequest="18" WidthRequest="18">
+                                                    <Image.IsVisible>
+                                                        <ext:MultiBinding Converter="{StaticResource MultiBoolConjunctiveConverter}">
+                                                            <ext:MultiBinding.Bindings>
+                                                                <Binding Path="HasInherenceProtection"/>
+                                                                <Binding Path="IsExpanded"/>
+                                                            </ext:MultiBinding.Bindings>
+                                                        </ext:MultiBinding>
+                                                    </Image.IsVisible>
+                                                </Image>
+                                                <Image Source="ic_inherence_red" HorizontalOptions="End" VerticalOptions="Center" HeightRequest="18" WidthRequest="18">
+                                                    <Image.IsVisible>
+                                                        <ext:MultiBinding Converter="{StaticResource MultiBoolConjunctiveConverter}">
+                                                            <ext:MultiBinding.Bindings>
+                                                                <Binding Path="HasInherenceProtection" Converter="{StaticResource InvertedBoolConverter}"/>
+                                                                <Binding Path="IsExpanded"/>
+                                                            </ext:MultiBinding.Bindings>
+                                                        </ext:MultiBinding>
+                                                    </Image.IsVisible>
+                                                </Image>
+                                            </StackLayout>
+                                            <StackLayout Orientation="Horizontal">
+                                                <Grid HorizontalOptions="End" IsVisible="{Binding SchemeName, Converter={StaticResource StringToBoolConverter}, ConverterParameter=!Passport|Email|DrivingLicense}">
+                                                    <Image Source="contact_green" IsVisible="{Binding State, Converter={StaticResource AttributeStateToBooleanConverter}, ConverterParameter=Confirmed}" HeightRequest="16"/>
+                                                    <Image Source="contact_red" IsVisible="{Binding State, Converter={StaticResource AttributeStateToBooleanConverter}, ConverterParameter=Disabled}" HeightRequest="16"/>
+                                                    <Image Source="contact_gray" IsVisible="{Binding State, Converter={StaticResource AttributeStateToBooleanConverter}, ConverterParameter=NotConfirmed}" HeightRequest="16"/>
+                                                </Grid>
+                                                <Grid HorizontalOptions="End" IsVisible="{Binding SchemeName, Converter={StaticResource StringToBoolConverter}, ConverterParameter=Passport}">
+                                                    <Image Source="ic_passport_green" IsVisible="{Binding State, Converter={StaticResource AttributeStateToBooleanConverter}, ConverterParameter=Confirmed}" HeightRequest="16"/>
+                                                    <Image Source="ic_passport_red" IsVisible="{Binding State, Converter={StaticResource AttributeStateToBooleanConverter}, ConverterParameter=Disabled}" HeightRequest="16"/>
+                                                    <Image Source="ic_passport_gray" IsVisible="{Binding State, Converter={StaticResource AttributeStateToBooleanConverter}, ConverterParameter=NotConfirmed}" HeightRequest="16"/>
+                                                </Grid>
+                                                <Grid HorizontalOptions="End" IsVisible="{Binding SchemeName, Converter={StaticResource StringToBoolConverter}, ConverterParameter=Email}">
+                                                    <Image Source="ic_email_green" IsVisible="{Binding State, Converter={StaticResource AttributeStateToBooleanConverter}, ConverterParameter=Confirmed}" HeightRequest="16"/>
+                                                    <Image Source="ic_email_red" IsVisible="{Binding State, Converter={StaticResource AttributeStateToBooleanConverter}, ConverterParameter=Disabled}" HeightRequest="16"/>
+                                                    <Image Source="ic_email_gray" IsVisible="{Binding State, Converter={StaticResource AttributeStateToBooleanConverter}, ConverterParameter=NotConfirmed}" HeightRequest="16"/>
+                                                </Grid>
+                                                <Grid HorizontalOptions="End" IsVisible="{Binding SchemeName, Converter={StaticResource StringToBoolConverter}, ConverterParameter=DrivingLicense}">
+                                                    <Image Source="ic_drivinglicense_green" IsVisible="{Binding State, Converter={StaticResource AttributeStateToBooleanConverter}, ConverterParameter=Confirmed}" HeightRequest="16"/>
+                                                    <Image Source="ic_drivinglicense_red" IsVisible="{Binding State, Converter={StaticResource AttributeStateToBooleanConverter}, ConverterParameter=Disabled}" HeightRequest="16"/>
+                                                    <Image Source="ic_drivinglicense_gray" IsVisible="{Binding State, Converter={StaticResource AttributeStateToBooleanConverter}, ConverterParameter=NotConfirmed}" HeightRequest="16"/>
+                                                </Grid>
+                                                <Label Text="{Binding SchemeName}" HorizontalOptions="StartAndExpand" VerticalOptions="Center" Margin="0,0"/>
+                                                <Label Text="{Binding RootAttributeContent}" HorizontalOptions="EndAndExpand" VerticalOptions="Center" IsVisible="{Binding IsExpanded}"/>
+                                            </StackLayout>
+                                        </StackLayout>
+                                        <ImageButton Source="ic_details" BackgroundColor="Transparent" HeightRequest="44" Padding="10"
+                                                     VerticalOptions="Center" Margin="0, 0, 10, 0" BorderColor="LightGray" BorderWidth="1"
+                                                     IsVisible="{Binding IsExpanded, Converter={StaticResource InvertedBoolConverter}}"
+                                                     Command="{Binding ProcessExpandCommand}"/>
+                                        <ImageButton Source="ic_details_hide" BackgroundColor="Transparent" HeightRequest="44" Padding="10"
+                                                     VerticalOptions="Center" Margin="0, 0, 10, 0" BorderColor="LightGray" BorderWidth="1"
+                                                     IsVisible="{Binding IsExpanded}"
+                                                     Command="{Binding ProcessExpandCommand}"/>
+                                    </StackLayout>
+                                </StackLayout>
+                            </ViewCell>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+                <StackLayout Grid.Row="2" Orientation="Horizontal" HorizontalOptions="FillAndExpand">
+                    <Button ImageSource="ic_add_key" Text="{ext:Translate CAP_ADD_ATTRIBUTES}" ContentLayout="Left,5" BorderColor="DarkGray" BorderWidth="1" Padding="10" BackgroundColor="LightBlue"
+                                 VerticalOptions="EndAndExpand" HorizontalOptions="FillAndExpand" TextColor="Black"
+                                 Command="{Binding EmbeddedIdpsCommand}" IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"/>
+                    <Button ImageSource="ic_barcode_scanner" Text="{ext:Translate CAP_SCAN_QR}" Margin="10, 0, 0, 0" BorderColor="DarkGray" BorderWidth="1" Padding="10" BackgroundColor="LightCyan"
+                                 VerticalOptions="EndAndExpand" HorizontalOptions="FillAndExpand" TextColor="Black" 
+                                 Command="{Binding ScanQrCommand}" IsEnabled="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"/>
+                </StackLayout>
+            </Grid>
+            <ActivityIndicator 
+                    IsVisible="{Binding IsLoading}" 
+                    IsRunning="{Binding IsLoading}" 
+                    HeightRequest="40" 
+                    VerticalOptions="CenterAndExpand" 
+                    HorizontalOptions="CenterAndExpand" >
+                <ActivityIndicator.WidthRequest>
+                    <OnPlatform x:TypeArguments="x:Double" iOS="100" Android="100" WinPhone="400" />
+                </ActivityIndicator.WidthRequest>
+                <ActivityIndicator.Color>
+                    <OnPlatform x:TypeArguments="Color"
+                      iOS="#2499CE" WinPhone="#2499CE" />
+                </ActivityIndicator.Color>
+            </ActivityIndicator>
+        </Grid>
+    </ContentPage.Content>
+</ContentPage>

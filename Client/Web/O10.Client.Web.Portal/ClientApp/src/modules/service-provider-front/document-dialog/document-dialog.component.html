@@ -1,0 +1,22 @@
+<div mat-dialog-title>Add document</div>
+<div mat-dialog-content>
+  <section *ngIf="!isUploaded">
+    <button mat-raised-button [disabled]="isUploading || isUploaded" color="primary" (click)="file.click()">Upload</button>
+    <input type="file" #file hidden (change)="uploadFiles(file.files)" />
+  </section>
+  <section *ngIf="isUploading">
+    <mat-progress-bar color="primary" mode="determinate" [value]="progress"></mat-progress-bar>
+  </section>
+  <mat-card *ngIf="isUploaded" style="margin: 10px 0px; background-color: lightgray">
+    <mat-card-header>
+      <mat-card-title>{{data.documentName}}</mat-card-title>
+      <div>
+        <qrcode [qrdata]="data.hash" [size]="64" [level]="'M'" (click)="copyQR()"></qrcode>
+      </div>
+    </mat-card-header>
+  </mat-card>
+</div>
+<div mat-dialog-actions>
+  <button mat-button [mat-dialog-close]="data">Submit</button>
+  <button mat-button (click)="onCancelClick()">Cancel</button>
+</div>

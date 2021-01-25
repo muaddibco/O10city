@@ -1,0 +1,45 @@
+<p *ngIf="!isLoaded"><em>Loading...</em></p>
+
+<div *ngIf="isLoaded">
+  <div>
+    <button mat-stroked-button (click)="openAddAttributeDialog()">
+      <img src="./images/icons8-add-property-48.png" width="24px" /><span style="margin-left:10px">Add Attribute Definition</span>
+    </button>
+  </div>
+
+  <section style="margin-top: 10px">
+    <p *ngIf="!attributeDefinitions || attributeDefinitions.length === 0"><em>No attributes defined yet...</em></p>
+  </section>
+
+  <table class='table table-striped' *ngIf="attributeDefinitions.length > 0">
+    <thead>
+      <tr>
+        <th>Scheme</th>
+        <th>Name</th>
+        <th>Alias</th>
+        <th>Description</th>
+        <th>Is Root</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let attributeDefinition of attributeDefinitions">
+        <td>{{attributeDefinition.schemeName}}</td>
+        <td>{{attributeDefinition.attributeName}}</td>
+        <td>{{attributeDefinition.alias}}</td>
+        <td>{{attributeDefinition.description}}</td>
+        <td>
+          <mat-slide-toggle color="primary" [(checked)]="attributeDefinition.isRoot" [disabled]="!attributeDefinition.isActive" [id]="attributeDefinition.schemeName" (change)="onIsRootChanged($event)"></mat-slide-toggle>
+        </td>
+        <td>
+          <img src="./images/icons8-lock-48.png" width="24px" class="locked" *ngIf="attributeDefinition.schemeId > 0" />
+          <img src="./images/icons8-trash-32.png" width="24px" (click)="dismissAttributeDefinition(attributeDefinition);" *ngIf="attributeDefinition.schemeId === 0" />
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <div>
+    <button class="btn btn-primary" (click)="onCancel()" style="margin-right:10px">Cancel</button>
+    <button class="btn btn-primary" (click)="onSaveScheme()" [disabled]="!areNewAttributes && !isRootChanged">Save Scheme</button>
+  </div>
+</div>

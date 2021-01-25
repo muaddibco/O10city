@@ -1,0 +1,11 @@
+<div mat-dialog-title>Request for proofs</div>
+<div mat-dialog-content>
+  <div style="display: flex; flex-direction:column">
+    <mat-slide-toggle color="primary" [(checked)]="data.withKnowledgeProof" (change)="onToggleKnowledgeFactor($event)">With knowledge factor proofs</mat-slide-toggle>
+    <mat-slide-toggle color="primary" [(checked)]="data.withBiometricProof" (change)="onToggleBiometricFactor($event)">With biometric factor proofs</mat-slide-toggle>
+  </div>
+</div>
+<div mat-dialog-actions>
+  <button mat-button [mat-dialog-close]="data">Send request</button>
+  <button mat-button (click)="onCancelClick()">Cancel</button>
+</div>

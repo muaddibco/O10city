@@ -1,0 +1,20 @@
+﻿using O10.Client.DataLayer.Enums;
+
+namespace O10.Client.Common.Entities
+{
+    public class AccountDescriptor
+    {
+        public byte[] SecretSpendKey { get; set; }
+        public byte[] PublicSpendKey { get; set; }
+        public byte[] SecretViewKey { get; set; }
+        public byte[] PublicViewKey { get; set; }
+        public AccountType AccountType { get; set; }
+        public string AccountInfo { get; set; }
+		public byte[] PwdHash { get; set; }
+		public long AccountId { get; set; }
+        public bool IsCompromised { get; set; }
+        public ulong LastRegistryCombinedBlock { get; set; }
+        public bool IsPrivate { get; set; }
+        public bool IsActive { get; set; }
+    }
+}

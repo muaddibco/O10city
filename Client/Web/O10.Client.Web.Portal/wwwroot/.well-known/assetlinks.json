@@ -1,0 +1,10 @@
+[
+  {
+    "relation": [ "delegate_permission/common.handle_all_urls" ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.O10.Wallet",
+      "sha256_cert_fingerprints": [ "C9:16:F1:8F:D7:C9:9C:CF:8C:52:57:52:B0:2F:A4:D1:4C:39:D0:6B:D2:95:FF:D4:06:43:48:26:67:70:B2:16" ]
+    }
+  }
+]

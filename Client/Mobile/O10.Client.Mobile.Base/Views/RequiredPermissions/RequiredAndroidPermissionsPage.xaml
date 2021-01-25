@@ -1,0 +1,75 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:d="http://xamarin.com/schemas/2014/forms/design"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             xmlns:behaviors="clr-namespace:Prism.Behaviors;assembly=Prism.Forms"
+             xmlns:converters="clr-namespace:O10.Client.Mobile.Base.Converters"
+             xmlns:ext="clr-namespace:O10.Client.Mobile.Base.Extensions"
+             x:Class="O10.Client.Mobile.Base.Views.RequiredPermissions.RequiredAndroidPermissionsPage">
+    <ContentPage.Resources>
+        <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+    </ContentPage.Resources>
+    <ContentPage.Behaviors>
+        <behaviors:EventToCommandBehavior EventName="Appearing" Command="{Binding RefreshCommand}"/>
+    </ContentPage.Behaviors>
+    <ContentPage.Content>
+        <Grid>
+            <StackLayout Margin="10"
+                         IsVisible="{Binding IsLoading, Converter={StaticResource InvertedBoolConverter}}"
+                         HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand">
+                <Label Text="{ext:Translate TEXT_ANDROID_PERMISSIONS_INVITATION}"
+                       HorizontalOptions="FillAndExpand" VerticalOptions="Start" />
+
+                <Frame Margin="3" 
+                       HorizontalOptions="FillAndExpand" VerticalOptions="Start">
+                    <StackLayout>
+                        <Label Text="Auto start"
+                               HorizontalOptions="FillAndExpand" VerticalOptions="Start" />
+                        <Button Text="{ext:Translate CAP_GO_TO_SETTINGS}" 
+                                HorizontalOptions="FillAndExpand" VerticalOptions="Start"
+                                IsEnabled="{Binding IsAutoStartConfigured, Converter={StaticResource InvertedBoolConverter}}"
+                                Command="{Binding OpenAutoStartSettingsCommand}" />
+                        <StackLayout 
+                        Orientation="Horizontal"
+                        HorizontalOptions="FillAndExpand" 
+                        VerticalOptions="Start">
+                            <Label 
+                            Text="{ext:Translate LABEL_CONFIM_AUTO_START}"
+                            HorizontalOptions="FillAndExpand"
+                            VerticalOptions="FillAndExpand"/>
+                            <Switch 
+                            HorizontalOptions="End"
+                            VerticalOptions="FillAndExpand"
+                            IsToggled="{Binding IsAutoStartConfigured}"/>
+                        </StackLayout>
+                    </StackLayout>
+                </Frame>
+
+                <Frame Margin="3">
+                    <StackLayout>
+                        <Label
+                        Text="Overflow Window"
+                        HorizontalOptions="FillAndExpand"
+                        VerticalOptions="Start" />
+                        <Button 
+                        Text="{ext:Translate CAP_GO_TO_SETTINGS}"
+                        HorizontalOptions="FillAndExpand"
+                        VerticalOptions="Start"
+                        Command="{Binding OpenOverflowSettingsCommand}"
+                        IsEnabled="{Binding IsOverflowWindowAllowed, Converter={StaticResource InvertedBoolConverter}}"/>
+                    </StackLayout>
+                </Frame>
+
+                <Button Text="{ext:Translate CAP_DISMISS}"
+                    HorizontalOptions="FillAndExpand" VerticalOptions="End"
+                    Command="{Binding SkipCommand}"/>
+            </StackLayout>
+            <StackLayout VerticalOptions="CenterAndExpand" HorizontalOptions="CenterAndExpand"  IsVisible="{Binding IsLoading}">
+                <Label Text="{ext:Translate CAP_REQUIRED_PERMISSIONS_NAVIGATING}" FontSize="Large" TextColor="DarkGray" VerticalOptions="Start" HorizontalOptions="FillAndExpand"/>
+                <ActivityIndicator IsVisible="{Binding IsLoading}" IsRunning="{Binding IsLoading}" VerticalOptions="End" HorizontalOptions="CenterAndExpand" HeightRequest="40" />
+            </StackLayout>
+        </Grid>
+    </ContentPage.Content>
+</ContentPage>

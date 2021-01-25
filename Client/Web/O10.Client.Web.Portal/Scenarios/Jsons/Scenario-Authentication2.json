@@ -1,0 +1,106 @@
+{
+	"id": 2,
+	"name": "Basic Authentication Flow with Fraud Prevention (for mobile device and desktop)",
+	"setup": {
+		"accounts": [
+			{
+				"accountType": 1,
+				"accountInfo": "MIA",
+				"identityScheme": [
+					{
+						"attributeName": "IDCard",
+						"attributeSchemeName": "IdCard",
+						"alias": "ID Card",
+						"canBeRoot": true
+					},
+					{
+						"attributeName": "FirstName",
+						"attributeSchemeName": "FirstName",
+						"alias": "First Name",
+						"canBeRoot": false
+					},
+					{
+						"attributeName": "LastName",
+						"attributeSchemeName": "LastName",
+						"alias": "Last Name",
+						"canBeRoot": false
+					},
+					{
+						"attributeName": "DOB",
+						"attributeSchemeName": "DateOfBirth",
+						"alias": "Date of Birth",
+						"canBeRoot": false
+					},
+					{
+						"attributeName": "Password",
+						"attributeSchemeName": "Password",
+						"alias": "Password",
+						"canBeRoot": false
+					}
+				],
+				"identities": [
+					{
+						"attributes": {
+							"IDCard": "111",
+							"FirstName": "FirstName1",
+							"LastName": "LastName1",
+							"DOB": "1980-03-09",
+							"Password": "qqq"
+						}
+					},
+					{
+						"attributes": {
+							"IDCard": "222",
+							"FirstName": "FirstName2",
+							"LastName": "LastName2",
+							"DOB": "1980-03-10",
+							"Password": "qqq"
+						}
+					}
+				]
+			},
+			{
+				"accountType": 2,
+				"accountInfo": "Documents Archive"
+			},
+			{
+				"accountType": 3,
+				"accountInfo": "User"
+			},
+			{
+				"accountType": 3,
+				"accountInfo": "Hacker"
+			}
+		]
+	},
+	"steps": [
+		{
+			"id": 1,
+			"caption": "Introduction"
+		},
+		{
+			"id": 2,
+			"caption": "Root Identity Obtaining. Preparation."
+		},
+		{
+			"id": 3,
+			"caption": "Root Identity Obtaining. Finalization."
+		},
+		{
+			"id": 4,
+			"caption": "Registration at Service Provider."
+		},
+		{
+			"id": 5,
+			"caption": "Login to Service Provider's Portal."
+		},
+    {
+      "id": 6,
+      "caption": "Account compromizatoin. Idenity Theft."
+    },
+    {
+      "id": 7,
+      "caption": "Theft Detection and Fraud Prevention."
+    }
+	]
+}

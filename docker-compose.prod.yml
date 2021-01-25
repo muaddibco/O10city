@@ -1,0 +1,13 @@
+version: '3.4'
+
+services:
+
+  o10.gateway.webapp:
+    image: muaddibco/o10gateway:maxathon
+    ports:
+    - 5002:80
+
+  o10.node.webapp:
+    image: muaddibco/o10node:maxathon
+    ports:
+    - 5001:80

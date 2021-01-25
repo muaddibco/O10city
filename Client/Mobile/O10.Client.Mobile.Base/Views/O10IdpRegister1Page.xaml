@@ -1,0 +1,169 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:d="http://xamarin.com/schemas/2014/forms/design"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ext="clr-namespace:O10.Client.Mobile.Base.Extensions"
+             xmlns:prism="clr-namespace:Prism.Mvvm;assembly=Prism.Forms"
+             xmlns:conv="clr-namespace:O10.Client.Mobile.Base.Converters"
+             mc:Ignorable="d"
+             prism:ViewModelLocator.AutowireViewModel="True"
+             Visual="Material"
+             x:Class="O10.Client.Mobile.Base.Views.O10IdpRegister1Page">
+    <ContentPage.Resources>
+        <conv:InvertedBoolConverter x:Key="InvertedBoolConverter"/>
+        <conv:MultiBoolConjunctiveConverter x:Key="MultiBoolConjunctiveConverter"/>
+    </ContentPage.Resources>
+    <ContentPage.Content>
+        <Grid>
+            <Grid Margin="5">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Label Text="{ext:Translate CAP_O10IDP_INVITATION}"
+                   Grid.Row="0" Margin="5"
+                   VerticalOptions="StartAndExpand" 
+                   HorizontalOptions="FillAndExpand" />
+                <Label Text="{ext:Translate CAP_EMAIL}"
+                   Grid.Row="1" Margin="5"
+                   VerticalOptions="StartAndExpand" 
+                   HorizontalOptions="FillAndExpand"/>
+                <Entry Text="{Binding Email}" ReturnCommand="{Binding CheckAccountCommand}"
+                   Grid.Row="2" Margin="5"
+                   VerticalOptions="StartAndExpand" 
+                   HorizontalOptions="FillAndExpand"/>
+                <Button Text="{ext:Translate CAP_CONTINUE_DOTS}" IsVisible="{Binding AccountChecked, Converter={StaticResource InvertedBoolConverter}}"
+                    Grid.Row="3" Margin="5"
+                    HorizontalOptions="FillAndExpand" VerticalOptions="Center" 
+                    Command="{Binding CheckAccountCommand}" />
+                <Label Text="{ext:Translate CAP_O10IDP_INVITATION2}"
+                   Grid.Row="3" Margin="5"
+                   VerticalOptions="StartAndExpand" 
+                   HorizontalOptions="FillAndExpand">
+                    <Label.IsVisible>
+                        <ext:MultiBinding Converter="{StaticResource MultiBoolConjunctiveConverter}">
+                            <ext:MultiBinding.Bindings>
+                                <Binding Path="AccountChecked"/>
+                                <Binding Path="IsAccountExist" Converter="{StaticResource InvertedBoolConverter}"/>
+                            </ext:MultiBinding.Bindings>
+                        </ext:MultiBinding>
+                    </Label.IsVisible>
+                </Label>
+                <Label Text="{ext:Translate CAP_O10IDP_INVITATION3}"
+                   Grid.Row="3" Margin="5"
+                   VerticalOptions="StartAndExpand" 
+                   HorizontalOptions="FillAndExpand">
+                    <Label.IsVisible>
+                        <ext:MultiBinding Converter="{StaticResource MultiBoolConjunctiveConverter}">
+                            <ext:MultiBinding.Bindings>
+                                <Binding Path="AccountChecked"/>
+                                <Binding Path="IsAccountExist"/>
+                            </ext:MultiBinding.Bindings>
+                        </ext:MultiBinding>
+                    </Label.IsVisible>
+                </Label>
+                <Label Text="{ext:Translate CAP_PASSPHRASE}"
+                   Grid.Row="4" Margin="5"
+                   VerticalOptions="StartAndExpand" 
+                   HorizontalOptions="FillAndExpand">
+                    <Label.IsVisible>
+                        <ext:MultiBinding Converter="{StaticResource MultiBoolConjunctiveConverter}">
+                            <ext:MultiBinding.Bindings>
+                                <Binding Path="AccountChecked"/>
+                                <Binding Path="IsAccountExist" Converter="{StaticResource InvertedBoolConverter}"/>
+                            </ext:MultiBinding.Bindings>
+                        </ext:MultiBinding>
+                    </Label.IsVisible>
+                </Label>
+                <Label Text="{ext:Translate CAP_PASSWORD}"
+                   Grid.Row="4" Margin="5"
+                   VerticalOptions="StartAndExpand" 
+                   HorizontalOptions="FillAndExpand">
+                    <Label.IsVisible>
+                        <ext:MultiBinding Converter="{StaticResource MultiBoolConjunctiveConverter}">
+                            <ext:MultiBinding.Bindings>
+                                <Binding Path="AccountChecked"/>
+                                <Binding Path="IsAccountExist"/>
+                            </ext:MultiBinding.Bindings>
+                        </ext:MultiBinding>
+                    </Label.IsVisible>
+                </Label>
+                <Entry Text="{Binding Password}" ReturnCommand="{Binding ConfirmCommand}"
+                   Grid.Row="5" Margin="5" IsPassword="True"
+                   VerticalOptions="StartAndExpand" 
+                   HorizontalOptions="FillAndExpand">
+                    <Entry.IsVisible>
+                        <ext:MultiBinding Converter="{StaticResource MultiBoolConjunctiveConverter}">
+                            <ext:MultiBinding.Bindings>
+                                <Binding Path="AccountChecked"/>
+                                <Binding Path="IsAccountExist" Converter="{StaticResource InvertedBoolConverter}"/>
+                            </ext:MultiBinding.Bindings>
+                        </ext:MultiBinding>
+                    </Entry.IsVisible>
+                </Entry>
+                <Entry Text="{Binding Password}" ReturnCommand="{Binding RequestReissueCommand}"
+                   Grid.Row="5" Margin="5" IsPassword="True"
+                   VerticalOptions="StartAndExpand" 
+                   HorizontalOptions="FillAndExpand">
+                    <Entry.IsVisible>
+                        <ext:MultiBinding Converter="{StaticResource MultiBoolConjunctiveConverter}">
+                            <ext:MultiBinding.Bindings>
+                                <Binding Path="AccountChecked"/>
+                                <Binding Path="IsAccountExist"/>
+                            </ext:MultiBinding.Bindings>
+                        </ext:MultiBinding>
+                    </Entry.IsVisible>
+                </Entry>
+                <Button Text="{ext:Translate CAP_CONFIRM}" Command="{Binding ConfirmCommand}"
+                    Grid.Row="7" Margin="5"
+                    VerticalOptions="StartAndExpand" 
+                    HorizontalOptions="FillAndExpand">
+                    <Button.IsVisible>
+                        <ext:MultiBinding Converter="{StaticResource MultiBoolConjunctiveConverter}">
+                            <ext:MultiBinding.Bindings>
+                                <Binding Path="AccountChecked"/>
+                                <Binding Path="IsAccountExist" Converter="{StaticResource InvertedBoolConverter}"/>
+                            </ext:MultiBinding.Bindings>
+                        </ext:MultiBinding>
+                    </Button.IsVisible>
+                </Button>
+                <Button Text="{ext:Translate CAP_REQUEST_REISSUE}" Command="{Binding RequestReissueCommand}"
+                    Grid.Row="7" Margin="5"
+                    VerticalOptions="StartAndExpand" 
+                    HorizontalOptions="FillAndExpand">
+                    <Button.IsVisible>
+                        <ext:MultiBinding Converter="{StaticResource MultiBoolConjunctiveConverter}">
+                            <ext:MultiBinding.Bindings>
+                                <Binding Path="AccountChecked"/>
+                                <Binding Path="IsAccountExist"/>
+                            </ext:MultiBinding.Bindings>
+                        </ext:MultiBinding>
+                    </Button.IsVisible>
+                </Button>
+            </Grid>
+            <StackLayout VerticalOptions="CenterAndExpand" HorizontalOptions="CenterAndExpand"  IsVisible="{Binding IsLoading}">
+                <Label Text="{Binding ActionDescription}" FontSize="Large" TextColor="DarkGray" 
+                       VerticalOptions="Start" HorizontalOptions="CenterAndExpand" HorizontalTextAlignment="Center"/>
+                <ActivityIndicator 
+                    IsRunning="{Binding IsLoading}" 
+                    HeightRequest="40" 
+                    VerticalOptions="CenterAndExpand" 
+                    HorizontalOptions="CenterAndExpand" >
+                    <ActivityIndicator.WidthRequest>
+                        <OnPlatform x:TypeArguments="x:Double" iOS="100" Android="100" WinPhone="400" />
+                    </ActivityIndicator.WidthRequest>
+                    <ActivityIndicator.Color>
+                        <OnPlatform x:TypeArguments="Color"
+                      iOS="#2499CE" WinPhone="#2499CE" />
+                    </ActivityIndicator.Color>
+                </ActivityIndicator>
+            </StackLayout>
+        </Grid>
+    </ContentPage.Content>
+</ContentPage>

@@ -1,0 +1,33 @@
+<h1>View Identity</h1>
+
+<p *ngIf="!isLoaded || !identityAttributesSchema"><em>Loading...</em></p>
+
+<div *ngIf="isLoaded && identityAttributesSchema">
+  <h2>{{ identity.description }}</h2>
+
+  <h4>Attributes</h4>
+  <table class='table table-striped'>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Content</th>
+        <th>Originating Commitment</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let attr of identityAttributesSchema.associatedAttributes">
+        <td>{{ attr.name}}</td>
+        <td>{{ getAssociatedAttrContent(attr.attributeName) }}</td>
+        <td>{{ getAssociatedAttrCommitment(attr.attributeName) }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p></p>
+  <p></p>
+
+  <div class="form-group">
+    <button class="btn" (click)="onBack()">Back</button>
+  </div>
+
+</div>

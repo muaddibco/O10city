@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Settings xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <Section Name="identity">
+    <Parameter Name="Provider" Value="Default" />
+  </Section>
+  <Section Name="gatewayDataContext">
+    <!--<Parameter Name="ConnectionType" Value="SQLite" />
+    <Parameter Name="ConnectionString" Value="Filename=gateway.dat" />-->
+    <Parameter Name="ConnectionType" Value="SqlServer" />
+    <!--<Parameter Name="ConnectionString" Value="Server=tcp:o10node.database.windows.net,1433;Initial Catalog=gateway;Persist Security Info=False;User ID=O10NodeAdmin;Password=5UCr!K5jay#ql#rApr86;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;" />-->
+    <Parameter Name="ConnectionString" Value="Server=.\\SQLEXPRESS;Database=core;Trusted_Connection=True;MultipleActiveResultSets=true;" />
+  </Section>
+  <Section Name="synchronizer">
+    <Parameter Name="NodeApiUri" Value="http://localhost:19081/O10.Node.ServiceFabric/O10.Node.ServiceFabric.WebApp/api/network/" />
+  </Section>
+  <Section Name="logging">
+    <!--<Parameter Name="LoggerName" Value="O10.Node.Worker.WorkerLogger" />
+    <Parameter Name="LoggerName" Value="O10.Tracking.ApplicationInsights.ApplicationInsightsLogger" />-->
+    <Parameter Name="LoggerName" Value="O10.Core.Logging.Log4NetLogger" />
+    <Parameter Name="LogConfigurationFile" Value="log4net.xml" />
+  </Section>
+  <Section Name="tracking">
+    <Parameter Name="TrackingReporterNames" Value="ApplicationInsights" />
+  </Section>
+  <Section Name="applicationInsights">
+    <Parameter Name="InstrumentationKey" Value="8fa6fcb4-869c-42d5-8b6c-fb4eff361eee" />
+  </Section>
+</Settings>

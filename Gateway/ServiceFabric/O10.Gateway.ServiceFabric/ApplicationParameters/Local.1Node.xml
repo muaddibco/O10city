@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Application xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" Name="fabric:/O10.Gateway.ServiceFabric" xmlns="http://schemas.microsoft.com/2011/01/fabric">
+  <Parameters>
+    <Parameter Name="O10.Gateway.ServiceFabric.WebApp_ASPNETCORE_ENVIRONMENT" Value="Development" />
+    <Parameter Name="O10.Gateway.ServiceFabric.WebApp_InstanceCount" Value="1" />
+    <Parameter Name="O10.Gateway.ServiceFabric.WebApp_ConnectionType" Value="SqlServer" />
+    <!--<Parameter Name="O10.Gateway.ServiceFabric.WebApp_ConnectionString" Value="Server=(localdb)\.\SharedDB;Database=gateway;Trusted_Connection=True;MultipleActiveResultSets=true" />-->
+    <Parameter Name="O10.Gateway.ServiceFabric.WebApp_ConnectionString" Value="Server=.;Database=gateway;Trusted_Connection=True;MultipleActiveResultSets=true" />
+    <!--<Parameter Name="O10.Gateway.ServiceFabric.WebApp_ConnectionType" Value="SqlServer" />
+    <Parameter Name="O10.Gateway.ServiceFabric.WebApp_ConnectionString" Value="Server=(localdb)\\mssqllocaldb;Database=gateway;Trusted_Connection=True;MultipleActiveResultSets=true;" />-->
+    <!--<Parameter Name="O10.Gateway.ServiceFabric.WebApp_ConnectionString" Value="Server=.\SQLEXPRESS;Database=gateway;User ID=sa;Password=help2desk;MultipleActiveResultSets=true;" />-->
+  </Parameters>
+</Application>

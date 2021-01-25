@@ -1,0 +1,6 @@
+<h1 *ngIf="!isAuthenticated">Hello Guest!</h1>
+<h1 *ngIf="isAuthenticated">Hello {{ userName | async }}!</h1>
+<p>Welcome to the O10 Network Demo Portal!</p>
+<p>Here you can learn about capabilities of our platform and try demo scenarios.</p>
+<p *ngIf="!isAuthenticated">Please authenticate yourself for playing with the demo</p>
+<p *ngIf="isAuthenticated">Please go to <a class="text-dark" [routerLink]='["/scenarioList"]'><strong>Scenarios</strong></a> for playing with the demo</p>

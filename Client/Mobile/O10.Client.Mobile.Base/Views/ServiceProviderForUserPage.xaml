@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:d="http://xamarin.com/schemas/2014/forms/design"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             x:Class="O10.Client.Mobile.Base.Views.ServiceProviderForUserPage"
+             xmlns:ios="clr-namespace:Xamarin.Forms.PlatformConfiguration.iOSSpecific;assembly=Xamarin.Forms.Core"
+             xmlns:andr="clr-namespace:Xamarin.Forms.PlatformConfiguration.AndroidSpecific;assembly=Xamarin.Forms.Core"
+             xmlns:ext="clr-namespace:O10.Client.Mobile.Base.Extensions"
+             xmlns:conv="clr-namespace:O10.Client.Mobile.Base.Converters"
+             xmlns:prism="clr-namespace:Prism.Mvvm;assembly=Prism.Forms"
+             prism:ViewModelLocator.AutowireViewModel="True"
+             Visual="Material">
+    <ContentPage.Resources>
+        <conv:InvertedBoolConverter x:Key="InvertedBoolConverter"/>
+        <conv:MultiBoolConjunctiveConverter x:Key="MultiBoolConjunctiveConverter"/>
+        <conv:CollectionSingleItemToBoolConverter x:Key="CollectionSingleItemToBoolConverter"/>
+        <conv:CollectionCountToBoolConverter x:Key="CollectionCountToBoolConverter"/>
+        <conv:NotNullToBooleanConverter x:Key="NotNullToBooleanConverter"/>
+    </ContentPage.Resources>
+    <ContentPage.Content>
+        <Grid>
+            <StackLayout Spacing="20" Padding="10,50" VerticalOptions="Center">
+                <Label Text="{ext:Translate CAP_INVITATION_REG}" VerticalOptions="Start" HorizontalOptions="FillAndExpand" IsVisible="{Binding IsRegistered, Converter={StaticResource InvertedBoolConverter}}"/>
+                <Label Text="{ext:Translate CAP_INVITATION_AUTH}" VerticalOptions="Start" HorizontalOptions="FillAndExpand" IsVisible="{Binding IsRegistered}"/>
+                
+                <Picker Title="{ext:Translate CAP_SELECT_ATTR_INVITATION}"
+                        IsVisible="{Binding RootAttributes, Converter={StaticResource CollectionSingleItemToBoolConverter}}"
+                        ItemsSource="{Binding RootAttributes}" ItemDisplayBinding="{Binding Content}" 
+                        SelectedItem="{Binding SelectedAttribute, Mode=TwoWay}"/>
+
+                <StackLayout Orientation="Vertical" HorizontalOptions="FillAndExpand" VerticalOptions="Center"
+                             IsVisible="{Binding SelectedAttribute, Converter={StaticResource NotNullToBooleanConverter}}">
+
+                    <Entry Placeholder="{ext:Translate CAP_PASSWORD_CONTENT}" 
+                           IsPassword="True" ReturnCommand="{Binding ConfirmCommand}"
+                           IsVisible="{Binding AuthenticationRequired}"
+                           Text="{Binding Password, Mode=TwoWay}"/>
+
+                    <StackLayout Orientation="Vertical"
+                                 IsVisible="{Binding IsBiometryRequired}">
+                        <Label Text="{ext:Translate CAP_SP_INHERENCE_CHECK_MISSING}" HorizontalOptions="FillAndExpand" IsVisible="{Binding InherenceVerifiers, Converter={StaticResource CollectionCountToBoolConverter}, ConverterParameter=!}"/>
+                        <Button Text="{ext:Translate CAP_SP_GOTO_INHERENCE_VERIFIERS}" HorizontalOptions="FillAndExpand" IsVisible="{Binding InherenceVerifiers, Converter={StaticResource CollectionCountToBoolConverter}, ConverterParameter=!}" Command="{Binding GoToInherenceVerifiersCommand}"/>
+                        <Label Text="{ext:Translate CAP_SP_INHERENCE_CHECK_REQUIRED}" HorizontalOptions="FillAndExpand" IsVisible="{Binding InherenceVerifiers, Converter={StaticResource CollectionCountToBoolConverter}}"/>
+                        <ListView ItemsSource="{Binding InherenceVerifiers}"
+                                  HorizontalOptions="FillAndExpand" HasUnevenRows="True" SeparatorVisibility="None">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <ViewCell ios:Cell.DefaultBackgroundColor="Transparent">
+                                        <Button Text="{Binding Alias}" Command="{Binding VerifyCommand}" HorizontalOptions="FillAndExpand"/>
+                                    </ViewCell>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </StackLayout>
+                    <Button Text="{ext:Translate CAP_IDENTIFY}" VerticalOptions="End" HorizontalOptions="FillAndExpand" Command="{Binding ConfirmCommand}">
+                        <Button.IsVisible>
+                            <ext:MultiBinding Converter="{StaticResource MultiBoolConjunctiveConverter}">
+                                <ext:MultiBinding.Bindings>
+                                    <Binding Path="AuthenticationRequired"/>
+                                    <Binding Path="IsBiometryRequired" Converter="{StaticResource InvertedBoolConverter}"/>
+                                </ext:MultiBinding.Bindings>
+                            </ext:MultiBinding>
+                        </Button.IsVisible>
+                    </Button>
+                </StackLayout>
+            </StackLayout>
+            <BoxView VerticalOptions="FillAndExpand" HorizontalOptions="FillAndExpand" BackgroundColor="White" Opacity="0.8" IsVisible="{Binding IsLoading}"/>
+            <StackLayout VerticalOptions="CenterAndExpand" HorizontalOptions="CenterAndExpand"  IsVisible="{Binding IsLoading}">
+                <Label Text="{Binding ActionDescription}" FontSize="Large" TextColor="DarkGray" VerticalOptions="Start" HorizontalOptions="CenterAndExpand" HorizontalTextAlignment="Center"/>
+                <ActivityIndicator IsRunning="{Binding IsLoading}" VerticalOptions="End" HorizontalOptions="CenterAndExpand" HeightRequest="40" />
+            </StackLayout>
+        </Grid>
+    </ContentPage.Content>
+</ContentPage>

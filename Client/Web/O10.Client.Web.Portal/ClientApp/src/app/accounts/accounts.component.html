@@ -1,0 +1,63 @@
+<h1 *ngIf="!showUserOnly">Accounts</h1>
+
+<p *ngIf="!isLoaded"><em>Loading...</em></p>
+
+<div *ngIf="isLoaded">
+  <div *ngIf="!showUserOnly">
+    <h4>Identity Providers</h4>
+    <p *ngIf="accountsIP.length == 0"><em>No Identity Provider accounts created yet. Please use 'Register' for account creation</em></p>
+    <table class='table table-striped' *ngIf="accountsIP.length > 0">
+      <tbody>
+        <tr *ngFor="let account of accountsIP" (click)="gotoLogin(account)" style="cursor:pointer">
+          <td width="1%"><img src="./images/icons8-parliament-50.png" width="30px" /></td>
+          <td><div style="max-width: 150px; text-overflow:ellipsis; white-space:nowrap; overflow:hidden">{{ account.accountInfo }}</div></td>
+          <td width="1%">
+            <img src="./images/icons8-trash-32.png" width="24px" style="cursor: pointer;" (click)="removeIPAccount(account); $event.stopPropagation();" />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div *ngIf="!showUserOnly">
+    <h4>Service Providers</h4>
+    <p *ngIf="accountsSP.length == 0"><em>No Service Provider accounts created yet. Please use 'Register' for account creation</em></p>
+    <table class='table table-striped' *ngIf="accountsSP.length > 0">
+      <tbody>
+        <tr *ngFor="let account of accountsSP" (click)="gotoLogin(account)" style="cursor:pointer">
+          <td width="1%"><img src="./images/icons8-museum-50.png" width="30px" /></td>
+          <td><div style="max-width: 150px; text-overflow:ellipsis; white-space:nowrap; overflow:hidden">{{ account.accountInfo }}</div></td>
+          <td width="1%">
+            <img src="./images/icons8-trash-32.png" width="24px" style="cursor: pointer;" (click)="removeSPAccount(account); $event.stopPropagation();" />
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <h4 *ngIf="!showUserOnly">User Accounts</h4>
+  <div *ngIf="showUserOnly">
+    <h4 style="margin-top: 20px; float: left">Choose account</h4>
+    <div style="display: inline-block; background-color: aliceblue; float: right; border-width: 1px; border-style: groove; margin-top: 5px">
+      <a class="nav-link text-dark" [routerLink]='["/authentication/logout"]' [state]='{ local: true }' title="Logout">Logout</a>
+    </div>
+  </div>
+  <div *ngIf="accountsUser.length == 0">
+    <em *ngIf="!isInScenario">No User accounts created yet. Please use 'Register' for account creation</em>
+    <em *ngIf="isInScenario">
+      <span>No User accounts created for this scenario yet. Please ascertain that scenario is activated. If you think that scenario is active try to reset it on your desktop by clicking on 'Reset' link</span>
+    </em>
+  </div>
+  <table class='table table-striped' *ngIf="accountsUser.length > 0">
+    <tbody>
+      <tr *ngFor="let account of accountsUser" (click)="gotoLogin(account)" style="cursor:pointer">
+        <td width="1%"><img src="./images/icons8-administrator-male-50.png " width="30px" /></td>
+        <td><div style="max-width: 150px; text-overflow:ellipsis; white-space:nowrap; overflow:hidden">{{ account.accountInfo }}</div></td>
+        <td width="1%" *ngIf="!showUserOnly">
+          <img src="./images/icons8-trash-32.png" width="24px" style="cursor: pointer;" (click)="removeUserAccount(account); $event.stopPropagation();" />
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="form-group" *ngIf="showUserOnly && !isInScenario">
+    <button class="btn btn-primary" style="width:100%" (click)="navigateToRegister()">Register new User</button>
+  </div>
+</div>

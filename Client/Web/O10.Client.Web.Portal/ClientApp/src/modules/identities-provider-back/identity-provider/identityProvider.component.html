@@ -1,0 +1,59 @@
+<div style="display:table-row">
+  <img src="./images/icons8-parliament-50.png" style="display:table-cell; margin-right:20px"/>
+  <h1 style="display:table-cell; vertical-align: central">Identities Provider Administration Page</h1>
+</div>
+
+<p *ngIf="!isLoaded"><em>Loading...</em></p>
+
+<div *ngIf="isLoaded">
+  <div style="display:flow-root">
+    <div style="float:left">
+      <h2>Wellcome, {{ pageTitle }}!</h2>
+    </div>
+    <button mat-button (click)="onShowQrClick()" style="float:right">
+      <img src="./images/icons8-qr-code-48.png" width="24px" />
+    </button>
+  </div>
+
+  <p></p>
+  <p></p>
+
+  <h4>Identities of managed users</h4>
+
+  <div>
+    <button mat-stroked-button style="margin-right: 10px" (click)="defineScheme()">
+      <img src="./images/icons8-index-48.png" width="24px" /><span style="margin-left:10px">Define scheme</span>
+    </button>
+
+    <button mat-stroked-button (click)="addIdentity()" [disabled]="!attributeDefinitions || attributeDefinitions.length === 0">
+      <img src="./images/icons8-add-property-48.png" width="24px" /><span style="margin-left:10px">Add Identity</span>
+    </button>
+  </div>
+
+  <table class='table table-striped' *ngIf="identities.length > 0" style="margin-top:10px">
+    <thead>
+      <tr>
+        <th>Description</th>
+        <th>{{getRootAttributeDefinition().alias}}</th>
+        <th>Transfers #</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let identity of identities">
+        <td>{{ identity.description }}</td>
+        <td>{{ getRootAttributeValue(identity)}}</td>
+        <td>{{ identity.numberOfTransfers }}</td>
+        <!--<td><button class="btn" (click)="onSendRootAttribute(identity.id)">Send</button></td>-->
+        <td>
+        <button mat-button (click)="viewIdentity(identity.id)">
+          <img src="./images/icons8-eye-48.png" width="24px"/>
+        </button>
+      </tr>
+    </tbody>
+  </table>
+
+  <p *ngIf="identities.length == 0"><em>No identities created yet...</em></p>
+
+  <div *ngIf="error" class="alert alert-danger">{{error}}</div>
+</div>

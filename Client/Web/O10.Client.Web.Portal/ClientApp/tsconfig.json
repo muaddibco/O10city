@@ -1,0 +1,35 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "baseUrl": "./",
+    "module": "ES2020",
+    "outDir": "./dist/out-tsc",
+    "sourceMap": true,
+    "declaration": false,
+    "moduleResolution": "node",
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "ES2015",
+    "noImplicitUseStrict": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "typeRoots": [
+      "node_modules/@types"
+    ],
+    "lib": [
+      "ES2018",
+      "dom"
+    ],
+    "paths": {
+      "core": [
+        "dist/core"
+      ],
+      "@angular-material-extensions/core": [
+        "dist/core"
+      ],
+      "core/*": [
+        "dist/core/*"
+      ]
+    }
+  }
+}

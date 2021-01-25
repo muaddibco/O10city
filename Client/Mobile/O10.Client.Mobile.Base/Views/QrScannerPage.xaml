@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:d="http://xamarin.com/schemas/2014/forms/design"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:zxing="clr-namespace:ZXing.Net.Mobile.Forms;assembly=ZXing.Net.Mobile.Forms"
+             xmlns:conv="clr-namespace:O10.Client.Mobile.Base.Converters"
+             mc:Ignorable="d"
+             x:Class="O10.Client.Mobile.Base.Views.QrScannerPage"
+             Visual="Material">
+    <ContentPage.Resources>
+        <conv:InvertedBoolConverter x:Key="InvertedBoolConverter"/>
+    </ContentPage.Resources>
+    <ContentPage.Content>
+        <Grid>
+            <StackLayout Orientation="Vertical" IsVisible="{Binding IsEmulated}">
+                <Entry Text="{Binding QrEmulatorText, Mode=TwoWay}" HorizontalOptions="FillAndExpand" VerticalOptions="FillAndExpand"/>
+                <Button Command="{Binding ConfirmEmulatedQrCommand}" Text="Confirm QR" HorizontalOptions="FillAndExpand" VerticalOptions="End"/>
+            </StackLayout>
+            <Grid IsVisible="{Binding IsEmulated, Converter={StaticResource InvertedBoolConverter}}">
+                <zxing:ZXingScannerView 
+                    x:Name="Scanner" 
+                    VerticalOptions="FillAndExpand" 
+                    HorizontalOptions="FillAndExpand"
+                    ScanResultCommand="{Binding ScanResultCommand}"/>
+                <zxing:ZXingDefaultOverlay 
+                    x:Name="Overlay" 
+                    TopText="Hold your phone up to the barcode" 
+                    BottomText = "Scanning will happen automatically" 
+                    FlashButtonClicked="Overlay_FlashButtonClicked"/>
+            </Grid>
+        </Grid>
+    </ContentPage.Content>
+</ContentPage>

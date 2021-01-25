@@ -1,0 +1,36 @@
+version: '3.4'
+
+services:
+  o10.web.portal:
+    image: ${DOCKER_REGISTRY-}o10webportal
+    build:
+      context: .
+      dockerfile: Client/Web/O10.Client.Web.Portal/Dockerfile
+    environment:
+      - ASPNETCORE_URLS=http://+:80
+      - GWSERVICENAME=o10.gateway.webapp
+    ports:
+    - 5003:80
+
+  o10.node.webapp:
+    image: ${DOCKER_REGISTRY-}o10nodewebapp
+    build:
+      context: .
+      dockerfile: Node/O10.Node.WebApp/dockerfile
+    environment:
+      - ASPNETCORE_URLS=http://+:80
+    ports:
+    - 5001:80
+
+  o10.gateway.webapp:
+    image: ${DOCKER_REGISTRY-}o10gatewaywebapp
+    build:
+      context: .
+      dockerfile: Gateway/O10.Gateway.WebApp/Dockerfile
+    environment:
+      - ASPNETCORE_URLS=http://+:80
+      - GWSERVICENAME=o10.gateway.webapp
+      - NODESERVICENAME=o10.node.webapp
+    ports:
+    - 5002:80
+

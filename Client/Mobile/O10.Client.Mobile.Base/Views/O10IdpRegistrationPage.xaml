@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:d="http://xamarin.com/schemas/2014/forms/design"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             x:Class="O10.Client.Mobile.Base.Views.O10IdpRegistrationPage"
+             xmlns:prism="clr-namespace:Prism.Mvvm;assembly=Prism.Forms"
+             prism:ViewModelLocator.AutowireViewModel="True"
+             xmlns:ext="clr-namespace:O10.Client.Mobile.Base.Extensions"
+             Visual="Material">
+    <ContentPage.Content>
+        <Grid>
+            <StackLayout Spacing="20" Padding="10" VerticalOptions="Center">
+                <StackLayout Orientation="Vertical" HorizontalOptions="FillAndExpand" VerticalOptions="StartAndExpand">
+                    <Label Text="{Binding Title}" TextColor="#374955"/>
+                    <Entry Placeholder="{ext:Translate CAP_PROVIDE_ROOT_ATTRIBUTE_VALUE}" Text="{Binding RootAttributeContent, Mode=TwoWay}"/>
+                    <Entry Placeholder="{ext:Translate CAP_REGISTER_IDENTITY_PASSPHRASE}" IsPassword="true" Text="{Binding OneTimePassphrase, Mode=TwoWay}"/>
+                    <Entry Placeholder="{ext:Translate CAP_REGISTER_IDENTITY_PASSWORD}" IsPassword="true" Text="{Binding Password, Mode=TwoWay}"/>
+                    <Entry Placeholder="{ext:Translate CAP_REGISTER_IDENTITY_PASSWORD_CONFIRM}" 
+                           IsPassword="true" Text="{Binding PasswordConfirm, Mode=TwoWay}"
+                           ReturnCommand="{Binding ConfirmRegistrationCommand}"/>
+                    <Button Text="{ext:Translate CAP_REGISTER_IDENTITY_CONFIRM_REGISTRATION}" VerticalOptions="End" HorizontalOptions="FillAndExpand" Command="{Binding ConfirmRegistrationCommand}"/>
+                </StackLayout>
+            </StackLayout>
+            <ActivityIndicator 
+                    IsVisible="{Binding IsLoading}" 
+                    IsRunning="{Binding IsLoading}" 
+                    HeightRequest="40" 
+                    VerticalOptions="CenterAndExpand" 
+                    HorizontalOptions="CenterAndExpand" >
+                <ActivityIndicator.WidthRequest>
+                    <OnPlatform x:TypeArguments="x:Double" iOS="100" Android="100" WinPhone="400" />
+                </ActivityIndicator.WidthRequest>
+                <ActivityIndicator.Color>
+                    <OnPlatform x:TypeArguments="Color" iOS="#2499CE" WinPhone="#2499CE" />
+                </ActivityIndicator.Color>
+            </ActivityIndicator>
+        </Grid>
+    </ContentPage.Content>
+</ContentPage>

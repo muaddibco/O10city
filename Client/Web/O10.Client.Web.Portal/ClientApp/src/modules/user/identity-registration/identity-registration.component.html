@@ -1,0 +1,77 @@
+<h1>Requesting Digital Identity for {{ pageTitle }}</h1>
+
+<div class="form-group" *ngIf="isCameraAvailable">
+  <button [ngClass]="{'btn':true, 'btn-primary':skipCamera}" (click)="onToggleCamera()" type="button">{{toggleCameraText}}</button>
+</div>
+
+<div *ngIf="!isError">
+  <div *ngIf="!skipCamera && isCameraAvailable" style="border-width: 1px; border-style: solid; border-color: darkgrey; margin-bottom: 10px; padding: 10px; display: inline-flex">
+    <div *ngIf="!webcamImage">
+      <webcam [height]="500" [width]="500" [trigger]="triggerObservable" (imageCapture)="handleImage($event)" *ngIf="showWebcam"
+              [allowCameraSwitch]="allowCameraSwitch" [switchCamera]="nextWebcamObservable"
+              [videoOptions]="videoOptions"
+              [imageQuality]="1"
+              (cameraSwitched)="cameraWasSwitched($event)"
+              (initError)="handleInitError($event)"></webcam>
+      <br />
+      <button class="btn btn-primary" (click)="triggerSnapshot();">Take A Snapshot</button>
+      <!--<button class="btn btn-primary" (click)="toggleWebcam();">Toggle Webcam</button>
+      <br />
+      <button class="btn btn-primary" (click)="showNextWebcam(true);" [disabled]="!multipleWebcamsAvailable">Next Webcam</button>
+      <input id="cameraSwitchCheckbox" type="checkbox" [(ngModel)]="allowCameraSwitch"><label for="cameraSwitchCheckbox">Allow Camera Switch</label>
+      <br />
+      <button class="btn" (click)="showNextWebcam(deviceId);">Activate</button>-->
+    </div>
+    <div class="snapshot" *ngIf="webcamImage">
+      <div>
+        <img [src]="webcamImage.imageAsDataUrl" width="500px" />
+      </div>
+      <button class="btn btn-primary" (click)="clearSnapshot();" style="margin-top: 10px">Clear Snapshot</button>
+    </div>
+
+    <h4 *ngIf="errors.length > 0">Messages:</h4>
+    <ul *ngFor="let error of errors">
+      <li>{{error | json}}</li>
+    </ul>
+  </div>
+
+  <form [formGroup]="requestIdentityForm" (ngSubmit)="onSubmitSending()">
+    <div class="form-group">
+      <label for="idCard">Identity Attribute</label>
+      <input formControlName="idCard" type="text" class="form-control" [ngClass]="{ 'is-invalid': submitted && formData.idCard.errors }" />
+      <div *ngIf="submitted && formData.idCard.errors" class="invalid-feedback">
+        <div *ngIf="formData.idCard.errors.required">Value is mandatory</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="passphrase">Passphrase</label>
+      <input formControlName="passphrase" type="password" class="form-control" [ngClass]="{ 'is-invalid': submitted && formData.passphrase.errors }" />
+      <div *ngIf="submitted && formData.passphrase.errors" class="invalid-feedback">
+        <div *ngIf="formData.passphrase.errors.required">Value is mandatory</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input formControlName="password" type="password" class="form-control" [ngClass]="{ 'is-invalid': submitted && formData.password.errors }" />
+      <div *ngIf="submitted && formData.password.errors" class="invalid-feedback">
+        <div *ngIf="formData.password.errors.required">Value is mandatory</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="passwordConfirm">Confirm Password</label>
+      <input formControlName="passwordConfirm" type="password" class="form-control" [ngClass]="{ 'is-invalid': submitted && formData.passwordConfirm.errors }" />
+      <div *ngIf="submitted && formData.passwordConfirm.errors" class="invalid-feedback">
+        <div *ngIf="formData.passwordConfirm.errors.required">Value is mandatory</div>
+        <div *ngIf="formData.passwordConfirm.errors.notSame">Passwords do not match</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <button [disabled]="submitClick" class="btn btn-primary" type="submit" style="margin-right:10px">Send Request</button>
+      <button [disabled]="submitClick" class="btn" (click)="onCancel()" type="reset">Cancel</button>
+    </div>
+  </form>
+</div>
+<div *ngIf="isError" class="alert alert-danger">
+  <p>{{errorMsg}}</p>
+  <button class="btn" (click)="onCancel()">OK</button>
+</div>

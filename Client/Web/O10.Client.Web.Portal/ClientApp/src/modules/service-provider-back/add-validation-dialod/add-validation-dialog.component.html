@@ -1,0 +1,20 @@
+<div mat-dialog-title>Add new validation rule</div>
+<div mat-dialog-content>
+  <mat-form-field>
+    <mat-label>Attribyte Type</mat-label>
+    <mat-select (selectionChange)="onSelectionChange($event)">
+      <mat-option *ngFor="let alias of data.schemeAliases" [value]="alias">
+        {{name}}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field *ngIf="showAgeCriterionValue">
+    <span matPrefix>Age &gt;</span>
+    <input matInput type="number" placeholder="specify minimum age restriction" style="width: 100%" [(ngModel)]="data.ageRestriction"/>
+    <span matSuffix>year(s)</span>
+  </mat-form-field>
+</div>
+<div mat-dialog-actions>
+  <button mat-button [mat-dialog-close]="data">Submit</button>
+  <button mat-button (click)="onCancelClick()">Cancel</button>
+</div>

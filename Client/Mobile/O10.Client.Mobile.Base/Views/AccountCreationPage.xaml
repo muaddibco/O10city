@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:d="http://xamarin.com/schemas/2014/forms/design"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d"
+             x:Class="O10.Client.Mobile.Base.Views.AccountCreationPage"
+             xmlns:prism="clr-namespace:Prism.Mvvm;assembly=Prism.Forms"
+             prism:ViewModelLocator.AutowireViewModel="True"
+             Title="{Binding Title}"
+             xmlns:ext="clr-namespace:O10.Client.Mobile.Base.Extensions"
+             Visual="Material">
+    <ContentPage.Content>
+        <StackLayout Spacing="20" Padding="50" VerticalOptions="Center">
+            <Label Text="{Binding Title}" TextColor="#374955"/>
+            <Entry Placeholder="{ext:Translate CAP_ALIAS}" Text="{Binding AccountInfo, Mode=TwoWay}"/>
+            <Entry Placeholder="{ext:Translate CAP_PASSWORD}" IsPassword="true" Text="{Binding Password, Mode=TwoWay}"/>
+            <Entry 
+                Placeholder="{ext:Translate CAP_PASSWORD_RETYPE}" 
+                IsPassword="true" ReturnCommand="{Binding ConfirmRegistrationCommand}"
+                Text="{Binding PasswordConfirmation, Mode=TwoWay}"/>
+            <Button Text="Confirm Creation" Command="{Binding ConfirmRegistrationCommand}" />
+        </StackLayout>
+    </ContentPage.Content>
+</ContentPage>

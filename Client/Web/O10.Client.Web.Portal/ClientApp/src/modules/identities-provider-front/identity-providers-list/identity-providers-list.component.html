@@ -1,0 +1,24 @@
+<h1>Identity Providers</h1>
+
+<p *ngIf="!isLoaded"><em>Loading...</em></p>
+
+<p *ngIf="isLoaded && identityProviders.length == 0"><em>No Identity Providers registered yet...</em></p>
+
+<div *ngIf="isLoaded && identityProviders.length > 0">
+  <table class='table table-striped'>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Description</th>
+        <th>Link</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let identityProvider of identityProviders">
+        <td>{{ identityProvider.id }}</td>
+        <td>{{ identityProvider.description }}</td>
+        <td><a class="nav-link text-dark" [routerLink]='["/ip", identityProvider.id]'>Go to</a></td>
+      </tr>
+    </tbody>
+  </table>
+</div>

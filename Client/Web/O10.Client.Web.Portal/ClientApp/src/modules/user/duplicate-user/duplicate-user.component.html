@@ -1,0 +1,17 @@
+<p *ngIf="!isLoaded"><em>Loading...</em></p>
+
+<h1 *ngIf="isLoaded">Duplicating {{ pageTitle }}!</h1>
+
+<form [formGroup]="duplicationForm" (ngSubmit)="onSubmitDuplicating()" *ngIf="isLoaded">
+  <div class="form-group">
+    <label for="accountInfo">Duplicated Account Info</label>
+    <input type="text" [(ngModel)]="accountInfo" formControlName="accountInfo" class="form-control" [ngClass]="{ 'is-invalid': submitted && formData.accountInfo.errors }" />
+    <div *ngIf="submitted && formData.accountInfo.errors" class="invalid-feedback">
+      <div *ngIf="formData.accountInfo.errors.required">Account info is required</div>
+    </div>
+  </div>
+  <div class="form-group">
+    <button [disabled]="submitClick" class="btn btn-primary" type="submit" style="margin-right:10px">Duplicate</button>
+    <button [disabled]="submitClick" class="btn" type="reset" (click)="onCancelDuplicating()">Cancel</button>
+  </div>
+</form>

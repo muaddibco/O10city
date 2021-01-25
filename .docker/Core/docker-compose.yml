@@ -1,0 +1,18 @@
+version: '3.4'
+
+services:
+  o10.gateway.webapp:
+    image: ${DOCKER_REGISTRY-}o10gatewaywebapp:latest
+    ports:
+    - 5002:80
+    environment:
+      - ASPNETCORE_URLS=http://+:80
+      - GWSERVICENAME=o10.gateway.webapp
+      - NODESERVICENAME=o10.node.webapp
+
+  o10.node.webapp:
+    image: ${DOCKER_REGISTRY-}o10nodewebapp:latest
+    environment:
+      - ASPNETCORE_URLS=http://+:80
+    ports:
+    - 5001:80

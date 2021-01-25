@@ -1,0 +1,12 @@
+<div mat-dialog-title>Confirm transaction</div>
+<div mat-dialog-content>
+  <mat-form-field>
+    <input matInput placeholder="Enter password for confirmation" [formControl]="passwordInput" type="password" required [(ngModel)]="password" />
+    <mat-error *ngIf="passwordInput.invalid">this is mandatory item</mat-error>
+  </mat-form-field>
+</div>
+<div mat-dialog-actions>
+  <button mat-button [mat-dialog-close]="password" [disabled]="passwordInput.invalid">OK</button>
+  <button mat-button (click)="onCancelClick()">Cancel</button>
+</div>
+

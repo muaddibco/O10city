@@ -1,0 +1,111 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://xamarin.com/schemas/2014/forms"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:d="http://xamarin.com/schemas/2014/forms/design"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:ext="clr-namespace:O10.Client.Mobile.Base.Extensions"
+             xmlns:conv="clr-namespace:O10.Client.Mobile.Base.Converters"
+             xmlns:prism="clr-namespace:Prism.Mvvm;assembly=Prism.Forms"
+             mc:Ignorable="d"
+             x:Class="O10.Client.Mobile.Base.Views.BlinkIDPage"
+             prism:ViewModelLocator.AutowireViewModel="True"
+             Visual="Material">
+    <ContentPage.Resources>
+        <conv:InvertedBoolConverter x:Key="InvertedBoolConverter"/>
+        <conv:NotNullToBooleanConverter x:Key="NotNullToBooleanConverter"/>
+        <conv:StringToBoolConverter x:Key="StringToBoolConverter" />
+    </ContentPage.Resources>
+    <ContentPage.Content>
+        <Grid>
+            <Grid VerticalOptions="FillAndExpand" HorizontalOptions="FillAndExpand" Margin="10">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Label Text="{ext:Translate CAP_BLINKID_INVITATION}"
+                       IsVisible="{Binding ScanCompleted, Converter={StaticResource InvertedBoolConverter}}"
+                       Grid.ColumnSpan="2" Grid.Row="0"/>
+                <Label Text="{ext:Translate CAP_NODATAYET}"
+                       Grid.Row="1" Grid.ColumnSpan="2"
+                       IsVisible="{Binding ScanCompleted, Converter={StaticResource InvertedBoolConverter}}"
+                       HorizontalOptions="Center" VerticalOptions="Center"/>
+                <ScrollView Orientation="Vertical" IsVisible="{Binding ScanCompleted}"
+                            Grid.Row="1" Grid.ColumnSpan="2">
+                    <StackLayout Orientation="Vertical" Spacing="5">
+                        <Image Source="{Binding DocumentFront}" Aspect="AspectFit" 
+                               HorizontalOptions="CenterAndExpand" VerticalOptions="Start" Margin="0,0,0,20"
+                               IsVisible="{Binding DocumentFront, Converter={StaticResource NotNullToBooleanConverter}}"/>
+                        <Image Source="{Binding DocumentBack}" Aspect="AspectFit" 
+                               HorizontalOptions="CenterAndExpand" VerticalOptions="Start" Margin="0,0,0,20" 
+                               IsVisible="{Binding DocumentBack, Converter={StaticResource NotNullToBooleanConverter}}"/>
+                        <Image Source="{Binding Face}" Aspect="AspectFit" 
+                               HorizontalOptions="CenterAndExpand" VerticalOptions="Start" Margin="0,0,0,20"
+                               IsVisible="{Binding Face, Converter={StaticResource NotNullToBooleanConverter}}"/>
+                        <Label Text="{ext:Translate CAP_DOCUMENTNUMBER}"/>
+                        <Label Text="{Binding DocumentNumber}" FontAttributes="Bold" Margin="20, 0"/>
+                        <Label Text="{ext:Translate CAP_IDCARD}"/>
+                        <Label Text="{Binding IdCardNumber}" FontAttributes="Bold" Margin="20, 0"/>
+                        <Label Text="{ext:Translate CAP_FIRSTNAME}"/>
+                        <Label Text="{Binding FirstName}" FontAttributes="Bold" Margin="20, 0"/>
+                        <Label Text="{ext:Translate CAP_LASTNAME}"/>
+                        <Label Text="{Binding LastName}" FontAttributes="Bold" Margin="20, 0"/>
+                        <Label Text="{ext:Translate CAP_DOB}"/>
+                        <Label Text="{Binding DateOfBirth}" FontAttributes="Bold" Margin="20, 0"/>
+                        <Label Text="{ext:Translate CAP_DOI}" IsVisible="{Binding DocumentType, Converter={StaticResource StringToBoolConverter}, ConverterParameter=DrivingLicense}"/>
+                        <Label Text="{Binding IssuanceDate}" IsVisible="{Binding DocumentType, Converter={StaticResource StringToBoolConverter}, ConverterParameter=DrivingLicense}" FontAttributes="Bold" Margin="20, 0"/>
+                        <Label Text="{ext:Translate CAP_DOE}"/>
+                        <Label Text="{Binding ExpirationDate}" FontAttributes="Bold" Margin="20, 0"/>
+                        <Label Text="{ext:Translate CAP_ISSUER_STATE}" IsVisible="{Binding DocumentType, Converter={StaticResource StringToBoolConverter}, ConverterParameter=Passport}"/>
+                        <Label Text="{Binding IssuerState}" IsVisible="{Binding DocumentType, Converter={StaticResource StringToBoolConverter}, ConverterParameter=Passport}" FontAttributes="Bold" Margin="20, 0"/>
+                        <Label Text="{ext:Translate CAP_NATIONALITY}" IsVisible="{Binding DocumentType, Converter={StaticResource StringToBoolConverter}, ConverterParameter=Passport}"/>
+                        <Label Text="{Binding Nationality}" IsVisible="{Binding DocumentType, Converter={StaticResource StringToBoolConverter}, ConverterParameter=Passport}" FontAttributes="Bold" Margin="20, 0"/>
+                    </StackLayout>
+                </ScrollView>
+                <Label Text="{ext:Translate CAP_SUGGEST_INHERENCE_PROTECTION}" FontAttributes="Bold"
+                       Grid.Row="2" Grid.ColumnSpan="2" IsVisible="{Binding UseInherenceProtection}" 
+                       HorizontalOptions="FillAndExpand"/>
+                <Picker Title="{ext:Translate CAP_SELECT_INHERENCE_PROVIDER}"
+                        Grid.Row="3" Grid.ColumnSpan="2"
+                        HorizontalOptions="FillAndExpand" IsVisible="{Binding UseInherenceProtection}"
+                        ItemsSource="{Binding InherenceVerifiers}" ItemDisplayBinding="{Binding Alias}"
+                        SelectedItem="{Binding SelectedInherenceVerifier, Mode=TwoWay}"/>
+                <Entry Text="{Binding Password}"
+                       Grid.Row="4" Grid.ColumnSpan="2"
+                       IsVisible="{Binding ScanCompleted}" ReturnCommand="{Binding ConfimRequestCommand}"
+                       IsPassword="True" Placeholder="{ext:Translate CAP_PASSWORD}"/>
+                <StackLayout Orientation="Horizontal"
+                             Grid.ColumnSpan="2" Grid.Row="5"
+                             HorizontalOptions="FillAndExpand" VerticalOptions="End">
+                    <Button Text="{ext:Translate CAP_SCAN}" Margin="5"
+                            Command="{Binding StartScanCommand}" 
+                            HorizontalOptions="FillAndExpand" VerticalOptions="Center"/>
+                    <Button Text="{ext:Translate CAP_REGISTER}" Margin="5" IsEnabled="{Binding ScanCompleted}"
+                            Command="{Binding ConfimRequestCommand}" 
+                            HorizontalOptions="FillAndExpand" VerticalOptions="Center"/>
+                </StackLayout>
+            </Grid>
+            <ActivityIndicator 
+                    IsVisible="{Binding IsLoading}" 
+                    IsRunning="{Binding IsLoading}" 
+                    HeightRequest="40" 
+                    VerticalOptions="CenterAndExpand" 
+                    HorizontalOptions="CenterAndExpand" >
+                <ActivityIndicator.WidthRequest>
+                    <OnPlatform x:TypeArguments="x:Double" iOS="100" Android="100" WinPhone="400" />
+                </ActivityIndicator.WidthRequest>
+                <ActivityIndicator.Color>
+                    <OnPlatform x:TypeArguments="Color"
+                      iOS="#2499CE" WinPhone="#2499CE" />
+                </ActivityIndicator.Color>
+            </ActivityIndicator>
+        </Grid>
+    </ContentPage.Content>
+</ContentPage>

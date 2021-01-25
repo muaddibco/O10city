@@ -1,0 +1,19 @@
+<div class="exactCenter" style="padding:20px; border:solid 1px; background-color: aliceblue">
+  <p *ngIf="!isLoaded"><em>Loading...</em></p>
+  <h2 *ngIf="!isMobile && isLoaded">Login to the account of {{accountInfo}}</h2>
+  <h2 *ngIf="isMobile && isLoaded">Login to Identity Wallet of {{accountInfo}}</h2>
+  <form *ngIf="isLoaded" [formGroup]="loginForm" (ngSubmit)="onLogin()">
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" formControlName="password" class="form-control" [ngClass]="{ 'is-invalid': submitted && formData.password.errors }" />
+      <div *ngIf="submitted && formData.password.errors" class="invalid-feedback">
+        <div *ngIf="formData.password.errors.required">Password is required</div>
+      </div>
+    </div>
+    <div class="form-group">
+      <button [disabled]="submitClick" class="btn btn-primary" style="margin-right: 10px">Login</button>
+      <button [disabled]="submitClick" class="btn" type="reset" (click)="onCancel()">Cancel</button>
+    </div>
+    <div *ngIf="isError" class="alert alert-danger">{{errorMsg}}</div>
+  </form>
+</div>

@@ -1,0 +1,72 @@
+
+<div>Select Group Relations</div>
+<div *ngIf="userAttributes.length === 0">
+  <p><em>Sorry, you are not allowed to perform this action</em></p>
+  <button mat-raised-button color="accent" (click)="onCancel()">Cancel</button>
+</div>
+<mat-vertical-stepper (selectionChange)="onStepperSelectionChanged($event)"  *ngIf="userAttributes.length > 0">
+  <mat-step label="Take your selfie" *ngIf="isCameraAvailable && withBiometricProof === 'true'">
+    <div style="border-width: 1px; border-style: solid; border-color: darkgrey; margin-bottom: 10px; padding: 10px; display: inline-flex">
+      <div *ngIf="!webcamImage" style="display: block; width: 400px">
+        <webcam [height]="400" [width]="400" [trigger]="triggerObservable" (imageCapture)="handleImage($event)" *ngIf="showWebcam"
+                [allowCameraSwitch]="allowCameraSwitch" [switchCamera]="nextWebcamObservable"
+                [videoOptions]="videoOptions"
+                [imageQuality]="1"
+                (cameraSwitched)="cameraWasSwitched($event)"
+                (initError)="handleInitError($event)"></webcam>
+        <br />
+        <div style="display: table-row">
+          <div style="display: table-cell" *ngIf="showWebcam">
+            <button class="btn btn-primary" (click)="triggerSnapshot();">Take A Snapshot</button>
+          </div>
+          <div style="display: table-cell" *ngIf="showWebcam">
+            <button class="btn" (click)="toggleWebcam();" matStepperNext>Skip camera</button>
+          </div>
+          <div style="display: table-cell" *ngIf="!showWebcam">
+            <button class="btn btn-primary" (click)="toggleWebcam();">Activate camera</button>
+          </div>
+        </div>
+      </div>
+      <div class="snapshot" *ngIf="webcamImage">
+        <div>
+          <img [src]="webcamImage.imageAsDataUrl" width="280px" height="200px" />
+        </div>
+        <button class="btn btn-primary" (click)="clearSnapshot();" style="margin-top: 10px">Clear Snapshot</button>
+      </div>
+      <h4 *ngIf="errors.length > 0">Messages:</h4>
+      <ul *ngFor="let error of errors">
+        <li>{{error | json}}</li>
+      </ul>
+    </div>
+    <div>
+      <button mat-button matStepperNext>Next</button>
+    </div>
+  </mat-step>
+  <mat-step label="Select root attribute for action" *ngIf="userAttributes && userAttributes.length > 1">
+    <mat-radio-group [(ngModel)]="selectedAttribute">
+      <mat-radio-button style="margin: 10px 0px" [value]="attribute" *ngFor="let attribute of userAttributes">[{{attribute.originalCommitment}}]:{{attribute.content}}</mat-radio-button>
+    </mat-radio-group>
+    <div>
+      <button mat-button matStepperNext>Next</button>
+    </div>
+  </mat-step>
+  <mat-step label="Select group relations">
+    <div *ngFor="let relation of relations">
+      <mat-checkbox (change)="onRelationSelectionChanged($event, relation)">{{relation.groupName}}, {{relation.groupOwnerName}}</mat-checkbox>
+    </div>
+    <div>
+      <button mat-button matStepperNext>Next</button>
+    </div>
+  </mat-step>
+  <mat-step label="Knowledge Factor" *ngIf="withKnowledgeProof">
+    <mat-form-field>
+      <input matInput placeholder="Enter password for confirmation" [formControl]="passwordInput" type="password" required [(ngModel)]="password" />
+      <mat-error *ngIf="passwordInput.invalid">this is mandatory item</mat-error>
+    </mat-form-field>
+  </mat-step>
+</mat-vertical-stepper>
+<div>
+  <button mat-raised-button color="primary" [disabled]="!isStepperLastStep || (withKnowledgeProof && passwordInput.invalid)" (click)="onSubmit()">Submit</button>
+  <button mat-raised-button color="accent" (click)="onCancel()">Cancel</button>
+</div>
+
