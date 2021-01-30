@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using O10.Core.ExtensionMethods;
+using Newtonsoft.Json.Linq;
 
 namespace O10.Core.Serialization
 {
@@ -13,11 +14,12 @@ namespace O10.Core.Serialization
 
 		public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
 		{
-			string val = existingValue?.ToString();
+			var json = JToken.ReadFrom(reader);
+			string value = json.Value<string>();
 
-			if(!string.IsNullOrEmpty(val))
+			if (!string.IsNullOrEmpty(value))
 			{
-				return (Memory<byte>)val.HexStringToByteArray();
+				return (Memory<byte>)value.HexStringToByteArray();
 			}
 
 			return null;

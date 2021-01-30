@@ -127,6 +127,7 @@ namespace O10.Client.Common.Communication
                 try
                 {
 					_logger.Info($"Sending transaction {p.Packet.GetType().Name}");
+					_logger.LogIfDebug(() => JsonConvert.SerializeObject(p.Packet, new ByteArrayJsonConverter()));
 
 					var response = await _restClientService
 						.Request(_gatewayUri).AppendPathSegments("api", "synchronization", "SendPacket")
@@ -136,12 +137,17 @@ namespace O10.Client.Common.Communication
 					if(!response.Status && !string.IsNullOrEmpty(response.ExistingHash))
                     {
 						_logger.Error($"Failed to send transaction {p.Packet.GetType().Name} because key image {((StealthSignedPacketBase)p.Packet).KeyImage} was already witnessed");
-						await _propagatorBlockNotifications.SendAsync(new KeyImageCorruptedNotification
+						KeyImageCorruptedNotification keyImageCorrupted = new KeyImageCorruptedNotification
 						{
 							KeyImage = ((StealthSignedPacketBase)p.Packet).KeyImage.ToByteArray(),
 							ExistingHash = response.ExistingHash.HexStringToByteArray()
-						}).ConfigureAwait(false);
+						};
+						await _propagatorBlockNotifications.SendAsync(keyImageCorrupted).ConfigureAwait(false);
+
+						p.TaskCompletion.SetResult(keyImageCorrupted);
                     }
+
+					p.TaskCompletion.SetResult(new SucceededNotification());
                 }
                 catch (FlurlHttpException ex)
                 {

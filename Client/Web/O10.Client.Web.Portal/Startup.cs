@@ -26,11 +26,15 @@ using O10.Client.Web.Saml.Common.Hubs;
 using Newtonsoft.Json;
 using Flurl.Http.Configuration;
 using Flurl.Http;
+using Newtonsoft.Json.Serialization;
+using O10.Core.Serialization;
+using System.Runtime.Serialization.Formatters;
 
 namespace O10.Client.Web.Portal
 {
     public class Startup
     {
+        static IContractResolver _suppressItemTypeNameContractResolver = new SuppressItemTypeNameContractResolver();
         private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly Log4NetLogger _logger;
 
@@ -106,7 +110,14 @@ namespace O10.Client.Web.Portal
 
             FlurlHttp.Configure(s =>
             {
-                var jsonSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto };
+                var jsonSettings = new JsonSerializerSettings 
+                { 
+                    TypeNameHandling = TypeNameHandling.All,
+                    ContractResolver = _suppressItemTypeNameContractResolver,
+                    TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
+                    NullValueHandling = NullValueHandling.Ignore,
+                    Formatting = Formatting.Indented
+                };
                 s.JsonSerializer = new NewtonsoftJsonSerializer(jsonSettings);
             });
         }
