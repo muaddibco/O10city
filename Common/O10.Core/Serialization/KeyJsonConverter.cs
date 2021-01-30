@@ -7,7 +7,7 @@ using System.Reflection;
 using O10.Core.ExtensionMethods;
 using O10.Core.Identity;
 
-namespace O10.Client.Common.Dtos.UniversalProofs
+namespace O10.Core.Serialization
 {
     public class KeyJsonConverter : JsonConverter
     {

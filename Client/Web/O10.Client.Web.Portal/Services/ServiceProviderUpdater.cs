@@ -22,11 +22,9 @@ using O10.Core.Logging;
 using O10.Client.Web.Common.Hubs;
 using System.Threading.Tasks;
 using O10.Client.DataLayer.AttributesScheme;
-using O10.Client.Common.Communication.SynchronizerNotifications;
 using System.Threading;
 using Newtonsoft.Json;
 using O10.Client.DataLayer.Entities;
-using O10.Client.Web.Portal.Exceptions;
 using O10.Client.Common.Dtos.UniversalProofs;
 using O10.Client.Web.Portal.ElectionCommittee;
 using Newtonsoft.Json.Linq;
@@ -34,6 +32,8 @@ using O10.Client.Web.Portal.ElectionCommittee.Models;
 using O10.Core.Architecture;
 using O10.Client.Common.Exceptions;
 using O10.Client.Common.Entities;
+using O10.Core.Serialization;
+using O10.Client.Common.Communication.Notifications;
 
 namespace O10.Client.Web.Portal.Services
 {
@@ -290,7 +290,7 @@ namespace O10.Client.Web.Portal.Services
         }
 
         public ITargetBlock<PacketBase> PipeIn { get; set; }
-        public ITargetBlock<SynchronizerNotificationBase> PipeInNotifications { get; }
+        public ITargetBlock<NotificationBase> PipeInNotifications { get; }
 
         private void ProcessDocumentSignRecord(DocumentSignRecord packet)
         {

@@ -24,6 +24,7 @@ using O10.Gateway.WebApp.Common.Exceptions;
 using O10.Core.Models;
 using O10.Transactions.Core.DataModel.Stealth;
 using O10.Gateway.Common.Services.Results;
+using O10.Core.Serialization;
 
 namespace O10.Gateway.WebApp.Common.Controllers
 {

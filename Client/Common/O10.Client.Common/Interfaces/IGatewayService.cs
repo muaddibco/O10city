@@ -5,19 +5,19 @@ using System.Threading.Tasks.Dataflow;
 using O10.Transactions.Core.DataModel;
 using O10.Transactions.Core.Interfaces;
 using O10.Core.Architecture;
-using O10.Core.Communication;
 using O10.Core.Models;
 using O10.Client.Common.Interfaces.Inputs;
 using System.Threading.Tasks;
-using O10.Client.Common.Communication.SynchronizerNotifications;
+using O10.Client.Common.Communication;
+using O10.Client.Common.Communication.Notifications;
 
 namespace O10.Client.Common.Interfaces
 {
-	[ServiceContract]
+    [ServiceContract]
     public interface IGatewayService : ISyncStateProvider
 	{
-		ITargetBlock<Tuple<string, IPacketProvider, IPacketProvider>> PipeInTransactions { get; }
-        ISourceBlock<SynchronizerNotificationBase> PipeOutNotifications { get; }
+		ITargetBlock<PacketWrapper> PipeInTransactions { get; }
+        ISourceBlock<NotificationBase> PipeOutNotifications { get; }
 
 
         bool Initialize(string gatewayUri, CancellationToken cancellationToken);

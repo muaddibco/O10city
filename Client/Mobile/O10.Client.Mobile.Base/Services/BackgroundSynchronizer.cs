@@ -74,12 +74,12 @@ namespace O10.Client.Mobile.Base.Services
             _walletSynchronizer.Initialize(_accountId);
             _userIdentitiesUpdater.Initialize(_accountId);
 
-            PacketsExtractor.GetSourcePipe<SynchronizerNotificationBase>().LinkTo(_userIdentitiesUpdater.PipeInNotifications);
+            PacketsExtractor.GetSourcePipe<NotificationBase>().LinkTo(_userIdentitiesUpdater.PipeInNotifications);
             PacketsExtractor.GetSourcePipe<PacketWrapper>().LinkTo(_walletSynchronizer.GetTargetPipe<PacketWrapper>());
             PacketsExtractor.GetSourcePipe<WitnessPackage>().LinkTo(_walletSynchronizer.GetTargetPipe<WitnessPackage>());
 
             _walletSynchronizer.GetSourcePipe<PacketBase>().LinkTo(_userIdentitiesUpdater.PipeIn);
-            _walletSynchronizer.GetSourcePipe<SynchronizerNotificationBase>().LinkTo(_userIdentitiesUpdater.PipeInNotifications);
+            _walletSynchronizer.GetSourcePipe<NotificationBase>().LinkTo(_userIdentitiesUpdater.PipeInNotifications);
 
             _packetsProvider.PipeOut.LinkTo(PacketsExtractor.GetTargetPipe<WitnessPackageWrapper>());
             _packetsProvider.Start();

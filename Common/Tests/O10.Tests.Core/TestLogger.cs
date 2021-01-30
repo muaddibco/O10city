@@ -2,6 +2,7 @@
 using System;
 using O10.Core.Logging;
 using Xunit.Abstractions;
+using O10.Core.Serialization;
 
 namespace O10.Tests.Core
 {

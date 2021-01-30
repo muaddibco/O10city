@@ -1,4 +1,7 @@
-﻿namespace O10.Core.Cryptography
+﻿using Newtonsoft.Json;
+using O10.Core.Serialization;
+
+namespace O10.Core.Cryptography
 {
     /// <summary>
     /// data for passing the asset to the receiver secretly
@@ -7,7 +10,10 @@
     /// </summary>
     public class EcdhTupleCA
     {
+        [JsonConverter(typeof(ByteArrayJsonConverter))]
         public byte[] Mask { get; set; }
+
+        [JsonConverter(typeof(ByteArrayJsonConverter))]
         public byte[] AssetId { get; set; }
     }
 }

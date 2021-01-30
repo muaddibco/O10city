@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using O10.Client.Common.Communication.SynchronizerNotifications;
+using O10.Client.Common.Communication.Notifications;
 using O10.Client.Common.Interfaces;
 using O10.Client.DataLayer.Services;
 using O10.Core.Logging;
@@ -14,7 +14,7 @@ namespace O10.Client.Common.Communication
         private bool _disposedValue; // To detect redundant calls
 
         private readonly IPropagatorBlock<PacketBase, PacketBase> _pipeOutPackets;
-        private readonly IPropagatorBlock<SynchronizerNotificationBase, SynchronizerNotificationBase> _pipeOutNotifications;
+        private readonly IPropagatorBlock<NotificationBase, NotificationBase> _pipeOutNotifications;
 
         protected long _accountId;
         protected readonly IDataAccessService _dataAccessService;
@@ -43,11 +43,11 @@ namespace O10.Client.Common.Communication
                     }
 
                     await StorePacket(p.Packet).ConfigureAwait(false);
-                    p.TaskCompletion.SetResult(true);
+                    p.TaskCompletion.SetResult(new SucceededNotification());
                 }
                 catch (Exception ex)
                 {
-                    p.TaskCompletion.SetResult(false);
+                    p.TaskCompletion.SetException(ex);
 
                     _logger.Error($"Failed to proccess incoming packet {p.GetType().Name}", ex);
                 }
@@ -73,7 +73,7 @@ namespace O10.Client.Common.Communication
             });
 
             _pipeOutPackets = new TransformBlock<PacketBase, PacketBase>(w => w);
-            _pipeOutNotifications = new TransformBlock<SynchronizerNotificationBase, SynchronizerNotificationBase>(p => p);
+            _pipeOutNotifications = new TransformBlock<NotificationBase, NotificationBase>(p => p);
         }
 
         public abstract string Name { get; }
@@ -89,7 +89,7 @@ namespace O10.Client.Common.Communication
             {
                 return (ISourceBlock<T>)_pipeOutPackets;
             }
-            else if (typeof(T) == typeof(SynchronizerNotificationBase))
+            else if (typeof(T) == typeof(NotificationBase))
             {
                 return (ISourceBlock<T>)_pipeOutNotifications;
             }
@@ -116,7 +116,7 @@ namespace O10.Client.Common.Communication
             await _pipeOutPackets.SendAsync(packetBase).ConfigureAwait(false);
         }
 
-        protected void NotifyObservers(SynchronizerNotificationBase notification)
+        protected void NotifyObservers(NotificationBase notification)
         {
             _pipeOutNotifications.SendAsync(notification);
         }

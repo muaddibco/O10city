@@ -1,9 +1,12 @@
-﻿using O10.Core.Cryptography;
+﻿using Newtonsoft.Json;
+using O10.Core.Cryptography;
+using O10.Core.Serialization;
 
 namespace O10.Transactions.Core.DataModel.Transactional.Internal
 {
     public class EncryptedAsset
     {
+        [JsonConverter(typeof(ByteArrayJsonConverter))]
         /// <summary>
         /// C = x * G + I, where I is elliptic curve point representing assert id
         /// </summary>

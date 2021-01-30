@@ -79,7 +79,7 @@ namespace O10.Client.Web.Common.Services
             packetsProvider.Initialize(scopeInitializationParams.AccountId, cancellationTokenSource.Token);
             _clientCryptoService.Initialize(scopeInitializationParams.SecretKey);
             _transactionsService.Initialize(scopeInitializationParams.AccountId);
-            _transactionsService.GetSourcePipe<Tuple<string, IPacketProvider, IPacketProvider>>().LinkTo(_gatewayService.PipeInTransactions);
+            _transactionsService.GetSourcePipe<PacketWrapper>().LinkTo(_gatewayService.PipeInTransactions);
             statePacketsExtractor.Initialize(scopeInitializationParams.AccountId);
 
             IUpdater updater = _updaterRegistry.GetInstance();

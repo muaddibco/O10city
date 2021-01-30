@@ -20,6 +20,7 @@ using O10.Node.Core.Common;
 using O10.Node.DataLayer.DataServices;
 using Newtonsoft.Json;
 using O10.Node.DataLayer.DataServices.Keys;
+using O10.Core.Serialization;
 
 namespace O10.Node.Core.Centralized
 {

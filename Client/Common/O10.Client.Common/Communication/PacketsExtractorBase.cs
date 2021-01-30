@@ -10,6 +10,7 @@ using O10.Client.Common.Interfaces;
 using O10.Client.DataLayer.Services;
 using O10.Core.Logging;
 using O10.Core.Models;
+using O10.Core.Serialization;
 
 namespace O10.Client.Common.Communication
 {

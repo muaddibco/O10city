@@ -15,6 +15,7 @@ using O10.Core.Logging;
 using O10.Crypto.ConfidentialAssets;
 using O10.Core;
 using System.Threading.Tasks;
+using O10.Client.Common.Communication.Notifications;
 
 namespace O10.Client.Common.Communication
 {
@@ -58,43 +59,55 @@ namespace O10.Client.Common.Communication
 		public async Task<DocumentSignRecord> IssueDocumentSignRecord(byte[] documentHash, ulong recordHeight, byte[] keyImage, byte[] signerCommitment, SurjectionProof eligibilityProof, byte[] issuer, SurjectionProof signerGroupRelationProof, byte[] signerGroupCommitment, byte[] groupIssuer, SurjectionProof signerGroupProof, SurjectionProof signerAllowedGroupsProof)
 		{
 			DocumentSignRecord packet = CreateDocumentSignRecord(documentHash, recordHeight, keyImage, signerCommitment, eligibilityProof, issuer, signerGroupRelationProof, signerGroupCommitment, groupIssuer, signerGroupProof, signerAllowedGroupsProof);
+            
+            var completionResult = PropagateTransaction(packet);
 
-            return (await PropagateTransaction(packet).ConfigureAwait(false)) ? packet : null;
+            return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
 		}
 
 		public async Task<DocumentRecord> IssueDocumentRecord(byte[] documentHash, byte[][] allowedSignerCommitments)
 		{
 			DocumentRecord packet = CreateDocumentRecord(documentHash, allowedSignerCommitments);
 
-            return (await PropagateTransaction(packet).ConfigureAwait(false)) ? packet : null;
+            var completionResult = PropagateTransaction(packet);
+
+            return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
         }
 
         public async Task<CancelEmployeeRecord> IssueCancelEmployeeRecord(byte[] registrationCommitment)
         {
             CancelEmployeeRecord packet = CreateCancelEmployeeRecord(registrationCommitment);
 
-            return (await PropagateTransaction(packet).ConfigureAwait(false)) ? packet : null;
+            var completionResult = PropagateTransaction(packet);
+
+            return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
         }
 
         public async Task<EmployeeRecord> IssueEmployeeRecord(byte[] registrationCommitment, byte[] groupCommitment)
         {
             EmployeeRecord packet = CreateEmployeeRecord(registrationCommitment, groupCommitment);
 
-            return (await PropagateTransaction(packet).ConfigureAwait(false)) ? packet : null;
+            var completionResult = PropagateTransaction(packet);
+
+            return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
         }
 
         public async Task<IssueBlindedAsset> IssueBlindedAsset(byte[] assetId, byte[] groupId)
         {
             IssueBlindedAsset packet = CreateIssueBlindedAsset(assetId, groupId);
 
-            return (await PropagateTransaction(packet).ConfigureAwait(false)) ? packet : null;
+            var completionResult = PropagateTransaction(packet);
+
+            return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
         }
 
         public async Task<IssueBlindedAsset> IssueBlindedAsset2(byte[] assetId, byte[] groupId, byte[] blindingFactor)
         {
             IssueBlindedAsset packet = CreateIssueBlindedAsset2(assetId, groupId, blindingFactor);
 
-            return (await PropagateTransaction(packet).ConfigureAwait(false)) ? packet : null;
+            var completionResult = PropagateTransaction(packet);
+
+            return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
         }
 
         /// <summary>
@@ -113,7 +126,9 @@ namespace O10.Client.Common.Communication
 		{
 			IssueAssociatedBlindedAsset packet = CreateIssueAssociatedBlindedAsset(assetId, groupId, blindingPointValue, blindingPointRoot);
 
-            return (await PropagateTransaction(packet).ConfigureAwait(false)) ? packet : null;
+            var completionResult = PropagateTransaction(packet);
+
+            return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
         }
 
         public async Task<TransferAssetToStealth> TransferAssetToStealth(byte[] assetId, ConfidentialAccount receiver)
@@ -125,14 +140,18 @@ namespace O10.Client.Common.Communication
 
             TransferAssetToStealth packet = CreateTransferAssetToStealth(assetId, receiver);
 
-            return (await PropagateTransaction(packet).ConfigureAwait(false)) ? packet : null;
+            var completionResult = PropagateTransaction(packet);
+
+            return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
         }
 
         public async Task<TransferAssetToStealth> TransferAssetToStealth2(byte[] assetId, byte[] issuanceCommitment, ConfidentialAccount receiver)
         {
             TransferAssetToStealth packet = CreateTransferAssetToStealth2(assetId, issuanceCommitment, receiver);
 
-            return (await PropagateTransaction(packet).ConfigureAwait(false)) ? packet : null;
+            var completionResult = PropagateTransaction(packet);
+
+            return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
         }
 
         #endregion

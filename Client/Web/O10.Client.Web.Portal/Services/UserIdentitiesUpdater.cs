@@ -7,7 +7,6 @@ using O10.Core.Models;
 using O10.Core.ExtensionMethods;
 using O10.Client.Web.Common.Hubs;
 using O10.Client.DataLayer.Services;
-using O10.Client.Common.Communication.SynchronizerNotifications;
 using System.Threading.Tasks.Dataflow;
 using System.Globalization;
 using O10.Client.DataLayer.Model;
@@ -18,6 +17,8 @@ using System;
 using O10.Client.Web.Portal.Dtos.User;
 using System.Threading;
 using Newtonsoft.Json;
+using O10.Core.Serialization;
+using O10.Client.Common.Communication.Notifications;
 
 namespace O10.Client.Web.Portal.Services
 {
@@ -91,7 +92,7 @@ namespace O10.Client.Web.Portal.Services
                 }
             });
 
-            PipeInNotifications = new ActionBlock<SynchronizerNotificationBase>(n =>
+            PipeInNotifications = new ActionBlock<NotificationBase>(n =>
             {
                 try
                 {
@@ -162,9 +163,9 @@ namespace O10.Client.Web.Portal.Services
         }
 
         public ITargetBlock<PacketBase> PipeIn { get; set; }
-        public ITargetBlock<SynchronizerNotificationBase> PipeInNotifications { get; }
+        public ITargetBlock<NotificationBase> PipeInNotifications { get; }
 
-        private void ProcessEligibilityCommitmentsDisabled(SynchronizerNotificationBase value)
+        private void ProcessEligibilityCommitmentsDisabled(NotificationBase value)
         {
             if (value is EligibilityCommitmentsDisabled eligibilityCommitmentsDisabled)
             {
@@ -178,7 +179,7 @@ namespace O10.Client.Web.Portal.Services
             }
         }
 
-        private void NotifyCompromisedKeyImage(SynchronizerNotificationBase value)
+        private void NotifyCompromisedKeyImage(NotificationBase value)
         {
             if (value is CompromisedKeyImage compromisedKeyImage)
             {
@@ -196,7 +197,7 @@ namespace O10.Client.Web.Portal.Services
             }
         }
 
-        private void NotifyUserAttributeLastUpdate(SynchronizerNotificationBase value)
+        private void NotifyUserAttributeLastUpdate(NotificationBase value)
         {
             if (value is UserAttributeStateUpdate userAttributeStateUpdate)
             {

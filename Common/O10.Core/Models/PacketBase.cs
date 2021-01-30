@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using O10.Core.Serialization;
+using System;
 
 namespace O10.Core.Models
 {
@@ -11,6 +13,7 @@ namespace O10.Core.Models
 
         public uint Nonce { get; set; }
 
+        [JsonConverter(typeof(ByteArrayJsonConverter))]
         /// <summary>
         /// 24 byte value of hash of sum of Hash of referenced Sync Block Content and Nonce
         /// </summary>
@@ -22,6 +25,7 @@ namespace O10.Core.Models
 
         public abstract ushort BlockType { get; }
 
+        [JsonIgnore]
         /// <summary>
         /// Bytes of packet (without signature and public key)
         /// </summary>
@@ -29,6 +33,7 @@ namespace O10.Core.Models
 
         //public Memory<byte> NonHeaderBytes { get; set; }
 
+        [JsonIgnore]
         /// <summary>
         /// All bytes of packet (without DLE + STX and length)
         /// </summary>

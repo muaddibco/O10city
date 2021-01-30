@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using O10.Transactions.Core.DataModel.Transactional;
 using O10.Transactions.Core.DataModel.Stealth;
-using O10.Client.Common.Communication.SynchronizerNotifications;
 using O10.Client.Common.Entities;
 using O10.Client.Common.Interfaces;
 using O10.Client.DataLayer.Model;
@@ -20,6 +19,7 @@ using O10.Client.Mobile.Base.Models.StateNotifications;
 using Xamarin.Forms.Internals;
 using O10.Core.Architecture;
 using System.Threading;
+using O10.Client.Common.Communication.Notifications;
 
 namespace O10.Client.Mobile.Base.Services
 {
@@ -94,7 +94,7 @@ namespace O10.Client.Mobile.Base.Services
                 }
             });
 
-            PipeInNotifications = new ActionBlock<SynchronizerNotificationBase>(async n =>
+            PipeInNotifications = new ActionBlock<NotificationBase>(async n =>
             {
                 try
                 {
@@ -113,7 +113,7 @@ namespace O10.Client.Mobile.Base.Services
             });
         }
 
-        private void NotifyKeyImageCorrupted(SynchronizerNotificationBase n)
+        private void NotifyKeyImageCorrupted(NotificationBase n)
         {
             if (n is KeyImageCorruptedNotification keyImageCorrupted)
             {
@@ -204,7 +204,7 @@ namespace O10.Client.Mobile.Base.Services
         }
 
         public ITargetBlock<PacketBase> PipeIn { get; set; }
-        public ITargetBlock<SynchronizerNotificationBase> PipeInNotifications { get; }
+        public ITargetBlock<NotificationBase> PipeInNotifications { get; }
 
         public void Initialize(long accountId, CancellationToken cancellationToken)
         {
@@ -218,7 +218,7 @@ namespace O10.Client.Mobile.Base.Services
             });
         }
 
-        private void ProcessEligibilityCommitmentsDisabled(SynchronizerNotificationBase value)
+        private void ProcessEligibilityCommitmentsDisabled(NotificationBase value)
         {
             if (value is EligibilityCommitmentsDisabled eligibilityCommitmentsDisabled)
             {
@@ -230,7 +230,7 @@ namespace O10.Client.Mobile.Base.Services
             }
         }
 
-        private async Task NotifyCompromisedKeyImage(SynchronizerNotificationBase value)
+        private async Task NotifyCompromisedKeyImage(NotificationBase value)
         {
             if (value is CompromisedKeyImage compromisedKeyImage)
             {
@@ -238,7 +238,7 @@ namespace O10.Client.Mobile.Base.Services
             }
         }
 
-        private void NotifyUserAttributeLastUpdate(SynchronizerNotificationBase value)
+        private void NotifyUserAttributeLastUpdate(NotificationBase value)
         {
             if (value is UserAttributeStateUpdate userAttributeStateUpdate)
             {

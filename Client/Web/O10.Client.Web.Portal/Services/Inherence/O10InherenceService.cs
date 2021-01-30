@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using O10.Transactions.Core.DataModel.Stealth;
-using O10.Client.Common.Communication.SynchronizerNotifications;
 using O10.Client.Common.Entities;
 using O10.Client.Common.Interfaces;
 using O10.Client.DataLayer.Enums;
@@ -19,14 +18,14 @@ using O10.Core.ExtensionMethods;
 using O10.Core.Cryptography;
 using Microsoft.AspNetCore.SignalR;
 using O10.Core.Logging;
-using O10.Client.Web.Portal.Exceptions;
 using Newtonsoft.Json;
 using System.Collections.Concurrent;
 using O10.Core.Identity;
 using O10.Client.Common.Dtos.UniversalProofs;
 using Microsoft.Extensions.DependencyInjection;
-using O10.Client.Web.Common.Services;
 using O10.Client.Common.Exceptions;
+using O10.Core.Serialization;
+using O10.Client.Common.Communication.Notifications;
 
 namespace O10.Client.Web.Portal.Services.Inherence
 {
@@ -87,7 +86,7 @@ namespace O10.Client.Web.Portal.Services.Inherence
                     }
                 });
 
-            PipeInNotifications = new ActionBlock<SynchronizerNotificationBase>(n =>
+            PipeInNotifications = new ActionBlock<NotificationBase>(n =>
             {
             });
         }
@@ -101,7 +100,7 @@ namespace O10.Client.Web.Portal.Services.Inherence
 
         public ITargetBlock<PacketBase> PipeIn { get; set; }
 
-        public ITargetBlock<SynchronizerNotificationBase> PipeInNotifications { get; }
+        public ITargetBlock<NotificationBase> PipeInNotifications { get; }
 
         public long AccountId { get; private set; }
 

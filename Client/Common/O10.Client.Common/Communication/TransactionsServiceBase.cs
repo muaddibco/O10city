@@ -7,19 +7,19 @@ using System.Threading.Tasks.Dataflow;
 using O10.Transactions.Core.DataModel;
 using O10.Transactions.Core.Parsers;
 using O10.Transactions.Core.Serializers;
-using O10.Client.Common.Communication.SynchronizerNotifications;
 using O10.Client.Common.Interfaces;
 using O10.Core;
-using O10.Core.Communication;
 using O10.Core.Cryptography;
 using O10.Core.HashCalculations;
 using O10.Core.Identity;
 using O10.Core.Logging;
 using O10.Core.Models;
+using O10.Core.Serialization;
+using O10.Client.Common.Communication.Notifications;
 
 namespace O10.Client.Common.Communication
 {
-	public abstract class TransactionsServiceBase : ITransactionsService
+    public abstract class TransactionsServiceBase : ITransactionsService
 	{
 		protected readonly ISerializersFactory _serializersFactory;
 		protected readonly IBlockParsersRepositoriesRepository _blockParsersRepositoriesRepository;
@@ -27,9 +27,9 @@ namespace O10.Client.Common.Communication
 		protected readonly IHashCalculation _hashCalculation;
 		protected readonly IHashCalculation _proofOfWorkCalculation;
 		protected readonly IIdentityKeyProvider _identityKeyProvider;
-		private readonly IPropagatorBlock<PacketBase, PacketBase> _pipeOutTransactions;
+		private readonly IPropagatorBlock<PacketWrapper, PacketWrapper> _pipeOutTransactions;
 		protected ISigningService _signingService;
-		protected readonly List<IObserver<SynchronizerNotificationBase>> _observers;
+		protected readonly List<IObserver<NotificationBase>> _observers;
 		protected readonly ILogger _logger;
 		protected long _accountId;
 
@@ -47,18 +47,20 @@ namespace O10.Client.Common.Communication
 			_hashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
 			_proofOfWorkCalculation = hashCalculationsRepository.Create(Globals.POW_TYPE);
 			_identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
-			_observers = new List<IObserver<SynchronizerNotificationBase>>();
-			_pipeOutTransactions = new TransformBlock<PacketBase, PacketBase>(w => w);
+			_observers = new List<IObserver<NotificationBase>>();
+			_pipeOutTransactions = new TransformBlock<PacketWrapper, PacketWrapper>(w => w);
 			_signingService = signingService;
 			_gatewayService = gatewayService;
 			_logger = loggerService.GetLogger(GetType().Name);
 		}
 
-		protected async Task<bool> PropagateTransaction(PacketBase packet)
+		protected TaskCompletionSource<NotificationBase> PropagateTransaction(PacketBase packet)
         {
-			var res = await _pipeOutTransactions.SendAsync(packet).ConfigureAwait(false);
+			var packetWrapper = new PacketWrapper(packet);
+
+			_pipeOutTransactions.SendAsync(packetWrapper);
 			
-			return res;
+			return packetWrapper.TaskCompletion;
 		}
 
 		protected byte[] GetPowHash(byte[] hash, ulong nonce)
@@ -89,7 +91,7 @@ namespace O10.Client.Common.Communication
 
 		public virtual ISourceBlock<T> GetSourcePipe<T>(string name = null)
 		{
-			if (typeof(T) == typeof(PacketBase))
+			if (typeof(T) == typeof(PacketWrapper))
 			{
 				return (ISourceBlock<T>)_pipeOutTransactions;
 			}
@@ -105,9 +107,9 @@ namespace O10.Client.Common.Communication
 		private sealed class Subscription : IDisposable
 		{
 			private readonly TransactionsServiceBase _service;
-			private IObserver<SynchronizerNotificationBase> _observer;
+			private IObserver<NotificationBase> _observer;
 
-			public Subscription(TransactionsServiceBase service, IObserver<SynchronizerNotificationBase> observer)
+			public Subscription(TransactionsServiceBase service, IObserver<NotificationBase> observer)
 			{
 				_service = service;
 				_observer = observer;
@@ -115,7 +117,7 @@ namespace O10.Client.Common.Communication
 
 			public void Dispose()
 			{
-				IObserver<SynchronizerNotificationBase> observer = _observer;
+				IObserver<NotificationBase> observer = _observer;
 				if (null != observer)
 				{
 					lock (_service._observers)

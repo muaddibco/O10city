@@ -9,6 +9,7 @@ using O10.Core.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Linq;
+using O10.Core.Serialization;
 
 namespace O10.Gateway.WebApp.Common.Services
 

@@ -17,6 +17,7 @@ using O10.Client.Common.Configuration;
 using O10.Client.DataLayer.Services;
 using O10.Core.Logging;
 using Newtonsoft.Json;
+using O10.Core.Serialization;
 
 namespace O10.Client.Common.Services
 {

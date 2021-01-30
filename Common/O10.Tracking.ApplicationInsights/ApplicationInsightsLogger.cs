@@ -4,6 +4,7 @@ using O10.Core.Architecture;
 
 using O10.Core.Logging;
 using O10.Core.Tracking;
+using O10.Core.Serialization;
 
 namespace O10.Tracking.ApplicationInsights
 {

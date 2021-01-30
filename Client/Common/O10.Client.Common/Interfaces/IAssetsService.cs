@@ -1,9 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using O10.Client.Common.Dtos.UniversalProofs;
 using O10.Client.Common.Entities;
 using O10.Core.Architecture;
-using O10.Core.Cryptography;
 using O10.Core.Identity;
 
 namespace O10.Client.Common.Interfaces

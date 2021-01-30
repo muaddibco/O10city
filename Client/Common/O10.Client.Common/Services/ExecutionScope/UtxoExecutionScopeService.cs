@@ -1,14 +1,11 @@
 ﻿using O10.Client.Common.Communication;
-using O10.Client.Common.Communication.SynchronizerNotifications;
+using O10.Client.Common.Communication.Notifications;
 using O10.Client.Common.Configuration;
 using O10.Client.Common.Interfaces;
 using O10.Core.Architecture;
-using O10.Core.Communication;
 using O10.Core.Configuration;
 using O10.Core.Models;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -90,7 +87,7 @@ namespace O10.Client.Common.Services
 
             _transactionsService.Initialize(scopeInitializationParams.AccountId);
             utxoWalletPacketsExtractor.Initialize(scopeInitializationParams.AccountId);
-            _transactionsService.GetSourcePipe<Tuple<string, IPacketProvider, IPacketProvider>>().LinkTo(_gatewayService.PipeInTransactions);
+            _transactionsService.GetSourcePipe<PacketWrapper>().LinkTo(_gatewayService.PipeInTransactions);
             _transactionsService.GetSourcePipe<byte[]>().LinkTo(utxoWalletPacketsExtractor.GetTargetPipe<byte[]>());
 
             IUpdater userIdentitiesUpdater = _updaterRegistry.GetInstance();
@@ -102,10 +99,10 @@ namespace O10.Client.Common.Services
 
             utxoWalletPacketsExtractor.GetSourcePipe<PacketWrapper>().LinkTo(walletSynchronizer.GetTargetPipe<PacketWrapper>());
             utxoWalletPacketsExtractor.GetSourcePipe<WitnessPackage>().LinkTo(walletSynchronizer.GetTargetPipe<WitnessPackage>());
-            utxoWalletPacketsExtractor.GetSourcePipe<SynchronizerNotificationBase>().LinkTo(userIdentitiesUpdater.PipeInNotifications);
+            utxoWalletPacketsExtractor.GetSourcePipe<NotificationBase>().LinkTo(userIdentitiesUpdater.PipeInNotifications);
 
             walletSynchronizer.GetSourcePipe<PacketBase>().LinkTo(userIdentitiesUpdater.PipeIn);
-            walletSynchronizer.GetSourcePipe<SynchronizerNotificationBase>().LinkTo(userIdentitiesUpdater.PipeInNotifications);
+            walletSynchronizer.GetSourcePipe<NotificationBase>().LinkTo(userIdentitiesUpdater.PipeInNotifications);
 
             packetsProvider.Start();
         }

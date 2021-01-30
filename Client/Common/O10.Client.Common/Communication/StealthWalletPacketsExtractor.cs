@@ -1,13 +1,13 @@
 ﻿using System.Linq;
 using System.Threading.Tasks.Dataflow;
 using O10.Transactions.Core.Parsers;
-using O10.Client.Common.Communication.SynchronizerNotifications;
 using O10.Client.Common.Interfaces;
 using O10.Client.DataLayer.Services;
 using O10.Core.ExtensionMethods;
 using O10.Core.Logging;
 using O10.Core.Models;
 using O10.Core.Architecture;
+using O10.Client.Common.Communication.Notifications;
 
 namespace O10.Client.Common.Communication
 {
@@ -16,7 +16,7 @@ namespace O10.Client.Common.Communication
     {
         private readonly IDataAccessService _dataAccessService;
         private byte[] _nextKeyImage;
-        private readonly IPropagatorBlock<SynchronizerNotificationBase, SynchronizerNotificationBase> _propagatorBlockNotifications;
+        private readonly IPropagatorBlock<NotificationBase, NotificationBase> _propagatorBlockNotifications;
         private readonly ITargetBlock<byte[]> _pipeInKeyImages;
 
         public StealthWalletPacketsExtractor(
@@ -28,7 +28,7 @@ namespace O10.Client.Common.Communication
             : base(blockParsersRepositoriesRepository, syncStateProvider, clientCryptoService, dataAccessService, loggerService)
         {
             _dataAccessService = dataAccessService;
-            _propagatorBlockNotifications = new TransformBlock<SynchronizerNotificationBase, SynchronizerNotificationBase>(p => p);
+            _propagatorBlockNotifications = new TransformBlock<NotificationBase, NotificationBase>(p => p);
 
             _pipeInKeyImages = new ActionBlock<byte[]>(k =>
             {
@@ -40,7 +40,7 @@ namespace O10.Client.Common.Communication
 
         public override ISourceBlock<T> GetSourcePipe<T>(string name = null)
         {
-            if (typeof(T) == typeof(SynchronizerNotificationBase))
+            if (typeof(T) == typeof(NotificationBase))
             {
                 return (ISourceBlock<T>)_propagatorBlockNotifications;
             }

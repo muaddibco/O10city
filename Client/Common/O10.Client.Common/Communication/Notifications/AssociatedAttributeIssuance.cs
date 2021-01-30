@@ -1,6 +1,6 @@
-﻿namespace O10.Client.Common.Communication.SynchronizerNotifications
+﻿namespace O10.Client.Common.Communication.Notifications
 {
-    public class AssociatedAttributeIssuance : SynchronizerNotificationBase
+    public class AssociatedAttributeIssuance : NotificationBase
     {
         public byte[] Issuer { get; set; }
 

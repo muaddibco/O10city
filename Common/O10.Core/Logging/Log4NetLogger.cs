@@ -8,6 +8,7 @@ using System.Reflection;
 using O10.Core.Architecture;
 
 using O10.Core.Configuration;
+using O10.Core.Serialization;
 
 namespace O10.Core.Logging
 {

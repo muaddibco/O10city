@@ -49,6 +49,7 @@ using O10.Client.Web.Portal.ElectionCommittee.Models;
 using Flurl.Util;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.DependencyInjection;
+using O10.Core.Serialization;
 
 namespace O10.Client.Web.Portal.Controllers
 {

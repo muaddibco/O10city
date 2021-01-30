@@ -31,6 +31,7 @@ using Newtonsoft.Json;
 using System.Net.Http;
 using O10.Gateway.Common.Dtos;
 using System.Collections.Concurrent;
+using O10.Core.Serialization;
 
 namespace O10.Gateway.Common.Services
 {

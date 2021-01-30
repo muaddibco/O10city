@@ -23,6 +23,7 @@ using Microsoft.AspNetCore.Http;
 using O10.Client.Common.Integration;
 using O10.Client.Common.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
+using O10.Core.Serialization;
 
 namespace O10.Client.Web.Portal.Controllers
 {

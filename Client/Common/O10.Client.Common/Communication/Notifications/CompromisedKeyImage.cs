@@ -1,6 +1,6 @@
-﻿namespace O10.Client.Common.Communication.SynchronizerNotifications
+﻿namespace O10.Client.Common.Communication.Notifications
 {
-    public class CompromisedKeyImage : SynchronizerNotificationBase
+    public class CompromisedKeyImage : NotificationBase
     {
         public byte[] KeyImage { get; set; }
 

@@ -12,6 +12,7 @@ using O10.Core.Cryptography;
 using O10.Core.ExtensionMethods;
 using O10.Core.Logging;
 using O10.Crypto.ConfidentialAssets;
+using O10.Core.Serialization;
 
 namespace O10.Client.Common.Services
 {

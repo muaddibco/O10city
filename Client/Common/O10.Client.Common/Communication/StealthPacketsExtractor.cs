@@ -6,6 +6,7 @@ using O10.Core;
 using O10.Core.Logging;
 using O10.Core.Models;
 using O10.Core.Architecture;
+using O10.Core.Serialization;
 
 namespace O10.Client.Common.Communication
 {

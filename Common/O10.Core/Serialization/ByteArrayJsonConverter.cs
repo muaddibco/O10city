@@ -2,7 +2,7 @@
 using System;
 using O10.Core.ExtensionMethods;
 
-namespace O10.Core.Logging
+namespace O10.Core.Serialization
 {
 	public class ByteArrayJsonConverter : JsonConverter
 	{

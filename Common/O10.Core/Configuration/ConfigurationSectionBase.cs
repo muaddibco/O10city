@@ -2,6 +2,7 @@
 using System.Reflection;
 using System.ComponentModel;
 using O10.Core.Exceptions;
+using System.Collections.Generic;
 
 namespace O10.Core.Configuration
 {
@@ -31,14 +32,27 @@ namespace O10.Core.Configuration
                     {
                         _isInitialized = true;
 
-                        PropertyInfo[] propertyInfos = GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
-
-                        foreach (PropertyInfo propertyInfo in propertyInfos)
+                        foreach (PropertyInfo propertyInfo in GetPropertyInfos())
                         {
                             SetPropertyValue(propertyInfo);
                         }
                     }
                 }
+            }
+        }
+
+        private IEnumerable<PropertyInfo> GetPropertyInfos()
+        {
+            Type type = GetType();
+
+            while (!type.Equals(typeof(ConfigurationSectionBase)))
+            {
+                var propertyInfos = type.GetProperties(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly);
+                foreach (var propertyInfo in propertyInfos)
+                {
+                    yield return propertyInfo;
+                }
+                type = type.BaseType;
             }
         }
 

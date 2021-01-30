@@ -31,6 +31,14 @@ services:
       - ASPNETCORE_URLS=http://+:80
       - GWSERVICENAME=o10.gateway.webapp
       - NODESERVICENAME=o10.node.webapp
+      - GATEWAYKEY=7109020FC572C7D84DB0BFE41595454EA2B8BEA65A8EAE398F0833D54DA1EA0B
     ports:
     - 5002:80
 
+  db:
+    image: "mcr.microsoft.com/mssql/server"
+    environment:
+      SA_PASSWORD: "p@ssword1"
+      ACCEPT_EULA: "Y"
+    ports:
+      - 1433:1433

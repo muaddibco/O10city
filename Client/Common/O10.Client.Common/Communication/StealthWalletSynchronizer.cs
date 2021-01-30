@@ -2,7 +2,6 @@
 using System.Threading.Tasks;
 using O10.Transactions.Core.DataModel.Transactional;
 using O10.Transactions.Core.DataModel.Stealth;
-using O10.Client.Common.Communication.SynchronizerNotifications;
 using O10.Client.Common.Interfaces;
 using O10.Client.DataLayer.Model;
 using O10.Client.DataLayer.Services;
@@ -10,6 +9,7 @@ using O10.Core.ExtensionMethods;
 using O10.Core.Logging;
 using O10.Core.Models;
 using O10.Core.Architecture;
+using O10.Client.Common.Communication.Notifications;
 
 namespace O10.Client.Common.Communication
 {

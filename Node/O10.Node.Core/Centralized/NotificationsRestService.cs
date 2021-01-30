@@ -15,6 +15,7 @@ using O10.Node.Core.DataLayer;
 using O10.Core.DataLayer;
 using O10.Core.Models;
 using System.Net.Http;
+using O10.Core.Serialization;
 
 namespace O10.Node.Worker.Services
 {

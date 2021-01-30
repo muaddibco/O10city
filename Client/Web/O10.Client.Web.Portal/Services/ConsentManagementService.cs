@@ -8,7 +8,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks.Dataflow;
 using O10.Transactions.Core.DataModel.Stealth;
-using O10.Client.Common.Communication.SynchronizerNotifications;
 using O10.Client.Common.Entities;
 using O10.Client.Common.Interfaces;
 using O10.Client.Common.Interfaces.Inputs;
@@ -28,7 +27,8 @@ using O10.Crypto.ConfidentialAssets;
 using O10.Client.Web.Portal.Dtos.ServiceProvider;
 using O10.Client.Web.Portal.Hubs;
 using Microsoft.Extensions.DependencyInjection;
-using O10.Client.Common.Services;
+using O10.Core.Serialization;
+using O10.Client.Common.Communication.Notifications;
 
 namespace O10.Client.Web.Portal.Services
 {
@@ -106,7 +106,7 @@ namespace O10.Client.Web.Portal.Services
                 }
             });
 
-            PipeInNotifications = new ActionBlock<SynchronizerNotificationBase>(n =>
+            PipeInNotifications = new ActionBlock<NotificationBase>(n =>
             {
             });
         }
@@ -116,7 +116,7 @@ namespace O10.Client.Web.Portal.Services
 
         public ITargetBlock<PacketBase> PipeIn { get; set; }
 
-        public ITargetBlock<SynchronizerNotificationBase> PipeInNotifications { get; }
+        public ITargetBlock<NotificationBase> PipeInNotifications { get; }
 
         public void Initialize(IExecutionContextManager executionContextManager, CancellationToken cancellationToken)
         {

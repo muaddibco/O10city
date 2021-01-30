@@ -15,6 +15,7 @@ using O10.Node.DataLayer.DataAccess;
 using O10.Node.DataLayer.Exceptions;
 using System;
 using O10.Node.DataLayer.Specific.O10Id.Model;
+using O10.Core.Serialization;
 
 namespace O10.Node.DataLayer.Specific.O10Id
 {

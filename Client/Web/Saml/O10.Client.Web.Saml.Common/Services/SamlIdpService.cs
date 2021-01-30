@@ -26,6 +26,7 @@ using Saml2.Authentication.Core.Configuration;
 using CONST = dk.nita.saml20.Bindings.HttpRedirectBindingConstants;
 using System.Security.Cryptography;
 using System.Web;
+using O10.Client.Common.Communication.Notifications;
 
 namespace O10.Client.Web.Saml.Common.Services
 {
@@ -83,11 +84,11 @@ namespace O10.Client.Web.Saml.Common.Services
                         SamlForceLogout(keyImage);
                     }
 
-                    p.TaskCompletion.SetResult(true);
+                    p.TaskCompletion.SetResult(new SucceededNotification());
                 }
-                catch (Exception)
+                catch (Exception ex)
                 {
-                    p.TaskCompletion.SetResult(false);
+                    p.TaskCompletion.SetException(ex);
                 }
 			});
 

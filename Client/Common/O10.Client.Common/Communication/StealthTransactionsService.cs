@@ -27,6 +27,7 @@ using O10.Core.HashCalculations;
 using O10.Core.Identity;
 using O10.Core.Logging;
 using O10.Crypto.ConfidentialAssets;
+using O10.Client.Common.Communication.Notifications;
 
 namespace O10.Client.Common.Communication
 {
@@ -86,12 +87,14 @@ namespace O10.Client.Common.Communication
 
             await _pipeOutKeyImages.SendAsync(packet.KeyImage.Value.ToArray()).ConfigureAwait(false);
 
+            var completionResult = PropagateTransaction(packet);
+
             var requestResult = new RequestResult
             {
                 NewCommitment = packet.AssetCommitment,
                 NewTransactionKey = packet.TransactionPublicKey,
                 NewDestinationKey = packet.DestinationKey,
-                Result = await PropagateTransaction(packet).ConfigureAwait(false)
+                Result = await completionResult.Task.ConfigureAwait(false) is SucceededNotification
             };
 
             return requestResult;
@@ -104,12 +107,14 @@ namespace O10.Client.Common.Communication
 
 			await _pipeOutKeyImages.SendAsync(packet.KeyImage.Value.ToArray()).ConfigureAwait(false);
 
+            var completionResult = PropagateTransaction(packet);
+
             RequestResult requestResult = new RequestResult
             {
                 NewCommitment = packet.AssetCommitment,
                 NewTransactionKey = packet.TransactionPublicKey,
                 NewDestinationKey = packet.DestinationKey,
-                Result = await PropagateTransaction(packet).ConfigureAwait(false)
+                Result = await completionResult.Task.ConfigureAwait(false) is SucceededNotification
             };
 
             return requestResult;
@@ -120,13 +125,15 @@ namespace O10.Client.Common.Communication
             var packet = CreateEmployeeRegistrationRequest(requestInput, associatedProofPreparations, outputModels, issuanceCommitments);
 
 			await _pipeOutKeyImages.SendAsync(packet.KeyImage.Value.ToArray()).ConfigureAwait(false);
-            
+
+            var completionResult = PropagateTransaction(packet);
+
             var requestResult = new RequestResult
             {
                 NewCommitment = packet.AssetCommitment,
                 NewTransactionKey = packet.TransactionPublicKey,
                 NewDestinationKey = packet.DestinationKey,
-                Result = await PropagateTransaction(packet).ConfigureAwait(false)
+                Result = await completionResult.Task.ConfigureAwait(false) is SucceededNotification
             };
 
             return requestResult;
@@ -138,12 +145,14 @@ namespace O10.Client.Common.Communication
 
 			await _pipeOutKeyImages.SendAsync(packet.KeyImage.Value.ToArray()).ConfigureAwait(false);
 
+            var completionResult = PropagateTransaction(packet);
+
             var requestResult = new RequestResult
             {
                 NewCommitment = packet.AssetCommitment,
                 NewTransactionKey = packet.TransactionPublicKey,
                 NewDestinationKey = packet.DestinationKey,
-                Result = await PropagateTransaction(packet).ConfigureAwait(false)
+                Result = await completionResult.Task.ConfigureAwait(false) is SucceededNotification
             };
 
             return requestResult;
@@ -155,12 +164,14 @@ namespace O10.Client.Common.Communication
 
 			await _pipeOutKeyImages.SendAsync(packet.KeyImage.Value.ToArray()).ConfigureAwait(false);
 
-			RequestResult requestResult = new RequestResult
+            var completionResult = PropagateTransaction(packet);
+
+            RequestResult requestResult = new RequestResult
 			{
 				NewCommitment = packet.AssetCommitment,
 				NewTransactionKey = packet.TransactionPublicKey,
 				NewDestinationKey = packet.DestinationKey,
-                Result = await PropagateTransaction(packet).ConfigureAwait(false)
+                Result = await completionResult.Task.ConfigureAwait(false) is SucceededNotification
             };
 
 			return requestResult;
@@ -172,13 +183,14 @@ namespace O10.Client.Common.Communication
 
 			await _pipeOutKeyImages.SendAsync(packet.KeyImage.Value.ToArray()).ConfigureAwait(false);
             
-            await PropagateTransaction(packet).ConfigureAwait(false);
+            var completionResult = PropagateTransaction(packet);
 
             RequestResult requestResult = new RequestResult
             {
                 NewCommitment = packet.AssetCommitment,
                 NewTransactionKey = packet.TransactionPublicKey,
-                NewDestinationKey = packet.DestinationKey
+                NewDestinationKey = packet.DestinationKey,
+                Result = await completionResult.Task.ConfigureAwait(false) is SucceededNotification
             };
 
             return requestResult;
@@ -194,14 +206,15 @@ namespace O10.Client.Common.Communication
 
             await _pipeOutKeyImages.SendAsync(packet.KeyImage.Value.ToArray()).ConfigureAwait(false);
             
-            await PropagateTransaction(packet).ConfigureAwait(false);
+            var completionSource = PropagateTransaction(packet);
 
             RequestResult requestResult = new RequestResult
             {
                 NewBlindingFactor = requestInput.BlindingFactor.ToArraySegment().Array,
                 NewCommitment = packet.AssetCommitment,
                 NewTransactionKey = packet.TransactionPublicKey,
-                NewDestinationKey = packet.DestinationKey
+                NewDestinationKey = packet.DestinationKey,
+                Result = await completionSource.Task.ConfigureAwait(false) is SucceededNotification
             };
 
             return requestResult;

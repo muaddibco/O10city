@@ -6,6 +6,8 @@ using O10.Core.Architecture;
 using O10.Core.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using O10.Core.Communication;
+using O10.Core.Models;
+using O10.Client.Common.Communication;
 
 namespace O10.Server.IdentityProvider.Common.Services
 {
@@ -39,7 +41,7 @@ namespace O10.Server.IdentityProvider.Common.Services
 				clientCryptoService.Initialize(secretKey);
 
 				transactionsService.Initialize(accountId);
-				transactionsService.GetSourcePipe<Tuple<string, IPacketProvider, IPacketProvider>>().LinkTo(_gatewayService.PipeInTransactions);
+				transactionsService.GetSourcePipe<PacketWrapper>().LinkTo(_gatewayService.PipeInTransactions);
 
 			}
 			catch (Exception ex)

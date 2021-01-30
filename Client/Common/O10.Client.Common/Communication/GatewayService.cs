@@ -9,24 +9,22 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using O10.Transactions.Core.DataModel;
-using O10.Transactions.Core.Serializers.Stealth;
-using O10.Client.Common.Communication.SynchronizerNotifications;
 using O10.Client.Common.Exceptions;
 using O10.Client.Common.Interfaces;
 using O10.Client.Common.Interfaces.Inputs;
 using O10.Client.Common.Interfaces.Outputs;
 using O10.Core;
 using O10.Core.Architecture;
-
-using O10.Core.Communication;
 using O10.Core.ExtensionMethods;
 using O10.Core.Logging;
 using O10.Core.Models;
 using O10.Core.Identity;
+using O10.Core.Serialization;
+using O10.Client.Common.Communication.Notifications;
 
 namespace O10.Client.Common.Communication
 {
-	[RegisterDefaultImplementation(typeof(IGatewayService), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterDefaultImplementation(typeof(IGatewayService), Lifetime = LifetimeManagement.Singleton)]
 	public class GatewayService : IGatewayService
     {
         private string _gatewayUri;
@@ -34,17 +32,17 @@ namespace O10.Client.Common.Communication
 		private bool _isInitialized;
 		private readonly ILogger _logger;
 		private readonly IRestClientService _restClientService;
-		private readonly IPropagatorBlock<SynchronizerNotificationBase, SynchronizerNotificationBase> _propagatorBlockNotifications;
+		private readonly IPropagatorBlock<NotificationBase, NotificationBase> _propagatorBlockNotifications;
 
 		public GatewayService(IRestClientService restClientService, ILoggerService loggerService)
         {
 			_logger = loggerService.GetLogger(nameof(GatewayService));
 			_restClientService = restClientService;
-			_propagatorBlockNotifications = new TransformBlock<SynchronizerNotificationBase, SynchronizerNotificationBase>(p => p);
+			_propagatorBlockNotifications = new TransformBlock<NotificationBase, NotificationBase>(p => p);
 		}
 
-		public ITargetBlock<Tuple<string, IPacketProvider, IPacketProvider>> PipeInTransactions { get; private set; }
-		public ISourceBlock<SynchronizerNotificationBase> PipeOutNotifications => _propagatorBlockNotifications;
+		public ITargetBlock<PacketWrapper> PipeInTransactions { get; private set; }
+		public ISourceBlock<NotificationBase> PipeOutNotifications => _propagatorBlockNotifications;
 
 		public async Task<byte[][]> GetIssuanceCommitments(Memory<byte> issuer, int amount)
         {
@@ -124,39 +122,35 @@ namespace O10.Client.Common.Communication
 
             _gatewayUri = gatewayUri;
 
-			PipeInTransactions = new ActionBlock<Tuple<string, IPacketProvider, IPacketProvider>>(async p =>
+			PipeInTransactions = new ActionBlock<PacketWrapper>(async p =>
 			{
                 try
                 {
-					byte[] transaction = p.Item2.GetBytes();
-					byte[] witness = p.Item3.GetBytes();
-					string transactionName = p.Item2.GetType().Name;
-
-					_logger.Info($"Sending transaction {transactionName}");
-
-					_logger.Debug($"Sending transaction \r\n {transaction.ToHexString()}\r\nSending witness {witness.ToHexString()}");
+					_logger.Info($"Sending transaction {p.Packet.GetType().Name}");
 
 					var response = await _restClientService
-						.Request(_gatewayUri).AppendPathSegments("api", "synchronization", "SendData", p.Item2 is RevokeIdentitySerializer ? string.Empty : (p.Item1 ?? string.Empty))
-						.PostJsonAsync(new { ContentTransaction = transaction, ContentWitness = witness })
+						.Request(_gatewayUri).AppendPathSegments("api", "synchronization", "SendPacket")
+						.PostJsonAsync(p.Packet)
 						.ReceiveJson<SendDataResponse>().ConfigureAwait(false);
 
 					if(!response.Status && !string.IsNullOrEmpty(response.ExistingHash))
                     {
-						_logger.Error($"Failed to send transaction {transactionName} because key image {p.Item1} was already witnessed");
+						_logger.Error($"Failed to send transaction {p.Packet.GetType().Name} because key image {((StealthSignedPacketBase)p.Packet).KeyImage} was already witnessed");
 						await _propagatorBlockNotifications.SendAsync(new KeyImageCorruptedNotification
 						{
-							KeyImage = p.Item1.HexStringToByteArray(),
+							KeyImage = ((StealthSignedPacketBase)p.Packet).KeyImage.ToByteArray(),
 							ExistingHash = response.ExistingHash.HexStringToByteArray()
 						}).ConfigureAwait(false);
                     }
                 }
                 catch (FlurlHttpException ex)
                 {
+					p.TaskCompletion.SetException(ex);
 					_logger.Error($"Failure during invoking {ex.Call.FlurlRequest.Url}, HTTP status: {ex.Call.HttpStatus}, duration: {ex.Call.Duration?.TotalMilliseconds??0} msec", ex);
                 }
                 catch (Exception ex)
                 {
+					p.TaskCompletion.SetException(ex);
 					_logger.Error("Failure during request execution", ex);
 				}
 			}, new ExecutionDataflowBlockOptions { CancellationToken = cancellationToken });

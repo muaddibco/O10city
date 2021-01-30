@@ -1,6 +1,6 @@
-﻿namespace O10.Client.Common.Communication.SynchronizerNotifications
+﻿namespace O10.Client.Common.Communication.Notifications
 {
-    public class UserAttributeStateUpdate : SynchronizerNotificationBase
+    public class UserAttributeStateUpdate : NotificationBase
 	{
         public byte[] Issuer { get; set; }
         public byte[] AssetId { get; set; }
