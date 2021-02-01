@@ -19,6 +19,7 @@ using System.Threading;
 using Newtonsoft.Json;
 using O10.Core.Serialization;
 using O10.Client.Common.Communication.Notifications;
+using O10.Core.Notifications;
 
 namespace O10.Client.Web.Portal.Services
 {

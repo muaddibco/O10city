@@ -8,6 +8,7 @@ using O10.Core.Logging;
 using O10.Core.Models;
 using O10.Core.Architecture;
 using O10.Client.Common.Communication.Notifications;
+using O10.Core.Notifications;
 
 namespace O10.Client.Common.Communication
 {

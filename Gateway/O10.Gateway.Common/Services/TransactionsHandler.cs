@@ -8,12 +8,15 @@ using O10.Core.ExtensionMethods;
 using O10.Core.HashCalculations;
 using O10.Core.Logging;
 using O10.Core.Models;
+using O10.Core.Notifications;
 using O10.Gateway.Common.Configuration;
 using O10.Gateway.Common.Services.Results;
 using O10.Transactions.Core.Accessors;
 using O10.Transactions.Core.DataModel.Stealth;
 using O10.Transactions.Core.Enums;
+using O10.Transactions.Core.Serializers;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
@@ -22,38 +25,38 @@ namespace O10.Gateway.Common.Services
     [RegisterDefaultImplementation(typeof(ITransactionsHandler), Lifetime = LifetimeManagement.Singleton)]
     public class TransactionsHandler : ITransactionsHandler
     {
-        private readonly IPropagatorBlock<PacketBase, EvidenceDescriptor> _pipeEvidence;
-        private readonly IPropagatorBlock<PacketBase, PacketBase> _pipeInPacket;
-        private readonly IPropagatorBlock<PacketBase, PacketBase> _pipeOutPacket;
+        private readonly IPropagatorBlock<TaskCompletionWrapper<PacketBase>, DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>> _pipeEvidence;
+        private readonly IPropagatorBlock<TaskCompletionWrapper<PacketBase>, TaskCompletionWrapper<PacketBase>> _pipeInPacket;
+        private readonly IPropagatorBlock<TaskCompletionWrapper<PacketBase>, TaskCompletionWrapper<PacketBase>> _pipeOutPacket;
         private readonly IHashCalculation _hashCalculation;
         private readonly ILogger _logger;
-        private readonly Dictionary<PacketBase, TaskCompletionSource<ResultBase>> _packetValidationTasks;
         private readonly ISynchronizerConfiguration _synchronizerConfiguration;
+        private readonly ISerializersFactory _serializersFactory;
+        private readonly Dictionary<PacketBase, TaskCompletionSource<NotificationBase>> _completions = new Dictionary<PacketBase, TaskCompletionSource<NotificationBase>>();
 
         public TransactionsHandler(IHashCalculationsRepository hashCalculationsRepository,
                                    IConfigurationService configurationService,
+                                   ISerializersFactory serializersFactory,
                                    ILoggerService loggerService)
         {
             _logger = loggerService.GetLogger(nameof(TransactionsHandler));
-            _packetValidationTasks = new Dictionary<PacketBase, TaskCompletionSource<ResultBase>>();
             _synchronizerConfiguration = configurationService.Get<ISynchronizerConfiguration>();
 
             _hashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
-            _pipeInPacket = new TransformBlock<PacketBase, PacketBase>(p => p);
-            _pipeEvidence = new TransformBlock<PacketBase, EvidenceDescriptor>(p => ProduceEvidenceAndSend(p));
-            _pipeOutPacket = new TransformBlock<PacketBase, PacketBase>(p => p);
+            _pipeInPacket = new TransformBlock<TaskCompletionWrapper<PacketBase>, TaskCompletionWrapper<PacketBase>>(p => p);
+            _pipeEvidence = new TransformBlock<TaskCompletionWrapper<PacketBase>, DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>>(p => ProduceEvidenceAndSend(p));
             
             _pipeInPacket.LinkTo(_pipeEvidence, ValidatePacket);
+            _serializersFactory = serializersFactory;
         }
 
-        public TaskCompletionSource<ResultBase> SendPacket(PacketBase packetBase)
+        public TaskCompletionSource<NotificationBase> SendPacket(PacketBase packetBase)
         {
-            var validationCompletionTask = new TaskCompletionSource<ResultBase>();
-            _packetValidationTasks.Add(packetBase, validationCompletionTask);
+            TaskCompletionWrapper<PacketBase> wrapper = new TaskCompletionWrapper<PacketBase>(packetBase);
 
-            _pipeInPacket.SendAsync(packetBase);
+            _pipeInPacket.SendAsync(wrapper);
 
-            return validationCompletionTask;
+            return wrapper.TaskCompletion;
         }
 
         public ISourceBlock<T> GetSourcePipe<T>(string name = null)
@@ -80,12 +83,12 @@ namespace O10.Gateway.Common.Services
             throw new InvalidTargetPipeRequestException(typeof(T));
         }
 
-        private bool ValidatePacket(PacketBase packetBase)
+        private bool ValidatePacket(TaskCompletionWrapper<PacketBase> wrapper)
         {
             bool res = true;
             string existingHash = null;
 
-            if (packetBase is StealthBase stealth)
+            if (wrapper.State is StealthBase stealth)
             {
                 var keyImage = stealth.KeyImage.ToString();
 
@@ -100,33 +103,62 @@ namespace O10.Gateway.Common.Services
                     existingHash = packetHashResponse.Hash;
                 }
             }
-            else if(packetBase.PacketType != (ushort)PacketType.Transactional)
+            else if(wrapper.State.PacketType != (ushort)PacketType.Transactional)
             {
-                _logger.Error($"Packets of the type {packetBase.GetType().Name} are not supported");
+                _logger.Error($"Packets of the type {wrapper.State.GetType().Name} are not supported");
                 res = false;
             }
 
-            if (_packetValidationTasks.TryGetValue(packetBase, out TaskCompletionSource<ResultBase> validationCompletionTask))
-            {
-                validationCompletionTask.SetResult(new KeyImageValidationResult { Succeeded = res, ExistingHash = existingHash });
-                _packetValidationTasks.Remove(packetBase);
-            }
+            wrapper.TaskCompletion.SetResult(new KeyImageViolatedNotification { ExistingHash = existingHash });
 
             return res;
         }
 
-        private EvidenceDescriptor ProduceEvidenceAndSend(PacketBase packet)
+        private DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase> ProduceEvidenceAndSend(TaskCompletionWrapper<PacketBase> wrapper)
         {
+            if(wrapper.State.RawData.Length == 0)
+            {
+                using var serializer = _serializersFactory.Create(wrapper.State);
+                serializer.SerializeFully();
+            }
+
             EvidenceDescriptor evidenceDescriptor = new EvidenceDescriptor
             {
-                ActionType = packet.BlockType,
-                PacketType = (PacketType)packet.PacketType,
-                Parameters = new Dictionary<string, string> { { "BodyHash", _hashCalculation.CalculateHash(packet.RawData).ToHexString() } }
+                ActionType = wrapper.State.BlockType,
+                PacketType = (PacketType)wrapper.State.PacketType,
+                Parameters = new Dictionary<string, string> { { "BodyHash", _hashCalculation.CalculateHash(wrapper.State.RawData).ToHexString() } }
             };
 
-            _pipeOutPacket.SendAsync(packet);
+            DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase> depending 
+                = new DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>(evidenceDescriptor, wrapper);
 
-            return evidenceDescriptor;
+            depending
+                .CompletionAll.Task.ContinueWith((t, o) => 
+                {
+                    var packet = o as PacketBase;
+                    var completionSource = _completions[packet];
+                    if(t.IsCompletedSuccessfully)
+                    {
+                        if(t.Result.All(n => n is SucceededNotification))
+                        {
+                            completionSource.SetResult(new SucceededNotification());
+                        }
+                        else
+                        {
+                            completionSource.SetResult(new FailedNotification());
+                        }
+                    }
+                    else
+                    {
+                        completionSource.SetException(t.Exception.InnerException);
+                    }
+
+                    _completions.Remove(packet);
+                }, wrapper.State, TaskScheduler.Default);
+
+            _pipeOutPacket.SendAsync(wrapper);
+
+            return depending;
         }
     }
 }

@@ -25,7 +25,7 @@ using O10.Client.Common.Dtos.UniversalProofs;
 using Microsoft.Extensions.DependencyInjection;
 using O10.Client.Common.Exceptions;
 using O10.Core.Serialization;
-using O10.Client.Common.Communication.Notifications;
+using O10.Core.Notifications;
 
 namespace O10.Client.Web.Portal.Services.Inherence
 {

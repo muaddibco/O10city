@@ -6,6 +6,7 @@ using O10.Client.Common.Interfaces;
 using O10.Client.DataLayer.Services;
 using O10.Core.Logging;
 using O10.Core.Models;
+using O10.Core.Notifications;
 
 namespace O10.Client.Common.Communication
 {
@@ -18,7 +19,7 @@ namespace O10.Client.Common.Communication
 
         protected long _accountId;
         protected readonly IDataAccessService _dataAccessService;
-        private readonly ITargetBlock<PacketWrapper> _pipeInPackets;
+        private readonly ITargetBlock<TaskCompletionWrapper<PacketBase>> _pipeInPackets;
         private readonly ITargetBlock<WitnessPackage> _pipeInPackage;
         protected readonly IClientCryptoService _clientCryptoService;
         protected ILogger _logger;
@@ -29,20 +30,20 @@ namespace O10.Client.Common.Communication
             _clientCryptoService = clientCryptoService;
             _logger = loggerService.GetLogger(GetType().Name);
 
-            _pipeInPackets = new ActionBlock<PacketWrapper>(async p =>
+            _pipeInPackets = new ActionBlock<TaskCompletionWrapper<PacketBase>>(async p =>
             {
                 try
                 {
-                    if (p.Packet is StealthSignedPacketBase packet)
+                    if (p.State is StealthSignedPacketBase packet)
                     {
                         _logger.LogIfDebug(() => $"[{_accountId}]: Processing {packet.GetType().Name} with {nameof(packet.KeyImage)}={packet.KeyImage}");
                     }
                     else
                     {
-                        _logger.LogIfDebug(() => $"[{_accountId}]: Processing {p.Packet.GetType().Name}");
+                        _logger.LogIfDebug(() => $"[{_accountId}]: Processing {p.State.GetType().Name}");
                     }
 
-                    await StorePacket(p.Packet).ConfigureAwait(false);
+                    await StorePacket(p.State).ConfigureAwait(false);
                     p.TaskCompletion.SetResult(new SucceededNotification());
                 }
                 catch (Exception ex)
@@ -99,7 +100,7 @@ namespace O10.Client.Common.Communication
 
         public ITargetBlock<T> GetTargetPipe<T>(string name = null)
         {
-            if (typeof(T) == typeof(PacketWrapper))
+            if (typeof(T) == typeof(TaskCompletionWrapper<PacketBase>))
             {
                 return (ITargetBlock<T>)_pipeInPackets;
             }

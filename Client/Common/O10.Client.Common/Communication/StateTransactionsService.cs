@@ -15,7 +15,7 @@ using O10.Core.Logging;
 using O10.Crypto.ConfidentialAssets;
 using O10.Core;
 using System.Threading.Tasks;
-using O10.Client.Common.Communication.Notifications;
+using O10.Core.Notifications;
 
 namespace O10.Client.Common.Communication
 {

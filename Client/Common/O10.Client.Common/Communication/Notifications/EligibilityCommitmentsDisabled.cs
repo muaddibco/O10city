@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using O10.Core.Notifications;
+using System.Collections.Generic;
 
 namespace O10.Client.Common.Communication.Notifications
 {

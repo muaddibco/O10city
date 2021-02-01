@@ -32,6 +32,7 @@ using System.Net.Http;
 using O10.Gateway.Common.Dtos;
 using System.Collections.Concurrent;
 using O10.Core.Serialization;
+using O10.Core.Notifications;
 
 namespace O10.Gateway.Common.Services
 {
@@ -71,7 +72,7 @@ namespace O10.Gateway.Common.Services
             _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
 			_logger = loggerService.GetLogger(nameof(NetworkSynchronizer));
 
-			PipeIn = new ActionBlock<PacketBase>(p => SendPacket(p));
+			PipeIn = new ActionBlock<TaskCompletionWrapper<PacketBase>>(p => SendPacket(p));
 
 			_connectityCheckerAwaiters = new ConcurrentDictionary<int, TaskCompletionSource<bool>>();
 		}
@@ -82,26 +83,40 @@ namespace O10.Gateway.Common.Services
 		
 		public IPropagatorBlock<WitnessPackage, WitnessPackage> PipeOut { get; set; }
 
-		public ITargetBlock<PacketBase> PipeIn { get; }
+		public ITargetBlock<TaskCompletionWrapper<PacketBase>> PipeIn { get; }
 
 		public async Task<RegistryCombinedBlockModel> GetLastRegistryCombinedBlock() => await Task.FromResult(_lastCombinedBlockDescriptor).ConfigureAwait(false);
 
-		public async Task<bool> SendPacket(PacketBase packet)
+		public void SendPacket(TaskCompletionWrapper<PacketBase> wrapper)
         {
-			_logger.LogIfDebug(() => $"Sending to Node {_synchronizerConfiguration.NodeApiUri} packet {packet}");
+			_logger.LogIfDebug(() => $"Sending to Node {_synchronizerConfiguration.NodeApiUri} packet {wrapper.State.GetType().Name}");
 
-			HttpResponseMessage response = await _synchronizerConfiguration.NodeApiUri.AppendPathSegment("Packet").PostJsonAsync(packet).ConfigureAwait(false);
-
-			if(response.IsSuccessStatusCode)
+            try
             {
-				_logger.Debug($"Transaction packet posted to Node successful");
-            }
-			else
-            {
-				_logger.Error($"Transaction packet posted to Node with HttpStatusCode: {response.StatusCode}, reason: \"{response.ReasonPhrase}\", content: \"{response.Content.ReadAsStringAsync().Result}\"");
+				_synchronizerConfiguration.NodeApiUri
+					.AppendPathSegment("Packet")
+					.PostJsonAsync(wrapper.State)
+					.ContinueWith(async (t, o) => 
+					{
+						var w = o as TaskCompletionWrapper<PacketBase>;
+						var response = await t.ConfigureAwait(false);
+						if (response.IsSuccessStatusCode)
+						{
+							_logger.Debug($"Transaction packet posted to Node successful");
+							w.TaskCompletion.SetResult(new SucceededNotification());
+						}
+						else
+						{
+							w.TaskCompletion.SetResult(new FailedNotification());
+							_logger.Error($"Transaction packet posted to Node with HttpStatusCode: {response.StatusCode}, reason: \"{response.ReasonPhrase}\", content: \"{response.Content.ReadAsStringAsync().Result}\"");
+						}
+					}, wrapper, TaskScheduler.Default);
 			}
-
-			return response.IsSuccessStatusCode;
+			catch (Exception ex)
+            {
+				_logger.Error("Failure during sending packet to node", ex);
+				wrapper.TaskCompletion.SetException(ex);
+            }
 		}
 
 		public async Task<bool> SendData(int transactionType, IPacketProvider packetProviderTransaction, IPacketProvider packetProviderWitness)

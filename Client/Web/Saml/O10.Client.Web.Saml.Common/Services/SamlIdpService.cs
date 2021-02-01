@@ -27,6 +27,8 @@ using CONST = dk.nita.saml20.Bindings.HttpRedirectBindingConstants;
 using System.Security.Cryptography;
 using System.Web;
 using O10.Client.Common.Communication.Notifications;
+using O10.Core.Models;
+using O10.Core.Notifications;
 
 namespace O10.Client.Web.Saml.Common.Services
 {
@@ -35,7 +37,7 @@ namespace O10.Client.Web.Saml.Common.Services
 		private readonly ILogger _logger;
 		private readonly StealthPacketsExtractor _utxoPacketsExtractor;
 		private readonly IHubContext<SamlIdpHub> _samlIdpHubContext;
-		private readonly ActionBlock<PacketWrapper> _processPacketBlock;
+		private readonly ActionBlock<TaskCompletionWrapper<PacketBase>> _processPacketBlock;
 		private byte[] _secretViewKey;
 		private byte[] _publicViewKey;
 		private byte[] _publicSpendKey;
@@ -58,11 +60,11 @@ namespace O10.Client.Web.Saml.Common.Services
 			PipeIn = _utxoPacketsExtractor.GetTargetPipe<WitnessPackageWrapper>(); // transformBlockIn;
 			//transformBlockIn.LinkTo(_utxoPacketsExtractor.PipeIn);
 
-			_processPacketBlock = new ActionBlock<PacketWrapper>(p =>
+			_processPacketBlock = new ActionBlock<TaskCompletionWrapper<PacketBase>>(p =>
             {
                 try
                 {
-                    if (p.Packet is IdentityProofs identityProofs)
+                    if (p.State is IdentityProofs identityProofs)
                     {
                         try
                         {
@@ -78,7 +80,7 @@ namespace O10.Client.Web.Saml.Common.Services
                             _logger.Error($"Failed to process IdentityProofs packet", ex);
                         }
                     }
-                    else if (p.Packet is TransitionCompromisedProofs compromisedProofs)
+                    else if (p.State is TransitionCompromisedProofs compromisedProofs)
                     {
                         string keyImage = compromisedProofs.CompromisedKeyImage.ToHexString();
                         SamlForceLogout(keyImage);
@@ -92,7 +94,7 @@ namespace O10.Client.Web.Saml.Common.Services
                 }
 			});
 
-			_utxoPacketsExtractor.GetSourcePipe<PacketWrapper>().LinkTo(_processPacketBlock);
+			_utxoPacketsExtractor.GetSourcePipe<TaskCompletionWrapper<PacketBase>>().LinkTo(_processPacketBlock);
 		}
 
 		public async void SamlForceLogout(string keyImage)

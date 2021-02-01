@@ -21,6 +21,7 @@ using O10.Core.Models;
 using O10.Core.Identity;
 using O10.Core.Serialization;
 using O10.Client.Common.Communication.Notifications;
+using O10.Core.Notifications;
 
 namespace O10.Client.Common.Communication
 {
@@ -41,7 +42,7 @@ namespace O10.Client.Common.Communication
 			_propagatorBlockNotifications = new TransformBlock<NotificationBase, NotificationBase>(p => p);
 		}
 
-		public ITargetBlock<PacketWrapper> PipeInTransactions { get; private set; }
+		public ITargetBlock<TaskCompletionWrapper<PacketBase>> PipeInTransactions { get; private set; }
 		public ISourceBlock<NotificationBase> PipeOutNotifications => _propagatorBlockNotifications;
 
 		public async Task<byte[][]> GetIssuanceCommitments(Memory<byte> issuer, int amount)
@@ -122,24 +123,24 @@ namespace O10.Client.Common.Communication
 
             _gatewayUri = gatewayUri;
 
-			PipeInTransactions = new ActionBlock<PacketWrapper>(async p =>
+			PipeInTransactions = new ActionBlock<TaskCompletionWrapper<PacketBase>>(async p =>
 			{
                 try
                 {
-					_logger.Info($"Sending transaction {p.Packet.GetType().Name}");
-					_logger.LogIfDebug(() => JsonConvert.SerializeObject(p.Packet, new ByteArrayJsonConverter()));
+					_logger.Info($"Sending transaction {p.State.GetType().Name}");
+					_logger.LogIfDebug(() => JsonConvert.SerializeObject(p.State, new ByteArrayJsonConverter()));
 
 					var response = await _restClientService
 						.Request(_gatewayUri).AppendPathSegments("api", "synchronization", "SendPacket")
-						.PostJsonAsync(p.Packet)
+						.PostJsonAsync(p.State)
 						.ReceiveJson<SendDataResponse>().ConfigureAwait(false);
 
 					if(!response.Status && !string.IsNullOrEmpty(response.ExistingHash))
                     {
-						_logger.Error($"Failed to send transaction {p.Packet.GetType().Name} because key image {((StealthSignedPacketBase)p.Packet).KeyImage} was already witnessed");
+						_logger.Error($"Failed to send transaction {p.State.GetType().Name} because key image {((StealthSignedPacketBase)p.State).KeyImage} was already witnessed");
 						KeyImageCorruptedNotification keyImageCorrupted = new KeyImageCorruptedNotification
 						{
-							KeyImage = ((StealthSignedPacketBase)p.Packet).KeyImage.ToByteArray(),
+							KeyImage = ((StealthSignedPacketBase)p.State).KeyImage.ToByteArray(),
 							ExistingHash = response.ExistingHash.HexStringToByteArray()
 						};
 						await _propagatorBlockNotifications.SendAsync(keyImageCorrupted).ConfigureAwait(false);

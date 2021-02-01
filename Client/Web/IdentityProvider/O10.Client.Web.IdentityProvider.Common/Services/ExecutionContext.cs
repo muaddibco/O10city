@@ -41,7 +41,7 @@ namespace O10.Server.IdentityProvider.Common.Services
 				clientCryptoService.Initialize(secretKey);
 
 				transactionsService.Initialize(accountId);
-				transactionsService.GetSourcePipe<PacketWrapper>().LinkTo(_gatewayService.PipeInTransactions);
+				transactionsService.GetSourcePipe<TaskCompletionWrapper<PacketBase>>().LinkTo(_gatewayService.PipeInTransactions);
 
 			}
 			catch (Exception ex)

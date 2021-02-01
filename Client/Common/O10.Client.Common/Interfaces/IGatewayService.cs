@@ -8,15 +8,14 @@ using O10.Core.Architecture;
 using O10.Core.Models;
 using O10.Client.Common.Interfaces.Inputs;
 using System.Threading.Tasks;
-using O10.Client.Common.Communication;
-using O10.Client.Common.Communication.Notifications;
+using O10.Core.Notifications;
 
 namespace O10.Client.Common.Interfaces
 {
     [ServiceContract]
     public interface IGatewayService : ISyncStateProvider
 	{
-		ITargetBlock<PacketWrapper> PipeInTransactions { get; }
+		ITargetBlock<TaskCompletionWrapper<PacketBase>> PipeInTransactions { get; }
         ISourceBlock<NotificationBase> PipeOutNotifications { get; }
 
 

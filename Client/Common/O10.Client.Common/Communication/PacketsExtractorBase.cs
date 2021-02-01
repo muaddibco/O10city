@@ -19,7 +19,7 @@ namespace O10.Client.Common.Communication
         protected readonly ILogger _logger;
         private readonly IGatewayService _syncStateProvider;
         private readonly IDataAccessService _dataAccessService;
-        private readonly IPropagatorBlock<PacketWrapper, PacketWrapper> _propagator;
+        private readonly IPropagatorBlock<TaskCompletionWrapper<PacketBase>, TaskCompletionWrapper<PacketBase>> _propagator;
         private readonly IPropagatorBlock<WitnessPackage, WitnessPackage> _propagatorProcessed;
         private readonly IBlockParsersRepositoriesRepository _blockParsersRepositoriesRepository;
         private readonly ITargetBlock<WitnessPackageWrapper> _pipeIn;
@@ -34,7 +34,7 @@ namespace O10.Client.Common.Communication
             ILoggerService loggerService)
         {
             _logger = loggerService.GetLogger(GetType().Name);
-            _propagator = new TransformBlock<PacketWrapper, PacketWrapper>(p => p);
+            _propagator = new TransformBlock<TaskCompletionWrapper<PacketBase>, TaskCompletionWrapper<PacketBase>>(p => p);
             _propagatorProcessed = new TransformBlock<WitnessPackage, WitnessPackage>(p => p);
             _clientCryptoService = clientCryptoService;
             _syncStateProvider = syncStateProvider;
@@ -117,7 +117,7 @@ namespace O10.Client.Common.Communication
                                     _logger.LogIfDebug(() => $"[{_accountId}]: Obtained packet {JsonConvert.SerializeObject(packetBase, new ByteArrayJsonConverter())}");
                                 }
 
-                                PacketWrapper packetWrapper = new PacketWrapper(packetBase);
+                                var packetWrapper = new TaskCompletionWrapper<PacketBase>(packetBase);
                                 allPacketsProcessedTasks.Add(packetWrapper.TaskCompletion.Task);
 
                                 await _propagator.SendAsync(packetWrapper).ConfigureAwait(false);
@@ -155,7 +155,7 @@ namespace O10.Client.Common.Communication
 
         public virtual ISourceBlock<T> GetSourcePipe<T>(string name = null)
         {
-            if (typeof(T) == typeof(PacketWrapper))
+            if (typeof(T) == typeof(TaskCompletionWrapper<PacketBase>))
             {
                 return (ISourceBlock<T>)_propagator;
             }

@@ -1,18 +1,14 @@
 ﻿using Newtonsoft.Json;
 using System;
-using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using O10.Transactions.Core.DataModel;
-using O10.Transactions.Core.DataModel.Registry;
 using O10.Transactions.Core.DataModel.Stealth;
 using O10.Transactions.Core.DataModel.Stealth.Internal;
-using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Parsers;
 using O10.Transactions.Core.Serializers;
 using O10.Client.Common.Dtos.UniversalProofs;
@@ -20,14 +16,13 @@ using O10.Client.Common.Identities;
 using O10.Client.Common.Interfaces;
 using O10.Client.Common.Interfaces.Inputs;
 using O10.Core.Architecture;
-using O10.Core.Communication;
 using O10.Core.Cryptography;
 using O10.Core.ExtensionMethods;
 using O10.Core.HashCalculations;
 using O10.Core.Identity;
 using O10.Core.Logging;
 using O10.Crypto.ConfidentialAssets;
-using O10.Client.Common.Communication.Notifications;
+using O10.Core.Notifications;
 
 namespace O10.Client.Common.Communication
 {

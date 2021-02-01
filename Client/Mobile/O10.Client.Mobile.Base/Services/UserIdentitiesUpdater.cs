@@ -20,6 +20,7 @@ using Xamarin.Forms.Internals;
 using O10.Core.Architecture;
 using System.Threading;
 using O10.Client.Common.Communication.Notifications;
+using O10.Core.Notifications;
 
 namespace O10.Client.Mobile.Base.Services
 {

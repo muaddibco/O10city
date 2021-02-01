@@ -1,5 +1,4 @@
 ﻿using O10.Core.Architecture;
-using O10.Core.Architecture.Enums;
 using O10.Core.Configuration;
 
 namespace O10.Core.Tests.Classes

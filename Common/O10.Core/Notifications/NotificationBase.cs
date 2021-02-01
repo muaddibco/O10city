@@ -1,4 +1,4 @@
-﻿namespace O10.Client.Common.Communication.Notifications
+﻿namespace O10.Core.Notifications
 {
     public abstract class NotificationBase
     {

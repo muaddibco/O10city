@@ -79,7 +79,7 @@ namespace O10.Client.Web.Common.Services
             packetsProvider.Initialize(scopeInitializationParams.AccountId, cancellationTokenSource.Token);
             _clientCryptoService.Initialize(scopeInitializationParams.SecretKey);
             _transactionsService.Initialize(scopeInitializationParams.AccountId);
-            _transactionsService.GetSourcePipe<PacketWrapper>().LinkTo(_gatewayService.PipeInTransactions);
+            _transactionsService.GetSourcePipe<TaskCompletionWrapper<PacketBase>>().LinkTo(_gatewayService.PipeInTransactions);
             statePacketsExtractor.Initialize(scopeInitializationParams.AccountId);
 
             IUpdater updater = _updaterRegistry.GetInstance();
@@ -88,8 +88,8 @@ namespace O10.Client.Web.Common.Services
             walletSynchronizer.Initialize(scopeInitializationParams.AccountId);
 
             packetsProvider.PipeOut.LinkTo(statePacketsExtractor.GetTargetPipe<WitnessPackageWrapper>());
-            statePacketsExtractor.GetSourcePipe<PacketWrapper>()
-                                 .LinkTo(walletSynchronizer.GetTargetPipe<PacketWrapper>());
+            statePacketsExtractor.GetSourcePipe<TaskCompletionWrapper<PacketBase>>()
+                                 .LinkTo(walletSynchronizer.GetTargetPipe<TaskCompletionWrapper<PacketBase>>());
             statePacketsExtractor.GetSourcePipe<WitnessPackage>()
                                  .LinkTo(walletSynchronizer.GetTargetPipe<WitnessPackage>());
 

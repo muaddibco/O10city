@@ -75,7 +75,7 @@ namespace O10.Client.Mobile.Base.Services
             _userIdentitiesUpdater.Initialize(_accountId);
 
             PacketsExtractor.GetSourcePipe<NotificationBase>().LinkTo(_userIdentitiesUpdater.PipeInNotifications);
-            PacketsExtractor.GetSourcePipe<PacketWrapper>().LinkTo(_walletSynchronizer.GetTargetPipe<PacketWrapper>());
+            PacketsExtractor.GetSourcePipe<TaskCompletionWrapper>().LinkTo(_walletSynchronizer.GetTargetPipe<TaskCompletionWrapper>());
             PacketsExtractor.GetSourcePipe<WitnessPackage>().LinkTo(_walletSynchronizer.GetTargetPipe<WitnessPackage>());
 
             _walletSynchronizer.GetSourcePipe<PacketBase>().LinkTo(_userIdentitiesUpdater.PipeIn);

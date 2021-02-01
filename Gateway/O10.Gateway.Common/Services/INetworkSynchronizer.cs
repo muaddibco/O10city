@@ -18,10 +18,10 @@ namespace O10.Gateway.Common.Services
 
 		IPropagatorBlock<WitnessPackage, WitnessPackage> PipeOut { get; set; }
 
-        ITargetBlock<PacketBase> PipeIn { get; }
+        ITargetBlock<TaskCompletionWrapper<PacketBase>> PipeIn { get; }
 
 		Task<bool> SendData(int transactionType, IPacketProvider packetProviderTransaction, IPacketProvider packetProviderWitness);
-		Task<bool> SendPacket(PacketBase packet);
+		void SendPacket(TaskCompletionWrapper<PacketBase> packetWrapper);
 
         void Initialize(CancellationToken cancellationToken);
 

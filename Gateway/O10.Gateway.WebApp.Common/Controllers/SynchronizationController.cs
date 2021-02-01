@@ -25,6 +25,7 @@ using O10.Core.Models;
 using O10.Transactions.Core.DataModel.Stealth;
 using O10.Gateway.Common.Services.Results;
 using O10.Core.Serialization;
+using O10.Core.Notifications;
 
 namespace O10.Gateway.WebApp.Common.Controllers
 {
@@ -179,10 +180,10 @@ namespace O10.Gateway.WebApp.Common.Controllers
 
             var completion = _transactionsHandler.SendPacket(packet);
             await completion.Task.ConfigureAwait(false);
-            var res = completion.Task.Result;
+            var res = await completion.Task.ConfigureAwait(false);
 
-            response.Status = res.Succeeded;
-            if (res is KeyImageValidationResult result)
+            response.Status = res is SucceededNotification;
+            if (res is KeyImageViolatedNotification result)
             {
                 response.ExistingHash = result.ExistingHash;
             }

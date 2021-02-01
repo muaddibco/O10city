@@ -5,6 +5,7 @@ using O10.Client.Common.Interfaces;
 using O10.Core.Architecture;
 using O10.Core.Configuration;
 using O10.Core.Models;
+using O10.Core.Notifications;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -87,7 +88,7 @@ namespace O10.Client.Common.Services
 
             _transactionsService.Initialize(scopeInitializationParams.AccountId);
             utxoWalletPacketsExtractor.Initialize(scopeInitializationParams.AccountId);
-            _transactionsService.GetSourcePipe<PacketWrapper>().LinkTo(_gatewayService.PipeInTransactions);
+            _transactionsService.GetSourcePipe<TaskCompletionWrapper<PacketBase>>().LinkTo(_gatewayService.PipeInTransactions);
             _transactionsService.GetSourcePipe<byte[]>().LinkTo(utxoWalletPacketsExtractor.GetTargetPipe<byte[]>());
 
             IUpdater userIdentitiesUpdater = _updaterRegistry.GetInstance();
@@ -97,7 +98,7 @@ namespace O10.Client.Common.Services
 
             packetsProvider.PipeOut.LinkTo(utxoWalletPacketsExtractor.GetTargetPipe<WitnessPackageWrapper>());
 
-            utxoWalletPacketsExtractor.GetSourcePipe<PacketWrapper>().LinkTo(walletSynchronizer.GetTargetPipe<PacketWrapper>());
+            utxoWalletPacketsExtractor.GetSourcePipe<TaskCompletionWrapper<PacketBase>>().LinkTo(walletSynchronizer.GetTargetPipe<TaskCompletionWrapper<PacketBase>>());
             utxoWalletPacketsExtractor.GetSourcePipe<WitnessPackage>().LinkTo(walletSynchronizer.GetTargetPipe<WitnessPackage>());
             utxoWalletPacketsExtractor.GetSourcePipe<NotificationBase>().LinkTo(userIdentitiesUpdater.PipeInNotifications);
 

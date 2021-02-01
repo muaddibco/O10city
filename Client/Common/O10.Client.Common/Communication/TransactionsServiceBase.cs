@@ -16,6 +16,7 @@ using O10.Core.Logging;
 using O10.Core.Models;
 using O10.Core.Serialization;
 using O10.Client.Common.Communication.Notifications;
+using O10.Core.Notifications;
 
 namespace O10.Client.Common.Communication
 {
@@ -27,7 +28,7 @@ namespace O10.Client.Common.Communication
 		protected readonly IHashCalculation _hashCalculation;
 		protected readonly IHashCalculation _proofOfWorkCalculation;
 		protected readonly IIdentityKeyProvider _identityKeyProvider;
-		private readonly IPropagatorBlock<PacketWrapper, PacketWrapper> _pipeOutTransactions;
+		private readonly IPropagatorBlock<TaskCompletionWrapper<PacketBase>, TaskCompletionWrapper<PacketBase>> _pipeOutTransactions;
 		protected ISigningService _signingService;
 		protected readonly List<IObserver<NotificationBase>> _observers;
 		protected readonly ILogger _logger;
@@ -48,7 +49,7 @@ namespace O10.Client.Common.Communication
 			_proofOfWorkCalculation = hashCalculationsRepository.Create(Globals.POW_TYPE);
 			_identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
 			_observers = new List<IObserver<NotificationBase>>();
-			_pipeOutTransactions = new TransformBlock<PacketWrapper, PacketWrapper>(w => w);
+			_pipeOutTransactions = new TransformBlock<TaskCompletionWrapper<PacketBase>, TaskCompletionWrapper<PacketBase>>(w => w);
 			_signingService = signingService;
 			_gatewayService = gatewayService;
 			_logger = loggerService.GetLogger(GetType().Name);
@@ -56,7 +57,7 @@ namespace O10.Client.Common.Communication
 
 		protected TaskCompletionSource<NotificationBase> PropagateTransaction(PacketBase packet)
         {
-			var packetWrapper = new PacketWrapper(packet);
+			var packetWrapper = new TaskCompletionWrapper<PacketBase>(packet);
 
 			_pipeOutTransactions.SendAsync(packetWrapper);
 			
@@ -91,7 +92,7 @@ namespace O10.Client.Common.Communication
 
 		public virtual ISourceBlock<T> GetSourcePipe<T>(string name = null)
 		{
-			if (typeof(T) == typeof(PacketWrapper))
+			if (typeof(T) == typeof(TaskCompletionWrapper<PacketBase>))
 			{
 				return (ISourceBlock<T>)_pipeOutTransactions;
 			}
