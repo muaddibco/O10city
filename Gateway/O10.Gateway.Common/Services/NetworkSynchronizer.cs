@@ -89,6 +89,12 @@ namespace O10.Gateway.Common.Services
 
 		public void SendPacket(TaskCompletionWrapper<PacketBase> wrapper)
         {
+			if(wrapper == null)
+            {
+				_logger.Error("Null packet received for sending");
+				return;
+            }
+
 			_logger.LogIfDebug(() => $"Sending to Node {_synchronizerConfiguration.NodeApiUri} packet {wrapper.State.GetType().Name}");
 
             try

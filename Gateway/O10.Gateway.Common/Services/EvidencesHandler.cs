@@ -1,4 +1,5 @@
-﻿using O10.Core.Architecture;
+﻿using O10.Core;
+using O10.Core.Architecture;
 using O10.Core.Models;
 using O10.Core.States;
 using O10.Core.Translators;
@@ -6,6 +7,7 @@ using O10.Transactions.Core.Accessors;
 using O10.Transactions.Core.DataModel.Registry;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Serializers;
+using System;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
@@ -20,9 +22,8 @@ namespace O10.Gateway.Common.Services
         private readonly IGatewayContext _gatewayContext;
         private readonly ISerializersFactory _serializersFactory;
 
-        private static IPropagatorBlock<DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>, DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>> InputPipe => new TransformBlock<DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>, DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>>(d => d);
-        private IPropagatorBlock<DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>, TaskCompletionWrapper<PacketBase>> ProduceRegistrationPacket 
-            => new TransformBlock<DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>, TaskCompletionWrapper<PacketBase>>(e => CreateRegisterPacket(e));
+        private IPropagatorBlock<DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>, DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>> _inputPipe;
+        private IPropagatorBlock<DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>, TaskCompletionWrapper<PacketBase>> _produceRegistrationPacket;
 
         public EvidencesHandler(ITranslatorsRepository translatorsRepository,
                                 IAccessorProvider accessorProvider,
@@ -30,8 +31,11 @@ namespace O10.Gateway.Common.Services
                                 IStatesRepository statesRepository,
                                 ISerializersFactory serializersFactory)
         {
+            _inputPipe = new TransformBlock<DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>, DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>>(d => d);
+            _produceRegistrationPacket = new TransformBlock<DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>, TaskCompletionWrapper<PacketBase>>(e => CreateRegisterPacket(e));
+
             _translator = translatorsRepository.GetInstance<EvidenceDescriptor, RegistryRegisterExBlock>();
-            InputPipe.LinkTo(ProduceRegistrationPacket, ValidateEvidence);
+            _inputPipe.LinkTo(_produceRegistrationPacket, ValidateEvidence);
             _accessorProvider = accessorProvider;
             _networkSynchronizer = networkSynchronizer;
             _gatewayContext = statesRepository.GetInstance<IGatewayContext>();
@@ -40,12 +44,12 @@ namespace O10.Gateway.Common.Services
 
         public ISourceBlock<T> GetSourcePipe<T>(string name = null)
         {
-            return (ISourceBlock<T>)ProduceRegistrationPacket;
+            return (ISourceBlock<T>)_produceRegistrationPacket;
         }
 
         public ITargetBlock<T> GetTargetPipe<T>(string name = null)
         {
-            return (ITargetBlock<T>)InputPipe;
+            return (ITargetBlock<T>)_inputPipe;
         }
 
         private bool ValidateEvidence(DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase> wrapper)
@@ -65,17 +69,43 @@ namespace O10.Gateway.Common.Services
         private async Task<TaskCompletionWrapper<PacketBase>> CreateRegisterPacket(DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase> wrapper)
         {
             var evidence = wrapper.State;
-            var packet = _translator.Translate(evidence);
+            try
+            {
+                var packet = _translator.Translate(evidence);
 
-            var lastPacketInfo = await _gatewayContext.GetLastPacketInfo().ConfigureAwait(false);
-            packet.BlockHeight = lastPacketInfo.Height;
-            packet.SyncBlockHeight = (await _networkSynchronizer.GetLastSyncBlock().ConfigureAwait(false))?.Height ?? 0;
+                var lastPacketInfo = await _gatewayContext.GetLastPacketInfo().ConfigureAwait(false);
+                packet.BlockHeight = lastPacketInfo.Height;
+                packet.PowHash = new byte[Globals.DEFAULT_HASH_SIZE];
+                packet.SyncBlockHeight = (await _networkSynchronizer.GetLastSyncBlock().ConfigureAwait(false))?.Height ?? 0;
 
-            ISerializer serializer = _serializersFactory.Create(packet);
-            serializer.SerializeBody();
-            _gatewayContext.SigningService.Sign(packet);
+                ISerializer serializer = _serializersFactory.Create(packet);
+                serializer.SerializeBody();
+                _gatewayContext.SigningService.Sign(packet);
 
-            return new TaskCompletionWrapper<PacketBase>(packet);
+                var evidenceWrapper = new TaskCompletionWrapper<PacketBase>(packet);
+                evidenceWrapper.TaskCompletion.Task
+                    .ContinueWith((t, o) => 
+                    {
+                        var w = o as DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>;
+                        if(t.IsCompletedSuccessfully)
+                        {
+                            w.TaskCompletion.SetResult(t.Result);
+                        }
+                        else
+                        {
+                            w.TaskCompletion.SetException(t.Exception.InnerException);
+                        }
+                    }, wrapper, TaskScheduler.Default);
+
+                return evidenceWrapper;
+
+            }
+            catch (Exception ex)
+            {
+                wrapper.TaskCompletion.SetException(ex);
+            }
+
+            return null;
         }
     }
 }

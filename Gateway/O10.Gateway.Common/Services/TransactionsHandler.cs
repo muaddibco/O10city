@@ -15,6 +15,7 @@ using O10.Transactions.Core.Accessors;
 using O10.Transactions.Core.DataModel.Stealth;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Serializers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -25,14 +26,16 @@ namespace O10.Gateway.Common.Services
     [RegisterDefaultImplementation(typeof(ITransactionsHandler), Lifetime = LifetimeManagement.Singleton)]
     public class TransactionsHandler : ITransactionsHandler
     {
-        private readonly IPropagatorBlock<TaskCompletionWrapper<PacketBase>, DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>> _pipeEvidence;
-        private readonly IPropagatorBlock<TaskCompletionWrapper<PacketBase>, TaskCompletionWrapper<PacketBase>> _pipeInPacket;
+        private readonly IPropagatorBlock<PacketBase, PacketBase> _pipeInPacket;
+        private readonly IPropagatorBlock<PacketBase, DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>> _pipeEvidence;
         private readonly IPropagatorBlock<TaskCompletionWrapper<PacketBase>, TaskCompletionWrapper<PacketBase>> _pipeOutPacket;
         private readonly IHashCalculation _hashCalculation;
         private readonly ILogger _logger;
         private readonly ISynchronizerConfiguration _synchronizerConfiguration;
         private readonly ISerializersFactory _serializersFactory;
         private readonly Dictionary<PacketBase, TaskCompletionSource<NotificationBase>> _completions = new Dictionary<PacketBase, TaskCompletionSource<NotificationBase>>();
+        //private readonly Dictionary<PacketBase, Task> _waitingTasks = new Dictionary<PacketBase, Task>();
+        //private readonly Dictionary<PacketBase, DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>> _dependings = new Dictionary<PacketBase, DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>>();
 
         public TransactionsHandler(IHashCalculationsRepository hashCalculationsRepository,
                                    IConfigurationService configurationService,
@@ -43,8 +46,9 @@ namespace O10.Gateway.Common.Services
             _synchronizerConfiguration = configurationService.Get<ISynchronizerConfiguration>();
 
             _hashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
-            _pipeInPacket = new TransformBlock<TaskCompletionWrapper<PacketBase>, TaskCompletionWrapper<PacketBase>>(p => p);
-            _pipeEvidence = new TransformBlock<TaskCompletionWrapper<PacketBase>, DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>>(p => ProduceEvidenceAndSend(p));
+            _pipeInPacket = new TransformBlock<PacketBase, PacketBase>(p => p);
+            _pipeEvidence = new TransformBlock<PacketBase, DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>>(p => ProduceEvidenceAndSend(p));
+            _pipeOutPacket = new TransformBlock<TaskCompletionWrapper<PacketBase>, TaskCompletionWrapper<PacketBase>>(p => p);
             
             _pipeInPacket.LinkTo(_pipeEvidence, ValidatePacket);
             _serializersFactory = serializersFactory;
@@ -52,20 +56,21 @@ namespace O10.Gateway.Common.Services
 
         public TaskCompletionSource<NotificationBase> SendPacket(PacketBase packetBase)
         {
-            TaskCompletionWrapper<PacketBase> wrapper = new TaskCompletionWrapper<PacketBase>(packetBase);
+            TaskCompletionSource<NotificationBase> taskCompletion = new TaskCompletionSource<NotificationBase>(packetBase);
+            _completions.Add(packetBase, taskCompletion);
 
-            _pipeInPacket.SendAsync(wrapper);
+            _pipeInPacket.SendAsync(packetBase);
 
-            return wrapper.TaskCompletion;
+            return taskCompletion;
         }
 
         public ISourceBlock<T> GetSourcePipe<T>(string name = null)
         {
-            if(typeof(T) == typeof(EvidenceDescriptor))
+            if(typeof(T) == typeof(DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>))
             {
                 return (ISourceBlock<T>)_pipeEvidence;
             }
-            else if(typeof(T) == typeof(PacketBase))
+            else if(typeof(T) == typeof(TaskCompletionWrapper<PacketBase>))
             {
                 return (ISourceBlock<T>)_pipeOutPacket;
             }
@@ -83,12 +88,12 @@ namespace O10.Gateway.Common.Services
             throw new InvalidTargetPipeRequestException(typeof(T));
         }
 
-        private bool ValidatePacket(TaskCompletionWrapper<PacketBase> wrapper)
+        private bool ValidatePacket(PacketBase packet)
         {
             bool res = true;
             string existingHash = null;
 
-            if (wrapper.State is StealthBase stealth)
+            if (packet is StealthBase stealth)
             {
                 var keyImage = stealth.KeyImage.ToString();
 
@@ -101,64 +106,76 @@ namespace O10.Gateway.Common.Services
                     _logger.Error($"It was found that key image {keyImage} already was witnessed for the packet with hash {packetHashResponse.Hash}");
                     res = false;
                     existingHash = packetHashResponse.Hash;
+                    _completions[packet].SetResult(new KeyImageViolatedNotification { ExistingHash = existingHash });
+                    _completions.Remove(packet);
                 }
             }
-            else if(wrapper.State.PacketType != (ushort)PacketType.Transactional)
+            else if(packet.PacketType != (ushort)PacketType.Transactional)
             {
-                _logger.Error($"Packets of the type {wrapper.State.GetType().Name} are not supported");
+                _logger.Error($"Packets of the type {packet.GetType().Name} are not supported");
                 res = false;
+                _completions[packet].SetResult(new FailedNotification());
+                _completions.Remove(packet);
             }
-
-            wrapper.TaskCompletion.SetResult(new KeyImageViolatedNotification { ExistingHash = existingHash });
 
             return res;
         }
 
-        private DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase> ProduceEvidenceAndSend(TaskCompletionWrapper<PacketBase> wrapper)
+        private DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase> ProduceEvidenceAndSend(PacketBase packet)
         {
-            if(wrapper.State.RawData.Length == 0)
+            TaskCompletionWrapper<PacketBase> wrapper = new TaskCompletionWrapper<PacketBase>(packet);
+
+            if(packet.RawData.Length == 0)
             {
-                using var serializer = _serializersFactory.Create(wrapper.State);
+                using var serializer = _serializersFactory.Create(packet);
                 serializer.SerializeFully();
             }
 
             EvidenceDescriptor evidenceDescriptor = new EvidenceDescriptor
             {
-                ActionType = wrapper.State.BlockType,
-                PacketType = (PacketType)wrapper.State.PacketType,
-                Parameters = new Dictionary<string, string> { { "BodyHash", _hashCalculation.CalculateHash(wrapper.State.RawData).ToHexString() } }
+                ActionType = packet.BlockType,
+                PacketType = (PacketType)packet.PacketType,
+                Parameters = new Dictionary<string, string> { { "BodyHash", _hashCalculation.CalculateHash(packet.RawData).ToHexString() } }
             };
 
             DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase> depending 
                 = new DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>(evidenceDescriptor, wrapper);
 
-            depending
-                .CompletionAll.Task.ContinueWith((t, o) => 
-                {
-                    var packet = o as PacketBase;
-                    var completionSource = _completions[packet];
-                    if(t.IsCompletedSuccessfully)
-                    {
-                        if(t.Result.All(n => n is SucceededNotification))
-                        {
-                            completionSource.SetResult(new SucceededNotification());
-                        }
-                        else
-                        {
-                            completionSource.SetResult(new FailedNotification());
-                        }
-                    }
-                    else
-                    {
-                        completionSource.SetException(t.Exception.InnerException);
-                    }
-
-                    _completions.Remove(packet);
-                }, wrapper.State, TaskScheduler.Default);
+            StartWaitingForDependingCompletion(depending);
+            //_dependings.Add(packet, depending);
+            //_waitingTasks.Add(packet, StartWaitingForDependingCompletion(depending));
 
             _pipeOutPacket.SendAsync(wrapper);
 
             return depending;
+        }
+
+        private async Task StartWaitingForDependingCompletion(DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase> depending)
+        {
+            PacketBase packet = depending.DependingTaskCompletion.State;
+
+            try
+            {
+                IEnumerable<NotificationBase> notifications = await depending.WaitForCompletion().ConfigureAwait(false);
+                if (notifications.All(n => n is SucceededNotification))
+                {
+                    _completions[packet].SetResult(new SucceededNotification());
+                }
+                else
+                {
+                    _completions[packet].SetResult(new FailedNotification());
+                }
+            }
+            catch(Exception ex)
+            {
+                _completions[packet].SetException(ex);
+            }
+            finally
+            {
+                _completions.Remove(packet);
+                //_waitingTasks.Remove(packet);
+                //_dependings.Remove(packet);
+            }
         }
     }
 }

@@ -9,6 +9,7 @@ using O10.Transactions.Core.Parsers;
 using System.Collections.Generic;
 using O10.Core.Tracking;
 using O10.Core.Models;
+using O10.Transactions.Core.Serializers;
 
 namespace O10.Network.Handlers
 {
@@ -25,7 +26,13 @@ namespace O10.Network.Handlers
 
         public bool IsInitialized { get; private set; }
 
-        public PacketsHandler(IPacketVerifiersRepository packetTypeHandlersFactory, IBlockParsersRepositoriesRepository blockParsersFactoriesRepository, IBlocksHandlersRegistry blocksProcessorFactory, ICoreVerifiersBulkFactory coreVerifiersBulkFactory, ITrackingService trackingService, ILoggerService loggerService)
+        public PacketsHandler(IPacketVerifiersRepository packetTypeHandlersFactory,
+                              IBlockParsersRepositoriesRepository blockParsersFactoriesRepository,
+                              IBlocksHandlersRegistry blocksProcessorFactory,
+                              ICoreVerifiersBulkFactory coreVerifiersBulkFactory,
+                              ISerializersFactory serializersFactory,
+                              ITrackingService trackingService,
+                              ILoggerService loggerService)
         {
             _log = loggerService.GetLogger(GetType().Name);
             _messagePackets = new BlockingCollection<byte[]>();
@@ -37,7 +44,7 @@ namespace O10.Network.Handlers
 
             for (int i = 0; i < _maxDegreeOfParallelism; i++)
             {
-                _handlingFlows[i] = new PacketHandlingFlow(i, coreVerifiersBulkFactory, packetTypeHandlersFactory, blockParsersFactoriesRepository, blocksProcessorFactory, trackingService, loggerService);
+                _handlingFlows[i] = new PacketHandlingFlow(i, coreVerifiersBulkFactory, packetTypeHandlersFactory, blockParsersFactoriesRepository, blocksProcessorFactory, serializersFactory, trackingService, loggerService);
             }
 
             _trackingService = trackingService;
@@ -85,6 +92,7 @@ namespace O10.Network.Handlers
             for (int i = 0; i < _maxDegreeOfParallelism; i++)
             {
                 tasks.Add(Task.Factory.StartNew(o => Parse((int)o), i, _cancellationToken, TaskCreationOptions.LongRunning, TaskScheduler.Current));
+                tasks.Add(Task.Factory.StartNew(o => Process((int)o), i, _cancellationToken, TaskCreationOptions.LongRunning, TaskScheduler.Current));
             }
 
             _log.Debug(() => "PacketsHandler started");

@@ -135,20 +135,30 @@ namespace O10.Client.Common.Communication
 						.PostJsonAsync(p.State)
 						.ReceiveJson<SendDataResponse>().ConfigureAwait(false);
 
-					if(!response.Status && !string.IsNullOrEmpty(response.ExistingHash))
-                    {
-						_logger.Error($"Failed to send transaction {p.State.GetType().Name} because key image {((StealthSignedPacketBase)p.State).KeyImage} was already witnessed");
-						KeyImageCorruptedNotification keyImageCorrupted = new KeyImageCorruptedNotification
+					if (!response.Status)
+					{
+						if (!string.IsNullOrEmpty(response.ExistingHash))
 						{
-							KeyImage = ((StealthSignedPacketBase)p.State).KeyImage.ToByteArray(),
-							ExistingHash = response.ExistingHash.HexStringToByteArray()
-						};
-						await _propagatorBlockNotifications.SendAsync(keyImageCorrupted).ConfigureAwait(false);
+							_logger.Error($"Failed to send transaction {p.State.GetType().Name} because key image {((StealthSignedPacketBase)p.State).KeyImage} was already witnessed");
+							KeyImageCorruptedNotification keyImageCorrupted = new KeyImageCorruptedNotification
+							{
+								KeyImage = ((StealthSignedPacketBase)p.State).KeyImage.ToByteArray(),
+								ExistingHash = response.ExistingHash.HexStringToByteArray()
+							};
+							await _propagatorBlockNotifications.SendAsync(keyImageCorrupted).ConfigureAwait(false);
 
-						p.TaskCompletion.SetResult(keyImageCorrupted);
-                    }
-
-					p.TaskCompletion.SetResult(new SucceededNotification());
+							p.TaskCompletion.SetResult(keyImageCorrupted);
+						}
+						else
+						{
+							_logger.Error($"Failed to send transaction {p.State.GetType().Name} due to unknown error");
+							p.TaskCompletion.SetResult(new FailedNotification());
+						}
+					}
+					else
+					{
+						p.TaskCompletion.SetResult(new SucceededNotification());
+					}
                 }
                 catch (FlurlHttpException ex)
                 {

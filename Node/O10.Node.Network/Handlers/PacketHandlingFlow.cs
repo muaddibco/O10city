@@ -10,6 +10,7 @@ using O10.Core.ExtensionMethods;
 using O10.Core.Logging;
 using O10.Core.Models;
 using O10.Core.Tracking;
+using O10.Transactions.Core.Serializers;
 
 namespace O10.Network.Handlers
 {
@@ -19,6 +20,7 @@ namespace O10.Network.Handlers
         private readonly IPacketVerifiersRepository _chainTypeValidationHandlersFactory;
         private readonly IBlockParsersRepositoriesRepository _blockParsersFactoriesRepository;
         private readonly IBlocksHandlersRegistry _blocksHandlersRegistry;
+        private readonly ISerializersFactory _serializersFactory;
         private readonly ITrackingService _trackingService;
         private readonly ILogger _log;
 
@@ -26,15 +28,21 @@ namespace O10.Network.Handlers
         private readonly TransformBlock<byte[], PacketBase> _parseBlock;
         private readonly ActionBlock<PacketBase> _processBlock;
 
-        public PacketHandlingFlow(int iteration, ICoreVerifiersBulkFactory coreVerifiersBulkFactory, 
-            IPacketVerifiersRepository packetTypeHandlersFactory, IBlockParsersRepositoriesRepository blockParsersFactoriesRepository, 
-            IBlocksHandlersRegistry blocksProcessorFactory, ITrackingService trackingService, ILoggerService loggerService)
+        public PacketHandlingFlow(int iteration,
+                                  ICoreVerifiersBulkFactory coreVerifiersBulkFactory,
+                                  IPacketVerifiersRepository packetTypeHandlersFactory,
+                                  IBlockParsersRepositoriesRepository blockParsersFactoriesRepository,
+                                  IBlocksHandlersRegistry blocksProcessorFactory,
+                                  ISerializersFactory serializersFactory,
+                                  ITrackingService trackingService,
+                                  ILoggerService loggerService)
         {
             _coreVerifiers = coreVerifiersBulkFactory.Create();
             _log = loggerService.GetLogger($"{nameof(PacketHandlingFlow)}#{iteration}");
             _blockParsersFactoriesRepository = blockParsersFactoriesRepository;
             _chainTypeValidationHandlersFactory = packetTypeHandlersFactory;
             _blocksHandlersRegistry = blocksProcessorFactory;
+            _serializersFactory = serializersFactory;
             _trackingService = trackingService;
             _decodeBlock = new TransformBlock<byte[], byte[]>(DecodeMessage, new ExecutionDataflowBlockOptions() { MaxDegreeOfParallelism = 1, BoundedCapacity = 1000000});
             _parseBlock = new TransformBlock<byte[], PacketBase>(ParseMessagePacket, new ExecutionDataflowBlockOptions() { MaxDegreeOfParallelism = 1, BoundedCapacity = 1000000 });
@@ -47,6 +55,12 @@ namespace O10.Network.Handlers
         public void PostPacket(PacketBase packet)
         {
             _log.Debug(() => $"Posting to processing packet {packet.GetType().Name} [{packet.PacketType}:{packet.BlockType}]");
+
+            if(packet.RawData.Length == 0)
+            {
+                using var serializer = _serializersFactory.Create(packet);
+                serializer.SerializeFully();
+            }
 
             _processBlock.Post(packet);
         }

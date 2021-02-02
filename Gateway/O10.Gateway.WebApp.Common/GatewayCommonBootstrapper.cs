@@ -43,8 +43,8 @@ namespace O10.Server.Gateway
             
             transactionsHandler.GetSourcePipe<DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>>().LinkTo(evidencesHandler.GetTargetPipe<DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>>());
 
-            transactionsHandler.GetSourcePipe<TaskCompletionWrapper<PacketBase>>().LinkTo(networkSynchronizer.PipeIn);
-            evidencesHandler.GetSourcePipe<TaskCompletionWrapper<PacketBase>>().LinkTo(networkSynchronizer.PipeIn);
+            transactionsHandler.GetSourcePipe<TaskCompletionWrapper<PacketBase>>().LinkTo(new ActionBlock<TaskCompletionWrapper<PacketBase>>(w => networkSynchronizer.PipeIn.SendAsync(w)));
+            evidencesHandler.GetSourcePipe<TaskCompletionWrapper<PacketBase>>().LinkTo(new ActionBlock<TaskCompletionWrapper<PacketBase>>(w => networkSynchronizer.PipeIn.SendAsync(w)));
 
             networkSynchronizer.PipeOut = new TransformBlock<WitnessPackage, WitnessPackage>(w => w);
             networkSynchronizer.PipeOut.LinkTo(notificationsHubService.PipeIn);

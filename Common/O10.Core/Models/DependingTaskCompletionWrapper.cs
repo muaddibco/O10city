@@ -9,24 +9,13 @@ namespace O10.Core.Models
         public DependingTaskCompletionWrapper(T state, TaskCompletionWrapper<TDepend> taskCompletionDependant) : base(state)
         {
             DependingTaskCompletion = taskCompletionDependant;
-            CompletionAll = new TaskCompletionSource<IEnumerable<NotificationBase>>();
-            Task
-                .WhenAll(new Task<NotificationBase>[] { TaskCompletion.Task, DependingTaskCompletion.TaskCompletion.Task })
-                .ContinueWith(t =>
-                {
-                    if (t.IsCompletedSuccessfully)
-                    {
-                        CompletionAll.SetResult(t.Result);
-                    }
-                    else
-                    {
-                        CompletionAll.SetException(t.Exception.InnerException);
-                    }
-                }, TaskScheduler.Default);
         }
 
         public TaskCompletionWrapper<TDepend> DependingTaskCompletion { get; }
 
-        public TaskCompletionSource<IEnumerable<NotificationBase>> CompletionAll { get; set; }
+        public async Task<IEnumerable<NotificationBase>> WaitForCompletion()
+        {
+            return await Task.WhenAll(new Task<NotificationBase>[] { TaskCompletion.Task, DependingTaskCompletion.TaskCompletion.Task }).ConfigureAwait(false);
+        }
     }
 }

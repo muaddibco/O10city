@@ -8,9 +8,11 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using O10.Core.Configuration;
 using O10.Core.ExtensionMethods;
 using O10.Core.Logging;
+using O10.Core.Serialization;
 using O10.Gateway.WebApp.Common.Controllers;
 using O10.Gateway.WebApp.Common.Hubs;
 using O10.Gateway.WebApp.Common.Services;
@@ -20,6 +22,7 @@ namespace O10.Gateway.WebApp
 {
     public class Startup
     {
+        static IContractResolver _suppressItemTypeNameContractResolver = new SuppressItemTypeNameContractResolver();
         private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly Log4NetLogger _logger;
 
@@ -51,9 +54,16 @@ namespace O10.Gateway.WebApp
             services.AddBootstrapper<GatewayCommonBootstrapper>(_logger);
             services.Replace(new ServiceDescriptor(typeof(IAppConfig), _ => new JsonAppConfig(Configuration), ServiceLifetime.Singleton));
 
-            FlurlHttp.Configure(s => 
+            FlurlHttp.Configure(s =>
             {
-                var jsonSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto };
+                var jsonSettings = new JsonSerializerSettings
+                {
+                    TypeNameHandling = TypeNameHandling.All,
+                    ContractResolver = _suppressItemTypeNameContractResolver,
+                    TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
+                    NullValueHandling = NullValueHandling.Ignore,
+                    Formatting = Formatting.Indented
+                };
                 s.JsonSerializer = new NewtonsoftJsonSerializer(jsonSettings);
             });
         }
