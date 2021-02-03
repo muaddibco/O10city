@@ -12,7 +12,9 @@ namespace O10.Gateway.DataLayer.Configuration
         {
         }
 
+        [Tokenized]
         public string ConnectionString { get; set; }
+
         public string ConnectionType { get; set; }
 	}
 }

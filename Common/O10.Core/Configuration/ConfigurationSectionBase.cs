@@ -8,7 +8,7 @@ namespace O10.Core.Configuration
 {
 	public class ConfigurationSectionBase : IConfigurationSection
     {
-        private bool _isInitialized = false;
+        private bool _isInitialized;
         private readonly object _sync = new object();
 
 		public ConfigurationSectionBase(IAppConfig appConfig, string sectionName)
@@ -58,19 +58,21 @@ namespace O10.Core.Configuration
 
         private void SetPropertyValue(PropertyInfo propertyInfo)
         {
-            string _propertyName = propertyInfo.Name;
-            object[] attrs = propertyInfo?.GetCustomAttributes(typeof(OptionalAttribute), true);
-            bool _isOptional = (attrs?.Length ?? 0) > 0;
-            string key = string.IsNullOrWhiteSpace(SectionName) ? _propertyName : $"{SectionName}:{_propertyName}";
+            string propertyName = propertyInfo.Name;
+
+            bool isOptional = IsOptional(propertyInfo);
+            bool isTokenized = IsTokenized(propertyInfo);
+
+            string key = string.IsNullOrWhiteSpace(SectionName) ? propertyName : $"{SectionName}:{propertyName}";
 
             //string sValue = _appConfig.GetString(key.ToLower(), !_isOptional);
-            string sValue = AppConfig.GetString(key, !_isOptional);
-			object value;
-			if (propertyInfo.PropertyType.IsArray)
+            string sValue = AppConfig.GetString(key, !isOptional);
+            object value;
+            if (propertyInfo.PropertyType.IsArray)
             {
                 Array values;
 
-                if (string.IsNullOrEmpty(sValue) && _isOptional)
+                if (string.IsNullOrEmpty(sValue) && isOptional)
                 {
                     values = Array.CreateInstance(propertyInfo.PropertyType.GetElementType(), 0);
                 }
@@ -84,13 +86,19 @@ namespace O10.Core.Configuration
 
                     foreach (string arrSValue in arrValues)
                     {
-                        if (TryConvertSingleValue(propertyInfo.PropertyType.GetElementType(), arrSValue.Trim(), out arrValue, _isOptional))
+                        var val = arrSValue;
+                        if(isTokenized && !string.IsNullOrEmpty(arrSValue))
+                        {
+                            val = AppConfig.ReplaceToken(arrSValue);
+                        }
+
+                        if (TryConvertSingleValue(propertyInfo.PropertyType.GetElementType(), val.Trim(), out arrValue, isOptional))
                         {
                             values.SetValue(arrValue, index++);
                         }
                         else
                         {
-                            throw new ConfigurationParameterValueConversionFailedException(sValue, key, propertyInfo.PropertyType, _propertyName, GetType());
+                            throw new ConfigurationParameterValueConversionFailedException(sValue, key, propertyInfo.PropertyType, propertyName, GetType());
                         }
                     }
                 }
@@ -99,13 +107,33 @@ namespace O10.Core.Configuration
             }
             else
             {
-                if (!TryConvertSingleValue(propertyInfo.PropertyType, sValue, out value, _isOptional))
+                var val = sValue;
+                if (isTokenized && !string.IsNullOrEmpty(sValue))
                 {
-                    throw new ConfigurationParameterValueConversionFailedException(sValue, key, propertyInfo.PropertyType, _propertyName, GetType());
+                    val = AppConfig.ReplaceToken(sValue);
+                }
+
+                if (!TryConvertSingleValue(propertyInfo.PropertyType, val, out value, isOptional))
+                {
+                    throw new ConfigurationParameterValueConversionFailedException(sValue, key, propertyInfo.PropertyType, propertyName, GetType());
                 }
             }
 
             propertyInfo.SetValue(this, value);
+        }
+
+        private static bool IsOptional(PropertyInfo propertyInfo)
+        {
+            object[] attrs = propertyInfo?.GetCustomAttributes(typeof(OptionalAttribute), true);
+            bool isOptional = (attrs?.Length ?? 0) > 0;
+            return isOptional;
+        }
+
+        private static bool IsTokenized(PropertyInfo propertyInfo)
+        {
+            object[] attrs = propertyInfo?.GetCustomAttributes(typeof(TokenizedAttribute), true);
+            bool isTokenized = (attrs?.Length ?? 0) > 0;
+            return isTokenized;
         }
 
         private bool TryConvertSingleValue(Type targetType, string sValue, out object value, bool isOptional)

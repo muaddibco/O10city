@@ -14,16 +14,10 @@ namespace O10.Gateway.Common.Configuration
         {
         }
 
-        public string NodeApiUri
-        {
-            get => AppConfig.ReplaceToken(_nodeApiUri);
-            set => _nodeApiUri = value;
-        }
+        [Tokenized]
+        public string NodeApiUri { get; set; }
 
-        public string NodeServiceApiUri 
-        { 
-            get => AppConfig.ReplaceToken(_nodeServiceApiUri); 
-            set => _nodeServiceApiUri = value; 
-        }
+        [Tokenized]
+        public string NodeServiceApiUri { get; set; }
     }
 }

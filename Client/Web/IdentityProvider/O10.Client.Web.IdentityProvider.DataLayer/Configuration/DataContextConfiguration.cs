@@ -1,5 +1,4 @@
 ﻿using O10.Core.Architecture;
-
 using O10.Core.Configuration;
 
 namespace O10.IdentityProvider.DataLayer.Configuration
@@ -13,7 +12,9 @@ namespace O10.IdentityProvider.DataLayer.Configuration
         {
         }
 
+        [Tokenized]
         public string ConnectionString { get; set; }
+
         public string ConnectionType { get; set; }
 	}
 }

@@ -13,6 +13,7 @@ namespace O10.Core.DataLayer.Configuration
         {
         }
 
+        [Tokenized]
         public string ConnectionString { get; set; }
 
 		public string ConnectionType { get; set; }

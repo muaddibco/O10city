@@ -9,13 +9,6 @@ namespace O10.Client.Common.Configuration
     public class RestApiConfiguration : ConfigurationSectionBase, IRestApiConfiguration
     {
         public const string SECTION_NAME = "RestApi";
-        private string _gatewayUri;
-        private string _inherenceUri;
-        private string _samlIdpUri;
-        private string _schemaResolutionUri;
-        private string _externalIdpsUri;
-        private string _consentManagementUri;
-        private string _universalProofsPoolUri;
 
         public RestApiConfiguration(IAppConfig appConfig) : base(appConfig, SECTION_NAME)
         {
@@ -23,49 +16,27 @@ namespace O10.Client.Common.Configuration
 
         public ushort RingSize { get; set; }
 
-        public string GatewayUri
-        {
-            get => AppConfig.ReplaceToken(_gatewayUri);
-            set => _gatewayUri = value;
-        }
+        [Tokenized]
+        public string GatewayUri { get; set; }
 
-        public string InherenceUri
-        {
-            get => AppConfig.ReplaceToken(_inherenceUri);
-            set => _inherenceUri = value;
-        }
+        [Tokenized]
+        public string InherenceUri { get; set; }
 
-        public string SamlIdpUri
-        {
-            get => AppConfig.ReplaceToken(_samlIdpUri);
-            set => _samlIdpUri = value;
-        }
+        [Tokenized]
+        public string SamlIdpUri { get; set; }
 
-        public string SchemaResolutionUri
-        {
-            get => AppConfig.ReplaceToken(_schemaResolutionUri);
-            set => _schemaResolutionUri = value;
-        }
+        [Tokenized]
+        public string SchemaResolutionUri { get; set; }
 
-        [Optional]
-        public string ExternalIdpsUri
-        {
-            get => AppConfig.ReplaceToken(_externalIdpsUri);
-            set => _externalIdpsUri = value;
-        }
+        [Optional, Tokenized]
+        public string ExternalIdpsUri { get; set; }
 
-        public string ConsentManagementUri
-        {
-            get => AppConfig.ReplaceToken(_consentManagementUri);
-            set => _consentManagementUri = value;
-        }
+        [Tokenized]
+        public string ConsentManagementUri { get; set; }
 
         public string WitnessProviderName { get; set; }
 
-        public string UniversalProofsPoolUri 
-        { 
-            get => AppConfig.ReplaceToken(_universalProofsPoolUri); 
-            set => _universalProofsPoolUri = value; 
-        }
+        [Tokenized]
+        public string UniversalProofsPoolUri { get; set; }
     }
 }
