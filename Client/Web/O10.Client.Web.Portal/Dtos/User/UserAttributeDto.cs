@@ -1,4 +1,7 @@
-﻿namespace O10.Client.Web.Portal.Dtos.User
+﻿using Newtonsoft.Json.Converters;
+using System.Text.Json.Serialization;
+
+namespace O10.Client.Web.Portal.Dtos.User
 {
     public class UserAttributeDto
     {

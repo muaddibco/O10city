@@ -106,7 +106,7 @@ namespace O10.Client.Web.Portal.Controllers
             _logger = loggerService.GetLogger(nameof(UserController));
         }
 
-        [HttpGet("UserAttributes")]
+        [HttpGet("{accountId}/Attributes")]
         public async Task<ActionResult<IEnumerable<UserAttributeSchemeDto>>> GetUserAttributes(long accountId)
         {
             var scope = _executionContextManager.ResolveExecutionServices(accountId).Scope;
@@ -954,7 +954,7 @@ namespace O10.Client.Web.Portal.Controllers
             return BadRequest(error);
         }
 
-        [HttpPost("AttributesIssuance")]
+        [HttpPost("{accountId}/Attributes")]
         public async Task<IActionResult> RequestForAttributesIssuance(long accountId, [FromBody] AttributesIssuanceRequestDto attributesIssuanceRequest)
         {
             _logger.Info("RequestForAttributesIssuance started");

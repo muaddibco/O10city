@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 using O10.Core.Configuration;
 using O10.Core.ExtensionMethods;
@@ -46,6 +47,7 @@ namespace O10.Gateway.WebApp
                 .AddNewtonsoftJson(o =>
                 {
                     o.SerializerSettings.TypeNameHandling = TypeNameHandling.Auto;
+                    o.SerializerSettings.Converters.Add(new StringEnumConverter());
                 });
 
             services.AddCors();
@@ -64,6 +66,7 @@ namespace O10.Gateway.WebApp
                     NullValueHandling = NullValueHandling.Ignore,
                     Formatting = Formatting.Indented
                 };
+                jsonSettings.Converters.Add(new StringEnumConverter());
                 s.JsonSerializer = new NewtonsoftJsonSerializer(jsonSettings);
             });
         }

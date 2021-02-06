@@ -29,14 +29,13 @@ using Flurl;
 using Flurl.Http;
 using Newtonsoft.Json;
 using System.Net.Http;
-using O10.Gateway.Common.Dtos;
 using System.Collections.Concurrent;
 using O10.Core.Serialization;
 using O10.Core.Notifications;
 
 namespace O10.Gateway.Common.Services
 {
-    [RegisterDefaultImplementation(typeof(INetworkSynchronizer), Lifetime = LifetimeManagement.Singleton)]
+	[RegisterDefaultImplementation(typeof(INetworkSynchronizer), Lifetime = LifetimeManagement.Singleton)]
 	public class NetworkSynchronizer : INetworkSynchronizer
 	{
 		private readonly ConcurrentDictionary<int, TaskCompletionSource<bool>> _connectityCheckerAwaiters;

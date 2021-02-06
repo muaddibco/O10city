@@ -107,19 +107,19 @@ namespace O10.Client.Web.Portal.Controllers
             return Ok(_translatorsRepository.GetInstance<AccountDescriptor, AccountDto>().Translate(accountDescriptor));
         }
 
-        [HttpPost("Start")]
-        public IActionResult Start([FromBody] AccountDto accountDto)
+        [HttpPost("{accountId}/Start")]
+        public IActionResult Start(long accountId)
         {
-            _logger.LogIfDebug(() => $"[{accountDto.AccountId}]: Starting the account {JsonConvert.SerializeObject(accountDto)}");
+            _logger.LogIfDebug(() => $"[{accountId}]: Starting the account with Id {accountId}");
 
             try
             {
-                var account = _dataAccessService.GetAccount(accountDto.AccountId);
+                var account = _dataAccessService.GetAccount(accountId);
                 var accountDescriptor = _translatorsRepository.GetInstance<Account, AccountDescriptor>()?.Translate(account);
 
                 if (accountDescriptor == null)
                 {
-                    throw new AccountNotFoundException(accountDto.AccountId);
+                    throw new AccountNotFoundException(accountId);
                 }
 
                 if (accountDescriptor.AccountType == AccountType.User)
@@ -142,34 +142,34 @@ namespace O10.Client.Web.Portal.Controllers
                     PublicViewKey = accountDescriptor.PublicViewKey.ToHexString()
                 };
 
-                _logger.LogIfDebug(() => $"[{accountDto.AccountId}]: Authenticated account {JsonConvert.SerializeObject(forLog)}");
+                _logger.LogIfDebug(() => $"[{accountId}]: Authenticated account {JsonConvert.SerializeObject(forLog)}");
 
                 return Ok(_translatorsRepository.GetInstance<AccountDescriptor, AccountDto>().Translate(accountDescriptor));
             }
             catch (Exception ex)
             {
-                _logger.Error($"[{accountDto.AccountId}]: failure during authentication", ex);
+                _logger.Error($"[{accountId}]: failure during authentication", ex);
                 throw;
             }
         }
 
-        [HttpGet("BindingKey")]
+        [HttpGet("{accountId}/BindingKey")]
         public IActionResult IsBindingKeySet(long accountId)
         {
             return Ok(_executionContextManager.ResolveExecutionServices(accountId)?.Scope.ServiceProvider.GetService<IBoundedAssetsService>().IsBindingKeySet());
         }
 
-        [HttpPost("BindingKey")]
-        public IActionResult BindingKey([FromBody] BindingKeyRequestDto bindingKeyRequest)
+        [HttpPost("{accountId}/BindingKey")]
+        public IActionResult BindingKey(long accountId, [FromBody] BindingKeyRequestDto bindingKeyRequest)
         {
-            var accountDescriptor = _accountsService.Authenticate(bindingKeyRequest.AccountId, bindingKeyRequest.Password);
+            var accountDescriptor = _accountsService.Authenticate(accountId, bindingKeyRequest.Password);
 
             if (accountDescriptor == null && !bindingKeyRequest.Force)
             {
-                throw new AccountAuthenticationFailedException(bindingKeyRequest.AccountId);
+                throw new AccountAuthenticationFailedException(accountId);
             }
 
-            var persistency = _executionContextManager.ResolveExecutionServices(bindingKeyRequest.AccountId);
+            var persistency = _executionContextManager.ResolveExecutionServices(accountId);
             var relationsBindingService = persistency.Scope.ServiceProvider.GetService<IBoundedAssetsService>();
             relationsBindingService.Initialize(bindingKeyRequest.Password);
 
@@ -181,7 +181,7 @@ namespace O10.Client.Web.Portal.Controllers
         {
             try
             {
-                long accountId = _accountsService.Create((AccountType)accountDto.AccountType, accountDto.AccountInfo, accountDto.Password);
+                long accountId = _accountsService.Create(accountDto.AccountType, accountDto.AccountInfo, accountDto.Password);
                 var accountDescriptor = _accountsService.GetById(accountId);
                 return Ok(_translatorsRepository.GetInstance<AccountDescriptor, AccountDto>().Translate(accountDescriptor));
             }
@@ -255,7 +255,7 @@ namespace O10.Client.Web.Portal.Controllers
             return BadRequest();
         }
 
-        [HttpPut("StopAccount/{accountId}")]
+        [HttpPut("{accountId}/Stop")]
         public IActionResult StopAccount(long accountId)
         {
             _executionContextManager.UnregisterExecutionServices(accountId);

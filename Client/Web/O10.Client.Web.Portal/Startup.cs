@@ -29,6 +29,7 @@ using Flurl.Http;
 using Newtonsoft.Json.Serialization;
 using O10.Core.Serialization;
 using System.Runtime.Serialization.Formatters;
+using Newtonsoft.Json.Converters;
 
 namespace O10.Client.Web.Portal
 {
@@ -94,6 +95,7 @@ namespace O10.Client.Web.Portal
                 .AddNewtonsoftJson(o =>
                 {
                     o.SerializerSettings.TypeNameHandling = TypeNameHandling.Auto;
+                    o.SerializerSettings.Converters.Add(new StringEnumConverter());
                 });
 
             // In production, the Angular files will be served from this directory
@@ -116,8 +118,10 @@ namespace O10.Client.Web.Portal
                     ContractResolver = _suppressItemTypeNameContractResolver,
                     TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
                     NullValueHandling = NullValueHandling.Ignore,
-                    Formatting = Formatting.Indented
+                    Formatting = Formatting.Indented,
                 };
+
+                jsonSettings.Converters.Add(new StringEnumConverter());
                 s.JsonSerializer = new NewtonsoftJsonSerializer(jsonSettings);
             });
         }

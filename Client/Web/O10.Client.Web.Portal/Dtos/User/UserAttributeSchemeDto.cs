@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using Newtonsoft.Json.Converters;
+using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace O10.Client.Web.Portal.Dtos.User
 {
@@ -11,13 +13,19 @@ namespace O10.Client.Web.Portal.Dtos.User
         }
 
         public AttributeState State { get; set; }
+        
         public string Issuer { get; set; }
+        
         public string IssuerName { get; set; }
+        
         public string RootAttributeContent { get; set; }
+        
         public string RootAssetId { get; set; }
+        
         public string SchemeName { get; set; }
-        public List<UserAttributeDto> RootAttributes { get; set; }
+        
+        public List<UserAttributeDto> RootAttributes { get; }
 
-        public List<UserAssociatedAttributesDto> AssociatedSchemes { get; set; }
+        public List<UserAssociatedAttributesDto> AssociatedSchemes { get; }
     }
 }

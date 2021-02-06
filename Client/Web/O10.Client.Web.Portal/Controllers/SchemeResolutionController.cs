@@ -180,29 +180,11 @@ namespace O10.Client.Web.Portal.Controllers
 
             var accountDescriptor = _accountsService.GetByPublicKey(issuer.HexStringToByteArray());
 
-            ActionStatus actionStatus = null;
-            string integrationKey = _dataAccessService.GetAccountKeyValue(accountDescriptor.AccountId, _integrationIdPRepository.IntegrationKeyName);
-            var integrationService = _integrationIdPRepository.GetInstance(integrationKey);
-            if (integrationService != null)
-            {
-                var definitions = _dataAccessService.GetAttributesSchemeByIssuer(issuer, true)
-                    .Select(
-                        a => new AttributeDefinition
-                        {
-                            SchemeId = a.IdentitiesSchemeId,
-                            AttributeName = a.AttributeName,
-                            SchemeName = a.AttributeSchemeName,
-                            Alias = a.Alias,
-                            Description = a.Description,
-                            IsActive = a.IsActive,
-                            IsRoot = a.CanBeRoot
-                        }).ToArray();
-                actionStatus = await integrationService.StoreScheme(accountDescriptor.AccountId, definitions).ConfigureAwait(false);
-            }
+            ActionStatus integrationActionStatus = await StoreDefinitionsToIntegratedLayer(issuer, accountDescriptor).ConfigureAwait(false);
 
             AttributeDefinitionsResponse response = new AttributeDefinitionsResponse
             {
-                IntegrationActionStatus = actionStatus,
+                IntegrationActionStatus = integrationActionStatus,
                 AttributeDefinitions = _dataAccessService.GetAttributesSchemeByIssuer(issuer, true)
                 .Where(a => a.AttributeSchemeName != AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD)
                 .Select(a => new AttributeDefinition
@@ -218,6 +200,35 @@ namespace O10.Client.Web.Portal.Controllers
             };
 
             return response;
+        }
+
+        private async Task<ActionStatus> StoreDefinitionsToIntegratedLayer(string issuer, AccountDescriptor accountDescriptor)
+        {
+            ActionStatus integrationActionStatus = null;
+
+            string integrationKey = _dataAccessService.GetAccountKeyValue(accountDescriptor.AccountId, _integrationIdPRepository.IntegrationKeyName);
+            if (!string.IsNullOrEmpty(integrationKey))
+            {
+                var integrationService = _integrationIdPRepository.GetInstance(integrationKey);
+                if (integrationService != null)
+                {
+                    var definitions = _dataAccessService.GetAttributesSchemeByIssuer(issuer, true)
+                        .Select(
+                            a => new AttributeDefinition
+                            {
+                                SchemeId = a.IdentitiesSchemeId,
+                                AttributeName = a.AttributeName,
+                                SchemeName = a.AttributeSchemeName,
+                                Alias = a.Alias,
+                                Description = a.Description,
+                                IsActive = a.IsActive,
+                                IsRoot = a.CanBeRoot
+                            }).ToArray();
+                    integrationActionStatus = await integrationService.StoreScheme(accountDescriptor.AccountId, definitions).ConfigureAwait(false);
+                }
+            }
+
+            return integrationActionStatus;
         }
 
         [HttpGet("SchemeItems")]

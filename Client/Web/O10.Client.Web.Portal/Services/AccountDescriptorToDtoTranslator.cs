@@ -15,7 +15,7 @@ namespace O10.Client.Web.Portal.Services
             return new AccountDto
             {
                 AccountId = obj.AccountId,
-                AccountType = (byte)obj.AccountType,
+                AccountType = obj.AccountType,
                 AccountInfo = obj.AccountInfo,
                 PublicSpendKey = obj.PublicSpendKey.ToHexString(),
                 PublicViewKey = obj.PublicViewKey.ToHexString()

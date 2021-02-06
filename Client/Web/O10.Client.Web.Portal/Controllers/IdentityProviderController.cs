@@ -470,33 +470,9 @@ namespace O10.Client.Web.Portal.Controllers
                 issuanceDetails = await IssueIdpAttributesAsAssociated(issuer, identity, issuanceInputDetails, persistency.Scope.ServiceProvider).ConfigureAwait(false);
             }
 
+            await IssueAttributesInIntegratedLayer(account, issuanceDetails).ConfigureAwait(false);
+
             await _idenitiesHubContext.Clients.Group(account.AccountId.ToString()).SendAsync("RequestForIssuance", issuanceDetails);
-
-            IIntegrationIdP integrationService = GetIntegrationService(account.AccountId);
-
-            if (integrationService != null)
-            {
-                IssuanceDetails issuanceIntegration = new IssuanceDetails
-                {
-                    RootAttribute = new IssuanceDetails.IssuanceDetailsRoot
-                    {
-                        AttributeName = issuanceDetails.RootAttribute.AttributeName,
-                        AssetCommitment = issuanceDetails.RootAttribute.AssetCommitment.HexStringToByteArray(),
-                        OriginatingCommitment = issuanceDetails.RootAttribute.OriginatingCommitment.HexStringToByteArray(),
-                        SurjectionProof = issuanceDetails.RootAttribute.SurjectionProof.HexStringToByteArray()
-                    },
-                    AssociatedAttributes = issuanceDetails.AssociatedAttributes?
-                        .Select(a =>
-                            new IssuanceDetails.IssuanceDetailsAssociated
-                            {
-                                AttributeName = a.AttributeName,
-                                AssetCommitment = a.AssetCommitment.HexStringToByteArray(),
-                                BindingToRootCommitment = a.BindingToRootCommitment.HexStringToByteArray()
-                            }).ToList()
-                };
-
-                integrationService.IssueAttributes(account.AccountId, issuanceIntegration);
-            }
 
             var attributeValues = FillAttributeValues(request.Attributes, attributeDefinitions);
 
@@ -663,11 +639,52 @@ namespace O10.Client.Web.Portal.Controllers
             #endregion  Internal Functions
         }
 
+        private async Task IssueAttributesInIntegratedLayer(AccountDescriptor account, IssuanceDetailsDto issuanceDetails)
+        {
+            IIntegrationIdP integrationService = GetIntegrationService(account.AccountId);
+
+            if (integrationService != null)
+            {
+                IssuanceDetails issuanceIntegration = new IssuanceDetails
+                {
+                    RootAttribute = new IssuanceDetails.IssuanceDetailsRoot
+                    {
+                        AttributeName = issuanceDetails.RootAttribute.AttributeName,
+                        AssetCommitment = issuanceDetails.RootAttribute.AssetCommitment.HexStringToByteArray(),
+                        OriginatingCommitment = issuanceDetails.RootAttribute.OriginatingCommitment.HexStringToByteArray(),
+                        SurjectionProof = issuanceDetails.RootAttribute.SurjectionProof.HexStringToByteArray()
+                    },
+                    AssociatedAttributes = issuanceDetails.AssociatedAttributes?
+                        .Select(a =>
+                            new IssuanceDetails.IssuanceDetailsAssociated
+                            {
+                                AttributeName = a.AttributeName,
+                                AssetCommitment = a.AssetCommitment.HexStringToByteArray(),
+                                BindingToRootCommitment = a.BindingToRootCommitment.HexStringToByteArray()
+                            }).ToList()
+                };
+
+                ActionStatus actionStatus = await integrationService.IssueAttributes(account.AccountId, issuanceIntegration).ConfigureAwait(false);
+                if (!actionStatus.ActionSucceeded)
+                {
+                    throw new Exception($"Failed to issue attributes using integrated layer: {JsonConvert.SerializeObject(actionStatus)}");
+                }
+            }
+        }
+
         [HttpPost("Activate")]
         public async Task<IActionResult> Activate(long accountId)
         {
             IIntegrationIdP integrationService = GetIntegrationService(accountId);
-            return Ok(await integrationService.Register(accountId).ConfigureAwait(false));
+            
+            ActionStatus actionStatus = new ActionStatus { ActionSucceeded = false, ErrorMsg = "No external integration registered" };
+            
+            if(integrationService != null)
+            {
+                actionStatus = await integrationService.Register(accountId).ConfigureAwait(false);
+            }
+
+            return Ok(actionStatus);
         }
 
         #region Private Functions
@@ -675,6 +692,11 @@ namespace O10.Client.Web.Portal.Controllers
         private IIntegrationIdP GetIntegrationService(long accountId)
         {
             string integrationKey = _dataAccessService.GetAccountKeyValue(accountId, _integrationIdPRepository.IntegrationKeyName);
+            if(string.IsNullOrEmpty(integrationKey))
+            {
+                return null;
+            }
+
             var integrationService = _integrationIdPRepository.GetInstance(integrationKey);
             return integrationService;
         }

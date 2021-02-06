@@ -20,6 +20,11 @@ namespace O10.Client.Common.Integration
 
         public IIntegrationIdP GetInstance(string key)
         {
+            if (key is null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
             var integrationIdP = _integrationIdPs.FirstOrDefault(i => i.Key == key);
 
             if(integrationIdP == null)

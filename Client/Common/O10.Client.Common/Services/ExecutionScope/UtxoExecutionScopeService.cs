@@ -51,7 +51,7 @@ namespace O10.Client.Common.Services
             _restApiConfiguration = configurationService.Get<IRestApiConfiguration>();
         }
 
-        public string Name => "UTXO";
+        public string Name => "Stealth";
 
         public T GetScopeInitializationParams<T>() where T: ScopeInitializationParams
         {
@@ -72,7 +72,7 @@ namespace O10.Client.Common.Services
             }
 
             IWitnessPackagesProvider packetsProvider = _witnessPackagesProviderRepository.GetInstance(_restApiConfiguration.WitnessProviderName);
-            IPacketsExtractor utxoWalletPacketsExtractor = _packetsExtractorsRepository.GetInstance("UTXOWallet");
+            IPacketsExtractor utxoWalletPacketsExtractor = _packetsExtractorsRepository.GetInstance("StealthWallet");
 
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
@@ -93,7 +93,7 @@ namespace O10.Client.Common.Services
 
             IUpdater userIdentitiesUpdater = _updaterRegistry.GetInstance();
 
-            var walletSynchronizer = _walletSynchronizersRepository.GetInstance("UTXO");
+            var walletSynchronizer = _walletSynchronizersRepository.GetInstance("Stealth");
             walletSynchronizer.Initialize(scopeInitializationParams.AccountId);
 
             packetsProvider.PipeOut.LinkTo(utxoWalletPacketsExtractor.GetTargetPipe<WitnessPackageWrapper>());

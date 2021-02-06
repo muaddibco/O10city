@@ -61,7 +61,7 @@ namespace O10.Client.Web.Portal.Services
             }
         }
 
-        private IUpdater CreateStateUpdater(IServiceProvider serviceProvider, long accountId, CancellationToken cancellationToken)
+        private static IUpdater CreateStateUpdater(IServiceProvider serviceProvider, long accountId, CancellationToken cancellationToken)
         {
             var updater = ActivatorUtilities.CreateInstance<ServiceProviderUpdater>(serviceProvider);
             updater.Initialize(accountId, cancellationToken);
@@ -83,8 +83,8 @@ namespace O10.Client.Web.Portal.Services
                 try
                 {
                     var state = new Persistency(accountId, _serviceProvider);
-                    state.Scope.ServiceProvider.GetService<IUpdaterRegistry>().RegisterInstance(updater ?? CreateUtxoUpdater(state.Scope.ServiceProvider, accountId, state.CancellationTokenSource.Token));
-                    var scopeService = state.Scope.ServiceProvider.GetService<IExecutionScopeServiceRepository>().GetInstance("UTXO");
+                    state.Scope.ServiceProvider.GetService<IUpdaterRegistry>().RegisterInstance(updater ?? CreateStealthUpdater(state.Scope.ServiceProvider, accountId, state.CancellationTokenSource.Token));
+                    var scopeService = state.Scope.ServiceProvider.GetService<IExecutionScopeServiceRepository>().GetInstance("Stealth");
                     var scopeParams = scopeService.GetScopeInitializationParams<UtxoScopeInitializationParams>();
                     scopeParams.AccountId = accountId;
                     scopeParams.SecretSpendKey = secretSpendKey;
@@ -105,7 +105,7 @@ namespace O10.Client.Web.Portal.Services
             }
         }
 
-        private IUpdater CreateUtxoUpdater(IServiceProvider serviceProvider, long accountId, CancellationToken cancellationToken)
+        private static IUpdater CreateStealthUpdater(IServiceProvider serviceProvider, long accountId, CancellationToken cancellationToken)
         {
             var updater = ActivatorUtilities.CreateInstance<UserIdentitiesUpdater>(serviceProvider);
             updater.Initialize(accountId, cancellationToken);

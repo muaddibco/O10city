@@ -11,6 +11,7 @@ using O10.Node.WebApp.Common;
 using O10.Node.WebApp.Common.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using O10.Core.Configuration;
+using Newtonsoft.Json.Converters;
 
 namespace O10.Node.WebApp
 {
@@ -40,6 +41,7 @@ namespace O10.Node.WebApp
                 .AddNewtonsoftJson(o => 
                 {
                     o.SerializerSettings.TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto;
+                    o.SerializerSettings.Converters.Add(new StringEnumConverter());
                 });
 
             services.AddBootstrapper<NodeWebAppBootstrapper>(_logger);
