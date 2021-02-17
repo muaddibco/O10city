@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
-using O10.Transactions.Core.DataModel.Transactional;
-using O10.Transactions.Core.DataModel.Transactional.Internal;
+using O10.Transactions.Core.Ledgers.O10State;
+using O10.Transactions.Core.Ledgers.O10State.Internal;
 using O10.Transactions.Core.Enums;
 using O10.Core.Cryptography;
 
@@ -9,7 +9,7 @@ namespace O10.Transactions.Core.Serializers.Signed.Transactional
 {
     public abstract class TransactionalSerializerBase<T> : SignatureSupportSerializerBase<T> where T : TransactionalPacketBase
     {
-        public TransactionalSerializerBase(IServiceProvider serviceProvider, PacketType packetType, ushort blockType) 
+        public TransactionalSerializerBase(IServiceProvider serviceProvider, LedgerType packetType, ushort blockType) 
 			: base(serviceProvider, packetType, blockType)
         {
         }

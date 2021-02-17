@@ -16,7 +16,7 @@ using O10.Core.Logging;
 using O10.Core.Models;
 using O10.Core.Translators;
 using O10.Node.DataLayer.DataAccess;
-using RegistryFullBlockPacket = O10.Transactions.Core.DataModel.Registry.RegistryFullBlock;
+using RegistryFullBlockPacket = O10.Transactions.Core.Ledgers.Registry.RegistryFullBlock;
 using RegistryFullBlockDb = O10.Node.DataLayer.Specific.Registry.Model.RegistryFullBlock;
 using O10.Core.Tracking;
 using System.Globalization;
@@ -44,7 +44,7 @@ namespace O10.Node.DataLayer.Specific.Registry
             _defaultHashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
         }
 
-        override public PacketType PacketType => PacketType.Registry;
+        override public LedgerType PacketType => LedgerType.Registry;
         public override void Add(PacketBase item)
         {
             if (item is RegistryFullBlockPacket registryFullBlock)
@@ -99,7 +99,7 @@ namespace O10.Node.DataLayer.Specific.Registry
                     RegistryFullBlockDb[] registryFullBlocks = blocks.Select(b =>
                     {
                         string hash = _defaultHashCalculation.CalculateHash(b.RawData).ToHexString();
-                        return new RegistryFullBlockDb { SyncBlockHeight = b.SyncBlockHeight, Round = b.BlockHeight, TransactionsCount = b.StateWitnesses.Length + b.UtxoWitnesses.Length, Content = b.RawData.ToArray(), Hash = hash, HashString = hash };
+                        return new RegistryFullBlockDb { SyncBlockHeight = b.SyncHeight, Round = b.Height, TransactionsCount = b.StateWitnesses.Length + b.StealthWitnesses.Length, Content = b.RawData.ToArray(), Hash = hash, HashString = hash };
                     }).ToArray();
 
                     foreach (var registryFullBlock in registryFullBlocks)

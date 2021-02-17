@@ -7,7 +7,7 @@ namespace O10.Transactions.Core.Serializers.Signed
 {
     public abstract class SignatureSupportSerializerBase<T> : SerializerBase<T> where T : SignedPacketBase
     {
-        public SignatureSupportSerializerBase(IServiceProvider serviceProvider, PacketType packetType, ushort blockType)
+        public SignatureSupportSerializerBase(IServiceProvider serviceProvider, LedgerType packetType, ushort blockType)
             : base(serviceProvider, packetType, blockType)
         {
         }
@@ -15,7 +15,7 @@ namespace O10.Transactions.Core.Serializers.Signed
         protected virtual void WriteHeader(BinaryWriter bw)
         {
             bw.Write((ushort)PacketType);
-            bw.Write(_block.SyncBlockHeight);
+            bw.Write(_block.SyncHeight);
             bw.Write(_block.Nonce);
             bw.Write(_block.PowHash);
         }
@@ -63,8 +63,8 @@ namespace O10.Transactions.Core.Serializers.Signed
         private void FillBody()
         {
             _binaryWriter.Write(_block.Version);
-            _binaryWriter.Write(_block.BlockType);
-            _binaryWriter.Write(_block.BlockHeight);
+            _binaryWriter.Write(_block.PacketType);
+            _binaryWriter.Write(_block.Height);
 
             WriteBody(_binaryWriter);
 

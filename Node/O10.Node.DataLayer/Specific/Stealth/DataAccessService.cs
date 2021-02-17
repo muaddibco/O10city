@@ -47,7 +47,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
             _defaultHashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
         }
 
-        public override PacketType PacketType => PacketType.Stealth;
+        public override LedgerType PacketType => LedgerType.Stealth;
 
         protected override void PostInitTasks()
         {
@@ -72,7 +72,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
                 throw new ArgumentNullException(nameof(keyImage));
             }
 
-            bool isService = blockType == ActionTypes.Stealth_TransitionCompromisedProofs || blockType == ActionTypes.Stealth_RevokeIdentity;
+            bool isService = blockType == PacketTypes.Stealth_TransitionCompromisedProofs || blockType == PacketTypes.Stealth_RevokeIdentity;
             bool keyImageExist = _keyImages.Contains(keyImage);
             if (keyImageExist)
             {

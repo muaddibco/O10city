@@ -1,6 +1,6 @@
 ﻿using System;
 using System.IO;
-using O10.Transactions.Core.DataModel.Synchronization;
+using O10.Transactions.Core.Ledgers.Synchronization;
 using O10.Transactions.Core.Enums;
 using O10.Core.Architecture;
 
@@ -10,7 +10,7 @@ namespace O10.Transactions.Core.Serializers.Signed.Synchronization
     [RegisterExtension(typeof(ISerializer), Lifetime = LifetimeManagement.Transient)]
     public class SynchronizationRegistryCombinedBlockSerializer : LinkedSerializerBase<SynchronizationRegistryCombinedBlock>
     {
-        public SynchronizationRegistryCombinedBlockSerializer(IServiceProvider serviceProvider) : base(serviceProvider, PacketType.Synchronization, ActionTypes.Synchronization_RegistryCombinationBlock)
+        public SynchronizationRegistryCombinedBlockSerializer(IServiceProvider serviceProvider) : base(serviceProvider, LedgerType.Synchronization, PacketTypes.Synchronization_RegistryCombinationBlock)
         {
         }
 

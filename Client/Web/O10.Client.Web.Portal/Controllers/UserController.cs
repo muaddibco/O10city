@@ -19,7 +19,6 @@ using Flurl;
 using Flurl.Http;
 using System.Net.Http;
 using O10.Client.DataLayer.Model;
-using O10.Transactions.Core.DataModel;
 using System.Collections.Specialized;
 using O10.Client.Common.Interfaces.Outputs;
 using O10.Client.Web.Portal.Dtos.User;
@@ -31,7 +30,7 @@ using O10.Client.Web.Common.Hubs;
 using O10.Client.Web.Common.Dtos.Biometric;
 using O10.Core.Cryptography;
 using System.Threading.Tasks;
-using O10.Transactions.Core.DataModel.Stealth.Internal;
+using O10.Transactions.Core.Ledgers.Stealth.Internal;
 using O10.Client.DataLayer.AttributesScheme;
 using O10.Client.Common.Configuration;
 using System.Threading;
@@ -50,6 +49,7 @@ using Flurl.Util;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using O10.Core.Serialization;
+using O10.Transactions.Core.DTOs;
 
 namespace O10.Client.Web.Portal.Controllers
 {

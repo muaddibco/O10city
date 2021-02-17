@@ -33,7 +33,7 @@ namespace O10.Node.Core.Centralized
 
         public abstract string Name { get; }
 
-        public abstract PacketType PacketType { get; }
+        public abstract LedgerType PacketType { get; }
 
         public void Initialize(CancellationToken ct)
         {
@@ -53,7 +53,7 @@ namespace O10.Node.Core.Centralized
 
 			try
 			{
-				IChainDataService chainDataService = _chainDataServicesManager.GetChainDataService((PacketType)blockBase.PacketType);
+				IChainDataService chainDataService = _chainDataServicesManager.GetChainDataService((LedgerType)blockBase.LedgerType);
 				chainDataService.Add(blockBase);
 			}
 			catch (Exception ex)

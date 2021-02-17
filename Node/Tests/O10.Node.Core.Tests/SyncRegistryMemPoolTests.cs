@@ -3,7 +3,7 @@ using NSubstitute;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using O10.Transactions.Core.DataModel.Registry;
+using O10.Transactions.Core.Ledgers.Registry;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Serializers;
 using O10.Transactions.Core.Serializers.Signed.Registry;
@@ -78,8 +78,8 @@ namespace O10.Node.Core.Tests
 
                 RegistryShortBlock registryShortBlock = new RegistryShortBlock
                 {
-                    SyncBlockHeight = syncBlockHeight,
-                    BlockHeight = blockHeight,
+                    SyncHeight = syncBlockHeight,
+                    Height = blockHeight,
                     Nonce = nonce,
                     PowHash = powHash,
                     WitnessStateKeys = transactionHeaderKeys
@@ -93,8 +93,8 @@ namespace O10.Node.Core.Tests
 
                 RegistryFullBlock registryFullBlock = new RegistryFullBlock
                 {
-                    SyncBlockHeight = syncBlockHeight,
-                    BlockHeight = blockHeight,
+                    SyncHeight = syncBlockHeight,
+                    Height = blockHeight,
                     Nonce = nonce,
                     PowHash = powHash,
                     StateWitnesses = transactionHeaders.Values.ToArray(),
@@ -128,7 +128,7 @@ namespace O10.Node.Core.Tests
             foreach (ushort order in transactionHeaders.Keys)
             {
                 RegistryRegisterBlock registryRegisterBlock = transactionHeaders[order];
-                WitnessStateKey key = new WitnessStateKey { PublicKey = registryRegisterBlock.Signer, Height = registryRegisterBlock.BlockHeight };
+                WitnessStateKey key = new WitnessStateKey { PublicKey = registryRegisterBlock.Signer, Height = registryRegisterBlock.Height };
 
                 transactionHeaderKeys[order] = key;
             }
@@ -138,18 +138,18 @@ namespace O10.Node.Core.Tests
 
         private static SortedList<ushort, RegistryRegisterBlock> GetTransactionHeaders(ulong syncBlockHeight, ulong blockHeight, uint nonce, ushort expectedCount)
         {
-            PacketType expectedReferencedPacketType = PacketType.Transactional;
-            ushort expectedReferencedBlockType = ActionTypes.Transaction_IssueBlindedAsset;
+            LedgerType expectedReferencedPacketType = LedgerType.O10State;
+            ushort expectedReferencedBlockType = PacketTypes.Transaction_IssueBlindedAsset;
 
             SortedList<ushort, RegistryRegisterBlock> transactionHeaders = new SortedList<ushort, RegistryRegisterBlock>(expectedCount);
             for (ushort j = 0; j < expectedCount; j++)
             {
                 RegistryRegisterBlock registryRegisterBlock = new RegistryRegisterBlock
                 {
-                    SyncBlockHeight = syncBlockHeight,
+                    SyncHeight = syncBlockHeight,
                     Nonce = nonce + j,
                     PowHash = BinaryHelper.GetPowHash(1234 + j),
-                    BlockHeight = blockHeight,
+                    Height = blockHeight,
                     ReferencedPacketType = expectedReferencedPacketType,
                     ReferencedBlockType = expectedReferencedBlockType,
                     ReferencedBodyHash = BinaryHelper.GetDefaultHash(473826643 + j),

@@ -1,7 +1,7 @@
 ﻿using NSubstitute;
 using System;
 using System.Collections.Generic;
-using O10.Transactions.Core.DataModel;
+using O10.Transactions.Core.Ledgers;
 using O10.Client.Common.Interfaces;
 using O10.Client.DataModel.Enums;
 using O10.Client.DataModel.Model;

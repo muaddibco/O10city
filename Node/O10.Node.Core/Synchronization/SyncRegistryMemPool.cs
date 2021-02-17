@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using O10.Transactions.Core.DataModel.Registry;
+using O10.Transactions.Core.Ledgers.Registry;
 using O10.Core.Architecture;
 using O10.Core.Logging;
 using System.Collections.ObjectModel;
 using O10.Core.HashCalculations;
 using O10.Core.ExtensionMethods;
 using System.Linq;
-using O10.Transactions.Core.DataModel.Synchronization;
+using O10.Transactions.Core.Ledgers.Synchronization;
 using O10.Core;
 
 namespace O10.Node.Core.Synchronization
@@ -35,7 +35,7 @@ namespace O10.Node.Core.Synchronization
                 throw new ArgumentNullException(nameof(registryFullBlock));
             }
 
-            _logger.Debug($"Adding candidate block of round {registryFullBlock.BlockHeight} with {registryFullBlock.StateWitnesses.Length + registryFullBlock.UtxoWitnesses.Length} transactions");
+            _logger.Debug($"Adding candidate block of round {registryFullBlock.Height} with {registryFullBlock.StateWitnesses.Length + registryFullBlock.StealthWitnesses.Length} transactions");
 
             byte[] hash = _defaultTransactionHashCalculation.CalculateHash(registryFullBlock.RawData);
 
@@ -69,7 +69,7 @@ namespace O10.Node.Core.Synchronization
 
         public void RegisterCombinedBlock(SynchronizationRegistryCombinedBlock combinedBlock)
         {
-            List<SynchronizationRegistryCombinedBlock> toRemove = _registryCombinedBlocks.Where(b => (int)(combinedBlock.BlockHeight - b.BlockHeight) > _maxCombinedBlocks).ToList();
+            List<SynchronizationRegistryCombinedBlock> toRemove = _registryCombinedBlocks.Where(b => (int)(combinedBlock.Height - b.Height) > _maxCombinedBlocks).ToList();
 
 			lock (_registryCombinedBlocks)
 			{

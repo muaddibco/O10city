@@ -28,7 +28,7 @@ namespace O10.Node.Core.Storage
 
         public abstract string Name { get; }
 
-        public abstract PacketType PacketType { get; }
+        public abstract LedgerType PacketType { get; }
 
         public void Initialize(CancellationToken ct)
         {
@@ -43,7 +43,7 @@ namespace O10.Node.Core.Storage
 
         private void StoreBlock(T blockBase)
         {
-            IChainDataService chainDataService = _chainDataServicesManager.GetChainDataService((PacketType)blockBase.PacketType);
+            IChainDataService chainDataService = _chainDataServicesManager.GetChainDataService((LedgerType)blockBase.LedgerType);
             chainDataService.Add(blockBase);
         }
     }

@@ -14,17 +14,17 @@
     <OutputPath>bin\Debug\</OutputPath>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="DataModel\Consensus\**" />
+    <Compile Remove="Ledgers\Consensus\**" />
     <Compile Remove="Parsers\Accounting\**" />
     <Compile Remove="Parsers\Consensus\**" />
     <Compile Remove="Parsers\Storage\**" />
     <Compile Remove="Serializers\Transactional\**" />
-    <EmbeddedResource Remove="DataModel\Consensus\**" />
+    <EmbeddedResource Remove="Ledgers\Consensus\**" />
     <EmbeddedResource Remove="Parsers\Accounting\**" />
     <EmbeddedResource Remove="Parsers\Consensus\**" />
     <EmbeddedResource Remove="Parsers\Storage\**" />
     <EmbeddedResource Remove="Serializers\Transactional\**" />
-    <None Remove="DataModel\Consensus\**" />
+    <None Remove="Ledgers\Consensus\**" />
     <None Remove="Parsers\Accounting\**" />
     <None Remove="Parsers\Consensus\**" />
     <None Remove="Parsers\Storage\**" />

@@ -9,7 +9,7 @@ namespace O10.Core.Models
     /// </summary>
     public abstract class PacketBase : Entity, IPacket
     {
-        public ulong SyncBlockHeight { get; set; }
+        public ulong SyncHeight { get; set; }
 
         public uint Nonce { get; set; }
 
@@ -19,11 +19,11 @@ namespace O10.Core.Models
         /// </summary>
         public byte[] PowHash { get; set; }
 
-        public abstract ushort PacketType { get; }
+        public abstract ushort LedgerType { get; }
 
         public abstract ushort Version { get; }
 
-        public abstract ushort BlockType { get; }
+        public abstract ushort PacketType { get; }
 
         [JsonIgnore]
         /// <summary>

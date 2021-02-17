@@ -3,7 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using O10.Transactions.Core.DataModel.Stealth;
+using O10.Transactions.Core.Ledgers.Stealth;
 using O10.Client.Common.Entities;
 using O10.Client.Common.Interfaces;
 using O10.Client.DataLayer.Enums;

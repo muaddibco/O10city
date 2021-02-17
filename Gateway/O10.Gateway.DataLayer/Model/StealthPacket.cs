@@ -16,11 +16,11 @@ namespace O10.Gateway.DataLayer.Model
 
         public byte[] Content { get; set; }
 
-        public UtxoTransactionKey TransactionKey { get; set; }
+        public TransactionKey TransactionKey { get; set; }
 
-        public UtxoKeyImage KeyImage { get; set; }
+        public KeyImage KeyImage { get; set; }
 
-        public UtxoOutput Output { get; set; }
+        public StealthOutput Output { get; set; }
 
         public PacketHash ThisBlockHash { get; set; }
     }

@@ -5,7 +5,7 @@ using O10.Core.Architecture;
 namespace O10.Node.DataLayer.DataAccess
 {
     [ServiceContract]
-    public interface INodeDataAccessServiceRepository : IRepository<INodeDataAccessService, PacketType>
+    public interface INodeDataAccessServiceRepository : IRepository<INodeDataAccessService, LedgerType>
     {
     }
 }

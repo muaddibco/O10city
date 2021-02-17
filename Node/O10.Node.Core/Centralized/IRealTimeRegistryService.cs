@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
-using O10.Transactions.Core.DataModel.Registry;
-using O10.Transactions.Core.DataModel.Synchronization;
+using O10.Transactions.Core.Ledgers.Registry;
+using O10.Transactions.Core.Ledgers.Synchronization;
 using O10.Core.Architecture;
 using O10.Core.Models;
 

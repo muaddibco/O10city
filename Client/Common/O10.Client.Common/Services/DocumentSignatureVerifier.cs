@@ -1,8 +1,8 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Threading.Tasks;
-using O10.Transactions.Core.DataModel;
-using O10.Transactions.Core.DataModel.Transactional;
+using O10.Transactions.Core.Ledgers;
+using O10.Transactions.Core.Ledgers.O10State;
 using O10.Transactions.Core.Parsers;
 using O10.Client.Common.Interfaces;
 using O10.Client.Common.Interfaces.Outputs;

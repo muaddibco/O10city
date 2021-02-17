@@ -5,7 +5,7 @@ using O10.Core.Architecture;
 namespace O10.Network.Handlers
 {
     [ServiceContract]
-    public interface IPacketVerifiersRepository : IRepository<IPacketVerifier, PacketType>
+    public interface IPacketVerifiersRepository : IRepository<IPacketVerifier, LedgerType>
     {
     }
 }

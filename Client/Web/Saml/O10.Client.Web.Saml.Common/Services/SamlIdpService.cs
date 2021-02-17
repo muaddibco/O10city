@@ -8,7 +8,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks.Dataflow;
-using O10.Transactions.Core.DataModel.Stealth;
+using O10.Transactions.Core.Ledgers.Stealth;
 using O10.Client.Common.Communication;
 using O10.Client.Web.Common.Dtos.SamlIdp;
 using O10.Core.ExtensionMethods;

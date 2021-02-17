@@ -4,7 +4,7 @@ using O10.Core.Models;
 using O10.Core.States;
 using O10.Core.Translators;
 using O10.Transactions.Core.Accessors;
-using O10.Transactions.Core.DataModel.Registry;
+using O10.Transactions.Core.Ledgers.Registry;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Serializers;
 using System;
@@ -54,7 +54,7 @@ namespace O10.Gateway.Common.Services
 
         private bool ValidateEvidence(DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase> wrapper)
         {
-            if(wrapper.State.PacketType == PacketType.Stealth || wrapper.State.PacketType == PacketType.Transactional)
+            if(wrapper.State.PacketType == LedgerType.Stealth || wrapper.State.PacketType == LedgerType.O10State)
             {
                 // TODO: replace this with an apporopriate logic that waits for packet to be stored in a node storage
                 return true;
@@ -74,9 +74,9 @@ namespace O10.Gateway.Common.Services
                 var packet = _translator.Translate(evidence);
 
                 var lastPacketInfo = await _gatewayContext.GetLastPacketInfo().ConfigureAwait(false);
-                packet.BlockHeight = lastPacketInfo.Height;
+                packet.Height = lastPacketInfo.Height;
                 packet.PowHash = new byte[Globals.DEFAULT_HASH_SIZE];
-                packet.SyncBlockHeight = (await _networkSynchronizer.GetLastSyncBlock().ConfigureAwait(false))?.Height ?? 0;
+                packet.SyncHeight = (await _networkSynchronizer.GetLastSyncBlock().ConfigureAwait(false))?.Height ?? 0;
 
                 ISerializer serializer = _serializersFactory.Create(packet);
                 serializer.SerializeBody();

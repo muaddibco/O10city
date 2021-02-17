@@ -1,5 +1,5 @@
 ﻿using System.IO;
-using O10.Transactions.Core.DataModel.Transactional;
+using O10.Transactions.Core.Ledgers.O10State;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Parsers.Transactional;
 using O10.Crypto.ConfidentialAssets;
@@ -86,17 +86,17 @@ namespace O10.Transactions.Core.Tests.ParserTests
 				body = ms.ToArray();
 			}
 
-			byte[] packet = BinaryHelper.GetSignedPacket(PacketType.Transactional, syncBlockHeight, nonce, powHash, version,
-				ActionTypes.Transaction_IssueBlindedAsset, blockHeight, null, body, _privateKey, out byte[] expectedSignature);
+			byte[] packet = BinaryHelper.GetSignedPacket(LedgerType.O10State, syncBlockHeight, nonce, powHash, version,
+				PacketTypes.Transaction_IssueBlindedAsset, blockHeight, null, body, _privateKey, out byte[] expectedSignature);
 
 			IssueBlindedAssetParser parser = new IssueBlindedAssetParser(_identityKeyProvidersRegistry);
 			IssueBlindedAsset block = (IssueBlindedAsset)parser.Parse(packet);
 
-			Assert.Equal(syncBlockHeight, block.SyncBlockHeight);
+			Assert.Equal(syncBlockHeight, block.SyncHeight);
 			Assert.Equal(nonce, block.Nonce);
 			Assert.Equal(powHash, block.PowHash);
 			Assert.Equal(version, block.Version);
-			Assert.Equal(blockHeight, block.BlockHeight);
+			Assert.Equal(blockHeight, block.Height);
 			Assert.Equal(uptodateFunds, block.UptodateFunds);
 			Assert.Equal(groupId, block.GroupId);
 			Assert.Equal(assetCommitment, block.AssetCommitment);
@@ -162,19 +162,19 @@ namespace O10.Transactions.Core.Tests.ParserTests
 			}
 
 			byte[] packet = BinaryHelper.GetSignedPacket(
-				PacketType.Synchronization,
+				LedgerType.Synchronization,
 				syncBlockHeight,
 				nonce, powHash, version,
-				ActionTypes.Transaction_transferAssetToStealth, blockHeight, null, body, _privateKey, out byte[] expectedSignature);
+				PacketTypes.Transaction_transferAssetToStealth, blockHeight, null, body, _privateKey, out byte[] expectedSignature);
 
 			transferAssetToStealthParser parser = new transferAssetToStealthParser(_identityKeyProvidersRegistry);
 			TransferAssetToStealth block = (TransferAssetToStealth)parser.Parse(packet);
 
-			Assert.Equal(syncBlockHeight, block.SyncBlockHeight);
+			Assert.Equal(syncBlockHeight, block.SyncHeight);
 			Assert.Equal(nonce, block.Nonce);
 			Assert.Equal(powHash, block.PowHash);
 			Assert.Equal(version, block.Version);
-			Assert.Equal(blockHeight, block.BlockHeight);
+			Assert.Equal(blockHeight, block.Height);
 			Assert.Equal(destinationKey, block.DestinationKey);
 			Assert.Equal(transactionKey, block.TransactionPublicKey);
 			Assert.Equal(assetCommitment, block.TransferredAsset.AssetCommitment);

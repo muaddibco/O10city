@@ -1,8 +1,8 @@
 ﻿using System;
-using O10.Transactions.Core.DataModel;
 using O10.Core;
 using O10.Core.Identity;
 using O10.Core.Models;
+using O10.Transactions.Core.Ledgers.Synchronization;
 
 namespace O10.Transactions.Core.Parsers
 {

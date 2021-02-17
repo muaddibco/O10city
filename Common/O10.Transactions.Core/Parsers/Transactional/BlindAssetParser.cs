@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Buffers.Binary;
-using O10.Transactions.Core.DataModel.Transactional;
+using O10.Transactions.Core.Ledgers.O10State;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Exceptions;
 using O10.Core;
@@ -18,7 +18,7 @@ namespace O10.Transactions.Core.Parsers.Transactional
         {
         }
 
-        public override ushort BlockType => ActionTypes.Transaction_BlindAsset;
+        public override ushort BlockType => PacketTypes.Transaction_BlindAsset;
 
         protected override Memory<byte> ParseTransactional(ushort version, Memory<byte> spanBody, out TransactionalPacketBase transactionalBlockBase)
         {
@@ -61,7 +61,7 @@ namespace O10.Transactions.Core.Parsers.Transactional
 
                 block = new BlindAsset
                 {
-                    EncryptedAsset = new DataModel.Transactional.Internal.EncryptedAsset
+                    EncryptedAsset = new Ledgers.O10State.Internal.EncryptedAsset
                     {
                         AssetCommitment = assetCommitment,
                         EcdhTuple = new O10.Core.Cryptography.EcdhTupleCA

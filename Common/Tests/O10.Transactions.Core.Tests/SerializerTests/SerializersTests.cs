@@ -1,6 +1,6 @@
 ﻿using Chaos.NaCl;
 using System;
-using O10.Transactions.Core.DataModel.Synchronization;
+using O10.Transactions.Core.Ledgers.Synchronization;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Serializers.Signed.Synchronization;
 using O10.Core.Cryptography;
@@ -9,7 +9,7 @@ using O10.Tests.Core;
 using O10.Core.ExtensionMethods;
 using Xunit;
 using System.IO;
-using O10.Transactions.Core.DataModel.Registry;
+using O10.Transactions.Core.Ledgers.Registry;
 using O10.Transactions.Core.Serializers.Signed.Registry;
 using System.Diagnostics;
 using System.Linq;
@@ -79,15 +79,15 @@ namespace O10.Transactions.Core.Tests.SerializerTests
             }
 
             byte[] expectedPacket = BinaryHelper.GetSignedPacket(
-                PacketType.Synchronization,
+                LedgerType.Synchronization,
                 syncBlockHeight,
                 nonce, powHash, version,
-                ActionTypes.Synchronization_ConfirmedBlock, blockHeight, prevHash, body, _privateKey, out byte[] expectedSignature);
+                PacketTypes.Synchronization_ConfirmedBlock, blockHeight, prevHash, body, _privateKey, out byte[] expectedSignature);
 
             SynchronizationConfirmedBlock block = new SynchronizationConfirmedBlock()
             {
-                SyncBlockHeight = syncBlockHeight,
-                BlockHeight = blockHeight,
+                SyncHeight = syncBlockHeight,
+                Height = blockHeight,
                 Nonce = nonce,
                 PowHash = powHash,
                 HashPrev = prevHash,
@@ -123,8 +123,8 @@ namespace O10.Transactions.Core.Tests.SerializerTests
             ulong blockHeight = 9;
             byte[] prevHash = null;
 
-            PacketType expectedReferencedPacketType = PacketType.Transactional;
-            ushort expectedReferencedBlockType = ActionTypes.Transaction_IssueBlindedAsset;
+            LedgerType expectedReferencedPacketType = LedgerType.O10State;
+            ushort expectedReferencedBlockType = PacketTypes.Transaction_IssueBlindedAsset;
             byte[] expectedReferencedBodyHash = BinaryHelper.GetDefaultHash(473826643);
             byte[] expectedTarget = BinaryHelper.GetDefaultHash(BinaryHelper.GetRandomPublicKey());
 
@@ -144,17 +144,17 @@ namespace O10.Transactions.Core.Tests.SerializerTests
             }
 
             byte[] expectedPacket = BinaryHelper.GetSignedPacket(
-                PacketType.Registry,
+                LedgerType.Registry,
                 syncBlockHeight,
                 nonce, powHash, version,
-                ActionTypes.Registry_Register, blockHeight, prevHash, body, _privateKey, out byte[] expectedSignature);
+                PacketTypes.Registry_Register, blockHeight, prevHash, body, _privateKey, out byte[] expectedSignature);
 
             RegistryRegisterBlock block = new RegistryRegisterBlock
             {
-                SyncBlockHeight = syncBlockHeight,
+                SyncHeight = syncBlockHeight,
                 Nonce = nonce,
                 PowHash = powHash,
-                BlockHeight = blockHeight,
+                Height = blockHeight,
                 ReferencedPacketType = expectedReferencedPacketType,
                 ReferencedBlockType = expectedReferencedBlockType,
                 ReferencedBodyHash = expectedReferencedBodyHash,
@@ -184,8 +184,8 @@ namespace O10.Transactions.Core.Tests.SerializerTests
 			ulong blockHeight = 9;
 			byte[] prevHash = null;
 
-			PacketType expectedReferencedPacketType = PacketType.Transactional;
-			ushort expectedReferencedBlockType = ActionTypes.Transaction_transferAssetToStealth;
+			LedgerType expectedReferencedPacketType = LedgerType.O10State;
+			ushort expectedReferencedBlockType = PacketTypes.Transaction_transferAssetToStealth;
 			byte[] expectedReferencedBodyHash = BinaryHelper.GetDefaultHash(473826643);
 			byte[] expectedTarget = BinaryHelper.GetDefaultHash(BinaryHelper.GetRandomPublicKey());
 			byte[] transactionKey = ConfidentialAssetsHelper.GetRandomSeed();
@@ -207,17 +207,17 @@ namespace O10.Transactions.Core.Tests.SerializerTests
 			}
 
 			byte[] expectedPacket = BinaryHelper.GetSignedPacket(
-				PacketType.Registry,
+				LedgerType.Registry,
 				syncBlockHeight,
 				nonce, powHash, version,
-				ActionTypes.Registry_Register, blockHeight, prevHash, body, _privateKey, out byte[] expectedSignature);
+				PacketTypes.Registry_Register, blockHeight, prevHash, body, _privateKey, out byte[] expectedSignature);
 
 			RegistryRegisterBlock block = new RegistryRegisterBlock
 			{
-				SyncBlockHeight = syncBlockHeight,
+				SyncHeight = syncBlockHeight,
 				Nonce = nonce,
 				PowHash = powHash,
-				BlockHeight = blockHeight,
+				Height = blockHeight,
 				ReferencedPacketType = expectedReferencedPacketType,
 				ReferencedBlockType = expectedReferencedBlockType,
 				ReferencedBodyHash = expectedReferencedBodyHash,
@@ -256,8 +256,8 @@ namespace O10.Transactions.Core.Tests.SerializerTests
             byte[][] secretKeys = new byte[ringSize][];
             byte[][] pubkeys = new byte[ringSize][];
 
-            PacketType expectedReferencedPacketType = PacketType.Transactional;
-            ushort expectedReferencedBlockType = ActionTypes.Stealth_OnboardingRequest;
+            LedgerType expectedReferencedPacketType = LedgerType.O10State;
+            ushort expectedReferencedBlockType = PacketTypes.Stealth_OnboardingRequest;
             byte[] expectedReferencedBodyHash = BinaryHelper.GetDefaultHash(473826643);
             byte[] expectedTarget = BinaryHelper.GetDefaultHash(BinaryHelper.GetRandomPublicKey());
 
@@ -281,13 +281,13 @@ namespace O10.Transactions.Core.Tests.SerializerTests
             }
 
             byte[] expectedPacket = BinaryHelper.GetStealthPacket(
-                PacketType.Registry, syncBlockHeight, nonce, powHash, version,
-                ActionTypes.Registry_RegisterStealth, keyImage, 
+                LedgerType.Registry, syncBlockHeight, nonce, powHash, version,
+                PacketTypes.Registry_RegisterStealth, keyImage, 
                 destinationKey, destinationKey2, transactionPublicKey, body, pubkeys, secretKeys[outputIndex], outputIndex, out RingSignature[] expectedSignatures);
 
             RegistryRegisterStealth block = new RegistryRegisterStealth
             {
-                SyncBlockHeight = syncBlockHeight,
+                SyncHeight = syncBlockHeight,
                 Nonce = nonce,
                 PowHash = powHash,
                 KeyImage = new Key32(keyImage),
@@ -359,17 +359,17 @@ namespace O10.Transactions.Core.Tests.SerializerTests
             }
 
             byte[] expectedPacket = BinaryHelper.GetSignedPacket(
-                PacketType.Registry,
+                LedgerType.Registry,
                 syncBlockHeight,
                 nonce, powHash, version,
-                ActionTypes.Registry_ShortBlock, blockHeight, prevHash, body, _privateKey, out byte[] expectedSignature);
+                PacketTypes.Registry_ShortBlock, blockHeight, prevHash, body, _privateKey, out byte[] expectedSignature);
 
             RegistryShortBlock block = new RegistryShortBlock
             {
-                SyncBlockHeight = syncBlockHeight,
+                SyncHeight = syncBlockHeight,
                 Nonce = nonce,
                 PowHash = powHash,
-                BlockHeight = blockHeight,
+                Height = blockHeight,
                 WitnessStateKeys = witnessStateKeys,
                 WitnessUtxoKeys = witnessUtxoKeys
             };
@@ -397,8 +397,8 @@ namespace O10.Transactions.Core.Tests.SerializerTests
             ulong blockHeight = 9;
             byte[] prevHash = null;
 
-            PacketType expectedReferencedPacketType = PacketType.Transactional;
-            ushort expectedReferencedBlockType = ActionTypes.Transaction_IssueBlindedAsset;
+            LedgerType expectedReferencedPacketType = LedgerType.O10State;
+            ushort expectedReferencedBlockType = PacketTypes.Transaction_IssueBlindedAsset;
             byte[] expectedReferencedBodyHash = BinaryHelper.GetDefaultHash(473826643);
             byte[] expectedTarget = BinaryHelper.GetDefaultHash(BinaryHelper.GetRandomPublicKey());
 
@@ -412,10 +412,10 @@ namespace O10.Transactions.Core.Tests.SerializerTests
             {
                 RegistryRegisterBlock registryRegisterBlock = new RegistryRegisterBlock
                 {
-                    SyncBlockHeight = syncBlockHeight,
+                    SyncHeight = syncBlockHeight,
                     Nonce = nonce + i,
                     PowHash = BinaryHelper.GetPowHash(1234 + i),
-                    BlockHeight = blockHeight,
+                    Height = blockHeight,
                     ReferencedPacketType = expectedReferencedPacketType,
                     ReferencedBlockType = expectedReferencedBlockType,
                     ReferencedBodyHash = BinaryHelper.GetDefaultHash(473826643 + i),
@@ -432,7 +432,7 @@ namespace O10.Transactions.Core.Tests.SerializerTests
 
                 RegistryRegisterStealth registryRegisterStealthBlock = new RegistryRegisterStealth
                 {
-                    SyncBlockHeight = syncBlockHeight,
+                    SyncHeight = syncBlockHeight,
                     Nonce = nonce + i,
                     PowHash = BinaryHelper.GetPowHash(1234 + i),
                     DestinationKey = ConfidentialAssetsHelper.GetRandomSeed(),
@@ -482,19 +482,19 @@ namespace O10.Transactions.Core.Tests.SerializerTests
             }
 
             byte[] expectedPacket = BinaryHelper.GetSignedPacket(
-                PacketType.Registry,
+                LedgerType.Registry,
                 syncBlockHeight,
                 nonce, powHash, version,
-                ActionTypes.Registry_FullBlock, blockHeight, prevHash, body, _privateKey, out byte[] expectedSignature);
+                PacketTypes.Registry_FullBlock, blockHeight, prevHash, body, _privateKey, out byte[] expectedSignature);
 
             RegistryFullBlock block = new RegistryFullBlock
             {
-                SyncBlockHeight = syncBlockHeight,
+                SyncHeight = syncBlockHeight,
                 Nonce = nonce,
                 PowHash = powHash,
-                BlockHeight = blockHeight,
+                Height = blockHeight,
                 StateWitnesses = stateWitnesses,
-                UtxoWitnesses = utxoWitnesses,
+                StealthWitnesses = utxoWitnesses,
                 ShortBlockHash = BinaryHelper.GetDefaultHash(1111)
             };
 
@@ -543,17 +543,17 @@ namespace O10.Transactions.Core.Tests.SerializerTests
             }
 
             byte[] expectedPacket = BinaryHelper.GetSignedPacket(
-                PacketType.Registry,
+                LedgerType.Registry,
                 syncBlockHeight,
                 nonce, powHash, version,
-                ActionTypes.Registry_ConfidenceBlock, blockHeight, prevHash, body, _privateKey, out byte[] expectedSignature);
+                PacketTypes.Registry_ConfidenceBlock, blockHeight, prevHash, body, _privateKey, out byte[] expectedSignature);
 
             RegistryConfidenceBlock block = new RegistryConfidenceBlock
             {
-                SyncBlockHeight = syncBlockHeight,
+                SyncHeight = syncBlockHeight,
                 Nonce = nonce,
                 PowHash = powHash,
-                BlockHeight = blockHeight,
+                Height = blockHeight,
                 BitMask = bitMask,
                 ConfidenceProof = expectedProof,
                 ReferencedBlockHash = expectedReferencedBodyHash
@@ -601,17 +601,17 @@ namespace O10.Transactions.Core.Tests.SerializerTests
             }
 
             byte[] expectedPacket = BinaryHelper.GetSignedPacket(
-                PacketType.Synchronization,
+                LedgerType.Synchronization,
                 syncBlockHeight,
                 nonce, powHash, version,
-                ActionTypes.Synchronization_RegistryCombinationBlock, blockHeight, prevHash, body, _privateKey, out byte[] expectedSignature);
+                PacketTypes.Synchronization_RegistryCombinationBlock, blockHeight, prevHash, body, _privateKey, out byte[] expectedSignature);
 
             SynchronizationRegistryCombinedBlock block = new SynchronizationRegistryCombinedBlock
             {
-                SyncBlockHeight = syncBlockHeight,
+                SyncHeight = syncBlockHeight,
                 Nonce = nonce,
                 PowHash = powHash,
-                BlockHeight = blockHeight,
+                Height = blockHeight,
                 HashPrev = prevHash,
                 ReportedTime = expectedDateTime,
                 BlockHashes = expectedHashes

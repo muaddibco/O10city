@@ -1,13 +1,13 @@
 ﻿using System;
 using System.IO;
-using O10.Transactions.Core.DataModel.Transactional;
+using O10.Transactions.Core.Ledgers.O10State;
 using O10.Transactions.Core.Enums;
 
 namespace O10.Transactions.Core.Serializers.Signed.Transactional
 {
 	public abstract class TransactionalTransitionalSerializerBase<T> : TransactionalSerializerBase<T> where T : TransactionalTransitionalPacketBase
 	{
-		public TransactionalTransitionalSerializerBase(IServiceProvider serviceProvider, PacketType packetType, ushort blockType) 
+		public TransactionalTransitionalSerializerBase(IServiceProvider serviceProvider, LedgerType packetType, ushort blockType) 
 			: base(serviceProvider, packetType, blockType)
 		{
 		}

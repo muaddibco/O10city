@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using O10.Transactions.Core.DataModel.Stealth;
+using O10.Transactions.Core.Ledgers.Stealth;
 using O10.Client.Common.Interfaces;
 using O10.Client.DataLayer.Services;
 using O10.Core.Cryptography;
@@ -10,7 +10,7 @@ using O10.Core.Models;
 using O10.Core.ExtensionMethods;
 using O10.Crypto.ConfidentialAssets;
 using O10.Client.Web.Portal.Dtos;
-using O10.Transactions.Core.DataModel.Transactional;
+using O10.Transactions.Core.Ledgers.O10State;
 using O10.Client.DataLayer.Model;
 using O10.Transactions.Core.Parsers;
 using O10.Core.Identity;
@@ -294,7 +294,7 @@ namespace O10.Client.Web.Portal.Services
 
         private void ProcessDocumentSignRecord(DocumentSignRecord packet)
         {
-            if (_dataAccessService.UpdateSpDocumentSignature(_accountId, packet.DocumentHash.ToHexString(), packet.RecordHeight, packet.BlockHeight, packet.RawData.ToArray()))
+            if (_dataAccessService.UpdateSpDocumentSignature(_accountId, packet.DocumentHash.ToHexString(), packet.RecordHeight, packet.Height, packet.RawData.ToArray()))
             {
                 _logger.Info($"[{_accountId}]: Document with hash {packet.DocumentHash.ToHexString()} was signed successfully");
             }
@@ -306,7 +306,7 @@ namespace O10.Client.Web.Portal.Services
 
         private void ProcessDocumentRecord(DocumentRecord packet)
         {
-            _dataAccessService.UpdateSpDocumentChangeRecord(_accountId, packet.DocumentHash.ToHexString(), packet.BlockHeight);
+            _dataAccessService.UpdateSpDocumentChangeRecord(_accountId, packet.DocumentHash.ToHexString(), packet.Height);
         }
 
         private async void ProcessDocumentSignRequest(DocumentSignRequest packet)
@@ -405,14 +405,14 @@ namespace O10.Client.Web.Portal.Services
             _logger.Info($"[{_accountId}]: All verifications for signing request of document {spDocument.DocumentName} at account {_accountId} were passed. Issuing document sign record");
 
             var issueDocumentSignTransaction = await _transactionsService.IssueDocumentSignRecord(documentHash, spDocument.LastChangeRecordHeight, packet.KeyImage.Value.ToArray(), packet.AssetCommitment, packet.EligibilityProof, issuer, packet.SignerGroupRelationProof, packet.AllowedGroupCommitment, groupIssuer.HexStringToByteArray(), packet.AllowedGroupNameSurjectionProof, signatureGroupProof).ConfigureAwait(false);
-            long signatureId = _dataAccessService.AddSpDocumentSignature(_accountId, spDocument.DocumentId, spDocument.LastChangeRecordHeight, issueDocumentSignTransaction.BlockHeight);
+            long signatureId = _dataAccessService.AddSpDocumentSignature(_accountId, spDocument.DocumentId, spDocument.LastChangeRecordHeight, issueDocumentSignTransaction.Height);
 
             DocumentSignatureDto documentSignature = new DocumentSignatureDto
             {
                 DocumentId = spDocument.DocumentId,
                 DocumentHash = spDocument.Hash,
                 DocumentRecordHeight = spDocument.LastChangeRecordHeight,
-                SignatureRecordHeight = issueDocumentSignTransaction.BlockHeight
+                SignatureRecordHeight = issueDocumentSignTransaction.Height
             };
 
             _logger.Info($"[{_accountId}]: DocumentSignature: {JsonConvert.SerializeObject(documentSignature)}");

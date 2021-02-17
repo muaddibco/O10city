@@ -4,13 +4,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using O10.Transactions.Core.DataModel;
 using O10.Transactions.Core.Parsers;
 using O10.Client.Common.Interfaces;
 using O10.Client.DataLayer.Services;
 using O10.Core.Logging;
 using O10.Core.Models;
 using O10.Core.Serialization;
+using O10.Transactions.Core.DTOs;
 
 namespace O10.Client.Common.Communication
 {

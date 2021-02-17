@@ -2,7 +2,7 @@
 using O10.Core.Cryptography;
 using O10.Core.Identity;
 using O10.Core.States;
-using O10.Transactions.Core.DataModel;
+using O10.Transactions.Core.DTOs;
 using System;
 using System.Linq;
 using System.Reactive.Subjects;

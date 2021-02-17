@@ -1,6 +1,6 @@
 ﻿using System;
 using System.IO;
-using O10.Transactions.Core.DataModel.Registry;
+using O10.Transactions.Core.Ledgers.Registry;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Serializers.Stealth;
 using O10.Core.Architecture;
@@ -11,7 +11,7 @@ namespace O10.Transactions.Core.Serializers.Signed.Registry
     [RegisterExtension(typeof(ISerializer), Lifetime = LifetimeManagement.Transient)]
     public class RegistryRegisterStealthBlockSerializer : StealthSerializerBase<RegistryRegisterStealth>
     {
-        public RegistryRegisterStealthBlockSerializer(IServiceProvider serviceProvider) : base(serviceProvider, PacketType.Registry, ActionTypes.Registry_RegisterStealth)
+        public RegistryRegisterStealthBlockSerializer(IServiceProvider serviceProvider) : base(serviceProvider, LedgerType.Registry, PacketTypes.Registry_RegisterStealth)
         {
         }
 

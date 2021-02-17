@@ -7,7 +7,7 @@ namespace O10.Core.Models
 {
     public abstract class SignedPacketBase : PacketBase
     {
-        public ulong BlockHeight { get; set; }
+        public ulong Height { get; set; }
 
         [JsonConverter(typeof(KeyJsonConverter))]
         public IKey Signer { get; set; }

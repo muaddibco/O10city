@@ -13,6 +13,7 @@ using O10.Core.Configuration;
 using O10.Core.ExtensionMethods;
 using O10.Core.HashCalculations;
 using O10.Core.Logging;
+using O10.Transactions.Core.Enums;
 
 namespace O10.Gateway.DataLayer.Services
 {
@@ -62,18 +63,27 @@ namespace O10.Gateway.DataLayer.Services
 
                 _logger.Debug("DataAccessService initialization started");
 
-				_dataContext = _dataContexts.FirstOrDefault(d => d.DataProvider.Equals(_configuration.ConnectionType)) as DataContext;
-				_dataContext.Initialize(_configuration.ConnectionString);
-				_dataContext.Database.Migrate();
-				_logger.Info($"ConnectionString = {_dataContext.Database.GetDbConnection().ConnectionString}");
+                _dataContext = _dataContexts.FirstOrDefault(d => d.DataProvider.Equals(_configuration.ConnectionType)) as DataContext;
+                _dataContext.Initialize(_configuration.ConnectionString);
+                _dataContext.Database.Migrate();
+                _logger.Info($"ConnectionString = {_dataContext.Database.GetDbConnection().ConnectionString}");
+
                 InitializeUtxoOutputsIndiciesMap();
 
                 InitializeRootAttributes();
+
+                InitializeLocalCache();
 
                 _isInitialzed = true;
             }
 
             InitializeTrackingAndSave(cancellationToken);
+        }
+
+        private void InitializeLocalCache()
+        {
+            _dataContext.PacketHashes.Load();
+            _dataContext.WitnessPackets.Load();
         }
 
         private void InitializeTrackingAndSave(CancellationToken cancellationToken)
@@ -127,7 +137,7 @@ namespace O10.Gateway.DataLayer.Services
         {
             foreach (var utxoOutput in _dataContext.UtxoOutputs.Where(o => !o.IsOverriden))
             {
-                _utxoOutputsIndiciesMap.Add(utxoOutput.UtxoOutputId);
+                _utxoOutputsIndiciesMap.Add(utxoOutput.StealthOutputId);
             }
         }
 
@@ -157,9 +167,9 @@ namespace O10.Gateway.DataLayer.Services
 						_witnessPacketStoreCompletions[witnessPacket].SetResult(witnessPacket);
 					}
 				}
-				else if(e.Entry.Entity is UtxoOutput utxoOutput)
+				else if(e.Entry.Entity is StealthOutput utxoOutput)
 				{
-					_utxoOutputsIndiciesMap.Add(utxoOutput.UtxoOutputId);
+					_utxoOutputsIndiciesMap.Add(utxoOutput.StealthOutputId);
 				}
 			}
 		}
@@ -227,7 +237,7 @@ namespace O10.Gateway.DataLayer.Services
 
         public void StoreIncomingTransactionalBlock(StateIncomingStoreInput storeInput, byte[] groupId)
         {
-            TransactionalPacket transactionalIncomingBlock = new TransactionalPacket
+            StatePacket transactionalIncomingBlock = new StatePacket
             {
                 WitnessId = storeInput.WitnessId,
                 Height = (long)storeInput.BlockHeight,
@@ -261,7 +271,7 @@ namespace O10.Gateway.DataLayer.Services
 
         public void StoreIncomingTransitionTransactionalBlock(StateTransitionIncomingStoreInput storeInput, byte[] groupId, Span<byte> originatingCommitment)
         {
-            TransactionalPacket transactionalIncomingBlock = new TransactionalPacket
+            StatePacket transactionalIncomingBlock = new StatePacket
             {
                 WitnessId = storeInput.WitnessId,
                 Height = (long)storeInput.BlockHeight,
@@ -370,7 +380,7 @@ namespace O10.Gateway.DataLayer.Services
             }
         }
 
-        public TaskCompletionSource<WitnessPacket> StoreWitnessPacket(ulong syncBlockHeight, long round, ulong combinedBlockHeight, ushort referencedPacketType, ushort referencedBlockType, byte[] referencedBodyHash, byte[] referencedDestinationKey, byte[] referencedDestinationKey2, byte[] referencedTransactionKey, byte[] referencedKeyImage)
+        public TaskCompletionSource<WitnessPacket> StoreWitnessPacket(ulong syncBlockHeight, long round, ulong combinedBlockHeight, LedgerType referencedPacketType, ushort referencedBlockType, byte[] referencedBodyHash, byte[] referencedDestinationKey, byte[] referencedDestinationKey2, byte[] referencedTransactionKey, byte[] referencedKeyImage)
         {
             try
             {
@@ -423,7 +433,7 @@ namespace O10.Gateway.DataLayer.Services
 			{
 				try
 				{
-					return _dataContext.WitnessPackets.Where(w => w.CombinedBlockHeight >= combinedBlockHeightStart && w.CombinedBlockHeight <= combinedBlockHeightEnd).AsEnumerable().GroupBy(w => w.CombinedBlockHeight).ToDictionary(g => g.Key, g => g.ToList());
+					return _dataContext.WitnessPackets.Local.Where(w => w.CombinedBlockHeight >= combinedBlockHeightStart && w.CombinedBlockHeight <= combinedBlockHeightEnd).GroupBy(w => w.CombinedBlockHeight).ToDictionary(g => g.Key, g => g.ToList());
 				}
 				finally
 				{
@@ -444,7 +454,7 @@ namespace O10.Gateway.DataLayer.Services
 			{
 				try
 				{
-					return _dataContext.WitnessPackets.Include(w => w.ReferencedBodyHash).FirstOrDefault(w => w.WitnessPacketId == witnessPacketId);
+					return _dataContext.WitnessPackets.Local.FirstOrDefault(w => w.WitnessPacketId == witnessPacketId);
 				}
 				finally
 				{
@@ -493,7 +503,7 @@ namespace O10.Gateway.DataLayer.Services
             {
                 try
                 {
-                    List<TransactionalPacket> excessedTransactionalPackets = _dataContext.TransactionalPackets.Where(r => r.ThisBlockHash.CombinedRegistryBlockHeight > combinedBlockHeight).ToList();
+                    List<StatePacket> excessedTransactionalPackets = _dataContext.TransactionalPackets.Where(r => r.ThisBlockHash.CombinedRegistryBlockHeight > combinedBlockHeight).ToList();
                     _dataContext.TransactionalPackets.RemoveRange(excessedTransactionalPackets);
 
                     List<StealthPacket> excessedStealthPackets = _dataContext.StealthPackets.Where(r => r.ThisBlockHash.CombinedRegistryBlockHeight > combinedBlockHeight).ToList();
@@ -502,7 +512,7 @@ namespace O10.Gateway.DataLayer.Services
                     List<PacketHash> excessedHashes = _dataContext.PacketHashes.Where(r => r.CombinedRegistryBlockHeight > combinedBlockHeight).ToList();
                     _dataContext.PacketHashes.RemoveRange(excessedHashes);
 
-                    List<WitnessPacket> excessedWitnessPackets = _dataContext.WitnessPackets.Where(r => r.CombinedBlockHeight > combinedBlockHeight).ToList();
+                    List<WitnessPacket> excessedWitnessPackets = _dataContext.WitnessPackets.Local.Where(r => r.CombinedBlockHeight > combinedBlockHeight).ToList();
                     _dataContext.WitnessPackets.RemoveRange(excessedWitnessPackets);
 
                     List<RegistryCombinedBlock> excessedCombinedBlocks = _dataContext.RegistryCombinedBlocks.Where(r => r.RegistryCombinedBlockId > combinedBlockHeight).ToList();
@@ -555,7 +565,7 @@ namespace O10.Gateway.DataLayer.Services
 			return commitments;
 		}
 
-		public UtxoOutput[] GetOutputs(int amount)
+		public StealthOutput[] GetOutputs(int amount)
 		{
 			int max = amount;
 
@@ -564,7 +574,7 @@ namespace O10.Gateway.DataLayer.Services
                 throw new ArgumentOutOfRangeException(nameof(amount), $"Number of requested outputs ({amount}) cannot exceed number of avaialble ones ({_utxoOutputsIndiciesMap.Count})");
             }
 
-			UtxoOutput[] outputs = new UtxoOutput[amount];
+			StealthOutput[] outputs = new StealthOutput[amount];
 			Random random = new Random(_utxoOutputsIndiciesMap.Count);
 			List<int> pickedIndicies = new List<int>();
 
@@ -584,13 +594,13 @@ namespace O10.Gateway.DataLayer.Services
                                 continue;
                             }
 
-							UtxoOutput utxoOutput = _dataContext.UtxoOutputs.FirstOrDefault(o => o.UtxoOutputId == _utxoOutputsIndiciesMap[index]);
+							StealthOutput utxoOutput = _dataContext.UtxoOutputs.FirstOrDefault(o => o.StealthOutputId == _utxoOutputsIndiciesMap[index]);
 							pickedIndicies.Add(index);
 
 							if (outputs.All(o => o?.Commitment != utxoOutput.Commitment))
 							{
 								found = true;
-								outputs[i] = _dataContext.UtxoOutputs.FirstOrDefault(o => o.UtxoOutputId == _utxoOutputsIndiciesMap[index]);
+								outputs[i] = _dataContext.UtxoOutputs.FirstOrDefault(o => o.StealthOutputId == _utxoOutputsIndiciesMap[index]);
 							}
                         } while (!found);
                     }
@@ -759,11 +769,11 @@ namespace O10.Gateway.DataLayer.Services
 						overriden.ForEach(overridenEntry => 
 						{
 							string overridenEntryString = overridenEntry.ToHexString();
-							IEnumerable<UtxoOutput> outputs = _dataContext.UtxoOutputs.Where(c => c.Commitment == overridenEntryString);
+							IEnumerable<StealthOutput> outputs = _dataContext.UtxoOutputs.Where(c => c.Commitment == overridenEntryString);
 							foreach (var o in outputs)
 							{
 								o.IsOverriden = true;
-								_utxoOutputsIndiciesMap.Remove(o.UtxoOutputId);
+								_utxoOutputsIndiciesMap.Remove(o.StealthOutputId);
 							}
 						});
                     }
@@ -908,13 +918,13 @@ namespace O10.Gateway.DataLayer.Services
             return false;
         }
 
-        public TransactionalPacket GetTransactionalIncomingBlock(long witnessid)
+        public StatePacket GetTransactionalIncomingBlock(long witnessid)
         {
             if (Monitor.TryEnter(_sync, _lockTimeout))
             {
                 try
                 {
-					TransactionalPacket transactionalIncomingBlock = _dataContext.TransactionalPackets.Local.FirstOrDefault(t => t.WitnessId == witnessid);
+					StatePacket transactionalIncomingBlock = _dataContext.TransactionalPackets.Local.FirstOrDefault(t => t.WitnessId == witnessid);
 
 					if(transactionalIncomingBlock == null)
 					{
@@ -970,14 +980,19 @@ namespace O10.Gateway.DataLayer.Services
             {
                 try
                 {
-                    StealthPacket stealthPacket = _dataContext.StealthPackets.Local.FirstOrDefault(t => t.ThisBlockHash?.SyncBlockHeight == syncBlockHeight && t.ThisBlockHash?.CombinedRegistryBlockHeight == combinedRegistryBlockHeight && t.ThisBlockHash?.Hash == hashString);
+                    var packetHash = _dataContext.PacketHashes.Local.FirstOrDefault(h => h.SyncBlockHeight == syncBlockHeight && h.CombinedRegistryBlockHeight == combinedRegistryBlockHeight && h.Hash == hashString);
 
-                    if (stealthPacket == null)
+                    if(packetHash != null)
                     {
-                        stealthPacket = _dataContext.StealthPackets.Include(p => p.ThisBlockHash).FirstOrDefault(t => t.ThisBlockHash.SyncBlockHeight == syncBlockHeight && t.ThisBlockHash.CombinedRegistryBlockHeight == combinedRegistryBlockHeight && t.ThisBlockHash.Hash == hashString);
-                    }
+                        StealthPacket stealthPacket = _dataContext.StealthPackets.Local.FirstOrDefault(t => t.ThisBlockHash?.PacketHashId == packetHash.PacketHashId);
 
-                    return stealthPacket;
+                        if (stealthPacket == null)
+                        {
+                            stealthPacket = _dataContext.StealthPackets.Include(p => p.ThisBlockHash).FirstOrDefault(t => t.ThisBlockHash != null && t.ThisBlockHash.PacketHashId == packetHash.PacketHashId);
+                        }
+
+                        return stealthPacket;
+                    }
                 }
                 finally
                 {
@@ -986,7 +1001,7 @@ namespace O10.Gateway.DataLayer.Services
             }
             else
             {
-                _logger.Warning("Failed to acquire lock at GetUtxoIncomingBlock");
+                _logger.Warning($"Failed to acquire lock at {nameof(GetStealthPacket)}");
             }
 
             return null;
@@ -1076,13 +1091,13 @@ namespace O10.Gateway.DataLayer.Services
 			return null;
 		}
 
-		public TransactionalPacket GetTransactionBySourceAndHeight(string source, ulong blockHeight)
+		public StatePacket GetTransactionBySourceAndHeight(string source, ulong blockHeight)
 		{
 			if (Monitor.TryEnter(_sync, _lockTimeout))
 			{
 				try
 				{
-					TransactionalPacket transaction = _dataContext.TransactionalPackets.Include(t => t.Source).Include(t => t.ThisBlockHash).FirstOrDefault(t => source.Equals(t.Source.Key) && t.Height == (long)blockHeight);
+					StatePacket transaction = _dataContext.TransactionalPackets.Include(t => t.Source).Include(t => t.ThisBlockHash).FirstOrDefault(t => source.Equals(t.Source.Key) && t.Height == (long)blockHeight);
 
 					return transaction;
 				}
@@ -1194,20 +1209,20 @@ namespace O10.Gateway.DataLayer.Services
             return null;
         }
 
-        private UtxoKeyImage GetOrAddUtxoKeyImage(Span<byte> keyImage)
+        private KeyImage GetOrAddUtxoKeyImage(Span<byte> keyImage)
         {
             if (Monitor.TryEnter(_sync, _lockTimeout))
             {
                 try
                 {
                     string keyImageString = keyImage.ToArray().ToHexString();
-                    UtxoKeyImage utxoKeyImage = _dataContext.UtxoKeyImages.FirstOrDefault(b => b.KeyImage == keyImageString);
+                    KeyImage utxoKeyImage = _dataContext.UtxoKeyImages.FirstOrDefault(b => b.Value == keyImageString);
 
                     if (utxoKeyImage == null)
                     {
-                        utxoKeyImage = new UtxoKeyImage
+                        utxoKeyImage = new KeyImage
                         {
-                            KeyImage = keyImageString
+                            Value = keyImageString
                         };
 
                         _dataContext.UtxoKeyImages.Add(utxoKeyImage);
@@ -1228,18 +1243,18 @@ namespace O10.Gateway.DataLayer.Services
             return null;
         }
 
-        private UtxoTransactionKey GetOrAddUtxoTransactionKey(Span<byte> transactionKey)
+        private TransactionKey GetOrAddUtxoTransactionKey(Span<byte> transactionKey)
         {
             if (Monitor.TryEnter(_sync, _lockTimeout))
             {
                 try
                 {
                     string transactionKeyString = transactionKey.ToArray().ToHexString();
-                    UtxoTransactionKey utxoTransactionKey = _dataContext.UtxoTransactionKeys.FirstOrDefault(b => b.Key == transactionKeyString);
+                    TransactionKey utxoTransactionKey = _dataContext.UtxoTransactionKeys.FirstOrDefault(b => b.Key == transactionKeyString);
 
                     if (utxoTransactionKey == null)
                     {
-                        utxoTransactionKey = new UtxoTransactionKey
+                        utxoTransactionKey = new TransactionKey
                         {
                             Key = transactionKeyString
                         };
@@ -1262,7 +1277,7 @@ namespace O10.Gateway.DataLayer.Services
             return null;
         }
 
-        private UtxoOutput GetOrAddUtxoOutput(Span<byte> commitment, Span<byte> destinationKey)
+        private StealthOutput GetOrAddUtxoOutput(Span<byte> commitment, Span<byte> destinationKey)
         {
             string commitmentString = commitment.ToArray().ToHexString();
             string destinationKeyString = destinationKey.ToArray().ToHexString();
@@ -1273,11 +1288,11 @@ namespace O10.Gateway.DataLayer.Services
 
                 try
                 {
-                    UtxoOutput utxoOutput = _dataContext.UtxoOutputs.FirstOrDefault(b => !b.IsOverriden && b.Commitment == commitmentString && b.DestinationKey == destinationKeyString);
+                    StealthOutput utxoOutput = _dataContext.UtxoOutputs.FirstOrDefault(b => !b.IsOverriden && b.Commitment == commitmentString && b.DestinationKey == destinationKeyString);
 
                     if (utxoOutput == null)
                     {
-                        utxoOutput = new UtxoOutput
+                        utxoOutput = new StealthOutput
                         {
                             Commitment = commitmentString,
                             DestinationKey = destinationKeyString
@@ -1302,7 +1317,7 @@ namespace O10.Gateway.DataLayer.Services
             return null;
         }
 
-        private UtxoOutput GetOrAddUtxoOutput(Span<byte> commitment, Span<byte> destinationKey, Span<byte> originatingCommitment)
+        private StealthOutput GetOrAddUtxoOutput(Span<byte> commitment, Span<byte> destinationKey, Span<byte> originatingCommitment)
         {
             string commitmentString = commitment.ToArray().ToHexString();
             string destinationKeyString = destinationKey.ToArray().ToHexString();
@@ -1313,11 +1328,11 @@ namespace O10.Gateway.DataLayer.Services
 
                 try
                 {
-                    UtxoOutput utxoOutput = _dataContext.UtxoOutputs.FirstOrDefault(b => !b.IsOverriden && b.Commitment == commitmentString && b.DestinationKey == destinationKeyString);
+                    StealthOutput utxoOutput = _dataContext.UtxoOutputs.FirstOrDefault(b => !b.IsOverriden && b.Commitment == commitmentString && b.DestinationKey == destinationKeyString);
 
                     if (utxoOutput == null)
                     {
-                        utxoOutput = new UtxoOutput
+                        utxoOutput = new StealthOutput
                         {
                             Commitment = commitmentString,
                             DestinationKey = destinationKeyString,

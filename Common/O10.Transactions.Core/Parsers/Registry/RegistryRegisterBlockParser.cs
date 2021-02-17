@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Buffers.Binary;
-using O10.Transactions.Core.DataModel.Registry;
+using O10.Transactions.Core.Ledgers.Registry;
 using O10.Transactions.Core.Enums;
 using O10.Core.Architecture;
 
@@ -19,9 +19,9 @@ namespace O10.Transactions.Core.Parsers.Registry
         {
         }
 
-        public override ushort BlockType => ActionTypes.Registry_Register;
+        public override ushort BlockType => PacketTypes.Registry_Register;
 
-        public override PacketType PacketType => PacketType.Registry;
+        public override LedgerType PacketType => LedgerType.Registry;
 
         protected override Memory<byte> ParseSigned(ushort version, Memory<byte> spanBody, out SignedPacketBase syncedBlockBase)
         {
@@ -29,7 +29,7 @@ namespace O10.Transactions.Core.Parsers.Registry
             {
 				int readBytes = 0;
 
-                PacketType referencedPacketType = (PacketType)BinaryPrimitives.ReadUInt16LittleEndian(spanBody.Span);
+                LedgerType referencedPacketType = (LedgerType)BinaryPrimitives.ReadUInt16LittleEndian(spanBody.Span);
 				readBytes += sizeof(ushort);
 
                 ushort referencedBlockType = BinaryPrimitives.ReadUInt16LittleEndian(spanBody.Span.Slice(readBytes));
@@ -43,7 +43,7 @@ namespace O10.Transactions.Core.Parsers.Registry
 
 				byte[] transactionKey = null;
 
-				if((referencedBlockType & ActionTypes.TransitionalFlag) == ActionTypes.TransitionalFlag)
+				if((referencedBlockType & PacketTypes.TransitionalFlag) == PacketTypes.TransitionalFlag)
 				{
 					transactionKey = spanBody.Slice(readBytes, Globals.DEFAULT_HASH_SIZE).ToArray();
 					readBytes += Globals.DEFAULT_HASH_SIZE;

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Buffers.Binary;
-using O10.Transactions.Core.DataModel.Registry;
+using O10.Transactions.Core.Ledgers.Registry;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Exceptions;
 using O10.Core;
@@ -20,9 +20,9 @@ namespace O10.Transactions.Core.Parsers.Registry
             _keyProvider = identityKeyProvidersRegistry.GetInstance();
         }
 
-        public override ushort BlockType => ActionTypes.Registry_ShortBlock;
+        public override ushort BlockType => PacketTypes.Registry_ShortBlock;
 
-        public override PacketType PacketType => PacketType.Registry;
+        public override LedgerType PacketType => LedgerType.Registry;
 
         protected override Memory<byte> ParseSigned(ushort version, Memory<byte> spanBody, out SignedPacketBase syncedBlockBase)
         {

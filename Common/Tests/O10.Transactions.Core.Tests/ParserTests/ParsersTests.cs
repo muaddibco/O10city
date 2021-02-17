@@ -8,9 +8,9 @@ using O10.Core.ExtensionMethods;
 using O10.Tests.Core;
 using Xunit;
 using NSubstitute;
-using O10.Transactions.Core.DataModel.Synchronization;
+using O10.Transactions.Core.Ledgers.Synchronization;
 using O10.Transactions.Core.Parsers.Registry;
-using O10.Transactions.Core.DataModel.Registry;
+using O10.Transactions.Core.Ledgers.Registry;
 using O10.Core.Cryptography;
 using O10.Transactions.Core.Serializers.Signed.Registry;
 using System.Linq;
@@ -79,21 +79,21 @@ namespace O10.Transactions.Core.Tests.ParserTests
 			}
 
 			byte[] packet = BinaryHelper.GetSignedPacket(
-				PacketType.Synchronization,
+				LedgerType.Synchronization,
 				syncBlockHeight,
 				nonce, powHash, version,
-				ActionTypes.Synchronization_ConfirmedBlock, blockHeight, prevHash, body, _privateKey, out byte[] expectedSignature);
+				PacketTypes.Synchronization_ConfirmedBlock, blockHeight, prevHash, body, _privateKey, out byte[] expectedSignature);
 			string packetExpectedString = packet.ToHexString();
 
 			SynchronizationConfirmedBlockParser synchronizationConfirmedBlockParser = new SynchronizationConfirmedBlockParser(_identityKeyProvidersRegistry);
 			SynchronizationConfirmedBlock block = (SynchronizationConfirmedBlock)synchronizationConfirmedBlockParser.Parse(packet);
 
 			string packetActualString = block.RawData.ToHexString();
-			Assert.Equal(syncBlockHeight, block.SyncBlockHeight);
+			Assert.Equal(syncBlockHeight, block.SyncHeight);
 			Assert.Equal(nonce, block.Nonce);
 			Assert.Equal(powHash, block.PowHash);
 			Assert.Equal(version, block.Version);
-			Assert.Equal(blockHeight, block.BlockHeight);
+			Assert.Equal(blockHeight, block.Height);
 			Assert.Equal(prevHash, block.HashPrev);
 			Assert.Equal(expectedDateTime, block.ReportedTime);
 			Assert.Equal(round, block.Round);
@@ -118,8 +118,8 @@ namespace O10.Transactions.Core.Tests.ParserTests
 			ulong blockHeight = 9;
 			byte[] prevHash = null;
 
-			PacketType expectedReferencedPacketType = PacketType.Transactional;
-			ushort expectedReferencedBlockType = ActionTypes.Transaction_IssueBlindedAsset;
+			LedgerType expectedReferencedPacketType = LedgerType.O10State;
+			ushort expectedReferencedBlockType = PacketTypes.Transaction_IssueBlindedAsset;
 			byte[] expectedReferencedBodyHash = BinaryHelper.GetDefaultHash(473826643);
 			byte[] expectedTarget = BinaryHelper.GetDefaultHash(BinaryHelper.GetRandomPublicKey());
 
@@ -140,19 +140,19 @@ namespace O10.Transactions.Core.Tests.ParserTests
 			}
 
 			byte[] packet = BinaryHelper.GetSignedPacket(
-				PacketType.Registry,
+				LedgerType.Registry,
 				syncBlockHeight,
 				nonce, powHash, version,
-				ActionTypes.Registry_Register, blockHeight, prevHash, body, _privateKey, out byte[] expectedSignature);
+				PacketTypes.Registry_Register, blockHeight, prevHash, body, _privateKey, out byte[] expectedSignature);
 
 			RegistryRegisterBlockParser registryRegisterBlockParser = new RegistryRegisterBlockParser(_identityKeyProvidersRegistry);
 			RegistryRegisterBlock block = (RegistryRegisterBlock)registryRegisterBlockParser.Parse(packet);
 
-			Assert.Equal(syncBlockHeight, block.SyncBlockHeight);
+			Assert.Equal(syncBlockHeight, block.SyncHeight);
 			Assert.Equal(nonce, block.Nonce);
 			Assert.Equal(powHash, block.PowHash);
 			Assert.Equal(version, block.Version);
-			Assert.Equal(blockHeight, block.BlockHeight);
+			Assert.Equal(blockHeight, block.Height);
 
 			Assert.Equal(expectedReferencedPacketType, block.ReferencedPacketType);
 			Assert.Equal(expectedReferencedBlockType, block.ReferencedBlockType);
@@ -173,8 +173,8 @@ namespace O10.Transactions.Core.Tests.ParserTests
 			ulong blockHeight = 9;
 			byte[] prevHash = null;
 
-			PacketType expectedReferencedPacketType = PacketType.Transactional;
-			ushort expectedReferencedBlockType = ActionTypes.Transaction_transferAssetToStealth;
+			LedgerType expectedReferencedPacketType = LedgerType.O10State;
+			ushort expectedReferencedBlockType = PacketTypes.Transaction_transferAssetToStealth;
 			byte[] expectedReferencedBodyHash = BinaryHelper.GetDefaultHash(473826643);
 			byte[] expectedTarget = BinaryHelper.GetDefaultHash(BinaryHelper.GetRandomPublicKey());
 			byte[] transactionKey = ConfidentialAssetsHelper.GetRandomSeed();
@@ -197,19 +197,19 @@ namespace O10.Transactions.Core.Tests.ParserTests
 			}
 
 			byte[] packet = BinaryHelper.GetSignedPacket(
-				PacketType.Registry,
+				LedgerType.Registry,
 				syncBlockHeight,
 				nonce, powHash, version,
-				ActionTypes.Registry_Register, blockHeight, prevHash, body, _privateKey, out byte[] expectedSignature);
+				PacketTypes.Registry_Register, blockHeight, prevHash, body, _privateKey, out byte[] expectedSignature);
 
 			RegistryRegisterBlockParser registryRegisterBlockParser = new RegistryRegisterBlockParser(_identityKeyProvidersRegistry);
 			RegistryRegisterBlock block = (RegistryRegisterBlock)registryRegisterBlockParser.Parse(packet);
 
-			Assert.Equal(syncBlockHeight, block.SyncBlockHeight);
+			Assert.Equal(syncBlockHeight, block.SyncHeight);
 			Assert.Equal(nonce, block.Nonce);
 			Assert.Equal(powHash, block.PowHash);
 			Assert.Equal(version, block.Version);
-			Assert.Equal(blockHeight, block.BlockHeight);
+			Assert.Equal(blockHeight, block.Height);
 
 			Assert.Equal(expectedReferencedPacketType, block.ReferencedPacketType);
 			Assert.Equal(expectedReferencedBlockType, block.ReferencedBlockType);
@@ -231,8 +231,8 @@ namespace O10.Transactions.Core.Tests.ParserTests
 			byte[] destinationKey = ConfidentialAssetsHelper.GetRandomSeed();
 			byte[] transactionPublicKey = ConfidentialAssetsHelper.GetRandomSeed();
 
-			PacketType expectedReferencedPacketType = PacketType.Transactional;
-			ushort expectedReferencedBlockType = ActionTypes.Stealth_OnboardingRequest;
+			LedgerType expectedReferencedPacketType = LedgerType.O10State;
+			ushort expectedReferencedBlockType = PacketTypes.Stealth_OnboardingRequest;
 			byte[] destinationKey2 = ConfidentialAssetsHelper.GetRandomSeed();
 			byte[] expectedReferencedBodyHash = BinaryHelper.GetDefaultHash(473826643);
 
@@ -261,13 +261,13 @@ namespace O10.Transactions.Core.Tests.ParserTests
 			}
 
 			byte[] packet = BinaryHelper.GetStealthPacket(
-				PacketType.Registry, syncBlockHeight, nonce, powHash, version,
-				ActionTypes.Registry_RegisterStealth, keyImage, destinationKey, destinationKey2, transactionPublicKey, body, pubkeys, secretKeys[outputIndex], outputIndex, out RingSignature[] expectedSignatures);
+				LedgerType.Registry, syncBlockHeight, nonce, powHash, version,
+				PacketTypes.Registry_RegisterStealth, keyImage, destinationKey, destinationKey2, transactionPublicKey, body, pubkeys, secretKeys[outputIndex], outputIndex, out RingSignature[] expectedSignatures);
 
 			RegistryRegisterStealthBlockParser registryRegisterBlockParser = new RegistryRegisterStealthBlockParser(_identityKeyProvidersRegistry);
 			RegistryRegisterStealth block = (RegistryRegisterStealth)registryRegisterBlockParser.Parse(packet);
 
-			Assert.Equal(syncBlockHeight, block.SyncBlockHeight);
+			Assert.Equal(syncBlockHeight, block.SyncHeight);
 			Assert.Equal(nonce, block.Nonce);
 			Assert.Equal(powHash, block.PowHash);
 			Assert.Equal(version, block.Version);
@@ -328,19 +328,19 @@ namespace O10.Transactions.Core.Tests.ParserTests
 			}
 
 			byte[] packet = BinaryHelper.GetSignedPacket(
-				PacketType.Registry,
+				LedgerType.Registry,
 				syncBlockHeight,
 				nonce, powHash, version,
-				ActionTypes.Registry_ShortBlock, blockHeight, prevHash, body, _privateKey, out byte[] expectedSignature);
+				PacketTypes.Registry_ShortBlock, blockHeight, prevHash, body, _privateKey, out byte[] expectedSignature);
 
 			RegistryShortBlockParser registryFullBlockParser = new RegistryShortBlockParser(_identityKeyProvidersRegistry);
 			RegistryShortBlock block = (RegistryShortBlock)registryFullBlockParser.Parse(packet);
 
-			Assert.Equal(syncBlockHeight, block.SyncBlockHeight);
+			Assert.Equal(syncBlockHeight, block.SyncHeight);
 			Assert.Equal(nonce, block.Nonce);
 			Assert.Equal(powHash, block.PowHash);
 			Assert.Equal(version, block.Version);
-			Assert.Equal(blockHeight, block.BlockHeight);
+			Assert.Equal(blockHeight, block.Height);
 
 			for (int i = 0; i < witnessStateKeys.Length; i++)
 			{
@@ -370,8 +370,8 @@ namespace O10.Transactions.Core.Tests.ParserTests
 			ulong blockHeight = 9;
 			byte[] prevHash = null;
 
-			PacketType expectedReferencedPacketType = PacketType.Transactional;
-			ushort expectedReferencedBlockType = ActionTypes.Transaction_IssueBlindedAsset;
+			LedgerType expectedReferencedPacketType = LedgerType.O10State;
+			ushort expectedReferencedBlockType = PacketTypes.Transaction_IssueBlindedAsset;
 
 			byte[] body;
 
@@ -385,10 +385,10 @@ namespace O10.Transactions.Core.Tests.ParserTests
 			{
 				RegistryRegisterBlock registryRegisterBlock = new RegistryRegisterBlock
 				{
-					SyncBlockHeight = syncBlockHeight,
+					SyncHeight = syncBlockHeight,
 					Nonce = nonce + i,
 					PowHash = BinaryHelper.GetPowHash(1234 + i),
-					BlockHeight = blockHeight,
+					Height = blockHeight,
 					ReferencedPacketType = expectedReferencedPacketType,
 					ReferencedBlockType = expectedReferencedBlockType,
 					ReferencedBodyHash = BinaryHelper.GetDefaultHash(473826643 + i),
@@ -405,7 +405,7 @@ namespace O10.Transactions.Core.Tests.ParserTests
 
 				RegistryRegisterStealth registryRegisterStealthBlock = new RegistryRegisterStealth
 				{
-					SyncBlockHeight = syncBlockHeight,
+					SyncHeight = syncBlockHeight,
 					Nonce = nonce + i,
 					PowHash = BinaryHelper.GetPowHash(1234 + i),
 					KeyImage = new Key32(ConfidentialAssetsHelper.GetRandomSeed()),
@@ -456,29 +456,29 @@ namespace O10.Transactions.Core.Tests.ParserTests
 			}
 
 			byte[] packet = BinaryHelper.GetSignedPacket(
-				PacketType.Registry,
+				LedgerType.Registry,
 				syncBlockHeight,
 				nonce, powHash, version,
-				ActionTypes.Registry_FullBlock, blockHeight, prevHash, body, _privateKey, out byte[] expectedSignature);
+				PacketTypes.Registry_FullBlock, blockHeight, prevHash, body, _privateKey, out byte[] expectedSignature);
 
 			RegistryFullBlockParser registryFullBlockParser = new RegistryFullBlockParser(_identityKeyProvidersRegistry);
 			RegistryFullBlock block = (RegistryFullBlock)registryFullBlockParser.Parse(packet);
 
-			Assert.Equal(syncBlockHeight, block.SyncBlockHeight);
+			Assert.Equal(syncBlockHeight, block.SyncHeight);
 			Assert.Equal(nonce, block.Nonce);
 			Assert.Equal(powHash, block.PowHash);
 			Assert.Equal(version, block.Version);
-			Assert.Equal(blockHeight, block.BlockHeight);
+			Assert.Equal(blockHeight, block.Height);
 
 			for (int i = 0; i < expectedCount; i++)
 			{
 				RegistryRegisterBlock registryRegisterBlock = block.StateWitnesses[i];
-				Assert.Equal(stateWitnesses[i].PacketType, registryRegisterBlock.PacketType);
-				Assert.Equal(stateWitnesses[i].SyncBlockHeight, registryRegisterBlock.SyncBlockHeight);
+				Assert.Equal(stateWitnesses[i].LedgerType, registryRegisterBlock.LedgerType);
+				Assert.Equal(stateWitnesses[i].SyncHeight, registryRegisterBlock.SyncHeight);
 				Assert.Equal(stateWitnesses[i].Nonce, registryRegisterBlock.Nonce);
 				Assert.Equal(stateWitnesses[i].PowHash, registryRegisterBlock.PowHash);
-				Assert.Equal(stateWitnesses[i].BlockHeight, registryRegisterBlock.BlockHeight);
-				Assert.Equal(stateWitnesses[i].BlockType, registryRegisterBlock.BlockType);
+				Assert.Equal(stateWitnesses[i].Height, registryRegisterBlock.Height);
+				Assert.Equal(stateWitnesses[i].PacketType, registryRegisterBlock.PacketType);
 				Assert.Equal(stateWitnesses[i].ReferencedPacketType, registryRegisterBlock.ReferencedPacketType);
 				Assert.Equal(stateWitnesses[i].ReferencedBlockType, registryRegisterBlock.ReferencedBlockType);
 				Assert.Equal(stateWitnesses[i].ReferencedBodyHash, registryRegisterBlock.ReferencedBodyHash);
@@ -486,13 +486,13 @@ namespace O10.Transactions.Core.Tests.ParserTests
 				Assert.Equal(stateWitnesses[i].Signature.ToArray(), registryRegisterBlock.Signature.ToArray());
 				Assert.Equal(stateWitnesses[i].Signer, registryRegisterBlock.Signer);
 
-				RegistryRegisterStealth registryRegisterStealthBlock = block.UtxoWitnesses[i];
-				Assert.Equal(utxoWitnesses[i].PacketType, registryRegisterStealthBlock.PacketType);
-				Assert.Equal(utxoWitnesses[i].SyncBlockHeight, registryRegisterStealthBlock.SyncBlockHeight);
+				RegistryRegisterStealth registryRegisterStealthBlock = block.StealthWitnesses[i];
+				Assert.Equal(utxoWitnesses[i].LedgerType, registryRegisterStealthBlock.LedgerType);
+				Assert.Equal(utxoWitnesses[i].SyncHeight, registryRegisterStealthBlock.SyncHeight);
 				Assert.Equal(utxoWitnesses[i].Nonce, registryRegisterStealthBlock.Nonce);
 				Assert.Equal(utxoWitnesses[i].PowHash, registryRegisterStealthBlock.PowHash);
 				Assert.Equal(utxoWitnesses[i].KeyImage, registryRegisterStealthBlock.KeyImage);
-				Assert.Equal(utxoWitnesses[i].BlockType, registryRegisterStealthBlock.BlockType);
+				Assert.Equal(utxoWitnesses[i].PacketType, registryRegisterStealthBlock.PacketType);
 				Assert.Equal(utxoWitnesses[i].ReferencedPacketType, registryRegisterStealthBlock.ReferencedPacketType);
 				Assert.Equal(utxoWitnesses[i].ReferencedBlockType, registryRegisterStealthBlock.ReferencedBlockType);
 				Assert.Equal(utxoWitnesses[i].DestinationKey2, registryRegisterStealthBlock.DestinationKey2);
@@ -538,19 +538,19 @@ namespace O10.Transactions.Core.Tests.ParserTests
 			}
 
 			byte[] packet = BinaryHelper.GetSignedPacket(
-				PacketType.Registry,
+				LedgerType.Registry,
 				syncBlockHeight,
 				nonce, powHash, version,
-				ActionTypes.Registry_ConfidenceBlock, blockHeight, prevHash, body, _privateKey, out byte[] expectedSignature);
+				PacketTypes.Registry_ConfidenceBlock, blockHeight, prevHash, body, _privateKey, out byte[] expectedSignature);
 
 			RegistryConfidenceBlockParser registryFullBlockParser = new RegistryConfidenceBlockParser(_identityKeyProvidersRegistry);
 			RegistryConfidenceBlock block = (RegistryConfidenceBlock)registryFullBlockParser.Parse(packet);
 
-			Assert.Equal(syncBlockHeight, block.SyncBlockHeight);
+			Assert.Equal(syncBlockHeight, block.SyncHeight);
 			Assert.Equal(nonce, block.Nonce);
 			Assert.Equal(powHash, block.PowHash);
 			Assert.Equal(version, block.Version);
-			Assert.Equal(blockHeight, block.BlockHeight);
+			Assert.Equal(blockHeight, block.Height);
 
 			Assert.Equal(bitMask, block.BitMask);
 			Assert.Equal(expectedProof, block.ConfidenceProof);
@@ -589,20 +589,20 @@ namespace O10.Transactions.Core.Tests.ParserTests
 			}
 
 			byte[] packet = BinaryHelper.GetSignedPacket(
-				PacketType.Synchronization,
+				LedgerType.Synchronization,
 				syncBlockHeight,
 				nonce, powHash, version,
-				ActionTypes.Synchronization_RegistryCombinationBlock, blockHeight, prevHash, body, _privateKey, out byte[] expectedSignature);
+				PacketTypes.Synchronization_RegistryCombinationBlock, blockHeight, prevHash, body, _privateKey, out byte[] expectedSignature);
 
 
 			SynchronizationRegistryCombinedBlockParser parser = new SynchronizationRegistryCombinedBlockParser(_identityKeyProvidersRegistry);
 			SynchronizationRegistryCombinedBlock block = (SynchronizationRegistryCombinedBlock)parser.Parse(packet);
 
-			Assert.Equal(syncBlockHeight, block.SyncBlockHeight);
+			Assert.Equal(syncBlockHeight, block.SyncHeight);
 			Assert.Equal(nonce, block.Nonce);
 			Assert.Equal(powHash, block.PowHash);
 			Assert.Equal(version, block.Version);
-			Assert.Equal(blockHeight, block.BlockHeight);
+			Assert.Equal(blockHeight, block.Height);
 
 			Assert.Equal(expectedHashes.Length, block.BlockHashes.Length);
 			for (int i = 0; i < expectedHashes.Length; i++)

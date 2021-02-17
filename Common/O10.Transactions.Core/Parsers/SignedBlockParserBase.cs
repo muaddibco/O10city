@@ -21,7 +21,7 @@ namespace O10.Transactions.Core.Parsers
 
             spanPostBody = ParseSigned(version, spanBody.Slice(sizeof(ulong)), out SignedPacketBase signedBlockBase);
 
-            signedBlockBase.BlockHeight = blockHeight;
+            signedBlockBase.Height = blockHeight;
             signedBlockBase.Signature = spanPostBody.Slice(0, Globals.SIGNATURE_SIZE);
             signedBlockBase.Signer = _signerIdentityKeyProvider.GetKey(spanPostBody.Slice(Globals.SIGNATURE_SIZE, Globals.NODE_PUBLIC_KEY_SIZE));
 

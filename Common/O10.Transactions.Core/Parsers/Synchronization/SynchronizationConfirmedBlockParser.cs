@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Buffers.Binary;
-using O10.Transactions.Core.DataModel.Synchronization;
+using O10.Transactions.Core.Ledgers.Synchronization;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Exceptions;
 using O10.Core;
@@ -18,7 +18,7 @@ namespace O10.Transactions.Core.Parsers.Synchronization
         {
         }
 
-        public override ushort BlockType => ActionTypes.Synchronization_ConfirmedBlock;
+        public override ushort BlockType => PacketTypes.Synchronization_ConfirmedBlock;
 
         protected override Memory<byte> ParseSynchronization(ushort version, Memory<byte> spanBody, out SynchronizationBlockBase synchronizationBlockBase)
         {

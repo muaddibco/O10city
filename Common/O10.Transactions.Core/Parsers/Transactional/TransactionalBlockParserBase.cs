@@ -1,5 +1,5 @@
 ﻿using System;
-using O10.Transactions.Core.DataModel.Transactional;
+using O10.Transactions.Core.Ledgers.O10State;
 using O10.Transactions.Core.Enums;
 using O10.Core.Identity;
 using System.Buffers.Binary;
@@ -14,7 +14,7 @@ namespace O10.Transactions.Core.Parsers.Transactional
         {
         }
 
-        public override PacketType PacketType => PacketType.Transactional;
+        public override LedgerType PacketType => LedgerType.O10State;
 
         protected override Memory<byte> ParseSigned(ushort version, Memory<byte> spanBody, out SignedPacketBase syncedBlockBase)
         {

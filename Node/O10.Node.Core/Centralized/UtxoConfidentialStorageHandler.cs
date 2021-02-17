@@ -1,4 +1,4 @@
-﻿using O10.Transactions.Core.DataModel.Stealth;
+﻿using O10.Transactions.Core.Ledgers.Stealth;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Interfaces;
 using O10.Node.DataLayer.DataServices;
@@ -21,6 +21,6 @@ namespace O10.Node.Core.Centralized
 
         public override string Name => NAME;
 
-        public override PacketType PacketType => PacketType.Stealth;
+        public override LedgerType PacketType => LedgerType.Stealth;
     }
 }

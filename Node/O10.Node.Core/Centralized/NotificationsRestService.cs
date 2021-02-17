@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using O10.Transactions.Core.DataModel;
+using O10.Transactions.Core.Ledgers;
 using O10.Transactions.Core.Enums;
 using O10.Core.Architecture;
 using O10.Core.Logging;
@@ -16,6 +16,7 @@ using O10.Core.DataLayer;
 using O10.Core.Models;
 using System.Net.Http;
 using O10.Core.Serialization;
+using O10.Transactions.Core.DTOs;
 
 namespace O10.Node.Worker.Services
 {
@@ -64,8 +65,8 @@ namespace O10.Node.Worker.Services
 					{
 						RtPackage rtPackage = new RtPackage
 						{
-							CombinedBlock = new TransactionInfo { SyncBlockHeight = item.Item1.SyncBlockHeight, PacketType = (PacketType)item.Item1.PacketType, BlockType = item.Item1.BlockType, Content = item.Item1.RawData.ToArray() },
-							RegistryFullBlock = new TransactionInfo { SyncBlockHeight = item.Item2.SyncBlockHeight, PacketType = (PacketType)item.Item2.PacketType, BlockType = item.Item2.BlockType, Content = item.Item2.RawData.ToArray() },
+							CombinedBlock = new TransactionInfo { SyncBlockHeight = item.Item1.SyncHeight, PacketType = (LedgerType)item.Item1.LedgerType, BlockType = item.Item1.PacketType, Content = item.Item1.RawData.ToArray() },
+							RegistryFullBlock = new TransactionInfo { SyncBlockHeight = item.Item2.SyncHeight, PacketType = (LedgerType)item.Item2.LedgerType, BlockType = item.Item2.PacketType, Content = item.Item2.RawData.ToArray() },
 						};
 
 						_logger.Debug("Propagating package to Gateways");

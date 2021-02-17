@@ -25,7 +25,7 @@ namespace O10.Node.DataLayer.DataAccess
         protected ITranslatorsRepository TranslatorsRepository { get; }
         protected ILogger Logger { get; }
 
-        public abstract PacketType PacketType { get; }
+        public abstract LedgerType PacketType { get; }
         public IChainDataServicesManager ChainDataServicesManager { protected get; set; }
 
         public abstract void Add(PacketBase item);

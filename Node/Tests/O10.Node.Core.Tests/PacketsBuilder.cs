@@ -1,7 +1,7 @@
 ﻿using Chaos.NaCl;
 using System.Collections.Generic;
 using System.Linq;
-using O10.Transactions.Core.DataModel.Registry;
+using O10.Transactions.Core.Ledgers.Registry;
 using O10.Transactions.Core.Enums;
 using O10.Core;
 using O10.Core.Identity;
@@ -10,16 +10,16 @@ namespace O10.Node.Core.Tests
 {
     public static class PacketsBuilder
     {
-        public static RegistryRegisterBlock GetTransactionRegisterBlock(ulong syncBlockHeight, uint nonce, byte[] powHash, ulong blockHeight, PacketType referencedPacketType, 
+        public static RegistryRegisterBlock GetTransactionRegisterBlock(ulong syncBlockHeight, uint nonce, byte[] powHash, ulong blockHeight, LedgerType referencedPacketType, 
             ushort referencedBlockType, byte[] referencedBlockHash, byte[] referencedTarget, byte[] privateKey)
         {
             byte[] publicKey = Ed25519.PublicKeyFromSeed(privateKey);
             RegistryRegisterBlock transactionRegisterBlock = new RegistryRegisterBlock
             {
-                SyncBlockHeight = syncBlockHeight,
+                SyncHeight = syncBlockHeight,
                 Nonce = nonce,
                 PowHash = powHash??new byte[Globals.POW_HASH_SIZE],
-                BlockHeight = blockHeight,
+                Height = blockHeight,
                 ReferencedPacketType = referencedPacketType,
                 ReferencedBlockType = referencedBlockType,
                 ReferencedBodyHash = referencedBlockHash,
@@ -39,15 +39,15 @@ namespace O10.Node.Core.Tests
             ushort order = 0;
             foreach (var item in transactionRegisterBlocks)
             {
-                transactionHeaders[order++] = new WitnessStateKey { PublicKey = item.Signer, Height = item.BlockHeight };
+                transactionHeaders[order++] = new WitnessStateKey { PublicKey = item.Signer, Height = item.Height };
             }
 
             RegistryShortBlock transactionsShortBlock = new RegistryShortBlock
             {
-                SyncBlockHeight = syncBlockHeight,
+                SyncHeight = syncBlockHeight,
                 Nonce = nonce,
                 PowHash = powHash ?? new byte[Globals.POW_HASH_SIZE],
-                BlockHeight = blockHeight,
+                Height = blockHeight,
                 WitnessStateKeys = transactionHeaders,
                 Signer = new Key32(publicKey)
             };

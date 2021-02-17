@@ -2,7 +2,7 @@
 using Flurl.Http;
 using System.Linq;
 using System.Threading.Tasks;
-using O10.Transactions.Core.DataModel.Stealth.Internal;
+using O10.Transactions.Core.Ledgers.Stealth.Internal;
 using O10.Client.Common.Configuration;
 using O10.Client.Common.Interfaces;
 using O10.Client.DataLayer.AttributesScheme;

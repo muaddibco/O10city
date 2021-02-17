@@ -1,6 +1,6 @@
 ﻿using System;
-using O10.Transactions.Core.DataModel.Stealth;
-using O10.Transactions.Core.DataModel.Stealth.Internal;
+using O10.Transactions.Core.Ledgers.Stealth;
+using O10.Transactions.Core.Ledgers.Stealth.Internal;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Exceptions;
 using O10.Core.Architecture;
@@ -17,7 +17,7 @@ namespace O10.Transactions.Core.Parsers.Stealth
         {
         }
 
-        public override ushort BlockType => ActionTypes.Stealth_IdentityProofs;
+        public override ushort BlockType => PacketTypes.Stealth_IdentityProofs;
 
         protected override Memory<byte> ParseStealthTransaction(ushort version, Memory<byte> spanBody, out StealthTransactionBase StealthBase)
         {

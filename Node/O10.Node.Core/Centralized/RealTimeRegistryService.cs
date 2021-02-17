@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using O10.Transactions.Core.DataModel.Registry;
-using O10.Transactions.Core.DataModel.Synchronization;
+using O10.Transactions.Core.Ledgers.Registry;
+using O10.Transactions.Core.Ledgers.Synchronization;
 using O10.Core;
 using O10.Core.Architecture;
 using O10.Core.ExtensionMethods;
@@ -54,10 +54,10 @@ namespace O10.Node.Core.Centralized
 
         public void PostPackets(SynchronizationRegistryCombinedBlock combinedBlock, RegistryFullBlock registryFullBlock)
         {
-            _logger.Debug($"Received combined and registryFullBlock with {registryFullBlock.StateWitnesses.Count()} StateWitnesses and {registryFullBlock.UtxoWitnesses.Count()} UtxoWitnesses. Wait for transaction packets...");
+            _logger.Debug($"Received combined and registryFullBlock with {registryFullBlock.StateWitnesses.Count()} StateWitnesses and {registryFullBlock.StealthWitnesses.Count()} UtxoWitnesses. Wait for transaction packets...");
 			List<Task<Tuple<byte[], PacketBase>>> tasks = new List<Task<Tuple<byte[], PacketBase>>>();
 
-			foreach (var item in registryFullBlock.UtxoWitnesses)
+			foreach (var item in registryFullBlock.StealthWitnesses)
 			{
 				TaskCompletionSource<Tuple<byte[], PacketBase>> taskCompletionSource = new TaskCompletionSource<Tuple<byte[], PacketBase>>();
 				_logger.LogIfDebug(() => $"Adding UtxoWitness TaskCompletionSource by hash {item.ReferencedBodyHash.ToHexString()}");
@@ -94,20 +94,20 @@ namespace O10.Node.Core.Centralized
 			Task.WhenAll(tasks).ContinueWith((t, o) => 
 			{
 				Tuple<SynchronizationRegistryCombinedBlock, RegistryFullBlock> tuple = (Tuple<SynchronizationRegistryCombinedBlock, RegistryFullBlock>)o;
-				_logger.Debug($"Transaction packet(s) for combined block height {tuple.Item1.BlockHeight} received");
+				_logger.Debug($"Transaction packet(s) for combined block height {tuple.Item1.Height} received");
 
-				Dictionary<byte[], PacketBase> dict = _packetsPerCombinedBlock.GetOrAdd(tuple.Item1.BlockHeight, new Dictionary<byte[], PacketBase>(new Byte32EqualityComparer()));
+				Dictionary<byte[], PacketBase> dict = _packetsPerCombinedBlock.GetOrAdd(tuple.Item1.Height, new Dictionary<byte[], PacketBase>(new Byte32EqualityComparer()));
 				foreach (var item in t.Result)
 				{
 					dict.Add(item.Item1, item.Item2);
 				}
 
-                _logger.Debug($"Passing combined and registryFullBlock with {registryFullBlock.StateWitnesses.Count()} StateWitnesses and {registryFullBlock.UtxoWitnesses.Count()} UtxoWitnesses for further processing...");
+                _logger.Debug($"Passing combined and registryFullBlock with {registryFullBlock.StateWitnesses.Count()} StateWitnesses and {registryFullBlock.StealthWitnesses.Count()} UtxoWitnesses for further processing...");
 
                 _packets.Add(tuple);
-				if (_lowestCombinedBlockHeight > combinedBlock.BlockHeight)
+				if (_lowestCombinedBlockHeight > combinedBlock.Height)
 				{
-					_lowestCombinedBlockHeight = combinedBlock.BlockHeight;
+					_lowestCombinedBlockHeight = combinedBlock.Height;
 				}
 			}, new Tuple<SynchronizationRegistryCombinedBlock, RegistryFullBlock>(combinedBlock, registryFullBlock), TaskScheduler.Current);
 		}

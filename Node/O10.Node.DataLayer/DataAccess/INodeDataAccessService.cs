@@ -5,6 +5,6 @@ namespace O10.Node.DataLayer.DataAccess
 {
     public interface INodeDataAccessService : IDataAccessService
     {
-        PacketType PacketType { get; }
+        LedgerType PacketType { get; }
     }
 }

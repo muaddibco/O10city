@@ -7,6 +7,6 @@ namespace O10.Transactions.Core.Interfaces
 {
     public interface IReferencedPayloadHandler
     {
-        public PacketType ReferencedPacketType { get; }
+        public LedgerType ReferencedPacketType { get; }
     }
 }

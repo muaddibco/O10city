@@ -12,7 +12,7 @@ using O10.Core.Notifications;
 using O10.Gateway.Common.Configuration;
 using O10.Gateway.Common.Services.Results;
 using O10.Transactions.Core.Accessors;
-using O10.Transactions.Core.DataModel.Stealth;
+using O10.Transactions.Core.Ledgers.Stealth;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Serializers;
 using System;
@@ -110,7 +110,7 @@ namespace O10.Gateway.Common.Services
                     _completions.Remove(packet);
                 }
             }
-            else if(packet.PacketType != (ushort)PacketType.Transactional)
+            else if(packet.LedgerType != (ushort)LedgerType.O10State)
             {
                 _logger.Error($"Packets of the type {packet.GetType().Name} are not supported");
                 res = false;
@@ -133,8 +133,8 @@ namespace O10.Gateway.Common.Services
 
             EvidenceDescriptor evidenceDescriptor = new EvidenceDescriptor
             {
-                ActionType = packet.BlockType,
-                PacketType = (PacketType)packet.PacketType,
+                ActionType = packet.PacketType,
+                PacketType = (LedgerType)packet.LedgerType,
                 Parameters = new Dictionary<string, string> { { "BodyHash", _hashCalculation.CalculateHash(packet.RawData).ToHexString() } }
             };
 

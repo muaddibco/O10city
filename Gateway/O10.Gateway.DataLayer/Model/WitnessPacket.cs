@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using O10.Transactions.Core.Enums;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Gateway.DataLayer.Model
@@ -16,7 +17,7 @@ namespace O10.Gateway.DataLayer.Model
 
         public long CombinedBlockHeight { get; set; }
 
-        public ushort ReferencedPacketType { get; set; }
+        public LedgerType ReferencedPacketType { get; set; }
 
         public ushort ReferencedBlockType { get; set; }
 

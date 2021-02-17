@@ -6,9 +6,8 @@ using System.Diagnostics.Contracts;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using O10.Transactions.Core.DataModel;
-using O10.Transactions.Core.DataModel.Stealth;
-using O10.Transactions.Core.DataModel.Stealth.Internal;
+using O10.Transactions.Core.Ledgers.Stealth;
+using O10.Transactions.Core.Ledgers.Stealth.Internal;
 using O10.Transactions.Core.Parsers;
 using O10.Transactions.Core.Serializers;
 using O10.Client.Common.Dtos.UniversalProofs;
@@ -23,6 +22,7 @@ using O10.Core.Identity;
 using O10.Core.Logging;
 using O10.Crypto.ConfidentialAssets;
 using O10.Core.Notifications;
+using O10.Transactions.Core.DTOs;
 
 namespace O10.Client.Common.Communication
 {

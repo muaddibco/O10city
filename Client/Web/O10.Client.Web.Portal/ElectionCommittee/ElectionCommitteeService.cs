@@ -14,7 +14,7 @@ using O10.Client.DataLayer.Model;
 using O10.Client.Web.Portal.Services.Idps;
 using O10.Client.Common.Entities;
 using O10.Client.Web.Portal.Exceptions;
-using O10.Transactions.Core.DataModel.Transactional;
+using O10.Transactions.Core.Ledgers.O10State;
 using O10.Client.DataLayer.AttributesScheme;
 using O10.Client.Web.Portal.Services;
 using O10.Core.Translators;

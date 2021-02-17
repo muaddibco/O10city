@@ -5,7 +5,7 @@ namespace O10.Transactions.Core.Accessors
 {
     public class EvidenceDescriptor
     {
-        public PacketType PacketType { get; set; }
+        public LedgerType PacketType { get; set; }
         public ushort ActionType { get; set; }
 
         public Dictionary<string, string> Parameters { get; set; }

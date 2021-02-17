@@ -1,15 +1,15 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using O10.Transactions.Core.DataModel;
 using O10.Core.Logging;
 using O10.Gateway.Common.Services;
 using System;
 using O10.Core.ExtensionMethods;
 using System.Threading.Tasks;
 using O10.Core.Models;
+using O10.Transactions.Core.DTOs;
 
 namespace O10.Gateway.WebApp.Common.Controllers
 {
-	[Route("api/[controller]")]
+    [Route("api/[controller]")]
 	[ApiController]
 	public class GatewayUpdaterController : ControllerBase
 	{

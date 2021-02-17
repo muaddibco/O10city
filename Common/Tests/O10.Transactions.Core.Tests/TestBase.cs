@@ -47,7 +47,7 @@ namespace O10.Transactions.Core.Tests
             _identityKeyProvider.GetKey(null).ReturnsForAnyArgs(c => new Key32() { Value = c.Arg<Memory<byte>>() });
             _transactionHashKeyProvider.GetKey(null).ReturnsForAnyArgs(c => new Key16() { Value = c.Arg<Memory<byte>>() });
             _hashCalculationRepository.Create(HashType.MurMur).Returns(new MurMurHashCalculation());
-            _blockParsersRepositoriesRepository.GetBlockParsersRepository(PacketType.Registry).ReturnsForAnyArgs(_blockParsersRepository);
+            _blockParsersRepositoriesRepository.GetBlockParsersRepository(LedgerType.Registry).ReturnsForAnyArgs(_blockParsersRepository);
 
             _privateKey = ConfidentialAssetsHelper.GetRandomSeed();
             _privateViewKey = ConfidentialAssetsHelper.GetRandomSeed();

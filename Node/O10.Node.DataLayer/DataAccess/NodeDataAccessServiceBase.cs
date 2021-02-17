@@ -36,7 +36,7 @@ namespace O10.Node.DataLayer.DataAccess
 			_timer.Elapsed += _timer_Elapsed;
 		}
 
-		public abstract PacketType PacketType { get; }
+		public abstract LedgerType PacketType { get; }
 
 		protected override T GetDataContext(string connectionType) => (T)_dataContextRepository.GetInstance(PacketType, connectionType);
 

@@ -15,7 +15,7 @@ namespace O10.Transactions.Core.Parsers.Factories
             _blockParsersFactories = blockParsersFactories;
         }
 
-        public IBlockParsersRepository GetBlockParsersRepository(PacketType packetType)
+        public IBlockParsersRepository GetBlockParsersRepository(LedgerType packetType)
         {
             return _blockParsersFactories.FirstOrDefault(f => f.PacketType == packetType);
         }

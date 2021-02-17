@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
-using O10.Transactions.Core.DataModel.Stealth;
-using O10.Transactions.Core.DataModel.Stealth.Internal;
+using O10.Transactions.Core.Ledgers.Stealth;
+using O10.Transactions.Core.Ledgers.Stealth.Internal;
 using O10.Transactions.Core.Enums;
 using O10.Core.Architecture;
 
@@ -12,7 +12,7 @@ namespace O10.Transactions.Core.Serializers.Stealth
     public class EmployeeRegistrationRequestSerializer : StealthTransactionSerializerBase<EmployeeRegistrationRequest>
     {
         public EmployeeRegistrationRequestSerializer(IServiceProvider serviceProvider) 
-			: base(serviceProvider, PacketType.Stealth, ActionTypes.Stealth_EmployeeReqistrationRequest)
+			: base(serviceProvider, LedgerType.Stealth, PacketTypes.Stealth_EmployeeReqistrationRequest)
         {
         }
 

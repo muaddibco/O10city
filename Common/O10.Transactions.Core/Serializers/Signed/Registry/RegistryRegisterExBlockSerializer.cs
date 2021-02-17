@@ -1,6 +1,6 @@
 ﻿using O10.Core.Architecture;
 using O10.Core.ExtensionMethods;
-using O10.Transactions.Core.DataModel.Registry;
+using O10.Transactions.Core.Ledgers.Registry;
 using O10.Transactions.Core.Enums;
 using System;
 using System.IO;
@@ -11,7 +11,7 @@ namespace O10.Transactions.Core.Serializers.Signed.Registry
     public class RegistryRegisterExBlockSerializer : SignatureSupportSerializerBase<RegistryRegisterExBlock>
     {
         public RegistryRegisterExBlockSerializer(IServiceProvider serviceProvider) 
-            : base(serviceProvider, PacketType.Registry, ActionTypes.Registry_RegisterEx)
+            : base(serviceProvider, LedgerType.Registry, PacketTypes.Registry_RegisterEx)
         {
         }
     

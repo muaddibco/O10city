@@ -11,8 +11,7 @@ using Plugin.Media;
 using Prism.Commands;
 using Prism.Navigation;
 using Prism.Services;
-using O10.Transactions.Core.DataModel;
-using O10.Transactions.Core.DataModel.Stealth.Internal;
+using O10.Transactions.Core.Ledgers.Stealth.Internal;
 using O10.Client.Common.Configuration;
 using O10.Client.Common.Identities;
 using O10.Client.Common.Interfaces;
@@ -28,6 +27,7 @@ using O10.Client.Mobile.Base.Interfaces;
 using O10.Client.Mobile.Base.Models;
 using O10.Client.Mobile.Base.Resx;
 using Xamarin.Forms;
+using O10.Transactions.Core.DTOs;
 
 namespace O10.Client.Mobile.Base.ViewModels
 {

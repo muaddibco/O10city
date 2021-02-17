@@ -9,12 +9,12 @@ namespace O10.Network.Handlers
     public class PacketVerifiersRepository : IPacketVerifiersRepository
     {
         private readonly ILogger _log;
-        private readonly Dictionary<PacketType, IPacketVerifier> _packetVerifiers;
+        private readonly Dictionary<LedgerType, IPacketVerifier> _packetVerifiers;
 
         public PacketVerifiersRepository(IEnumerable<IPacketVerifier> packetVerifiers, ILoggerService loggerService)
         {
             _log = loggerService.GetLogger(GetType().Name);
-            _packetVerifiers = new Dictionary<PacketType, IPacketVerifier>();
+            _packetVerifiers = new Dictionary<LedgerType, IPacketVerifier>();
 
             foreach (var packetVerifier in packetVerifiers)
             {
@@ -25,7 +25,7 @@ namespace O10.Network.Handlers
             }
         }
 
-        public IPacketVerifier GetInstance(PacketType packetType)
+        public IPacketVerifier GetInstance(LedgerType packetType)
         {
             if (!_packetVerifiers.ContainsKey(packetType))
             {

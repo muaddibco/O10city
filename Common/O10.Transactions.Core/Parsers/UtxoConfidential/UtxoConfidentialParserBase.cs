@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Buffers.Binary;
-using O10.Transactions.Core.DataModel.Stealth;
+using O10.Transactions.Core.Ledgers.Stealth;
 using O10.Transactions.Core.Enums;
 using O10.Core;
 using O10.Core.Cryptography;
@@ -15,7 +15,7 @@ namespace O10.Transactions.Core.Parsers.Stealth
         {
         }
 
-        public override PacketType PacketType => PacketType.Stealth;
+        public override LedgerType PacketType => LedgerType.Stealth;
 
         protected override PacketBase ParseBlockBase(ushort version, Memory<byte> spanBody, out Memory<byte> spanPostBody)
         {

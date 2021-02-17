@@ -1,4 +1,4 @@
-﻿using O10.Transactions.Core.DataModel.Synchronization;
+﻿using O10.Transactions.Core.Ledgers.Synchronization;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Parsers;
 using O10.Node.DataLayer.Specific.Synchronization.Model;
@@ -21,7 +21,7 @@ namespace O10.Node.DataLayer.Specific.Synchronization.Mappers
                 throw new System.ArgumentNullException(nameof(blockParsersFactoriesRepository));
             }
 
-            _blockParsersRepository = blockParsersFactoriesRepository.GetBlockParsersRepository(PacketType.Synchronization);
+            _blockParsersRepository = blockParsersFactoriesRepository.GetBlockParsersRepository(LedgerType.Synchronization);
         }
 
         public override PacketBase Translate(SynchronizationBlock synchronizationBlock)
@@ -31,7 +31,7 @@ namespace O10.Node.DataLayer.Specific.Synchronization.Mappers
                 return null;
             }
 
-            IBlockParser blockParser = _blockParsersRepository.GetInstance(ActionTypes.Synchronization_ConfirmedBlock);
+            IBlockParser blockParser = _blockParsersRepository.GetInstance(PacketTypes.Synchronization_ConfirmedBlock);
 
             return blockParser.Parse(synchronizationBlock.BlockContent) as SynchronizationConfirmedBlock;
         }

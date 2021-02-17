@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using O10.Transactions.Core.DataModel.Synchronization;
+using O10.Transactions.Core.Ledgers.Synchronization;
 using O10.Transactions.Core.Enums;
 using O10.Core.Architecture;
 using O10.Core.ExtensionMethods;
@@ -35,7 +35,7 @@ namespace O10.Node.DataLayer.Specific.Synchronization
         {
         }
 
-        override public PacketType PacketType => PacketType.Synchronization;
+        override public LedgerType PacketType => LedgerType.Synchronization;
 
 		override public void Add(PacketBase item)
         {
@@ -49,7 +49,7 @@ namespace O10.Node.DataLayer.Specific.Synchronization
 				throw new ArgumentNullException(nameof(key));
 			}
 
-            if (key is SingleByBlockTypeAndHeight blockTypeAndHeight && blockTypeAndHeight.BlockType == ActionTypes.Synchronization_RegistryCombinationBlock)
+            if (key is SingleByBlockTypeAndHeight blockTypeAndHeight && blockTypeAndHeight.BlockType == PacketTypes.Synchronization_RegistryCombinationBlock)
             {
                 return Service.GetRegistryCombinedBlockByHeight(blockTypeAndHeight.Height)?.SyncBlockHeight ?? 0L;
             }
@@ -68,12 +68,12 @@ namespace O10.Node.DataLayer.Specific.Synchronization
             {
 				switch (singleByBlockTypeKey.BlockType)
 				{
-					case ActionTypes.Synchronization_RegistryCombinationBlock:
+					case PacketTypes.Synchronization_RegistryCombinationBlock:
 						{
 							RegistryCombinedBlock block = Service.GetLastRegistryCombinedBlock();
 							return new List<PacketBase> { TranslatorsRepository.GetInstance<RegistryCombinedBlock, PacketBase>().Translate(block) };
 						}
-					case ActionTypes.Synchronization_ConfirmedBlock:
+					case PacketTypes.Synchronization_ConfirmedBlock:
 						{
 							SynchronizationBlock block = Service.GetLastSynchronizationBlock();
 							return new List<PacketBase> { TranslatorsRepository.GetInstance<SynchronizationBlock, PacketBase>().Translate(block) };
@@ -84,22 +84,22 @@ namespace O10.Node.DataLayer.Specific.Synchronization
 			}
 			else if (key is BlockTypeLowHeightKey blockTypeLowHeightKey)
 			{
-				if (blockTypeLowHeightKey.BlockType == ActionTypes.Synchronization_ConfirmedBlock)
+				if (blockTypeLowHeightKey.BlockType == PacketTypes.Synchronization_ConfirmedBlock)
 				{
 					return Service.GetAllLastSynchronizationBlocks(blockTypeLowHeightKey.Height).Select(b => TranslatorsRepository.GetInstance<SynchronizationBlock, PacketBase>().Translate(b));
 				}
-				else if (blockTypeLowHeightKey.BlockType == ActionTypes.Synchronization_RegistryCombinationBlock)
+				else if (blockTypeLowHeightKey.BlockType == PacketTypes.Synchronization_RegistryCombinationBlock)
 				{
 					return Service.GetAllLastRegistryCombinedBlocks(blockTypeLowHeightKey.Height).OrderBy(b => b.RegistryCombinedBlockId).Select(b => TranslatorsRepository.GetInstance<RegistryCombinedBlock, PacketBase>().Translate(b));
 				}
 			}
 			else if (key is BlockTypeKey blockTypeKey)
 			{
-				if (blockTypeKey.BlockType == ActionTypes.Synchronization_ConfirmedBlock)
+				if (blockTypeKey.BlockType == PacketTypes.Synchronization_ConfirmedBlock)
 				{
 					return Service.GetAllSynchronizationBlocks().Select(b => TranslatorsRepository.GetInstance<SynchronizationBlock, PacketBase>().Translate(b));
 				}
-				else if (blockTypeKey.BlockType == ActionTypes.Synchronization_RegistryCombinationBlock)
+				else if (blockTypeKey.BlockType == PacketTypes.Synchronization_RegistryCombinationBlock)
 				{
 					return Service.GetAllRegistryCombinedBlocks().Select(b => TranslatorsRepository.GetInstance<RegistryCombinedBlock, PacketBase>().Translate(b));
 				}
@@ -124,14 +124,14 @@ namespace O10.Node.DataLayer.Specific.Synchronization
 					{
 						if (item is SynchronizationConfirmedBlock synchronizationConfirmedBlock)
 						{
-							Logger.LogIfDebug(() => $"Adding to buffer synchronization block {synchronizationConfirmedBlock.BlockHeight}");
+							Logger.LogIfDebug(() => $"Adding to buffer synchronization block {synchronizationConfirmedBlock.Height}");
 							_bufferSyncPackets.Post(synchronizationConfirmedBlock);
 							//Service.AddSynchronizationBlock(synchronizationConfirmedBlock.BlockHeight, DateTime.Now, synchronizationConfirmedBlock.ReportedTime, synchronizationConfirmedBlock.RawData.ToArray());
 						}
 
 						if (item is SynchronizationRegistryCombinedBlock combinedBlock)
 						{
-							Logger.LogIfDebug(() => $"Adding to buffer combined block {combinedBlock.BlockHeight}");
+							Logger.LogIfDebug(() => $"Adding to buffer combined block {combinedBlock.Height}");
 							_bufferCombinedPackets.Post(combinedBlock);
 							//Service.AddSynchronizationRegistryCombinedBlock(combinedBlock.BlockHeight, combinedBlock.SyncBlockHeight, combinedBlock.BlockHeight, combinedBlock.RawData.ToArray(), combinedBlock.BlockHashes);
 						}
@@ -151,14 +151,14 @@ namespace O10.Node.DataLayer.Specific.Synchronization
 				{
 					if (source.TryReceiveAll(out IList<SynchronizationConfirmedBlock> blocks))
 					{
-						Logger.Debug($"Getting from buffer and storing bulk of {nameof(SynchronizationConfirmedBlock)} with heights {string.Join(',', blocks.Select(b => b.BlockHeight))}");
-						Service.AddSynchronizationBlocks(blocks.Select(b => new SynchronizationBlock { SynchronizationBlockId = (long)b.BlockHeight, ReceiveTime = DateTime.Now, MedianTime = b.ReportedTime, BlockContent = b.RawData.ToArray() }).ToArray());
+						Logger.Debug($"Getting from buffer and storing bulk of {nameof(SynchronizationConfirmedBlock)} with heights {string.Join(',', blocks.Select(b => b.Height))}");
+						Service.AddSynchronizationBlocks(blocks.Select(b => new SynchronizationBlock { SynchronizationBlockId = (long)b.Height, ReceiveTime = DateTime.Now, MedianTime = b.ReportedTime, BlockContent = b.RawData.ToArray() }).ToArray());
 					}
 					else
 					{
 						SynchronizationConfirmedBlock block = source.Receive(cancellationToken);
-						Logger.Debug($"Getting from buffer and storing {nameof(SynchronizationConfirmedBlock)} with height {block.BlockHeight}");
-						Service.AddSynchronizationBlock(block.BlockHeight, DateTime.Now, block.ReportedTime, block.RawData.ToArray());
+						Logger.Debug($"Getting from buffer and storing {nameof(SynchronizationConfirmedBlock)} with height {block.Height}");
+						Service.AddSynchronizationBlock(block.Height, DateTime.Now, block.ReportedTime, block.RawData.ToArray());
 					}
 				}
 				catch (Exception ex)
@@ -176,14 +176,14 @@ namespace O10.Node.DataLayer.Specific.Synchronization
 				{
 					if (source.TryReceiveAll(out IList<SynchronizationRegistryCombinedBlock> blocks))
 					{
-						Logger.Debug($"Getting from buffer and storing bulk of {nameof(SynchronizationRegistryCombinedBlock)} with heights {string.Join(',', blocks.Select(b => b.BlockHeight))}");
-						Service.AddSynchronizationRegistryCombinedBlocks(blocks.Select(b => new RegistryCombinedBlock { RegistryCombinedBlockId = (long)b.BlockHeight, SyncBlockHeight = b.SyncBlockHeight, Content = b.RawData.ToArray(), FullBlockHashes = string.Join(",", b.BlockHashes.Select(h => h.ToHexString())) }).ToArray());
+						Logger.Debug($"Getting from buffer and storing bulk of {nameof(SynchronizationRegistryCombinedBlock)} with heights {string.Join(',', blocks.Select(b => b.Height))}");
+						Service.AddSynchronizationRegistryCombinedBlocks(blocks.Select(b => new RegistryCombinedBlock { RegistryCombinedBlockId = (long)b.Height, SyncBlockHeight = b.SyncHeight, Content = b.RawData.ToArray(), FullBlockHashes = string.Join(",", b.BlockHashes.Select(h => h.ToHexString())) }).ToArray());
 					}
 					else
 					{
 						SynchronizationRegistryCombinedBlock block = source.Receive(cancellationToken);
-						Logger.Debug($"Getting from buffer and storing {nameof(SynchronizationRegistryCombinedBlock)} with height {block.BlockHeight}");
-						Service.AddSynchronizationRegistryCombinedBlock(block.BlockHeight, block.SyncBlockHeight, block.RawData.ToArray(), block.BlockHashes);
+						Logger.Debug($"Getting from buffer and storing {nameof(SynchronizationRegistryCombinedBlock)} with height {block.Height}");
+						Service.AddSynchronizationRegistryCombinedBlock(block.Height, block.SyncHeight, block.RawData.ToArray(), block.BlockHashes);
 					}
 				}
 				catch (Exception ex)

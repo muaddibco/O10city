@@ -54,7 +54,7 @@ namespace O10.Network.Handlers
 
         public void PostPacket(PacketBase packet)
         {
-            _log.Debug(() => $"Posting to processing packet {packet.GetType().Name} [{packet.PacketType}:{packet.BlockType}]");
+            _log.Debug(() => $"Posting to processing packet {packet.GetType().Name} [{packet.LedgerType}:{packet.PacketType}]");
 
             if(packet.RawData.Length == 0)
             {
@@ -113,7 +113,7 @@ namespace O10.Network.Handlers
             _log.Debug(() => $"Packet being parsed {messagePacket.ToHexString()}");
 
             PacketBase blockBase = null;
-            PacketType packetType = (PacketType)BitConverter.ToUInt16(messagePacket, 0);
+            LedgerType packetType = (LedgerType)BitConverter.ToUInt16(messagePacket, 0);
             const int blockTypePos = Globals.PACKET_TYPE_LENGTH + Globals.SYNC_BLOCK_HEIGHT_LENGTH + Globals.NONCE_LENGTH + Globals.POW_HASH_SIZE + Globals.VERSION_LENGTH;
 
             if (messagePacket.Length < blockTypePos + 2)
@@ -178,7 +178,7 @@ namespace O10.Network.Handlers
             try
             {
 				//TODO: !!! need to find proper solution for the problem of checking mandatory conditions
-                if (!(block.PacketType == (ushort)PacketType.Registry && block.BlockType == ActionTypes.Registry_RegisterStealth))
+                if (!(block.LedgerType == (ushort)LedgerType.Registry && block.PacketType == PacketTypes.Registry_RegisterStealth))
                 {
                     foreach (ICoreVerifier coreVerifier in _coreVerifiers)
                     {
@@ -190,7 +190,7 @@ namespace O10.Network.Handlers
                     }
                 }
 
-                IPacketVerifier packetVerifier = _chainTypeValidationHandlersFactory.GetInstance((PacketType)block.PacketType);
+                IPacketVerifier packetVerifier = _chainTypeValidationHandlersFactory.GetInstance((LedgerType)block.LedgerType);
 
                 bool res = packetVerifier?.ValidatePacket(block) ?? true;
 
@@ -207,7 +207,7 @@ namespace O10.Network.Handlers
         {
             if (block != null)
             {
-                _log.Debug($"Block being dispatched PacketType = {(PacketType)block.PacketType}, BlockType = {block.BlockType}");
+                _log.Debug($"Block being dispatched PacketType = {(LedgerType)block.LedgerType}, BlockType = {block.PacketType}");
 
 				//TODO: !!! need to find proper solution for the problem of checking mandatory conditions
                 if (!ValidateBlock(block))
@@ -219,7 +219,7 @@ namespace O10.Network.Handlers
                 {
                     _log.Debug(() => $"Dispatching block {block.GetType().Name}");
 
-                    foreach (IBlocksHandler blocksHandler in _blocksHandlersRegistry.GetBulkInstances((PacketType)block.PacketType))
+                    foreach (IBlocksHandler blocksHandler in _blocksHandlersRegistry.GetBulkInstances((LedgerType)block.LedgerType))
 					{
 						_log.Debug(() => $"Dispatching block {block.GetType().Name} to {blocksHandler.GetType().Name}");
 						blocksHandler.ProcessBlock(block);

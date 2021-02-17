@@ -1,4 +1,4 @@
-﻿using O10.Transactions.Core.DataModel.Synchronization;
+﻿using O10.Transactions.Core.Ledgers.Synchronization;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Parsers;
 using O10.Node.DataLayer.Specific.Synchronization.Model;
@@ -20,7 +20,7 @@ namespace O10.Node.DataLayer.Specific.Synchronization.Mappers
                 throw new System.ArgumentNullException(nameof(blockParsersFactoriesRepository));
             }
 
-            _blockParsersRepository = blockParsersFactoriesRepository.GetBlockParsersRepository(PacketType.Synchronization);
+            _blockParsersRepository = blockParsersFactoriesRepository.GetBlockParsersRepository(LedgerType.Synchronization);
         }
 
         public override PacketBase Translate(RegistryCombinedBlock registryCombinedBlock)
@@ -30,10 +30,10 @@ namespace O10.Node.DataLayer.Specific.Synchronization.Mappers
                 return null;
             }
 
-            IBlockParser blockParser = _blockParsersRepository.GetInstance(ActionTypes.Synchronization_RegistryCombinationBlock);
+            IBlockParser blockParser = _blockParsersRepository.GetInstance(PacketTypes.Synchronization_RegistryCombinationBlock);
 
             SynchronizationRegistryCombinedBlock block = blockParser.Parse(registryCombinedBlock.Content) as SynchronizationRegistryCombinedBlock;
-            block.SyncBlockHeight = registryCombinedBlock.SyncBlockHeight;
+            block.SyncHeight = registryCombinedBlock.SyncBlockHeight;
 
             return block;
         }

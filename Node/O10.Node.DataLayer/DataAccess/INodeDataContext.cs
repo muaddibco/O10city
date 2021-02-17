@@ -7,6 +7,6 @@ namespace O10.Node.DataLayer.DataAccess
     [ExtensionPoint]
     public interface INodeDataContext : IDataContext
     {
-        PacketType PacketType { get; }
+        LedgerType PacketType { get; }
     }
 }

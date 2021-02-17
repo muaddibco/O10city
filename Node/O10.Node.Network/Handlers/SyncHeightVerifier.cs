@@ -29,7 +29,7 @@ namespace O10.Network.Handlers
 
         public bool VerifyBlock(PacketBase packetBase)
         {
-            ulong syncBlockHeight = packetBase.SyncBlockHeight;
+            ulong syncBlockHeight = packetBase.SyncHeight;
 
             bool isInSyncRange = _synchronizationContext.LastBlockDescriptor != null ? 
                 (_synchronizationContext.LastBlockDescriptor.BlockHeight.Equals(syncBlockHeight) ||
@@ -48,14 +48,14 @@ namespace O10.Network.Handlers
 
         private bool CheckSyncPOW(PacketBase packet)
         {
-            ulong syncBlockHeight = packet.SyncBlockHeight;
+            ulong syncBlockHeight = packet.SyncHeight;
 
             uint nonce = packet.Nonce;
             byte[] powHash = packet.PowHash;
             byte[] baseHash;
             byte[] baseSyncHash;
 
-            if (packet.PacketType != (ushort)PacketType.Synchronization)
+            if (packet.LedgerType != (ushort)LedgerType.Synchronization)
             {
                 //TODO: make difficulty check dynamic
                 //if (powHash[0] != 0 || powHash[1] != 0)
@@ -106,7 +106,7 @@ namespace O10.Network.Handlers
 
             if (!computedHash.Equals24(powHash))
             {
-                _log.Error($"Computed HASH differs from obtained one. PacketType is {packet.PacketType}, BlockType is {packet.BlockType}. Reported SyncBlockHeight is {packet.SyncBlockHeight}, Nonce is {packet.Nonce}, POW is {packet.PowHash.ToHexString()}. Hash of SyncBlock is {baseSyncHash.ToHexString()}, after adding Nonce is {baseHash.ToHexString()}, computed POW Hash is {computedHash.ToHexString()}");
+                _log.Error($"Computed HASH differs from obtained one. PacketType is {packet.LedgerType}, BlockType is {packet.PacketType}. Reported SyncBlockHeight is {packet.SyncHeight}, Nonce is {packet.Nonce}, POW is {packet.PowHash.ToHexString()}. Hash of SyncBlock is {baseSyncHash.ToHexString()}, after adding Nonce is {baseHash.ToHexString()}, computed POW Hash is {computedHash.ToHexString()}");
                 return false;
             }
 

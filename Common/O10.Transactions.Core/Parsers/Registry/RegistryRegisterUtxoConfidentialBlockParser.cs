@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Buffers.Binary;
-using O10.Transactions.Core.DataModel.Registry;
-using O10.Transactions.Core.DataModel.Stealth;
+using O10.Transactions.Core.Ledgers.Registry;
+using O10.Transactions.Core.Ledgers.Stealth;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Exceptions;
 using O10.Transactions.Core.Parsers.Stealth;
@@ -19,9 +19,9 @@ namespace O10.Transactions.Core.Parsers.Registry
         {
         }
 
-        public override PacketType PacketType => PacketType.Registry;
+        public override LedgerType PacketType => LedgerType.Registry;
 
-        public override ushort BlockType => ActionTypes.Registry_RegisterStealth;
+        public override ushort BlockType => PacketTypes.Registry_RegisterStealth;
 
         protected override Memory<byte> ParseStealth(ushort version, Memory<byte> spanBody, out StealthBase StealthBase)
         {
@@ -29,7 +29,7 @@ namespace O10.Transactions.Core.Parsers.Registry
             {
                 int readBytes = 0;
 
-                PacketType referencedPacketType = (PacketType)BinaryPrimitives.ReadUInt16LittleEndian(spanBody.Span);
+                LedgerType referencedPacketType = (LedgerType)BinaryPrimitives.ReadUInt16LittleEndian(spanBody.Span);
                 readBytes += 2;
 
                 ushort referencedBlockType = BinaryPrimitives.ReadUInt16LittleEndian(spanBody.Span.Slice(readBytes));

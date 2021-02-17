@@ -9,8 +9,8 @@ namespace O10.Transactions.Core.Exceptions
     public class PacketTypeNotSupportedBySignatureSupportingSerializersException : Exception
     {
         public PacketTypeNotSupportedBySignatureSupportingSerializersException() { }
-        public PacketTypeNotSupportedBySignatureSupportingSerializersException(PacketType chainType) : base(string.Format(Resources.ERR_SIGNATURE_SUPPORTING_SERIALIZERS_CHAIN_TYPE_NOT_SUPPORTED, chainType)) { }
-        public PacketTypeNotSupportedBySignatureSupportingSerializersException(PacketType chainType, Exception inner) : base(string.Format(Resources.ERR_SIGNATURE_SUPPORTING_SERIALIZERS_CHAIN_TYPE_NOT_SUPPORTED, chainType), inner) { }
+        public PacketTypeNotSupportedBySignatureSupportingSerializersException(LedgerType chainType) : base(string.Format(Resources.ERR_SIGNATURE_SUPPORTING_SERIALIZERS_CHAIN_TYPE_NOT_SUPPORTED, chainType)) { }
+        public PacketTypeNotSupportedBySignatureSupportingSerializersException(LedgerType chainType, Exception inner) : base(string.Format(Resources.ERR_SIGNATURE_SUPPORTING_SERIALIZERS_CHAIN_TYPE_NOT_SUPPORTED, chainType), inner) { }
         protected PacketTypeNotSupportedBySignatureSupportingSerializersException(
           System.Runtime.Serialization.SerializationInfo info,
           System.Runtime.Serialization.StreamingContext context) : base(info, context) { }

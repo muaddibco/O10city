@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using O10.Transactions.Core.DataModel;
 using O10.Transactions.Core.Parsers;
 using O10.Transactions.Core.Serializers;
 using O10.Client.Common.Interfaces;
@@ -17,6 +16,7 @@ using O10.Core.Models;
 using O10.Core.Serialization;
 using O10.Client.Common.Communication.Notifications;
 using O10.Core.Notifications;
+using O10.Transactions.Core.DTOs;
 
 namespace O10.Client.Common.Communication
 {
@@ -86,7 +86,7 @@ namespace O10.Client.Common.Communication
 		protected void FillSyncData(PacketBase packet)
 		{
 			SyncBlockModel lastSyncBlock = AsyncUtil.RunSync(() => _gatewayService.GetLastSyncBlock());
-			packet.SyncBlockHeight = lastSyncBlock?.Height ?? 0;
+			packet.SyncHeight = lastSyncBlock?.Height ?? 0;
 			packet.PowHash = GetPowHash(lastSyncBlock?.Hash ?? new byte[Globals.DEFAULT_HASH_SIZE], 0);
 		}
 

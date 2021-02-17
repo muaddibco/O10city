@@ -12,13 +12,13 @@ namespace O10.Transactions.Core.Serializers
 	[RegisterDefaultImplementation(typeof(ISerializersFactory), Lifetime = LifetimeManagement.Singleton)]
     public class SerializersFactory : ISerializersFactory
     {
-        private readonly Dictionary<PacketType, Dictionary<ushort, Stack<ISerializer>>> _serializersCache;
+        private readonly Dictionary<LedgerType, Dictionary<ushort, Stack<ISerializer>>> _serializersCache;
         private readonly object _sync = new object();
 		private readonly IServiceProvider _serviceProvider;
 
 		public SerializersFactory(IServiceProvider serviceProvider, IEnumerable<ISerializer> signatureSupportSerializers)
         {
-            _serializersCache = new Dictionary<PacketType, Dictionary<ushort, Stack<ISerializer>>>();
+            _serializersCache = new Dictionary<LedgerType, Dictionary<ushort, Stack<ISerializer>>>();
 
 			if(signatureSupportSerializers != null)
 			{
@@ -41,7 +41,7 @@ namespace O10.Transactions.Core.Serializers
 			_serviceProvider = serviceProvider;
 		}
 
-        private ISerializer Create(PacketType packetType, ushort blockType)
+        private ISerializer Create(LedgerType packetType, ushort blockType)
         {
             if(!_serializersCache.ContainsKey(packetType))
             {
@@ -79,7 +79,7 @@ namespace O10.Transactions.Core.Serializers
                 throw new ArgumentNullException(nameof(block));
             }
 
-            ISerializer serializer = Create((PacketType)block.PacketType, block.BlockType);
+            ISerializer serializer = Create((LedgerType)block.LedgerType, block.PacketType);
             serializer.Initialize(block);
 
             return serializer;

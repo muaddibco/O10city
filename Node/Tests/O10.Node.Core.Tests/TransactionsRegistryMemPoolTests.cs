@@ -3,7 +3,7 @@ using HashLib;
 using NSubstitute;
 using System;
 using System.Collections.Generic;
-using O10.Transactions.Core.DataModel.Registry;
+using O10.Transactions.Core.Ledgers.Registry;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Serializers.Signed.Registry;
 using O10.Core;
@@ -73,7 +73,7 @@ namespace O10.Node.Core.Tests
             for (ulong i = 0; i < (ulong)heights.Length; i++)
             {
                 RegistryRegisterBlock transactionRegisterBlock = PacketsBuilder.GetTransactionRegisterBlock(synchronizationContext.LastBlockDescriptor.BlockHeight, 1, null, 
-                    heights[i],PacketType.Transactional, ActionTypes.Transaction_IssueBlindedAsset, new byte[Globals.POW_HASH_SIZE], new byte[Globals.DEFAULT_HASH_SIZE],privateKey);
+                    heights[i],LedgerType.O10State, PacketTypes.Transaction_IssueBlindedAsset, new byte[Globals.POW_HASH_SIZE], new byte[Globals.DEFAULT_HASH_SIZE],privateKey);
 
                 RegistryRegisterBlockSerializer serializer = new RegistryRegisterBlockSerializer(null);
                 serializer.Initialize(transactionRegisterBlock);
@@ -95,7 +95,7 @@ namespace O10.Node.Core.Tests
             Assert.Equal(expectedBlocks.Count, actualBlocks.Count);
             for (ushort i = 0; i < (ushort)expectedBlocks.Count; i++)
             {
-                Assert.Equal(expectedBlocks[i].BlockHeight, actualBlocks[i].BlockHeight);
+                Assert.Equal(expectedBlocks[i].Height, actualBlocks[i].Height);
             }
         }
 

@@ -17,7 +17,7 @@ namespace O10.Node.DataLayer.DataAccess
             _dataAccessServices = dataAccessServices.OfType<INodeDataAccessService>();
         }
 
-        public INodeDataAccessService GetInstance(PacketType key)
+        public INodeDataAccessService GetInstance(LedgerType key)
         {
             var dataAccessService = _dataAccessServices.FirstOrDefault(s => s.PacketType == key);
 

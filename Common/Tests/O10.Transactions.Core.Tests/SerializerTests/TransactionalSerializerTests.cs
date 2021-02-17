@@ -1,6 +1,6 @@
 ﻿using System.IO;
-using O10.Transactions.Core.DataModel.Transactional;
-using O10.Transactions.Core.DataModel.Transactional.Internal;
+using O10.Transactions.Core.Ledgers.O10State;
+using O10.Transactions.Core.Ledgers.O10State.Internal;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Serializers.Signed.Transactional;
 using O10.Core.Cryptography;
@@ -51,15 +51,15 @@ namespace O10.Transactions.Core.Tests.SerializerTests
 				body = ms.ToArray();
 			}
 
-			byte[] expectedPacket = BinaryHelper.GetSignedPacket(PacketType.Transactional, syncBlockHeight, nonce, powHash, version,
-				ActionTypes.Transaction_IssueBlindedAsset, blockHeight, null, body, _privateKey, out byte[] expectedSignature);
+			byte[] expectedPacket = BinaryHelper.GetSignedPacket(LedgerType.O10State, syncBlockHeight, nonce, powHash, version,
+				PacketTypes.Transaction_IssueBlindedAsset, blockHeight, null, body, _privateKey, out byte[] expectedSignature);
 
 			IssueBlindedAsset issueBlindedAsset = new IssueBlindedAsset
 			{
-				SyncBlockHeight = syncBlockHeight,
+				SyncHeight = syncBlockHeight,
 				Nonce = nonce,
 				PowHash = powHash,
-				BlockHeight = blockHeight,
+				Height = blockHeight,
 				GroupId = groupId,
 				UptodateFunds = uptodateFunds,
 				AssetCommitment = assetCommitment,
@@ -136,15 +136,15 @@ namespace O10.Transactions.Core.Tests.SerializerTests
 				body = ms.ToArray();
 			}
 
-			byte[] expectedPacket = BinaryHelper.GetSignedPacket(PacketType.Transactional, syncBlockHeight, nonce, powHash, version,
-				ActionTypes.Transaction_transferAssetToStealth, blockHeight, null, body, _privateKey, out byte[] expectedSignature);
+			byte[] expectedPacket = BinaryHelper.GetSignedPacket(LedgerType.O10State, syncBlockHeight, nonce, powHash, version,
+				PacketTypes.Transaction_transferAssetToStealth, blockHeight, null, body, _privateKey, out byte[] expectedSignature);
 
 			TransferAssetToStealth packet = new TransferAssetToStealth
 			{
-				SyncBlockHeight = syncBlockHeight,
+				SyncHeight = syncBlockHeight,
 				Nonce = nonce,
 				PowHash = powHash,
-				BlockHeight = blockHeight,
+				Height = blockHeight,
 				UptodateFunds = uptodateFunds,
 				DestinationKey = destinationKey, 
 				TransactionPublicKey = transactionKey,

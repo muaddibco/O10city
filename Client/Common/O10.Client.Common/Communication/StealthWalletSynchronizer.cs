@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using O10.Transactions.Core.DataModel.Transactional;
-using O10.Transactions.Core.DataModel.Stealth;
+using O10.Transactions.Core.Ledgers.O10State;
+using O10.Transactions.Core.Ledgers.Stealth;
 using O10.Client.Common.Interfaces;
 using O10.Client.DataLayer.Model;
 using O10.Client.DataLayer.Services;

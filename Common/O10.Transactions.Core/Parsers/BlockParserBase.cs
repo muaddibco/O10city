@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Buffers.Binary;
-using O10.Transactions.Core.DataModel.Transactional.Internal;
+using O10.Transactions.Core.Ledgers.O10State.Internal;
 using O10.Transactions.Core.Enums;
 using O10.Core;
 using O10.Core.Cryptography;
@@ -20,7 +20,7 @@ namespace O10.Transactions.Core.Parsers
 
         public abstract ushort BlockType { get; }
 
-        public abstract PacketType PacketType { get; }
+        public abstract LedgerType PacketType { get; }
 
         public virtual PacketBase Parse(Memory<byte> source)
         {
@@ -63,10 +63,10 @@ namespace O10.Transactions.Core.Parsers
 
         protected virtual Memory<byte> FillBlockBaseHeader(PacketBase blockBase, Memory<byte> spanHeader)
         {
-            PacketType packetType = (PacketType)BinaryPrimitives.ReadUInt16LittleEndian(spanHeader.Span);
+            LedgerType packetType = (LedgerType)BinaryPrimitives.ReadUInt16LittleEndian(spanHeader.Span);
             int readBytes = sizeof(ushort);
 
-            blockBase.SyncBlockHeight = BinaryPrimitives.ReadUInt64LittleEndian(spanHeader.Slice(readBytes).Span);
+            blockBase.SyncHeight = BinaryPrimitives.ReadUInt64LittleEndian(spanHeader.Slice(readBytes).Span);
             readBytes += sizeof(ulong);
 
             blockBase.Nonce = BinaryPrimitives.ReadUInt32LittleEndian(spanHeader.Slice(readBytes).Span);
@@ -78,10 +78,10 @@ namespace O10.Transactions.Core.Parsers
             return spanHeader.Slice(readBytes);
         }
 
-        public static void GetPacketAndBlockTypes(Memory<byte> source, out PacketType packetType, out ushort blockType)
+        public static void GetPacketAndBlockTypes(Memory<byte> source, out LedgerType packetType, out ushort blockType)
         {
             int blockTypePos = Globals.PACKET_TYPE_LENGTH + Globals.SYNC_BLOCK_HEIGHT_LENGTH + Globals.NONCE_LENGTH + Globals.POW_HASH_SIZE + Globals.VERSION_LENGTH;
-            packetType = (PacketType)BinaryPrimitives.ReadUInt16LittleEndian(source.Span);
+            packetType = (LedgerType)BinaryPrimitives.ReadUInt16LittleEndian(source.Span);
             blockType = BinaryPrimitives.ReadUInt16LittleEndian(source.Span.Slice(blockTypePos));
         }
 

@@ -1,14 +1,14 @@
 ﻿using System;
 using System.IO;
-using O10.Transactions.Core.DataModel;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Exceptions;
+using O10.Transactions.Core.Ledgers.Synchronization;
 
 namespace O10.Transactions.Core.Serializers.Signed
 {
     public abstract class LinkedSerializerBase<T> : SignatureSupportSerializerBase<T> where T : LinkedPacketBase
     {
-        public LinkedSerializerBase(IServiceProvider serviceProvider, PacketType packetType, ushort blockType) 
+        public LinkedSerializerBase(IServiceProvider serviceProvider, LedgerType packetType, ushort blockType) 
             : base(serviceProvider, packetType, blockType)
         {
         }

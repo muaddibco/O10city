@@ -2,7 +2,7 @@
 using O10.Core.ExtensionMethods;
 using O10.Core.Identity;
 using O10.Core.Models;
-using O10.Transactions.Core.DataModel.Registry;
+using O10.Transactions.Core.Ledgers.Registry;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Exceptions;
 using System;
@@ -19,9 +19,9 @@ namespace O10.Transactions.Core.Parsers.Registry
         {
         }
 
-        public override ushort BlockType => ActionTypes.Registry_RegisterEx;
+        public override ushort BlockType => PacketTypes.Registry_RegisterEx;
 
-        public override PacketType PacketType => PacketType.Registry;
+        public override LedgerType PacketType => LedgerType.Registry;
 
         protected override Memory<byte> ParseSigned(ushort version, Memory<byte> spanBody, out SignedPacketBase syncedBlockBase)
         {
@@ -29,7 +29,7 @@ namespace O10.Transactions.Core.Parsers.Registry
             {
                 int readBytes = 0;
 
-                PacketType referencedPacketType = (PacketType)BinaryPrimitives.ReadUInt16LittleEndian(spanBody.Span);
+                LedgerType referencedPacketType = (LedgerType)BinaryPrimitives.ReadUInt16LittleEndian(spanBody.Span);
                 readBytes += sizeof(ushort);
 
                 int paramsLength = BinaryPrimitives.ReadInt32LittleEndian(spanBody.Span[readBytes..]);

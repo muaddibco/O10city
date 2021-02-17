@@ -6,12 +6,12 @@ using System.Threading.Tasks.Dataflow;
 using O10.Core.Architecture;
 using O10.Core.Communication;
 using O10.Core.Models;
+using O10.Transactions.Core.DTOs;
 using O10.Transactions.Core.Interfaces;
-using O10.Transactions.Core.DataModel;
 
 namespace O10.Gateway.Common.Services
 {
-	[ServiceContract]
+    [ServiceContract]
     public interface INetworkSynchronizer : ISyncStateProvider
     {
         DateTime LastSyncTime { get; set; }

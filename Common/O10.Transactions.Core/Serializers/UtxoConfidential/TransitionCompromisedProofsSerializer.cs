@@ -1,6 +1,6 @@
 ﻿using System;
 using System.IO;
-using O10.Transactions.Core.DataModel.Stealth;
+using O10.Transactions.Core.Ledgers.Stealth;
 using O10.Transactions.Core.Enums;
 using O10.Core.Architecture;
 
@@ -11,7 +11,7 @@ namespace O10.Transactions.Core.Serializers.Stealth
 	public class TransitionCompromisedProofsSerializer : StealthTransactionSerializerBase<TransitionCompromisedProofs>
 	{
 		public TransitionCompromisedProofsSerializer(IServiceProvider serviceProvider) 
-			: base(serviceProvider, PacketType.Stealth, ActionTypes.Stealth_TransitionCompromisedProofs)
+			: base(serviceProvider, LedgerType.Stealth, PacketTypes.Stealth_TransitionCompromisedProofs)
 		{
 		}
 

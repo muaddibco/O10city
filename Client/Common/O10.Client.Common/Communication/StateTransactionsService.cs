@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using O10.Transactions.Core.DataModel.Transactional;
-using O10.Transactions.Core.DataModel.Transactional.Internal;
+using O10.Transactions.Core.Ledgers.O10State;
+using O10.Transactions.Core.Ledgers.O10State.Internal;
 using O10.Transactions.Core.Parsers;
 using O10.Transactions.Core.Serializers;
 using O10.Client.Common.Entities;
@@ -356,7 +356,7 @@ namespace O10.Client.Common.Communication
 
         private void FillHeightInfo(TransactionalPacketBase transactionalBlockBase)
         {
-            transactionalBlockBase.BlockHeight = _lastHeight++;
+            transactionalBlockBase.Height = _lastHeight++;
         }
 
 		#endregion

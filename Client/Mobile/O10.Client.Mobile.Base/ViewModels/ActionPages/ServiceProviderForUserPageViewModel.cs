@@ -7,7 +7,7 @@ using System.Web;
 using Prism.Commands;
 using Prism.Navigation;
 using Prism.Services;
-using O10.Transactions.Core.DataModel.Stealth.Internal;
+using O10.Transactions.Core.Ledgers.Stealth.Internal;
 using O10.Client.Common.Communication;
 using O10.Client.Common.Configuration;
 using O10.Client.Common.Entities;

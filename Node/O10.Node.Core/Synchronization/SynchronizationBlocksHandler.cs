@@ -1,7 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
-using O10.Transactions.Core.DataModel.Synchronization;
+using O10.Transactions.Core.Ledgers.Synchronization;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Interfaces;
 using O10.Network.Interfaces;
@@ -40,7 +40,7 @@ namespace O10.Node.Core.Synchronization
 
         public string Name => NAME;
 
-        public PacketType PacketType => PacketType.Synchronization;
+        public LedgerType PacketType => LedgerType.Synchronization;
 
         public void Initialize(CancellationToken ct)
         {
@@ -62,7 +62,7 @@ namespace O10.Node.Core.Synchronization
             foreach (SynchronizationBlockBase synchronizationBlock in _synchronizationBlocks.GetConsumingEnumerable(ct))
             {
                 ulong lastBlockHeight = _synchronizationContext.LastBlockDescriptor?.BlockHeight ?? 0;
-                if (lastBlockHeight + 1 > synchronizationBlock.BlockHeight)
+                if (lastBlockHeight + 1 > synchronizationBlock.Height)
                 {
                     continue;
                 }

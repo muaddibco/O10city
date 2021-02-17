@@ -13,7 +13,7 @@ namespace O10.Node.DataLayer.Specific.Stealth.Mappers
                 throw new System.ArgumentNullException(nameof(blockParsersFactoriesRepository));
             }
 
-            BlockParsersRepository = blockParsersFactoriesRepository.GetBlockParsersRepository(PacketType.Stealth);
+            BlockParsersRepository = blockParsersFactoriesRepository.GetBlockParsersRepository(LedgerType.Stealth);
 		}
 
         protected IBlockParsersRepository BlockParsersRepository { get; }

@@ -3,12 +3,12 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Gateway.DataLayer.Model
 {
-    [Table("TransactionalPackets")]
-    public class TransactionalPacket
+    [Table("StatePackets")]
+    public class StatePacket
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public long TransactionalPacketId { get; set; }
+        public long StatePacketId { get; set; }
 
         public long WitnessId { get; set; }
 
@@ -28,9 +28,9 @@ namespace O10.Gateway.DataLayer.Model
 
         public bool IsTransition { get; set; }
 
-        public UtxoTransactionKey TransactionKey { get; set; }
+        public TransactionKey TransactionKey { get; set; }
 
-        public UtxoOutput Output { get; set; }
+        public StealthOutput Output { get; set; }
 
         #endregion Transition Account based to UTXO based transaction
 

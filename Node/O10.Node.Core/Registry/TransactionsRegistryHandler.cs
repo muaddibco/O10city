@@ -3,7 +3,7 @@ using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using O10.Transactions.Core.DataModel.Registry;
+using O10.Transactions.Core.Ledgers.Registry;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Interfaces;
 using O10.Transactions.Core.Serializers.RawPackets;
@@ -66,7 +66,7 @@ namespace O10.Node.Core.Registry
 
         public string Name => NAME;
 
-        public PacketType PacketType => PacketType.Registry;
+        public LedgerType PacketType => LedgerType.Registry;
 
         public void Initialize(CancellationToken ct)
         {

@@ -19,7 +19,7 @@ namespace O10.Node.DataLayer.Mappers.Registry
                 throw new System.ArgumentNullException(nameof(blockParsersFactoriesRepository));
             }
 
-            _blockParsersRepository = blockParsersFactoriesRepository.GetBlockParsersRepository(PacketType.Registry);
+            _blockParsersRepository = blockParsersFactoriesRepository.GetBlockParsersRepository(LedgerType.Registry);
         }
 
         public override PacketBase Translate(RegistryFullBlock obj)
@@ -29,9 +29,9 @@ namespace O10.Node.DataLayer.Mappers.Registry
                 return null;
             }
 
-            IBlockParser blockParser = _blockParsersRepository.GetInstance(ActionTypes.Registry_FullBlock);
+            IBlockParser blockParser = _blockParsersRepository.GetInstance(PacketTypes.Registry_FullBlock);
 
-			return (Transactions.Core.DataModel.Registry.RegistryFullBlock)blockParser.Parse(obj.Content);
+			return (Transactions.Core.Ledgers.Registry.RegistryFullBlock)blockParser.Parse(obj.Content);
         }
     }
 }

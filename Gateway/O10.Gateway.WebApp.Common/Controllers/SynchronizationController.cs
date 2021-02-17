@@ -7,7 +7,6 @@ using O10.Core.Communication;
 using O10.Core.ExtensionMethods;
 using O10.Gateway.Common.Services;
 using O10.Gateway.WebApp.Common.Models;
-using O10.Transactions.Core.DataModel;
 using O10.Gateway.DataLayer.Model;
 using O10.Transactions.Core.Enums;
 using O10.Gateway.WebApp.Common.Services;
@@ -22,10 +21,11 @@ using System;
 using Newtonsoft.Json;
 using O10.Gateway.WebApp.Common.Exceptions;
 using O10.Core.Models;
-using O10.Transactions.Core.DataModel.Stealth;
+using O10.Transactions.Core.Ledgers.Stealth;
 using O10.Gateway.Common.Services.Results;
 using O10.Core.Serialization;
 using O10.Core.Notifications;
+using O10.Transactions.Core.DTOs;
 
 namespace O10.Gateway.WebApp.Common.Controllers
 {
@@ -318,11 +318,11 @@ namespace O10.Gateway.WebApp.Common.Controllers
         [HttpGet("GetTransactionBySourceAndHeight")]
         public IActionResult GetTransactionBySourceAndHeight([FromQuery] string source, [FromQuery] ulong height)
         {
-            TransactionalPacket transaction = _dataAccessService.GetTransactionBySourceAndHeight(source, height);
+            StatePacket transaction = _dataAccessService.GetTransactionBySourceAndHeight(source, height);
 
             PacketInfo packetInfo = new PacketInfo
             {
-                PacketType = PacketType.Transactional,
+                PacketType = LedgerType.O10State,
                 BlockType = transaction.BlockType,
                 Content = transaction.Content
             };

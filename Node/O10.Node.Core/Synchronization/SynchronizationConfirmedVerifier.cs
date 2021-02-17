@@ -1,5 +1,4 @@
-﻿using O10.Transactions.Core.DataModel;
-using O10.Transactions.Core.Enums;
+﻿using O10.Transactions.Core.Enums;
 using O10.Core.Architecture;
 using O10.Core.ExtensionMethods;
 using O10.Core.Logging;
@@ -8,6 +7,7 @@ using O10.Core.Synchronization;
 using O10.Core.Models;
 using O10.Core;
 using O10.Network.Handlers;
+using O10.Transactions.Core.Ledgers.Synchronization;
 
 namespace O10.Node.Core.Synchronization
 {
@@ -23,15 +23,15 @@ namespace O10.Node.Core.Synchronization
 			_loggerService = loggerService;
 		}
 
-        public PacketType PacketType => PacketType.Synchronization;
+        public LedgerType PacketType => LedgerType.Synchronization;
 
         public bool ValidatePacket(PacketBase blockBase)
         {
             LinkedPacketBase syncedBlockBase = (LinkedPacketBase)blockBase;
 
-            if(syncedBlockBase.BlockType == ActionTypes.Synchronization_ConfirmedBlock && syncedBlockBase.Version == 1)
+            if(syncedBlockBase.PacketType == PacketTypes.Synchronization_ConfirmedBlock && syncedBlockBase.Version == 1)
             {
-                if (_synchronizationContext.LastBlockDescriptor != null && _synchronizationContext.LastBlockDescriptor.BlockHeight + 1 <= syncedBlockBase.BlockHeight || _synchronizationContext.LastBlockDescriptor == null)
+                if (_synchronizationContext.LastBlockDescriptor != null && _synchronizationContext.LastBlockDescriptor.BlockHeight + 1 <= syncedBlockBase.Height || _synchronizationContext.LastBlockDescriptor == null)
                 {
                     if (_synchronizationContext.LastBlockDescriptor != null && syncedBlockBase.HashPrev.Equals32(_synchronizationContext.LastBlockDescriptor.Hash) ||
                         _synchronizationContext.LastBlockDescriptor == null && syncedBlockBase.HashPrev.Equals32(new byte[Globals.DEFAULT_HASH_SIZE]))

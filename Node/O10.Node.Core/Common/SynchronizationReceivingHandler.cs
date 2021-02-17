@@ -2,7 +2,7 @@
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
-using O10.Transactions.Core.DataModel.Synchronization;
+using O10.Transactions.Core.Ledgers.Synchronization;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Interfaces;
 using O10.Transactions.Core.Serializers.RawPackets;
@@ -39,13 +39,13 @@ namespace O10.Node.Core.Common
             _synchronizationBlocks = new BlockingCollection<SynchronizationConfirmedBlock>();
             _communicationServicesRegistry = communicationServicesRegistry;
             _rawPacketProvidersFactory = rawPacketProvidersFactory;
-            _chainDataService = chainDataServicesManager.GetChainDataService(PacketType.Synchronization);
+            _chainDataService = chainDataServicesManager.GetChainDataService(LedgerType.Synchronization);
             _hashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
         }
 
         public string Name => NAME;
 
-        public PacketType PacketType => PacketType.Synchronization;
+        public LedgerType PacketType => LedgerType.Synchronization;
 
         public void Initialize(CancellationToken ct)
         {
@@ -73,12 +73,12 @@ namespace O10.Node.Core.Common
 			{
 				foreach (SynchronizationConfirmedBlock synchronizationBlock in _synchronizationBlocks.GetConsumingEnumerable(ct))
 				{
-					if ((_synchronizationContext.LastBlockDescriptor?.BlockHeight ?? 0) >= synchronizationBlock.BlockHeight)
+					if ((_synchronizationContext.LastBlockDescriptor?.BlockHeight ?? 0) >= synchronizationBlock.Height)
 					{
 						continue;
 					}
 
-					_synchronizationContext.UpdateLastSyncBlockDescriptor(new SynchronizationDescriptor(synchronizationBlock.BlockHeight, _hashCalculation.CalculateHash(synchronizationBlock.RawData), synchronizationBlock.ReportedTime, DateTime.Now, synchronizationBlock.Round));
+					_synchronizationContext.UpdateLastSyncBlockDescriptor(new SynchronizationDescriptor(synchronizationBlock.Height, _hashCalculation.CalculateHash(synchronizationBlock.RawData), synchronizationBlock.ReportedTime, DateTime.Now, synchronizationBlock.Round));
 
 					_chainDataService.Add(synchronizationBlock);
 

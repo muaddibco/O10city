@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Buffers.Binary;
-using O10.Transactions.Core.DataModel.Registry;
+using O10.Transactions.Core.Ledgers.Registry;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Exceptions;
 using O10.Core;
@@ -23,9 +23,9 @@ namespace O10.Transactions.Core.Parsers.Registry
             _registryRegisterStealthBlockParser = new RegistryRegisterStealthBlockParser(identityKeyProvidersRegistry);
         }
 
-        public override ushort BlockType => ActionTypes.Registry_FullBlock;
+        public override ushort BlockType => PacketTypes.Registry_FullBlock;
 
-        public override PacketType PacketType => PacketType.Registry;
+        public override LedgerType PacketType => LedgerType.Registry;
 
         protected override Memory<byte> ParseSigned(ushort version, Memory<byte> spanBody, out SignedPacketBase syncedBlockBase)
         {
@@ -41,7 +41,7 @@ namespace O10.Transactions.Core.Parsers.Registry
                 readBytes += sizeof(ushort);
 
                 transactionsFullBlock.StateWitnesses = new RegistryRegisterBlock[stateWitnessesCount];
-                transactionsFullBlock.UtxoWitnesses = new RegistryRegisterStealth[utxoWitnessesCount];
+                transactionsFullBlock.StealthWitnesses = new RegistryRegisterStealth[utxoWitnessesCount];
 
                 for (int i = 0; i < stateWitnessesCount; i++)
                 {
@@ -58,7 +58,7 @@ namespace O10.Transactions.Core.Parsers.Registry
 
                     readBytes += block?.RawData.Length ?? 0;
 
-                    transactionsFullBlock.UtxoWitnesses[i] = block;
+                    transactionsFullBlock.StealthWitnesses[i] = block;
                 }
 
                 transactionsFullBlock.ShortBlockHash = spanBody.Slice(readBytes, Globals.DEFAULT_HASH_SIZE).ToArray();

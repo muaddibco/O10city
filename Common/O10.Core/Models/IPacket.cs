@@ -4,11 +4,11 @@ namespace O10.Core.Models
 {
     public interface IPacket
     {
-        ushort PacketType { get; }
+        ushort LedgerType { get; }
 
         ushort Version { get; }
 
-        ushort BlockType { get; }
+        ushort PacketType { get; }
 
         /// <summary>
         /// Bytes of packet (without signature and public key)

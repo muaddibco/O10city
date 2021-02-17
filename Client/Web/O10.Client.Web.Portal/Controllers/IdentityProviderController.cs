@@ -28,7 +28,7 @@ using O10.Client.Common.ExternalIdps.BlinkId;
 using O10.Client.Web.Portal.ExternalIdps.Validators;
 using O10.Client.Web.Portal.Exceptions;
 using System.Collections.ObjectModel;
-using O10.Transactions.Core.DataModel.Transactional;
+using O10.Transactions.Core.Ledgers.O10State;
 using O10.Client.Web.Portal.Dtos.IdentityProvider;
 using Microsoft.AspNetCore.SignalR;
 using O10.Client.Web.Common.Hubs;

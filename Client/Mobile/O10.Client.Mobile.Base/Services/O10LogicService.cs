@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using O10.Transactions.Core.DataModel;
 using O10.Client.Common.Configuration;
 using O10.Client.Common.Dtos.UniversalProofs;
 using O10.Client.Common.Entities;
@@ -17,6 +16,7 @@ using O10.Core.ExtensionMethods;
 using O10.Core.Logging;
 using O10.Client.Mobile.Base.Exceptions;
 using O10.Client.Mobile.Base.Interfaces;
+using O10.Transactions.Core.DTOs;
 
 namespace O10.Client.Mobile.Base.Services
 {

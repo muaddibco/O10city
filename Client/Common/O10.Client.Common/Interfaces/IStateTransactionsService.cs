@@ -1,7 +1,7 @@
 ﻿using O10.Client.Common.Entities;
 using O10.Core.Architecture;
 using O10.Core.Cryptography;
-using O10.Transactions.Core.DataModel.Transactional;
+using O10.Transactions.Core.Ledgers.O10State;
 using System.Threading.Tasks;
 
 namespace O10.Client.Common.Interfaces

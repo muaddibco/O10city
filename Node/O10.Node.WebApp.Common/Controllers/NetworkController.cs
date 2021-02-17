@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
-using O10.Transactions.Core.DataModel;
-using O10.Transactions.Core.DataModel.Synchronization;
-using O10.Transactions.Core.DataModel.Transactional;
+using O10.Transactions.Core.Ledgers.Synchronization;
+using O10.Transactions.Core.Ledgers.O10State;
 using O10.Transactions.Core.Enums;
 using O10.Node.DataLayer.DataServices;
 using O10.Node.DataLayer.DataServices.Keys;
@@ -18,6 +17,7 @@ using O10.Core.Models;
 using O10.Core.States;
 using O10.Core.Synchronization;
 using O10.Network.Handlers;
+using O10.Transactions.Core.DTOs;
 
 namespace O10.Node.WebApp.Common.Controllers
 {
@@ -42,9 +42,9 @@ namespace O10.Node.WebApp.Common.Controllers
 						   ILoggerService loggerService)
 		{
 			_packetsHandler = packetsHandler;
-            _transactionalDataService = chainDataServicesManager.GetChainDataService(PacketType.Transactional);
-			_stealthDataService = (IStealthDataService)chainDataServicesManager.GetChainDataService(PacketType.Stealth);
-			_synchronizationDataService = chainDataServicesManager.GetChainDataService(PacketType.Synchronization);
+            _transactionalDataService = chainDataServicesManager.GetChainDataService(LedgerType.O10State);
+			_stealthDataService = (IStealthDataService)chainDataServicesManager.GetChainDataService(LedgerType.Stealth);
+			_synchronizationDataService = chainDataServicesManager.GetChainDataService(LedgerType.Synchronization);
 			_identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
 			_hashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
 			_synchronizationContext = statesRepository.GetInstance<ISynchronizationContext>();
@@ -86,10 +86,10 @@ namespace O10.Node.WebApp.Common.Controllers
 		[HttpGet("LastRegistryCombinedBlock")]
 		public ActionResult<RegistryCombinedBlockModel> GetLastRegistryCombinedBlock()
 		{
-			SynchronizationRegistryCombinedBlock combinedBlock = _synchronizationDataService.Single<SynchronizationRegistryCombinedBlock>(new SingleByBlockTypeKey(ActionTypes.Synchronization_RegistryCombinationBlock));
+			SynchronizationRegistryCombinedBlock combinedBlock = _synchronizationDataService.Single<SynchronizationRegistryCombinedBlock>(new SingleByBlockTypeKey(PacketTypes.Synchronization_RegistryCombinationBlock));
 
 			byte[] content = combinedBlock?.RawData.ToArray() ?? new byte[] { };
-			return Ok(new RegistryCombinedBlockModel(combinedBlock?.BlockHeight??0, content, _hashCalculation.CalculateHash(content)));
+			return Ok(new RegistryCombinedBlockModel(combinedBlock?.Height??0, content, _hashCalculation.CalculateHash(content)));
 		}
 
 		[HttpGet("GetLastStatePacketInfo")]
@@ -107,7 +107,7 @@ namespace O10.Node.WebApp.Common.Controllers
 
 			return new StatePacketInfo
 			{
-				Height = transactionalBlockBase?.BlockHeight ?? 0,
+				Height = transactionalBlockBase?.Height ?? 0,
 				//TODO: !!! need to reconsider hash calculation here since it is potential point of DoS attack
 				Hash = (transactionalBlockBase != null ? _hashCalculation.CalculateHash(transactionalBlockBase.RawData) : new byte[Globals.DEFAULT_HASH_SIZE]).ToHexString(),
 			};
@@ -127,9 +127,9 @@ namespace O10.Node.WebApp.Common.Controllers
 				{
 					return new TransactionInfo
 					{
-						SyncBlockHeight = blockBase.SyncBlockHeight,
-						PacketType = (PacketType)blockBase.PacketType,
-						BlockType = blockBase.BlockType,
+						SyncBlockHeight = blockBase.SyncHeight,
+						PacketType = (LedgerType)blockBase.LedgerType,
+						BlockType = blockBase.PacketType,
 						Content = blockBase.RawData.ToArray()
 					};
 				}
@@ -141,9 +141,9 @@ namespace O10.Node.WebApp.Common.Controllers
 					{
 						return new TransactionInfo
 						{
-							SyncBlockHeight = blockBase.SyncBlockHeight,
-							PacketType = (PacketType)blockBase.PacketType,
-							BlockType = blockBase.BlockType,
+							SyncBlockHeight = blockBase.SyncHeight,
+							PacketType = (LedgerType)blockBase.LedgerType,
+							BlockType = blockBase.PacketType,
 							Content = blockBase.RawData.ToArray()
 						};
 					}
@@ -159,8 +159,8 @@ namespace O10.Node.WebApp.Common.Controllers
 			return new TransactionInfo();
 		}
 
-		[HttpGet("GetTransactionInfoUtxo")]
-		public ActionResult<TransactionInfo> GetTransactionInfoUtxo([FromQuery] string combinedBlockHeight, [FromQuery] string hash)
+		[HttpGet("StealthTransactionInfo")]
+		public ActionResult<TransactionInfo> GetStealthTransactionInfo([FromQuery] string combinedBlockHeight, [FromQuery] string hash)
 		{
 			byte[] hashBytes = hash.HexStringToByteArray();
 			try
@@ -171,9 +171,9 @@ namespace O10.Node.WebApp.Common.Controllers
 				{
 					return new TransactionInfo
 					{
-						SyncBlockHeight = blockBase.SyncBlockHeight,
-						PacketType = (PacketType)blockBase.PacketType,
-						BlockType = blockBase.BlockType,
+						SyncBlockHeight = blockBase.SyncHeight,
+						PacketType = (LedgerType)blockBase.LedgerType,
+						BlockType = blockBase.PacketType,
 						Content = blockBase.RawData.ToArray()
 					};
 				}
@@ -185,9 +185,9 @@ namespace O10.Node.WebApp.Common.Controllers
 					{
 						return new TransactionInfo
 						{
-							SyncBlockHeight = blockBase.SyncBlockHeight,
-							PacketType = (PacketType)blockBase.PacketType,
-							BlockType = blockBase.BlockType,
+							SyncBlockHeight = blockBase.SyncHeight,
+							PacketType = (LedgerType)blockBase.LedgerType,
+							BlockType = blockBase.PacketType,
 							Content = blockBase.RawData.ToArray()
 						};
 					}

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text;
-using O10.Transactions.Core.DataModel.Transactional;
-using O10.Transactions.Core.DataModel.Transactional.Internal;
+using O10.Transactions.Core.Ledgers.O10State;
+using O10.Transactions.Core.Ledgers.O10State.Internal;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Exceptions;
 using O10.Core;
@@ -18,7 +18,7 @@ namespace O10.Transactions.Core.Parsers.Transactional
         {
         }
 
-        public override ushort BlockType => ActionTypes.Transaction_IssueAsset;
+        public override ushort BlockType => PacketTypes.Transaction_IssueAsset;
 
         protected override Memory<byte> ParseTransactional(ushort version, Memory<byte> spanBody, out TransactionalPacketBase transactionalBlockBase)
         {

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using O10.Transactions.Core.Enums;
-using O10.Transactions.Core.DataModel.Transactional;
+using O10.Transactions.Core.Ledgers.O10State;
 using O10.Core.Architecture;
 using O10.Core.Translators;
 using O10.Core.Identity;
@@ -22,7 +22,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
     [RegisterExtension(typeof(IChainDataService), Lifetime = LifetimeManagement.Singleton)]
     public class DataService : ChainDataServiceBase<DataAccessService>
     {
-		public override PacketType PacketType => PacketType.Transactional;
+		public override LedgerType PacketType => LedgerType.O10State;
 
         public DataService(
             INodeDataAccessServiceRepository dataAccessServiceRepository,
@@ -45,7 +45,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
             {
                 IKey key = transactionalBlockBase.Signer;
 
-                Service.AddTransactionalBlock(key, (long)transactionalBlockBase.SyncBlockHeight, transactionalBlockBase.BlockType, (long)transactionalBlockBase.BlockHeight, transactionalBlockBase.RawData.ToArray());
+                Service.AddTransactionalBlock(key, (long)transactionalBlockBase.SyncHeight, transactionalBlockBase.PacketType, (long)transactionalBlockBase.Height, transactionalBlockBase.RawData.ToArray());
                 Logger?.LogIfDebug(() => $"Storing of {packet.GetType().Name} completed");
             }
             else
@@ -84,7 +84,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
             }
             else if (key is CombinedHashKey combinedHashKey)
             {
-                ulong syncBlockHeight = ChainDataServicesManager.GetChainDataService(PacketType.Synchronization).GetScalar(new SingleByBlockTypeAndHeight(ActionTypes.Synchronization_RegistryCombinationBlock, combinedHashKey.CombinedBlockHeight));
+                ulong syncBlockHeight = ChainDataServicesManager.GetChainDataService(LedgerType.Synchronization).GetScalar(new SingleByBlockTypeAndHeight(PacketTypes.Synchronization_RegistryCombinationBlock, combinedHashKey.CombinedBlockHeight));
                 O10Transaction transactionalBlock = Service.GetTransactionalBySyncAndHash(syncBlockHeight, combinedHashKey.Hash);
 
 				if(transactionalBlock == null)

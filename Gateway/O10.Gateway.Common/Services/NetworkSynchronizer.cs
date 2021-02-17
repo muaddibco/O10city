@@ -4,10 +4,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using O10.Transactions.Core.DataModel.Registry;
-using O10.Transactions.Core.DataModel.Synchronization;
-using O10.Transactions.Core.DataModel.Transactional;
-using O10.Transactions.Core.DataModel.Stealth;
+using O10.Transactions.Core.Ledgers.Registry;
+using O10.Transactions.Core.Ledgers.Synchronization;
+using O10.Transactions.Core.Ledgers.O10State;
+using O10.Transactions.Core.Ledgers.Stealth;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Parsers;
 using O10.Gateway.Common.Configuration;
@@ -23,7 +23,6 @@ using O10.Core.HashCalculations;
 using O10.Core.Identity;
 using O10.Core.Logging;
 using O10.Core.Models;
-using O10.Transactions.Core.DataModel;
 using Microsoft.AspNetCore.SignalR.Client;
 using Flurl;
 using Flurl.Http;
@@ -32,10 +31,12 @@ using System.Net.Http;
 using System.Collections.Concurrent;
 using O10.Core.Serialization;
 using O10.Core.Notifications;
+using O10.Transactions.Core.Accessors;
+using O10.Transactions.Core.DTOs;
 
 namespace O10.Gateway.Common.Services
 {
-	[RegisterDefaultImplementation(typeof(INetworkSynchronizer), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterDefaultImplementation(typeof(INetworkSynchronizer), Lifetime = LifetimeManagement.Singleton)]
 	public class NetworkSynchronizer : INetworkSynchronizer
 	{
 		private readonly ConcurrentDictionary<int, TaskCompletionSource<bool>> _connectityCheckerAwaiters;
@@ -44,6 +45,7 @@ namespace O10.Gateway.Common.Services
         private readonly IHashCalculation _defaultHashCalculation;
 		private readonly IBlockParsersRepositoriesRepository _blockParsersRepositoriesRepository;
 		private readonly IIdentityKeyProvidersRegistry _identityKeyProvidersRegistry;
+        private readonly IAccessorProvider _accessorProvider;
         private readonly IAppConfig _appConfig;
         private readonly IIdentityKeyProvider _identityKeyProvider;
 		private readonly ILogger _logger;
@@ -55,18 +57,20 @@ namespace O10.Gateway.Common.Services
 		private RegistryCombinedBlockModel _lastCombinedBlockDescriptor;
 
 		public NetworkSynchronizer(IDataAccessService dataAccessService,
-                             IHashCalculationsRepository hashCalculationsRepository,
-                             IConfigurationService configurationService,
-                             IBlockParsersRepositoriesRepository blockParsersRepositoriesRepository,
-                             IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
-							 IAppConfig appConfig,
-                             ILoggerService loggerService)
+								   IHashCalculationsRepository hashCalculationsRepository,
+								   IConfigurationService configurationService,
+								   IBlockParsersRepositoriesRepository blockParsersRepositoriesRepository,
+								   IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
+								   IAccessorProvider accessorProvider,
+								   IAppConfig appConfig,
+								   ILoggerService loggerService)
 		{
 			_dataAccessService = dataAccessService;
             _synchronizerConfiguration = configurationService.Get<ISynchronizerConfiguration>();
 			_defaultHashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
 			_blockParsersRepositoriesRepository = blockParsersRepositoriesRepository;
 			_identityKeyProvidersRegistry = identityKeyProvidersRegistry;
+            _accessorProvider = accessorProvider;
             _appConfig = appConfig;
             _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
 			_logger = loggerService.GetLogger(nameof(NetworkSynchronizer));
@@ -224,7 +228,7 @@ namespace O10.Gateway.Common.Services
 			}
 			catch (Exception ex)
 			{
-				_logger.Error($"Failure during obtaining transactions at Registry Combined Block with height {combinedBlock.BlockHeight}", ex);
+				_logger.Error($"Failure during obtaining transactions at Registry Combined Block with height {combinedBlock.Height}", ex);
 			}
 		}
 
@@ -397,7 +401,7 @@ namespace O10.Gateway.Common.Services
 			}
 			catch (Exception ex)
 			{
-				_logger.Error($"Failure during deserealization of block of PacketType = {(PacketType)transactionInfo.PacketType} and  BlockType = {transactionInfo.BlockType} at Sync Block Height {transactionInfo.SyncBlockHeight}", ex);
+				_logger.Error($"Failure during deserealization of block of PacketType = {(LedgerType)transactionInfo.PacketType} and  BlockType = {transactionInfo.BlockType} at Sync Block Height {transactionInfo.SyncBlockHeight}", ex);
 			}
 
 			return null;
@@ -416,7 +420,7 @@ namespace O10.Gateway.Common.Services
 			}
 			catch (Exception ex)
 			{
-				_logger.Error($"Failure during deserealization of block of PacketType = {(PacketType)transactionInfo.PacketType} and  BlockType = {transactionInfo.BlockType} at Sync Block Height {transactionInfo.SyncBlockHeight}", ex);
+				_logger.Error($"Failure during deserealization of block of PacketType = {(LedgerType)transactionInfo.PacketType} and  BlockType = {transactionInfo.BlockType} at Sync Block Height {transactionInfo.SyncBlockHeight}", ex);
 			}
 
 			return null;
@@ -424,15 +428,15 @@ namespace O10.Gateway.Common.Services
 
         private void StoreRegistryCombinedBlock(SynchronizationRegistryCombinedBlock combinedBlock)
         {
-            _dataAccessService.StoreRegistryCombinedBlock(combinedBlock.BlockHeight, combinedBlock.RawData.ToArray());
+            _dataAccessService.StoreRegistryCombinedBlock(combinedBlock.Height, combinedBlock.RawData.ToArray());
 
-            if ((_lastCombinedBlockDescriptor?.Height ?? 0) < combinedBlock.BlockHeight)
+            if ((_lastCombinedBlockDescriptor?.Height ?? 0) < combinedBlock.Height)
             {
 				if(_lastCombinedBlockDescriptor == null)
                 {
 					_lastCombinedBlockDescriptor = new RegistryCombinedBlockModel(0, null, new byte[32]);
 				}
-                _lastCombinedBlockDescriptor.Height = combinedBlock.BlockHeight;
+                _lastCombinedBlockDescriptor.Height = combinedBlock.Height;
             }
         }
 
@@ -448,7 +452,7 @@ namespace O10.Gateway.Common.Services
 						_logger.Info($"Packets were stored successfully");
 						WitnessPackage witnessPackage = new WitnessPackage
                         {
-                            StateWitnesses = t.Result.Where(w => w.ReferencedKeyImage == null).Select(w => new PacketWitness { WitnessId = w.WitnessPacketId, DestinationKey = w.ReferencedDestinationKey.HexStringToByteArray(), TransactionKey = w.ReferencedTransactionKey.HexStringToByteArray(), IsIdentityIssuing = ((PacketType)w.ReferencedPacketType == PacketType.Transactional && (w.ReferencedBlockType == ActionTypes.Transaction_IssueBlindedAsset || w.ReferencedBlockType == ActionTypes.Transaction_IssueAssociatedBlindedAsset || w.ReferencedBlockType == ActionTypes.Transaction_transferAssetToStealth)) }).ToArray(),
+                            StateWitnesses = t.Result.Where(w => w.ReferencedKeyImage == null).Select(w => new PacketWitness { WitnessId = w.WitnessPacketId, DestinationKey = w.ReferencedDestinationKey.HexStringToByteArray(), TransactionKey = w.ReferencedTransactionKey.HexStringToByteArray(), IsIdentityIssuing = (w.ReferencedPacketType == LedgerType.O10State && (w.ReferencedBlockType == PacketTypes.Transaction_IssueBlindedAsset || w.ReferencedBlockType == PacketTypes.Transaction_IssueAssociatedBlindedAsset || w.ReferencedBlockType == PacketTypes.Transaction_transferAssetToStealth)) }).ToArray(),
                             StealthWitnesses = t.Result.Where(w => w.ReferencedKeyImage != null).Select(w => new PacketWitness { WitnessId = w.WitnessPacketId, DestinationKey = w.ReferencedDestinationKey.HexStringToByteArray(), DestinationKey2 = w.ReferencedDestinationKey2.HexStringToByteArray(), KeyImage = w.ReferencedKeyImage.HexStringToByteArray(), TransactionKey = w.ReferencedTransactionKey.HexStringToByteArray() }).ToArray(),
                             CombinedBlockHeight = (ulong)o
                         };
@@ -459,13 +463,13 @@ namespace O10.Gateway.Common.Services
 					{
 						_logger.Error($"Packets were not stored successfully", t.Exception);
 					}
-				}, combinedBlock.BlockHeight, TaskScheduler.Current);
+				}, combinedBlock.Height, TaskScheduler.Current);
             }
         }
 
         private void ProcessRegistryFullBlock(SynchronizationRegistryCombinedBlock combinedBlock, RegistryFullBlock registryFullBlock, List<Task<WitnessPacket>> packetWitnessTasks)
         {
-            _logger.Info($"[N2G]: Obtained {registryFullBlock.StateWitnesses.Count()} StateWitnesses and {registryFullBlock.UtxoWitnesses.Count()} UtxoWitnesses");
+            _logger.Info($"[N2G]: Obtained {registryFullBlock.StateWitnesses.Count()} StateWitnesses and {registryFullBlock.StealthWitnesses.Count()} UtxoWitnesses");
 
             try
             {
@@ -478,23 +482,23 @@ namespace O10.Gateway.Common.Services
                 {
                     foreach (var item in registryFullBlock.StateWitnesses)
                     {
-                        TaskCompletionSource<WitnessPacket> taskCompletionSource = _dataAccessService.StoreWitnessPacket(registryFullBlock.SyncBlockHeight, (long)registryFullBlock.BlockHeight, combinedBlock.BlockHeight, (ushort)item.ReferencedPacketType, item.ReferencedBlockType, item.ReferencedBodyHash, item.ReferencedTarget, null, item.ReferencedTransactionKey, null);
+                        TaskCompletionSource<WitnessPacket> witnessStoreCompletionSource = _dataAccessService.StoreWitnessPacket(registryFullBlock.SyncHeight, (long)registryFullBlock.Height, combinedBlock.Height, item.ReferencedPacketType, item.ReferencedBlockType, item.ReferencedBodyHash, item.ReferencedTarget, null, item.ReferencedTransactionKey, null);
 
-                        TaskCompletionSource<WitnessPacket> taskCompletionSource2 = ObtainAndStoreStateTransaction(taskCompletionSource);
+                        TaskCompletionSource<WitnessPacket> transactionStoreCompletionSource = ObtainAndStoreStateTransaction(witnessStoreCompletionSource);
 
-                        packetWitnessTasks.Add(taskCompletionSource2.Task);
+                        packetWitnessTasks.Add(transactionStoreCompletionSource.Task);
                     }
                 }
 
-                if (registryFullBlock.UtxoWitnesses != null)
+                if (registryFullBlock.StealthWitnesses != null)
                 {
-                    foreach (var item in registryFullBlock.UtxoWitnesses)
+                    foreach (var item in registryFullBlock.StealthWitnesses)
                     {
-                        TaskCompletionSource<WitnessPacket> taskCompletionSource = _dataAccessService.StoreWitnessPacket(registryFullBlock.SyncBlockHeight, (long)registryFullBlock.BlockHeight, combinedBlock.BlockHeight, (ushort)item.ReferencedPacketType, item.ReferencedBlockType, item.ReferencedBodyHash, item.DestinationKey, item.DestinationKey2, item.TransactionPublicKey, item.KeyImage.Value.ToArray());
+                        TaskCompletionSource<WitnessPacket> witnessStoreCompletionSource = _dataAccessService.StoreWitnessPacket(registryFullBlock.SyncHeight, (long)registryFullBlock.Height, combinedBlock.Height, item.ReferencedPacketType, item.ReferencedBlockType, item.ReferencedBodyHash, item.DestinationKey, item.DestinationKey2, item.TransactionPublicKey, item.KeyImage.Value.ToArray());
 
-                        TaskCompletionSource<WitnessPacket> taskCompletionSource2 = ObtainAndStoreUtxoTransaction(taskCompletionSource);
+                        TaskCompletionSource<WitnessPacket> transactionStoreCompletionSource = ObtainAndStoreStealthTransaction(witnessStoreCompletionSource);
 
-                        packetWitnessTasks.Add(taskCompletionSource2.Task);
+                        packetWitnessTasks.Add(transactionStoreCompletionSource.Task);
                     }
                 }
 
@@ -506,11 +510,25 @@ namespace O10.Gateway.Common.Services
             }        
         }
 
-        private TaskCompletionSource<WitnessPacket> ObtainAndStoreStateTransaction(TaskCompletionSource<WitnessPacket> taskCompletionSource)
-		{
-            TaskCompletionSource<WitnessPacket> taskCompletionSource2 = new TaskCompletionSource<WitnessPacket>();
+		private TaskCompletionSource<WitnessPacket> ObtainAndStoreUniversalTransaction(TaskCompletionSource<WitnessPacket> witnessStoreCompletionSource)
+        {
+			TaskCompletionSource<WitnessPacket> transactionStoreCompletionSource = new TaskCompletionSource<WitnessPacket>();
+			witnessStoreCompletionSource.Task.ContinueWith(async (t, o) =>
+            {
+				WitnessPacket witnessPacket = t.Result;
+				TaskCompletionSource<WitnessPacket> completionSource = (TaskCompletionSource<WitnessPacket>)o;
+				var packet = _accessorProvider.GetInstance(witnessPacket.ReferencedPacketType);
+			}, transactionStoreCompletionSource, TaskScheduler.Current);
 
-            taskCompletionSource.Task.ContinueWith(async (t, o) =>
+			return transactionStoreCompletionSource;
+		}
+
+
+		private TaskCompletionSource<WitnessPacket> ObtainAndStoreStateTransaction(TaskCompletionSource<WitnessPacket> witnessStoreCompletionSource)
+		{
+            TaskCompletionSource<WitnessPacket> transactionStoreCompletionSource = new TaskCompletionSource<WitnessPacket>();
+
+            witnessStoreCompletionSource.Task.ContinueWith(async (t, o) =>
 			{
 				WitnessPacket witnessPacket = t.Result;
 				TaskCompletionSource<WitnessPacket> completionSource = (TaskCompletionSource<WitnessPacket>)o;
@@ -519,7 +537,7 @@ namespace O10.Gateway.Common.Services
 				
 				try
 				{
-					Transactions.Core.DataModel.TransactionInfo transactionInfo = await url.GetJsonAsync<Transactions.Core.DataModel.TransactionInfo>().ConfigureAwait(false);
+                    TransactionInfo transactionInfo = await url.GetJsonAsync<TransactionInfo>().ConfigureAwait(false);
 					_logger.LogIfDebug(() => $"Transactional packet obtained from URL {url}: {JsonConvert.SerializeObject(transactionInfo, new ByteArrayJsonConverter())}");
 					
 					if (transactionInfo.Content?.Any()??false)
@@ -538,26 +556,26 @@ namespace O10.Gateway.Common.Services
 					completionSource.SetException(ex);
 					_logger.Error($"Failure during obtaining and storing Transactional packet from URL {url}", ex);
 				}
-			}, taskCompletionSource2, TaskScheduler.Current);
+			}, transactionStoreCompletionSource, TaskScheduler.Current);
 
-            return taskCompletionSource2;
+            return transactionStoreCompletionSource;
         }
 
-        private TaskCompletionSource<WitnessPacket> ObtainAndStoreUtxoTransaction(TaskCompletionSource<WitnessPacket> taskCompletionSource)
+        private TaskCompletionSource<WitnessPacket> ObtainAndStoreStealthTransaction(TaskCompletionSource<WitnessPacket> witnessStoreCompletionSource)
         {
-            TaskCompletionSource<WitnessPacket> taskCompletionSource2 = new TaskCompletionSource<WitnessPacket>();
+            TaskCompletionSource<WitnessPacket> transactionStoreCompletionSource = new TaskCompletionSource<WitnessPacket>();
 
-            taskCompletionSource.Task.ContinueWith((t, o) =>
+            witnessStoreCompletionSource.Task.ContinueWith((t, o) =>
             {
-				Url url = _synchronizerConfiguration.NodeApiUri.AppendPathSegment("GetTransactionInfoUtxo").SetQueryParam("combinedBlockHeight", t.Result.CombinedBlockHeight).SetQueryParam("hash", t.Result.ReferencedBodyHash.Hash);
-				_logger.Info($"Querying UTXO packet with URL {url}");
-				url.GetJsonAsync<Transactions.Core.DataModel.TransactionInfo>()
+				Url url = _synchronizerConfiguration.NodeApiUri.AppendPathSegment("StealthTransactionInfo").SetQueryParam("combinedBlockHeight", t.Result.CombinedBlockHeight).SetQueryParam("hash", t.Result.ReferencedBodyHash.Hash);
+				_logger.Info($"Querying Stealth packet with URL {url}");
+				url.GetJsonAsync<TransactionInfo>()
 				.ContinueWith((t1, o2) =>
                 {
 					Tuple<WitnessPacket, TaskCompletionSource<WitnessPacket>> tuple = (Tuple<WitnessPacket, TaskCompletionSource<WitnessPacket>>)o2;
 					if(t1.IsCompletedSuccessfully)
 					{
-						_logger.Info($"UTXO packet Packet Type {t1.Result.PacketType}, BlockType {t1.Result.BlockType} at SyncBlockHeight {t1.Result.SyncBlockHeight} with empty[{!(t1.Result.Content?.Any()??false)}] content obtained");
+						_logger.Info($"Stealth packet Packet Type {t1.Result.PacketType}, BlockType {t1.Result.BlockType} at SyncBlockHeight {t1.Result.SyncBlockHeight} with empty[{!(t1.Result.Content?.Any()??false)}] content obtained");
 
 						if (t1.Result.Content?.Any()??false)
 						{
@@ -566,23 +584,23 @@ namespace O10.Gateway.Common.Services
 						}
 						else
 						{
-							_logger.Error("Empty UTXO packet obtained");
+							_logger.Error("Empty Stealth packet obtained");
 						}
 					}
 					else
 					{
                         tuple.Item2.SetException(t1.Exception);
 
-                        _logger.Error($"Failure during obtaining and storing UTXO packet", t1.Exception);
+                        _logger.Error($"Failure during obtaining and storing Stealth packet", t1.Exception);
                         foreach (var ex in t1.Exception.InnerExceptions)
                         {
                             _logger.Error(ex.Message);
                         }
                     }
 				}, new Tuple<WitnessPacket, TaskCompletionSource<WitnessPacket>>(t.Result, (TaskCompletionSource<WitnessPacket>)o), TaskScheduler.Current);
-            }, taskCompletionSource2, TaskScheduler.Current);
+            }, transactionStoreCompletionSource, TaskScheduler.Current);
 
-            return taskCompletionSource2;
+            return transactionStoreCompletionSource;
         }
 
 		public IEnumerable<WitnessPackage> GetWitnessRange(ulong combinedBlockHeightStart, ulong combinedBlockHeightEnd = 0)
@@ -604,7 +622,7 @@ namespace O10.Gateway.Common.Services
 						WitnessPackage witnessPackage = new WitnessPackage
 						{
 							CombinedBlockHeight = (ulong)key,
-							StateWitnesses = witnessPackets[key].Where(w => w.ReferencedKeyImage == null).Select(w => new PacketWitness { WitnessId = w.WitnessPacketId, DestinationKey = w.ReferencedDestinationKey.HexStringToByteArray(), TransactionKey = w.ReferencedTransactionKey.HexStringToByteArray(), IsIdentityIssuing = ((PacketType)w.ReferencedPacketType == PacketType.Transactional && (w.ReferencedBlockType == ActionTypes.Transaction_IssueBlindedAsset || w.ReferencedBlockType == ActionTypes.Transaction_IssueAssociatedBlindedAsset || w.ReferencedBlockType == ActionTypes.Transaction_transferAssetToStealth)) }).ToArray(),
+							StateWitnesses = witnessPackets[key].Where(w => w.ReferencedKeyImage == null).Select(w => new PacketWitness { WitnessId = w.WitnessPacketId, DestinationKey = w.ReferencedDestinationKey.HexStringToByteArray(), TransactionKey = w.ReferencedTransactionKey.HexStringToByteArray(), IsIdentityIssuing = (w.ReferencedPacketType == LedgerType.O10State && (w.ReferencedBlockType == PacketTypes.Transaction_IssueBlindedAsset || w.ReferencedBlockType == PacketTypes.Transaction_IssueAssociatedBlindedAsset || w.ReferencedBlockType == PacketTypes.Transaction_transferAssetToStealth)) }).ToArray(),
 							StealthWitnesses = witnessPackets[key].Where(w => w.ReferencedKeyImage != null).Select(w => new PacketWitness { WitnessId = w.WitnessPacketId, DestinationKey = w.ReferencedDestinationKey.HexStringToByteArray(), DestinationKey2 = w.ReferencedDestinationKey2.HexStringToByteArray(), TransactionKey = w.ReferencedTransactionKey.HexStringToByteArray(), KeyImage = w.ReferencedKeyImage.HexStringToByteArray() }).ToArray()
 						};
 
@@ -647,12 +665,12 @@ namespace O10.Gateway.Common.Services
 						if (utxoIncomingBlock != null)
 						{
 							_logger.LogIfDebug(() => $"{nameof(StealthPacket)}: {JsonConvert.SerializeObject(utxoIncomingBlock, new ByteArrayJsonConverter())}");
-							packetInfos.Add(new PacketInfo { PacketType = PacketType.Stealth, BlockType = utxoIncomingBlock.BlockType, Content = utxoIncomingBlock.Content });
+							packetInfos.Add(new PacketInfo { PacketType = LedgerType.Stealth, BlockType = utxoIncomingBlock.BlockType, Content = utxoIncomingBlock.Content });
 						}
 					}
 					else
 					{
-						TransactionalPacket transactionalIncomingBlock = _dataAccessService.GetTransactionalIncomingBlock(witnessId);
+						StatePacket transactionalIncomingBlock = _dataAccessService.GetTransactionalIncomingBlock(witnessId);
 
 						if(transactionalIncomingBlock == null)
 						{
@@ -661,8 +679,8 @@ namespace O10.Gateway.Common.Services
 
 						if(transactionalIncomingBlock != null)
 						{
-							_logger.LogIfDebug(() => $"{nameof(TransactionalPacket)}: {JsonConvert.SerializeObject(transactionalIncomingBlock, new ByteArrayJsonConverter())}");
-							packetInfos.Add(new PacketInfo { PacketType = PacketType.Transactional, BlockType = transactionalIncomingBlock.BlockType, Content = transactionalIncomingBlock.Content });
+							_logger.LogIfDebug(() => $"{nameof(StatePacket)}: {JsonConvert.SerializeObject(transactionalIncomingBlock, new ByteArrayJsonConverter())}");
+							packetInfos.Add(new PacketInfo { PacketType = LedgerType.O10State, BlockType = transactionalIncomingBlock.BlockType, Content = transactionalIncomingBlock.Content });
 						}
 					}
 				}
@@ -696,9 +714,9 @@ namespace O10.Gateway.Common.Services
 		{
 			_logger.Warning($"{nameof(StealthPacket)} for WitnessId {witness.WitnessPacketId} is missing. Retry to obtain");
 
-			Url url = _synchronizerConfiguration.NodeApiUri.AppendPathSegment("GetTransactionInfoUtxo").SetQueryParam("combinedBlockHeight", witness.CombinedBlockHeight).SetQueryParam("hash", witness.ReferencedBodyHash.Hash);
+			Url url = _synchronizerConfiguration.NodeApiUri.AppendPathSegment("StealthTransactionInfo").SetQueryParam("combinedBlockHeight", witness.CombinedBlockHeight).SetQueryParam("hash", witness.ReferencedBodyHash.Hash);
 			_logger.Info($"Querying UTXO packet with URL {url}");
-			Transactions.Core.DataModel.TransactionInfo transactionInfo = await url.GetJsonAsync<Transactions.Core.DataModel.TransactionInfo>().ConfigureAwait(false);
+            TransactionInfo transactionInfo = await url.GetJsonAsync<TransactionInfo>().ConfigureAwait(false);
 			StorePacket(witness, transactionInfo.Content);
 			StealthPacket utxoIncomingBlock = _dataAccessService.GetUtxoIncomingBlock(witness.WitnessPacketId);
 			if (utxoIncomingBlock == null)
@@ -709,18 +727,18 @@ namespace O10.Gateway.Common.Services
 			return utxoIncomingBlock;
 		}
 
-		private async Task<TransactionalPacket> RetryObtainTransactionalPacket(WitnessPacket witness)
+		private async Task<StatePacket> RetryObtainTransactionalPacket(WitnessPacket witness)
 		{
-			_logger.Warning($"{nameof(TransactionalPacket)} for WitnessId {witness.WitnessPacketId} is missing. Retry to obtain");
+			_logger.Warning($"{nameof(StatePacket)} for WitnessId {witness.WitnessPacketId} is missing. Retry to obtain");
 
 			Url url = _synchronizerConfiguration.NodeApiUri.AppendPathSegment("GetTransactionInfoState").SetQueryParam("combinedBlockHeight", witness.CombinedBlockHeight).SetQueryParam("hash", witness.ReferencedBodyHash.Hash);
 			_logger.Info($"Querying Transactional packet with URL {url}");
             TransactionInfo transactionInfo = await url.GetJsonAsync<TransactionInfo>().ConfigureAwait(false);
 			StorePacket(witness, transactionInfo.Content);
-			TransactionalPacket transactionalIncomingBlock = _dataAccessService.GetTransactionalIncomingBlock(witness.WitnessPacketId);
+			StatePacket transactionalIncomingBlock = _dataAccessService.GetTransactionalIncomingBlock(witness.WitnessPacketId);
 			if (transactionalIncomingBlock == null)
 			{
-				_logger.Error($"Failed retry to obtain {nameof(TransactionalPacket)} for WitnessId {witness.WitnessPacketId}");
+				_logger.Error($"Failed retry to obtain {nameof(StatePacket)} for WitnessId {witness.WitnessPacketId}");
 			}
 
 			return transactionalIncomingBlock;
@@ -734,7 +752,7 @@ namespace O10.Gateway.Common.Services
 		private void StoreParsedPacket(WitnessPacket wp, byte[] content)
 		{
 			ulong registryCombinedBlockHeight = (ulong)wp.CombinedBlockHeight;
-			PacketType packetType = (PacketType)wp.ReferencedPacketType;
+			LedgerType packetType = wp.ReferencedPacketType;
 			ushort blockType = wp.ReferencedBlockType;
 			
 			_logger.LogIfDebug(() => $"{nameof(StoreParsedPacket)} PacketType = {packetType}, BlockType = {blockType}, HashId={wp.ReferencedBodyHash.PacketHashId}, Hash={wp.ReferencedBodyHash.Hash}");
@@ -751,41 +769,41 @@ namespace O10.Gateway.Common.Services
 			{
 				_logger.LogIfDebug(() => $"Storing packet {packet.GetType()} started");
 
-				if (packet.PacketType == (ushort)PacketType.Transactional)
+				if (packet.LedgerType == (ushort)LedgerType.O10State)
 				{
-					switch (packet.BlockType)
+					switch (packet.PacketType)
 					{
-						case ActionTypes.Transaction_IssueBlindedAsset:
+						case PacketTypes.Transaction_IssueBlindedAsset:
 							StoreIssueBlindedAsset(wp.WitnessPacketId, registryCombinedBlockHeight, (IssueBlindedAsset)packet);
 							break;
-						case ActionTypes.Transaction_IssueAssociatedBlindedAsset:
+						case PacketTypes.Transaction_IssueAssociatedBlindedAsset:
 							StoreIssueAssociatedBlindedAsset(wp.WitnessPacketId, registryCombinedBlockHeight, (IssueAssociatedBlindedAsset)packet);
 							break;
-						case ActionTypes.Transaction_transferAssetToStealth:
+						case PacketTypes.Transaction_transferAssetToStealth:
 							StoreTransferAsset(wp.WitnessPacketId, registryCombinedBlockHeight, (TransferAssetToStealth)packet);
 							break;
-						case ActionTypes.Transaction_EmployeeRecord:
+						case PacketTypes.Transaction_EmployeeRecord:
 							StoreEmployeeRecordPacket(wp.WitnessPacketId, registryCombinedBlockHeight, (EmployeeRecord)packet);
 							break;
-						case ActionTypes.Transaction_CancelEmployeeRecord:
+						case PacketTypes.Transaction_CancelEmployeeRecord:
 							StoreCancelEmployeeRecordPacket(wp.WitnessPacketId, registryCombinedBlockHeight, (CancelEmployeeRecord)packet);
 							break;
-						case ActionTypes.Transaction_DocumentRecord:
+						case PacketTypes.Transaction_DocumentRecord:
 							StoreDocumentRecord(wp.WitnessPacketId, registryCombinedBlockHeight, (DocumentRecord)packet);
 							break;
-						case ActionTypes.Transaction_DocumentSignRecord:
+						case PacketTypes.Transaction_DocumentSignRecord:
 							StoreDocumentSignRecord(wp.WitnessPacketId, registryCombinedBlockHeight, (DocumentSignRecord)packet);
 							break;
 					}
 				}
-				else if (packet.PacketType == (ushort)PacketType.Stealth)
+				else if (packet.LedgerType == (ushort)LedgerType.Stealth)
 				{
-					switch (packet.BlockType)
+					switch (packet.PacketType)
 					{
-						case ActionTypes.Stealth_TransitionCompromisedProofs:
+						case PacketTypes.Stealth_TransitionCompromisedProofs:
 							_dataAccessService.AddCompromisedKeyImage(((TransitionCompromisedProofs)packet).CompromisedKeyImage.ToHexString());
 							break;
-						case ActionTypes.Stealth_RevokeIdentity:
+						case PacketTypes.Stealth_RevokeIdentity:
 							ProcessRevokeIdentity((RevokeIdentity)packet, registryCombinedBlockHeight);
 							break;
 					}
@@ -802,7 +820,7 @@ namespace O10.Gateway.Common.Services
 			}
 		}
 
-		private PacketBase GetParsedPacket(byte[] content, PacketType packetType, ushort blockType)
+		private PacketBase GetParsedPacket(byte[] content, LedgerType packetType, ushort blockType)
 		{
 			PacketBase packet = null;
 			try
@@ -823,11 +841,11 @@ namespace O10.Gateway.Common.Services
 		{
 			StateIncomingStoreInput storeInput = new StateIncomingStoreInput
 			{
-				SyncBlockHeight = packet.SyncBlockHeight,
+				SyncBlockHeight = packet.SyncHeight,
 				CombinedRegistryBlockHeight = registryCombinedBlockHeight,
 				WitnessId = witnessId,
-				BlockHeight = packet.BlockHeight,
-				BlockType = packet.BlockType,
+				BlockHeight = packet.Height,
+				BlockType = packet.PacketType,
 				Commitment = packet.SignerCommitment,
 				Destination = null,
 				Source = packet.Signer.Value.ToArray(),
@@ -841,11 +859,11 @@ namespace O10.Gateway.Common.Services
         {
             StateIncomingStoreInput storeInput = new StateIncomingStoreInput
             {
-                SyncBlockHeight = packet.SyncBlockHeight,
+                SyncBlockHeight = packet.SyncHeight,
                 CombinedRegistryBlockHeight = registryCombinedBlockHeight,
                 WitnessId = witnessId,
-                BlockHeight = packet.BlockHeight,
-                BlockType = packet.BlockType,
+                BlockHeight = packet.Height,
+                BlockType = packet.PacketType,
                 Commitment = packet.DocumentHash,
                 Destination = null,
                 Source = packet.Signer.Value.ToArray(),
@@ -859,11 +877,11 @@ namespace O10.Gateway.Common.Services
         {
             StateIncomingStoreInput storeInput = new StateIncomingStoreInput
             {
-                SyncBlockHeight = packet.SyncBlockHeight,
+                SyncBlockHeight = packet.SyncHeight,
                 CombinedRegistryBlockHeight = registryCombinedBlockHeight,
                 WitnessId = witnessId,
-                BlockHeight = packet.BlockHeight,
-                BlockType = packet.BlockType,
+                BlockHeight = packet.Height,
+                BlockType = packet.PacketType,
                 Commitment = packet.RegistrationCommitment,
                 Destination = null,
                 Source = packet.Signer.Value.ToArray(),
@@ -878,11 +896,11 @@ namespace O10.Gateway.Common.Services
 		{
 			StateIncomingStoreInput storeInput = new StateIncomingStoreInput
 			{
-				SyncBlockHeight = packet.SyncBlockHeight,
+				SyncBlockHeight = packet.SyncHeight,
 				CombinedRegistryBlockHeight = registryCombinedBlockHeight,
 				WitnessId = witnessId,
-				BlockHeight = packet.BlockHeight,
-				BlockType = packet.BlockType,
+				BlockHeight = packet.Height,
+				BlockType = packet.PacketType,
 				Commitment = packet.RegistrationCommitment,
 				Destination = null,
 				Source = packet.Signer.Value.ToArray(),
@@ -897,10 +915,10 @@ namespace O10.Gateway.Common.Services
 		{
 			UtxoIncomingStoreInput storeInput = new UtxoIncomingStoreInput
 			{
-				SyncBlockHeight = packet.SyncBlockHeight,
+				SyncBlockHeight = packet.SyncHeight,
 				CombinedRegistryBlockHeight = registryCombinedBlockHeight,
                 WitnessId = witnessId,
-				BlockType = packet.BlockType,
+				BlockType = packet.PacketType,
 				Commitment = packet.AssetCommitment,
 				Destination = packet.DestinationKey,
 				DestinationKey2 = packet.DestinationKey2,
@@ -916,11 +934,11 @@ namespace O10.Gateway.Common.Services
 		{
 			StateIncomingStoreInput storeInput = new StateIncomingStoreInput
 			{
-				SyncBlockHeight = packet.SyncBlockHeight,
+				SyncBlockHeight = packet.SyncHeight,
 				CombinedRegistryBlockHeight = registryCombinedBlockHeight,
                 WitnessId = witnessId,
-				BlockHeight = packet.BlockHeight,
-                BlockType = packet.BlockType,
+				BlockHeight = packet.Height,
+                BlockType = packet.PacketType,
 				Commitment = packet.AssetCommitment,
 				Destination = null,
 				Source = packet.Signer.Value.ToArray(),
@@ -936,11 +954,11 @@ namespace O10.Gateway.Common.Services
 		{
 			StateIncomingStoreInput storeInput = new StateIncomingStoreInput
 			{
-				SyncBlockHeight = packet.SyncBlockHeight,
+				SyncBlockHeight = packet.SyncHeight,
 				CombinedRegistryBlockHeight = registryCombinedBlockHeight,
                 WitnessId = witnessId,
-				BlockHeight = packet.BlockHeight,
-				BlockType = packet.BlockType,
+				BlockHeight = packet.Height,
+				BlockType = packet.PacketType,
 				Commitment = packet.AssetCommitment,
 				Destination = null,
 				Source = packet.Signer.Value.ToArray(),
@@ -959,11 +977,11 @@ namespace O10.Gateway.Common.Services
 		{
 			StateTransitionIncomingStoreInput storeInput = new StateTransitionIncomingStoreInput
 			{
-				SyncBlockHeight = packet.SyncBlockHeight,
+				SyncBlockHeight = packet.SyncHeight,
 				CombinedRegistryBlockHeight = registryCombinedBlockHeight,
                 WitnessId = witnessId,
-				BlockHeight = packet.BlockHeight,
-				BlockType = packet.BlockType,
+				BlockHeight = packet.Height,
+				BlockType = packet.PacketType,
 				Commitment = packet.TransferredAsset.AssetCommitment,
 				Destination = packet.DestinationKey,
 				TransactionKey = packet.TransactionPublicKey,

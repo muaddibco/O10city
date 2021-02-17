@@ -1,6 +1,5 @@
 ﻿using NSubstitute;
 using System;
-using O10.Transactions.Core.DataModel;
 using O10.Transactions.Core.Parsers;
 using O10.Transactions.Core.Serializers;
 using O10.Client.Common.Communication;
@@ -12,6 +11,7 @@ using O10.Tests.Core;
 using O10.Tests.Core.Fixtures;
 using Xunit;
 using Xunit.Abstractions;
+using O10.Transactions.Core.DTOs;
 
 namespace O10.Client.Common.Tests
 {

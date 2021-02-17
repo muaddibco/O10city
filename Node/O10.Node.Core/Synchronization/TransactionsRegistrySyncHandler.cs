@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using O10.Transactions.Core.DataModel.Registry;
+using O10.Transactions.Core.Ledgers.Registry;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Interfaces;
 using O10.Transactions.Core.Serializers;
@@ -16,7 +16,7 @@ using O10.Core.HashCalculations;
 using O10.Core.Identity;
 using O10.Core.States;
 using O10.Core.Synchronization;
-using O10.Transactions.Core.DataModel.Synchronization;
+using O10.Transactions.Core.Ledgers.Synchronization;
 using O10.Transactions.Core.Serializers.RawPackets;
 using O10.Core.Logging;
 using O10.Core.ExtensionMethods;
@@ -81,14 +81,14 @@ namespace O10.Node.Core.Synchronization
             _syncRegistryMemPool = syncRegistryMemPool;
             _nodesResolutionService = nodesResolutionService;
             _rawPacketProvidersFactory = rawPacketProvidersFactory;
-            _synchronizationChainDataService = chainDataServicesManager.GetChainDataService(PacketType.Synchronization);
-            _registryChainDataService = chainDataServicesManager.GetChainDataService(PacketType.Registry);
+            _synchronizationChainDataService = chainDataServicesManager.GetChainDataService(LedgerType.Synchronization);
+            _registryChainDataService = chainDataServicesManager.GetChainDataService(LedgerType.Registry);
             _logger = loggerService.GetLogger(nameof(TransactionsRegistrySyncHandler));
         }
 
         public string Name => NAME;
 
-        public PacketType PacketType => PacketType.Registry;
+        public LedgerType PacketType => LedgerType.Registry;
 
         public void Initialize(CancellationToken ct)
         {
@@ -97,7 +97,7 @@ namespace O10.Node.Core.Synchronization
             _synchronizationConfiguration = _configurationService.Get<ISynchronizationConfiguration>();
             _communicationService = _communicationServicesRegistry.GetInstance(_synchronizationConfiguration.CommunicationServiceName);
             _syncContextChangedUnsibsciber = _synchronizationContext.SubscribeOnStateChange(new ActionBlock<string>(SynchronizationStateChanged));
-            _lastCombinedBlock = _synchronizationChainDataService.Single<SynchronizationRegistryCombinedBlock>(new SingleByBlockTypeKey(ActionTypes.Synchronization_RegistryCombinationBlock));
+            _lastCombinedBlock = _synchronizationChainDataService.Single<SynchronizationRegistryCombinedBlock>(new SingleByBlockTypeKey(PacketTypes.Synchronization_RegistryCombinationBlock));
 
 			Task.Factory.StartNew(() => ProcessBlocks(ct), ct, TaskCreationOptions.LongRunning, TaskScheduler.Current);
         }
@@ -139,7 +139,7 @@ namespace O10.Node.Core.Synchronization
             {
                 try
                 {
-                    _logger.Debug($"Obtained block {registryBlock.GetType().Name} with Round {registryBlock.BlockHeight}");
+                    _logger.Debug($"Obtained block {registryBlock.GetType().Name} with Round {registryBlock.Height}");
 
                     lock (_syncRegistryMemPool)
                     {
@@ -165,9 +165,9 @@ namespace O10.Node.Core.Synchronization
                 //TODO: For initial POC there will be only one participant at Synchronization Layer, thus combination of FullBlocks won't be implemented fully
                 SynchronizationRegistryCombinedBlock synchronizationRegistryCombinedBlock = new SynchronizationRegistryCombinedBlock
                 {
-                    SyncBlockHeight = _synchronizationContext.LastBlockDescriptor?.BlockHeight ?? 0,
+                    SyncHeight = _synchronizationContext.LastBlockDescriptor?.BlockHeight ?? 0,
                     PowHash = _powCalculation.CalculateHash(_synchronizationContext.LastBlockDescriptor?.Hash ?? new byte[Globals.DEFAULT_HASH_SIZE]),
-                    BlockHeight = ++_synchronizationContext.LastRegistrationCombinedBlockHeight,
+                    Height = ++_synchronizationContext.LastRegistrationCombinedBlockHeight,
                     HashPrev = prevHash,
                     ReportedTime = DateTime.Now,
                     BlockHashes = registryFullBlocks.Select(b => _defaultTransactionHashCalculation.CalculateHash(b?.RawData ?? new byte[Globals.DEFAULT_HASH_SIZE])).ToArray()
@@ -187,7 +187,7 @@ namespace O10.Node.Core.Synchronization
 
                 foreach (var item in registryFullBlocks)
                 {
-                    _logger.Debug($"Recombined RegistryFullBlock[{item.SyncBlockHeight}:{item.BlockHeight}]: {item.StateWitnesses.Length} : {item.UtxoWitnesses.Length}");
+                    _logger.Debug($"Recombined RegistryFullBlock[{item.SyncHeight}:{item.Height}]: {item.StateWitnesses.Length} : {item.StealthWitnesses.Length}");
                 }
             }
         }
@@ -205,7 +205,7 @@ namespace O10.Node.Core.Synchronization
 
                     _registryChainDataService.Add(registryFullBlock);
 
-                    _logger.Debug($"Stored RegistryFullBlock[{registryFullBlock.SyncBlockHeight}:{registryFullBlock.BlockHeight}]: {registryFullBlock.StateWitnesses.Length} : {registryFullBlock.UtxoWitnesses.Length}");
+                    _logger.Debug($"Stored RegistryFullBlock[{registryFullBlock.SyncHeight}:{registryFullBlock.Height}]: {registryFullBlock.StateWitnesses.Length} : {registryFullBlock.StealthWitnesses.Length}");
                 }
             }
         }

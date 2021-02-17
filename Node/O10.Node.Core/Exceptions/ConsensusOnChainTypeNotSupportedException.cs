@@ -9,8 +9,8 @@ namespace O10.Node.Core.Exceptions
     public class ConsensusOnChainTypeNotSupportedException : Exception
     {
         public ConsensusOnChainTypeNotSupportedException() { }
-        public ConsensusOnChainTypeNotSupportedException(PacketType chainType) : base(string.Format(Resources.ERR_CONSENSUS_ON_CHAINTYPE_NOT_SUPPORTED, chainType)) { }
-        public ConsensusOnChainTypeNotSupportedException(PacketType chainType, Exception inner) : base(string.Format(Resources.ERR_CONSENSUS_ON_CHAINTYPE_NOT_SUPPORTED, chainType), inner) { }
+        public ConsensusOnChainTypeNotSupportedException(LedgerType chainType) : base(string.Format(Resources.ERR_CONSENSUS_ON_CHAINTYPE_NOT_SUPPORTED, chainType)) { }
+        public ConsensusOnChainTypeNotSupportedException(LedgerType chainType, Exception inner) : base(string.Format(Resources.ERR_CONSENSUS_ON_CHAINTYPE_NOT_SUPPORTED, chainType), inner) { }
         protected ConsensusOnChainTypeNotSupportedException(
           System.Runtime.Serialization.SerializationInfo info,
           System.Runtime.Serialization.StreamingContext context) : base(info, context) { }

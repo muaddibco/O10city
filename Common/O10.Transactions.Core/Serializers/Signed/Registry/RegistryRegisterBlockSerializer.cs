@@ -1,6 +1,6 @@
 ﻿using System;
 using System.IO;
-using O10.Transactions.Core.DataModel.Registry;
+using O10.Transactions.Core.Ledgers.Registry;
 using O10.Transactions.Core.Enums;
 using O10.Core.Architecture;
 
@@ -10,7 +10,7 @@ namespace O10.Transactions.Core.Serializers.Signed.Registry
     [RegisterExtension(typeof(ISerializer), Lifetime = LifetimeManagement.Transient)]
     public class RegistryRegisterBlockSerializer : SignatureSupportSerializerBase<RegistryRegisterBlock>
     {
-        public RegistryRegisterBlockSerializer(IServiceProvider serviceProvider) : base(serviceProvider, PacketType.Registry, ActionTypes.Registry_Register)
+        public RegistryRegisterBlockSerializer(IServiceProvider serviceProvider) : base(serviceProvider, LedgerType.Registry, PacketTypes.Registry_Register)
         {
         }
 
@@ -21,7 +21,7 @@ namespace O10.Transactions.Core.Serializers.Signed.Registry
             bw.Write(_block.ReferencedBodyHash);
             bw.Write(_block.ReferencedTarget);
 
-			if((_block.ReferencedBlockType & ActionTypes.TransitionalFlag) == ActionTypes.TransitionalFlag)
+			if((_block.ReferencedBlockType & PacketTypes.TransitionalFlag) == PacketTypes.TransitionalFlag)
 			{
 				bw.Write(_block.ReferencedTransactionKey);
 			}

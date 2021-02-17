@@ -3,20 +3,21 @@ using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Exceptions;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace O10.Transactions.Core.Accessors
 {
     public abstract class AccessorBase : IAccessor
     {
-        public abstract PacketType PacketType { get; }
+        public abstract LedgerType PacketType { get; }
 
         protected abstract IEnumerable<string> GetAccessingKeys();
 
         protected virtual string ValidateEvidence(EvidenceDescriptor accessDescriptor) => string.Empty;
 
-        protected abstract PacketBase GetPacketInner(EvidenceDescriptor accessDescriptor);
+        protected abstract Task<PacketBase> GetPacketInner(EvidenceDescriptor accessDescriptor);
 
-        public virtual T GetPacket<T>(EvidenceDescriptor accessDescriptor) where T : PacketBase
+        public virtual async Task<T> GetPacket<T>(EvidenceDescriptor accessDescriptor) where T : PacketBase
         {
             if (accessDescriptor is null)
             {
@@ -31,7 +32,7 @@ namespace O10.Transactions.Core.Accessors
                 throw new AccessorValidationFailedException(msg);
             }
 
-            var packet = GetPacketInner(accessDescriptor);
+            var packet = await GetPacketInner(accessDescriptor).ConfigureAwait(false);
         
             if (packet is T resultPacket)
             {
@@ -57,5 +58,5 @@ namespace O10.Transactions.Core.Accessors
                 throw new AccessorValidationFailedException($"The provided access descriptor misses the following key(s): {string.Join(',', missedKeys)}");
             }
         }
-    }
+	}
 }

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks.Dataflow;
-using O10.Transactions.Core.DataModel.Registry;
+using O10.Transactions.Core.Ledgers.Registry;
 using O10.Transactions.Core.Serializers;
 using O10.Network.Interfaces;
 using O10.Core.Architecture;
@@ -136,11 +136,11 @@ namespace O10.Node.Core.Registry
 
             RegistryFullBlock transactionsFullBlock = new RegistryFullBlock
             {
-                SyncBlockHeight = syncBlockHeight,
+                SyncHeight = syncBlockHeight,
                 PowHash = pow,
-                BlockHeight = blockHeight,
+                Height = blockHeight,
                 StateWitnesses = registryRegisterBlocks,
-                UtxoWitnesses = registryRegisterStealths
+                StealthWitnesses = registryRegisterStealths
             };
 
             _logger.Debug($"Created RegistryFullBlock[{syncBlockHeight}:{blockHeight}]: {registryRegisterBlocks.Length} : {registryRegisterStealths.Length}");
@@ -162,7 +162,7 @@ namespace O10.Node.Core.Registry
             fullBlockSerializer.SerializeBody();
             _nodeContext.SigningService.Sign(transactionsFullBlock);
 
-            _logger.Debug($"Sending FullBlock with {transactionsFullBlock.StateWitnesses.Length + transactionsFullBlock.UtxoWitnesses.Length} transactions and ShortBlock with {transactionsShortBlock.WitnessStateKeys.Length + transactionsShortBlock.WitnessUtxoKeys.Length} keys at round {transactionsFullBlock.BlockHeight}");
+            _logger.Debug($"Sending FullBlock with {transactionsFullBlock.StateWitnesses.Length + transactionsFullBlock.StealthWitnesses.Length} transactions and ShortBlock with {transactionsShortBlock.WitnessStateKeys.Length + transactionsShortBlock.WitnessUtxoKeys.Length} keys at round {transactionsFullBlock.Height}");
 
 			if (!cancellationToken.IsCancellationRequested)
 			{
@@ -175,15 +175,15 @@ namespace O10.Node.Core.Registry
         {
             RegistryShortBlock transactionsShortBlock = new RegistryShortBlock
             {
-                SyncBlockHeight = transactionsFullBlock.SyncBlockHeight,
+                SyncHeight = transactionsFullBlock.SyncHeight,
                 Nonce = transactionsFullBlock.Nonce,
                 PowHash = transactionsFullBlock.PowHash,
-                BlockHeight = transactionsFullBlock.BlockHeight,
-                WitnessStateKeys = transactionsFullBlock.StateWitnesses.Select(w => new WitnessStateKey { PublicKey = w.Signer, Height = w.BlockHeight}).ToArray(),
-                WitnessUtxoKeys = transactionsFullBlock.UtxoWitnesses.Select(w => new WitnessUtxoKey { KeyImage = w.KeyImage }).ToArray()
+                Height = transactionsFullBlock.Height,
+                WitnessStateKeys = transactionsFullBlock.StateWitnesses.Select(w => new WitnessStateKey { PublicKey = w.Signer, Height = w.Height}).ToArray(),
+                WitnessUtxoKeys = transactionsFullBlock.StealthWitnesses.Select(w => new WitnessUtxoKey { KeyImage = w.KeyImage }).ToArray()
             };
 
-            _logger.Debug($"Created RegistryShortBlock[{transactionsShortBlock.SyncBlockHeight}:{transactionsShortBlock.BlockHeight}]: {transactionsShortBlock.WitnessStateKeys.Length} : {transactionsShortBlock.WitnessUtxoKeys.Length}");
+            _logger.Debug($"Created RegistryShortBlock[{transactionsShortBlock.SyncHeight}:{transactionsShortBlock.Height}]: {transactionsShortBlock.WitnessStateKeys.Length} : {transactionsShortBlock.WitnessUtxoKeys.Length}");
 
             return transactionsShortBlock;
         }

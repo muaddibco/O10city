@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using O10.Transactions.Core.DataModel.Stealth;
+using O10.Transactions.Core.Ledgers.Stealth;
 using O10.Transactions.Core.Enums;
 using O10.Node.DataLayer.DataServices;
 using O10.Node.DataLayer.DataServices.Keys;
@@ -24,7 +24,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
         {
         }
 
-        public override PacketType PacketType => PacketType.Stealth;
+        public override LedgerType PacketType => LedgerType.Stealth;
 
         public override void Add(PacketBase item)
         {
@@ -37,7 +37,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
 
             if (item is StealthBase Stealth)
             {
-                Service.AddStealthBlock(Stealth.KeyImage, Stealth.SyncBlockHeight, Stealth.BlockType, Stealth.DestinationKey, Stealth.RawData.ToArray());
+                Service.AddStealthBlock(Stealth.KeyImage, Stealth.SyncHeight, Stealth.PacketType, Stealth.DestinationKey, Stealth.RawData.ToArray());
             }
         }
 
@@ -59,7 +59,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
             }
             else if (key is CombinedHashKey combinedHashKey)
             {
-                ulong syncBlockHeight = ChainDataServicesManager.GetChainDataService(PacketType.Synchronization).GetScalar(new SingleByBlockTypeAndHeight(ActionTypes.Synchronization_RegistryCombinationBlock, combinedHashKey.CombinedBlockHeight));
+                ulong syncBlockHeight = ChainDataServicesManager.GetChainDataService(LedgerType.Synchronization).GetScalar(new SingleByBlockTypeAndHeight(PacketTypes.Synchronization_RegistryCombinationBlock, combinedHashKey.CombinedBlockHeight));
                 StealthTransaction Stealth = Service.GetStealthBySyncAndHash(syncBlockHeight, combinedHashKey.Hash);
 
                 if (Stealth == null)

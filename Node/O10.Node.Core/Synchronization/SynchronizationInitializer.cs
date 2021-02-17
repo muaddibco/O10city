@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading;
-using O10.Transactions.Core.DataModel.Synchronization;
+using O10.Transactions.Core.Ledgers.Synchronization;
 using O10.Transactions.Core.Enums;
 using O10.Node.DataLayer.DataServices;
 using O10.Node.DataLayer.DataServices.Keys;
@@ -28,7 +28,7 @@ namespace O10.Node.Core.Synchronization
         public SynchronizationInitializer(IStatesRepository statesRepository, IChainDataServicesManager chainDataServicesManager, ILoggerService loggerService, IHashCalculationsRepository hashCalculationsRepository)
         {
             _synchronizationContext = statesRepository.GetInstance<ISynchronizationContext>();
-            _chainDataService = chainDataServicesManager.GetChainDataService(PacketType.Synchronization);
+            _chainDataService = chainDataServicesManager.GetChainDataService(LedgerType.Synchronization);
             _logger = loggerService.GetLogger(typeof(SynchronizationInitializer).Name);
             _hashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
         }
@@ -41,17 +41,17 @@ namespace O10.Node.Core.Synchronization
 
             try
             {
-                SynchronizationConfirmedBlock synchronizationConfirmedBlock = _chainDataService.Single<SynchronizationConfirmedBlock>(new SingleByBlockTypeKey(ActionTypes.Synchronization_ConfirmedBlock));
+                SynchronizationConfirmedBlock synchronizationConfirmedBlock = _chainDataService.Single<SynchronizationConfirmedBlock>(new SingleByBlockTypeKey(PacketTypes.Synchronization_ConfirmedBlock));
 
                 if (synchronizationConfirmedBlock != null)
                 {
-                    _synchronizationContext.UpdateLastSyncBlockDescriptor(new SynchronizationDescriptor(synchronizationConfirmedBlock.BlockHeight, _hashCalculation.CalculateHash(synchronizationConfirmedBlock.RawData), synchronizationConfirmedBlock.ReportedTime, DateTime.Now, synchronizationConfirmedBlock.Round));
+                    _synchronizationContext.UpdateLastSyncBlockDescriptor(new SynchronizationDescriptor(synchronizationConfirmedBlock.Height, _hashCalculation.CalculateHash(synchronizationConfirmedBlock.RawData), synchronizationConfirmedBlock.ReportedTime, DateTime.Now, synchronizationConfirmedBlock.Round));
                 }
 
-                SynchronizationRegistryCombinedBlock combinedBlock = _chainDataService.Single<SynchronizationRegistryCombinedBlock>(new SingleByBlockTypeKey(ActionTypes.Synchronization_RegistryCombinationBlock));
+                SynchronizationRegistryCombinedBlock combinedBlock = _chainDataService.Single<SynchronizationRegistryCombinedBlock>(new SingleByBlockTypeKey(PacketTypes.Synchronization_RegistryCombinationBlock));
                 if(combinedBlock != null)
                 {
-                    _synchronizationContext.LastRegistrationCombinedBlockHeight = combinedBlock.BlockHeight;
+                    _synchronizationContext.LastRegistrationCombinedBlockHeight = combinedBlock.Height;
                 }
             }
             finally

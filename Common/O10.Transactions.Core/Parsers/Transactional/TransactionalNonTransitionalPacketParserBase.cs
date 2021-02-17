@@ -1,5 +1,5 @@
 ﻿using System;
-using O10.Transactions.Core.DataModel.Transactional;
+using O10.Transactions.Core.Ledgers.O10State;
 using O10.Core;
 using O10.Core.Identity;
 

@@ -13,7 +13,7 @@ namespace O10.Node.DataLayer.Specific.O10Id.Mappers
                 throw new System.ArgumentNullException(nameof(blockParsersFactoriesRepository));
             }
 
-            BlockParsersRepository = blockParsersFactoriesRepository.GetBlockParsersRepository(PacketType.Transactional);
+            BlockParsersRepository = blockParsersFactoriesRepository.GetBlockParsersRepository(LedgerType.O10State);
         }
 
         protected IBlockParsersRepository BlockParsersRepository { get; }

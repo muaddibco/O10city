@@ -8,7 +8,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using O10.Transactions.Core.DataModel;
 using O10.Client.Common.Exceptions;
 using O10.Client.Common.Interfaces;
 using O10.Client.Common.Interfaces.Inputs;
@@ -22,6 +21,7 @@ using O10.Core.Identity;
 using O10.Core.Serialization;
 using O10.Client.Common.Communication.Notifications;
 using O10.Core.Notifications;
+using O10.Transactions.Core.DTOs;
 
 namespace O10.Client.Common.Communication
 {

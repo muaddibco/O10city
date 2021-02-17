@@ -1,6 +1,6 @@
 ﻿using System;
 using System.IO;
-using O10.Transactions.Core.DataModel.Stealth;
+using O10.Transactions.Core.Ledgers.Stealth;
 using O10.Transactions.Core.Enums;
 using O10.Core.Cryptography;
 using O10.Core.Identity;
@@ -12,7 +12,7 @@ namespace O10.Transactions.Core.Serializers.Stealth
         protected int _prevSecretKeyIndex;
         protected byte[] _prevSecretKey;
 
-        public StealthSerializerBase(IServiceProvider serviceProvider, PacketType packetType, ushort blockType) 
+        public StealthSerializerBase(IServiceProvider serviceProvider, LedgerType packetType, ushort blockType) 
             : base(serviceProvider, packetType, blockType)
         {
         }
@@ -20,7 +20,7 @@ namespace O10.Transactions.Core.Serializers.Stealth
         protected virtual void WriteHeader(BinaryWriter bw)
         {
             bw.Write((ushort)PacketType);
-            bw.Write(_block.SyncBlockHeight);
+            bw.Write(_block.SyncHeight);
             bw.Write(_block.Nonce);
             bw.Write(_block.PowHash);
         }
@@ -68,7 +68,7 @@ namespace O10.Transactions.Core.Serializers.Stealth
         private void FillBody()
         {
             _binaryWriter.Write(_block.Version);
-            _binaryWriter.Write(_block.BlockType);
+            _binaryWriter.Write(_block.PacketType);
             _binaryWriter.Write(_block.DestinationKey);
             _binaryWriter.Write(_block.DestinationKey2);
 			_binaryWriter.Write(_block.TransactionPublicKey);

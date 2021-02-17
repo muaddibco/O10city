@@ -1,6 +1,6 @@
 ﻿using System;
 using System.IO;
-using O10.Transactions.Core.DataModel.Registry;
+using O10.Transactions.Core.Ledgers.Registry;
 using O10.Transactions.Core.Enums;
 using O10.Core.Architecture;
 
@@ -10,7 +10,7 @@ namespace O10.Transactions.Core.Serializers.Signed.Registry
     [RegisterExtension(typeof(ISerializer), Lifetime = LifetimeManagement.Transient)]
     public class RegistryConfidenceBlockSerializer : SignatureSupportSerializerBase<RegistryConfidenceBlock>
     {
-        public RegistryConfidenceBlockSerializer(IServiceProvider serviceProvider) : base(serviceProvider, PacketType.Registry, ActionTypes.Registry_ConfidenceBlock)
+        public RegistryConfidenceBlockSerializer(IServiceProvider serviceProvider) : base(serviceProvider, LedgerType.Registry, PacketTypes.Registry_ConfidenceBlock)
         {
         }
 

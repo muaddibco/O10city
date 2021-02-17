@@ -1,13 +1,13 @@
 ﻿using System;
 using System.IO;
-using O10.Transactions.Core.DataModel.Stealth;
+using O10.Transactions.Core.Ledgers.Stealth;
 using O10.Transactions.Core.Enums;
 
 namespace O10.Transactions.Core.Serializers.Stealth
 {
 	public abstract class StealthTransactionSerializerBase<T> : StealthSerializerBase<T> where T : StealthTransactionBase
     {
-        public StealthTransactionSerializerBase(IServiceProvider serviceProvider, PacketType packetType, ushort blockType) 
+        public StealthTransactionSerializerBase(IServiceProvider serviceProvider, LedgerType packetType, ushort blockType) 
             : base(serviceProvider, packetType, blockType)
         {
         }

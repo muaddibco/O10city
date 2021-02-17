@@ -1,4 +1,4 @@
-﻿using O10.Transactions.Core.DataModel.Stealth;
+﻿using O10.Transactions.Core.Ledgers.Stealth;
 
 namespace O10.Transactions.Core.Serializers.Stealth
 {

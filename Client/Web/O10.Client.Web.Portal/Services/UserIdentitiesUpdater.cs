@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using System.Collections.Generic;
 using System.Linq;
-using O10.Transactions.Core.DataModel.Transactional;
+using O10.Transactions.Core.Ledgers.O10State;
 using O10.Client.Common.Interfaces;
 using O10.Core.Models;
 using O10.Core.ExtensionMethods;

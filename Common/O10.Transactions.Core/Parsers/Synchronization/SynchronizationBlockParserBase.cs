@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Buffers.Binary;
-using O10.Transactions.Core.DataModel;
-using O10.Transactions.Core.DataModel.Synchronization;
+using O10.Transactions.Core.Ledgers.Synchronization;
 using O10.Transactions.Core.Enums;
 using O10.Core.Identity;
 
@@ -14,7 +13,7 @@ namespace O10.Transactions.Core.Parsers.Synchronization
         {
         }
 
-        public override PacketType PacketType => PacketType.Synchronization;
+        public override LedgerType PacketType => LedgerType.Synchronization;
 
         protected override Memory<byte> ParseLinked(ushort version, Memory<byte> spanBody, out LinkedPacketBase syncedBlockBase)
         {

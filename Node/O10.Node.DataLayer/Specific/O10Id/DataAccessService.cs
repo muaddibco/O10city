@@ -49,7 +49,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
             _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
         }
 
-        public override PacketType PacketType => PacketType.Transactional;
+        public override LedgerType PacketType => LedgerType.O10State;
 
         protected override void PostInitTasks()
         {

@@ -11,11 +11,11 @@ namespace O10.Transactions.Core
     public class BlocksHandlersRegistry : IBlocksHandlersRegistry
     {
         private readonly Dictionary<string, IBlocksHandler> _blocksHandlers;
-        private readonly Dictionary<PacketType, HashSet<IBlocksHandler>> _blocksHandlersRegistered;
+        private readonly Dictionary<LedgerType, HashSet<IBlocksHandler>> _blocksHandlersRegistered;
 
         public BlocksHandlersRegistry(IEnumerable<IBlocksHandler> blocksProcessors)
         {
-            _blocksHandlersRegistered = new Dictionary<PacketType, HashSet<IBlocksHandler>>();
+            _blocksHandlersRegistered = new Dictionary<LedgerType, HashSet<IBlocksHandler>>();
             _blocksHandlers = new Dictionary<string, IBlocksHandler>();
 
 			if (blocksProcessors != null)
@@ -40,7 +40,7 @@ namespace O10.Transactions.Core
             return _blocksHandlers[blocksProcessorName];
         }
 
-        public IEnumerable<IBlocksHandler> GetBulkInstances(PacketType key)
+        public IEnumerable<IBlocksHandler> GetBulkInstances(LedgerType key)
         {
             if(!_blocksHandlersRegistered.ContainsKey(key))
             {

@@ -1,5 +1,5 @@
 ﻿using System;
-using O10.Transactions.Core.DataModel.Stealth.Internal;
+using O10.Transactions.Core.Ledgers.Stealth.Internal;
 
 namespace O10.Client.Common.Interfaces.Inputs
 {

@@ -7,7 +7,7 @@ namespace O10.Node.DataLayer.Specific.O10Id.DataContexts
 {
     public abstract class O10IdDataContextBase : NodeDataContextBase
 	{
-        public override PacketType PacketType => PacketType.Transactional;
+        public override LedgerType PacketType => LedgerType.O10State;
 
         public DbSet<AccountIdentity> AccountIdentities { get; set; }
 

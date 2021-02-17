@@ -16,7 +16,7 @@ namespace O10.Node.DataLayer.DataAccess
             _nodeDataContexts = nodeDataContexts;
         }
 
-        public INodeDataContext GetInstance(PacketType packetType, string dataProvider)
+        public INodeDataContext GetInstance(LedgerType packetType, string dataProvider)
         {
             var dctx = _nodeDataContexts.FirstOrDefault(d => d.PacketType == packetType && d.DataProvider == dataProvider);
 

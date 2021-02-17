@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks.Dataflow;
-using O10.Transactions.Core.DataModel;
 using O10.Transactions.Core.Interfaces;
 using O10.Core.Architecture;
 using O10.Core.Models;
 using O10.Client.Common.Interfaces.Inputs;
 using System.Threading.Tasks;
 using O10.Core.Notifications;
+using O10.Transactions.Core.DTOs;
 
 namespace O10.Client.Common.Interfaces
 {

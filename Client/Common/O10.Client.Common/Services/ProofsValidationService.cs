@@ -11,7 +11,7 @@ using O10.Core.ExtensionMethods;
 using O10.Core.Identity;
 using O10.Core.Logging;
 using O10.Crypto.ConfidentialAssets;
-using O10.Transactions.Core.DataModel.Stealth.Internal;
+using O10.Transactions.Core.Ledgers.Stealth.Internal;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;

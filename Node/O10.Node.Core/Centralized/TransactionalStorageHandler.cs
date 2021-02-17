@@ -1,4 +1,4 @@
-﻿using O10.Transactions.Core.DataModel.Transactional;
+﻿using O10.Transactions.Core.Ledgers.O10State;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Interfaces;
 using O10.Node.DataLayer.DataServices;
@@ -20,6 +20,6 @@ namespace O10.Node.Core.Centralized
 
         public override string Name => NAME;
 
-        public override PacketType PacketType => PacketType.Transactional;
+        public override LedgerType PacketType => LedgerType.O10State;
     }
 }

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using O10.Gateway.DataLayer.Model;
 using O10.Gateway.DataLayer.Services.Inputs;
 using O10.Core.Architecture;
+using O10.Transactions.Core.Enums;
 
 namespace O10.Gateway.DataLayer.Services
 {
@@ -17,7 +18,7 @@ namespace O10.Gateway.DataLayer.Services
         void StoreRegistryCombinedBlock(ulong height, byte[] content);
         void CutExcessedPackets(long combinedBlockHeight);
         void StoreRegistryFullBlock(ulong height, byte[] content);
-        TaskCompletionSource<WitnessPacket> StoreWitnessPacket(ulong syncBlockHeight, long round, ulong combinedBlockHeight, ushort referencedPacketType, ushort referencedBlockType, byte[] referencedBodyHash, byte[] referencedDestinationKey, byte[] referencedDestinationKey2, byte[] referencedTransactionKey, byte[] referencedKeyImage);
+        TaskCompletionSource<WitnessPacket> StoreWitnessPacket(ulong syncBlockHeight, long round, ulong combinedBlockHeight, LedgerType referencedPacketType, ushort referencedBlockType, byte[] referencedBodyHash, byte[] referencedDestinationKey, byte[] referencedDestinationKey2, byte[] referencedTransactionKey, byte[] referencedKeyImage);
         WitnessPacket GetWitnessPacket(long witnessPacketId);
         Dictionary<long, List<WitnessPacket>> GetWitnessPackets(long combinedBlockHeightStart, long combinedBlockHeightEnd);
 
@@ -36,14 +37,14 @@ namespace O10.Gateway.DataLayer.Services
         void StoreIncomingTransitionTransactionalBlock(StateTransitionIncomingStoreInput storeInput, byte[] groupId, Span<byte> originatingCommitment);
         void StoreIncomingUtxoTransactionBlock(UtxoIncomingStoreInput storeInput);
 
-        TransactionalPacket GetTransactionalIncomingBlock(long witnessid);
+        StatePacket GetTransactionalIncomingBlock(long witnessid);
         StealthPacket GetUtxoIncomingBlock(long witnessid);
         StealthPacket GetStealthPacket(long syncBlockHeight, long combinedRegistryBlockHeight, string hashString);
 
         int GetTotalUtxoOutputsAmount();
 		
 		byte[][] GetRootAttributeCommitments(byte[] issuer, int amount);
-		UtxoOutput[] GetOutputs(int amount);
+		StealthOutput[] GetOutputs(int amount);
 
         void StoreRootAttributeIssuance(Memory<byte> issuer, Memory<byte> issuanceCommitment, Memory<byte> rootCommitment, long combinedBlockHeight);
         void StoreAssociatedAttributeIssuance(Memory<byte> issuer, Memory<byte> issuanceCommitment, Memory<byte> rootIssuanceCommitment);
@@ -59,7 +60,7 @@ namespace O10.Gateway.DataLayer.Services
 
 		byte[] GetEmployeeRecordGroup(string issuer, string registrationCommitment);
 
-		TransactionalPacket GetTransactionBySourceAndHeight(string source, ulong blockHeight);
+		StatePacket GetTransactionBySourceAndHeight(string source, ulong blockHeight);
 
         void AddCompromisedKeyImage(string keyImage);
         bool GetIsKeyImageCompomised(string keyImage);

@@ -22,7 +22,7 @@ namespace O10.Transactions.Core.Parsers.Factories
             }
         }
 
-        public abstract PacketType PacketType { get; }
+        public abstract LedgerType PacketType { get; }
 
         public IBlockParser GetInstance(ushort blockType)
         {
