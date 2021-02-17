@@ -92,18 +92,18 @@ namespace O10.Client.Common.Communication
             return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
         }
 
-        public async Task<IssueBlindedAsset> IssueBlindedAsset(byte[] assetId, byte[] groupId)
+        public async Task<IssueBlindedAsset> IssueBlindedAsset(byte[] assetId)
         {
-            IssueBlindedAsset packet = CreateIssueBlindedAsset(assetId, groupId);
+            IssueBlindedAsset packet = CreateIssueBlindedAsset(assetId);
 
             var completionResult = PropagateTransaction(packet);
 
             return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
         }
 
-        public async Task<IssueBlindedAsset> IssueBlindedAsset2(byte[] assetId, byte[] groupId, byte[] blindingFactor)
+        public async Task<IssueBlindedAsset> IssueBlindedAsset2(byte[] assetId, byte[] blindingFactor)
         {
-            IssueBlindedAsset packet = CreateIssueBlindedAsset2(assetId, groupId, blindingFactor);
+            IssueBlindedAsset packet = CreateIssueBlindedAsset2(assetId, blindingFactor);
 
             var completionResult = PropagateTransaction(packet);
 
@@ -114,17 +114,15 @@ namespace O10.Client.Common.Communication
         /// originatingCommitment = blindingPointValue + assetId * G
         /// </summary>
         /// <param name="assetId"></param>
-        /// <param name="groupId"></param>
         /// <param name="blindingPointValue"></param>
         /// <param name="blindingPointRoot"></param>
         /// <param name="originatingCommitment"></param>
         /// <returns></returns>
         public async Task<IssueAssociatedBlindedAsset> IssueAssociatedAsset(byte[] assetId,
-                                         byte[] groupId,
                                          byte[] blindingPointValue,
                                          byte[] blindingPointRoot)
 		{
-			IssueAssociatedBlindedAsset packet = CreateIssueAssociatedBlindedAsset(assetId, groupId, blindingPointValue, blindingPointRoot);
+			IssueAssociatedBlindedAsset packet = CreateIssueAssociatedBlindedAsset(assetId, blindingPointValue, blindingPointRoot);
 
             var completionResult = PropagateTransaction(packet);
 
@@ -227,7 +225,6 @@ namespace O10.Client.Common.Communication
         }
 
         private IssueAssociatedBlindedAsset CreateIssueAssociatedBlindedAsset(byte[] assetId,
-                                                                              byte[] groupId,
                                                                               byte[] blindingPointValue,
                                                                               byte[] blindingPointRoot)
 		{
@@ -237,7 +234,6 @@ namespace O10.Client.Common.Communication
 
 			IssueAssociatedBlindedAsset issueAssociatedBlindedAsset = new IssueAssociatedBlindedAsset
 			{
-				GroupId = groupId,
 				AssetCommitment = commitmentToValue,
 				RootAssetCommitment = commitmentToBinding
 			};
@@ -249,14 +245,13 @@ namespace O10.Client.Common.Communication
 			return issueAssociatedBlindedAsset;
 		}
 
-		private IssueBlindedAsset CreateIssueBlindedAsset(byte[] assetId, byte[] groupId)
+		private IssueBlindedAsset CreateIssueBlindedAsset(byte[] assetId)
 		{
 			//TODO: must be replaced with usage of constant secret key of issuing
 			_clientCryptoService.GetBoundedCommitment(assetId, out byte[] assetCommitment, out byte[] keyImage, out RingSignature ringSignature);
 
             IssueBlindedAsset issueBlindedAsset = new IssueBlindedAsset
             {
-                GroupId = groupId,
                 AssetCommitment = assetCommitment,
                 KeyImage = keyImage,
                 UniquencessProof = ringSignature
@@ -269,7 +264,7 @@ namespace O10.Client.Common.Communication
 			return issueBlindedAsset;
 		}
 
-        private IssueBlindedAsset CreateIssueBlindedAsset2(byte[] assetId, byte[] groupId, byte[] blindingFactor)
+        private IssueBlindedAsset CreateIssueBlindedAsset2(byte[] assetId, byte[] blindingFactor)
         {
             //TODO: must be replaced with usage of constant secret key of issuing
             byte[] issuanceNonBlindedCommitment = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(assetId);
@@ -280,7 +275,6 @@ namespace O10.Client.Common.Communication
 
             IssueBlindedAsset issueBlindedAsset = new IssueBlindedAsset
             {
-                GroupId = groupId,
                 AssetCommitment = issuanceCommitment,
                 KeyImage = keyImage,
                 UniquencessProof = ringSignature

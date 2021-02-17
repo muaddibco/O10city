@@ -754,7 +754,7 @@ namespace O10.Client.Web.Portal.Controllers
 
             if (rootAttribute != null && rootAttribute.Commitment == null)
             {
-                var packet = await transactionsService.IssueBlindedAsset(rootAssetId, 0UL.ToByteArray(32)).ConfigureAwait(false);
+                var packet = await transactionsService.IssueBlindedAsset(rootAssetId).ConfigureAwait(false);
                 _dataAccessService.UpdateIdentityAttributeCommitment(rootAttribute.AttributeId, packet.AssetCommitment);
 
                 rootAttributeIssued = true;
@@ -811,22 +811,8 @@ namespace O10.Client.Web.Portal.Controllers
                                                       IStateTransactionsService transactionsService)
         {
             byte[] assetId = await _assetsService.GenerateAssetId(schemeName, content, issuer).ConfigureAwait(false);
-            byte[] groupId;
 
-            if (AttributesSchemes.AttributeSchemes.FirstOrDefault(a => a.Name == schemeName)?.ValueType == AttributeValueType.Date)
-            {
-                groupId = await _identityAttributesService.GetGroupId(schemeName, DateTime.ParseExact(content, "yyyy-MM-dd", null), issuer).ConfigureAwait(false);
-            }
-            else
-            {
-                groupId = schemeName switch
-                {
-                    AttributesSchemes.ATTR_SCHEME_NAME_PLACEOFBIRTH => await _identityAttributesService.GetGroupId(schemeName, content, issuer).ConfigureAwait(false),
-                    _ => await _identityAttributesService.GetGroupId(schemeName, issuer).ConfigureAwait(false),
-                };
-            }
-
-            return await transactionsService.IssueAssociatedAsset(assetId, groupId, blindingPointValue, blindingPointRoot).ConfigureAwait(false);
+            return await transactionsService.IssueAssociatedAsset(assetId, blindingPointValue, blindingPointRoot).ConfigureAwait(false);
         }
 
         private async Task<bool> VerifyFaceImage(string imageContent, string idContent, string publicKey)

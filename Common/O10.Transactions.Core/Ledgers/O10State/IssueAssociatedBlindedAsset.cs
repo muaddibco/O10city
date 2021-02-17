@@ -15,8 +15,6 @@ namespace O10.Transactions.Core.Ledgers.O10State
 
 		public override ushort PacketType => PacketTypes.Transaction_IssueAssociatedBlindedAsset;
 
-        public byte[] GroupId { get; set; }
-
         public byte[] AssetCommitment { get; set; }
 
 		/// <summary>

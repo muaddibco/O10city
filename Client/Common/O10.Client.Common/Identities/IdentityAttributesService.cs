@@ -39,41 +39,6 @@ namespace O10.Client.Common.Identities
 			return values;
 		}
 
-		public async Task<byte[]> GetGroupId(string attributeSchemeName, string issuer)
-        {
-			Entities.AttributeDefinition attributeScheme = await _schemeResolverService.ResolveAttributeScheme(issuer, attributeSchemeName).ConfigureAwait(false);
-			
-			byte[] groupId = new byte[32];
-            Array.Copy(BitConverter.GetBytes(attributeScheme.SchemeId), 0, groupId, _hashCalculation.HashSize, sizeof(long));
-
-            return groupId;
-        }
-
-        public async Task<byte[]> GetGroupId(string attributeSchemeName, string content, string issuer)
-        {
-			Entities.AttributeDefinition attributeScheme = await _schemeResolverService.ResolveAttributeScheme(issuer, attributeSchemeName).ConfigureAwait(false);
-			byte[] groupId = new byte[32];
-
-            byte[] hash = _hashCalculation.CalculateHash(Encoding.ASCII.GetBytes(content));
-            Array.Copy(hash, 0, groupId, 0, hash.Length);
-            Array.Copy(BitConverter.GetBytes(attributeScheme.SchemeId), 0, groupId, hash.Length, sizeof(long));
-
-            return groupId;
-        }
-
-        public async Task<byte[]> GetGroupId(string attributeSchemeName, DateTime content, string issuer)
-        {
-			Entities.AttributeDefinition attributeScheme = await _schemeResolverService.ResolveAttributeScheme(issuer, attributeSchemeName).ConfigureAwait(false);
-			TimeSpan diff = content - new DateTime(1900, 1, 1);
-
-            ulong days = (ulong)diff.TotalDays;
-            byte[] groupId = new byte[32];
-            Array.Copy(BitConverter.GetBytes(days), 0, groupId, 0, sizeof(uint));
-            Array.Copy(BitConverter.GetBytes(attributeScheme.SchemeId), 0, groupId, _hashCalculation.HashSize, sizeof(long));
-
-            return groupId;
-        }
-
 		public async Task<List<IdentityAttributeValidationDescriptor>> GetIdentityAttributeValidationDescriptors(string issuer, bool activeOnly)
 		{
 			IEnumerable<Entities.AttributeDefinition> attributeSchemes = await _schemeResolverService.ResolveAttributeSchemes(issuer, activeOnly).ConfigureAwait(false);

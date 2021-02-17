@@ -19,9 +19,9 @@ namespace O10.Client.Common.Interfaces
 
         Task<DocumentRecord> IssueDocumentRecord(byte[] documentHash, byte[][] allowedSignerCommitments);
 
-        Task<IssueBlindedAsset> IssueBlindedAsset(byte[] assetId, byte[] groupId);
+        Task<IssueBlindedAsset> IssueBlindedAsset(byte[] assetId);
 
-        Task<IssueBlindedAsset> IssueBlindedAsset2(byte[] assetId, byte[] groupId, byte[] blindingFactor);
+        Task<IssueBlindedAsset> IssueBlindedAsset2(byte[] assetId, byte[] blindingFactor);
 
         /// <summary>
         /// originatingCommitment = blindingPointValue + assetId * G
@@ -32,7 +32,7 @@ namespace O10.Client.Common.Interfaces
         /// <param name="blindingPointRoot"></param>
         /// <param name="originatingCommitment"></param>
         /// <returns></returns>
-        Task<IssueAssociatedBlindedAsset> IssueAssociatedAsset(byte[] assetId, byte[] groupId, byte[] blindingPointValue, byte[] blindingPointRoot);
+        Task<IssueAssociatedBlindedAsset> IssueAssociatedAsset(byte[] assetId, byte[] blindingPointValue, byte[] blindingPointRoot);
 
         Task<TransferAssetToStealth> TransferAssetToStealth(byte[] assetId, ConfidentialAccount receiver);
 

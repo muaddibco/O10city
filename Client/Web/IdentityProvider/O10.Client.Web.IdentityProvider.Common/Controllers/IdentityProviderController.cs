@@ -147,7 +147,7 @@ namespace O10.Server.IdentityProvider.Common.Controllers
 						var persistency = _executionContext.GetContext();
 						var transactionsService = persistency.Scope.ServiceProvider.GetService<IStateTransactionsService>();
 						byte[] issuanceBlindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
-						var packet = await transactionsService.IssueBlindedAsset2(assetIdEmail, 0UL.ToByteArray(32), issuanceBlindingFactor).ConfigureAwait(false);
+						var packet = await transactionsService.IssueBlindedAsset2(assetIdEmail, issuanceBlindingFactor).ConfigureAwait(false);
 
 						byte[] protectionCommitment = null;
 						if (requestBody.Attributes.ContainsKey(AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD))
@@ -368,14 +368,8 @@ namespace O10.Server.IdentityProvider.Common.Controllers
 															   IStateTransactionsService transactionsService)
         {
             byte[] assetId = await _assetsService.GenerateAssetId(attributeSchemeName, content, issuer).ConfigureAwait(false);
-			byte[] groupId = attributeSchemeName switch
-			{
-				AttributesSchemes.ATTR_SCHEME_NAME_PLACEOFBIRTH => await _identityAttributesService.GetGroupId(attributeSchemeName, content, issuer).ConfigureAwait(false),
-				AttributesSchemes.ATTR_SCHEME_NAME_DATEOFBIRTH => await _identityAttributesService.GetGroupId(attributeSchemeName, DateTime.ParseExact(content, "yyyy-MM-dd", null), issuer).ConfigureAwait(false),
-				_ => await _identityAttributesService.GetGroupId(attributeSchemeName, issuer).ConfigureAwait(false),
-			};
 			byte[] rootCommitment = _assetsService.GetCommitmentBlindedByPoint(rootAssetId, blindingPointRoot);
-            var packet = await transactionsService.IssueAssociatedAsset(assetId, groupId, blindingPointValue, rootCommitment).ConfigureAwait(false);
+            var packet = await transactionsService.IssueAssociatedAsset(assetId, blindingPointValue, rootCommitment).ConfigureAwait(false);
 
 			return packet.AssetCommitment;
         }
