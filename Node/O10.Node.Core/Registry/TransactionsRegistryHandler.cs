@@ -66,7 +66,7 @@ namespace O10.Node.Core.Registry
 
         public string Name => NAME;
 
-        public LedgerType PacketType => LedgerType.Registry;
+        public LedgerType LedgerType => LedgerType.Registry;
 
         public void Initialize(CancellationToken ct)
         {

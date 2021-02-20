@@ -45,7 +45,7 @@ namespace O10.Node.Core.Common
 
         public string Name => NAME;
 
-        public LedgerType PacketType => LedgerType.Synchronization;
+        public LedgerType LedgerType => LedgerType.Synchronization;
 
         public void Initialize(CancellationToken ct)
         {

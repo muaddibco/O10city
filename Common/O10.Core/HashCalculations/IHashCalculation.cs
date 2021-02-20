@@ -13,5 +13,7 @@ namespace O10.Core.HashCalculations
         byte[] CalculateHash(byte[] input);
 
         byte[] CalculateHash(Memory<byte> input);
+
+        byte[] CalculateHash(string input);
     }
 }

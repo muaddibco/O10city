@@ -10,7 +10,7 @@ namespace O10.Core.Models
         public ulong Height { get; set; }
 
         [JsonConverter(typeof(KeyJsonConverter))]
-        public IKey Signer { get; set; }
+        public IKey Source { get; set; }
 
         [JsonConverter(typeof(MemoryByteJsonConverter))]
         public Memory<byte> Signature { get; set; }

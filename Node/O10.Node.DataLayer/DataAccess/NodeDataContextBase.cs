@@ -5,6 +5,6 @@ namespace O10.Node.DataLayer.DataAccess
 {
     public abstract class NodeDataContextBase : DataContextBase, INodeDataContext
     {
-        public abstract LedgerType PacketType { get; }
+        public abstract LedgerType LedgerType { get; }
     }
 }

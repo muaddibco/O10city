@@ -16,7 +16,7 @@ namespace O10.Node.DataLayer.Specific.Registry.Model
 
         public int TransactionsCount { get; set; }
 
-        public byte[] Content { get; set; }
+        public string Content { get; set; }
 
 		[Column(TypeName = "varbinary(64)")]
         public string Hash { get; set; }

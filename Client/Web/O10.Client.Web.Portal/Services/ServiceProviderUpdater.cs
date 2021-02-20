@@ -572,13 +572,13 @@ namespace O10.Client.Web.Portal.Services
         private void ProcessTransferAsset(TransferAsset transferAsset)
         {
             _clientCryptoService.DecodeEcdhTuple(transferAsset.TransferredAsset.EcdhTuple, null, out byte[] blindingFactor, out byte[] assetId);
-            _assetsService.GetAttributeSchemeName(assetId, transferAsset.Signer.ToString()).ContinueWith(t =>
+            _assetsService.GetAttributeSchemeName(assetId, transferAsset.Source.ToString()).ContinueWith(t =>
             {
                 if (t.IsCompleted && !t.IsFaulted)
                 {
-                    _dataAccessService.StoreSpAttribute(_accountId, t.Result, assetId, transferAsset.Signer.Value.ToHexString(), blindingFactor, transferAsset.TransferredAsset.AssetCommitment, transferAsset.SurjectionProof.AssetCommitments[0]);
+                    _dataAccessService.StoreSpAttribute(_accountId, t.Result, assetId, transferAsset.Source.Value.ToHexString(), blindingFactor, transferAsset.TransferredAsset.AssetCommitment, transferAsset.SurjectionProof.AssetCommitments[0]);
 
-                    _idenitiesHubContext.Clients.Group(_accountId.ToString(CultureInfo.InvariantCulture)).SendAsync("PushAttribute", new SpAttributeDto { SchemeName = t.Result, Source = transferAsset.Signer.ArraySegment.Array.ToHexString(), AssetId = assetId.ToHexString(), OriginalBlindingFactor = blindingFactor.ToHexString(), OriginalCommitment = transferAsset.TransferredAsset.AssetCommitment.ToHexString(), IssuingCommitment = transferAsset.SurjectionProof.AssetCommitments[0].ToHexString(), Validated = false, IsOverriden = false });
+                    _idenitiesHubContext.Clients.Group(_accountId.ToString(CultureInfo.InvariantCulture)).SendAsync("PushAttribute", new SpAttributeDto { SchemeName = t.Result, Source = transferAsset.Source.ArraySegment.Array.ToHexString(), AssetId = assetId.ToHexString(), OriginalBlindingFactor = blindingFactor.ToHexString(), OriginalCommitment = transferAsset.TransferredAsset.AssetCommitment.ToHexString(), IssuingCommitment = transferAsset.SurjectionProof.AssetCommitments[0].ToHexString(), Validated = false, IsOverriden = false });
                 }
             }, TaskScheduler.Current);
         }

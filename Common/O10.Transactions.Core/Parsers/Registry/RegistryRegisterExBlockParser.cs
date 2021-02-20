@@ -21,7 +21,7 @@ namespace O10.Transactions.Core.Parsers.Registry
 
         public override ushort BlockType => PacketTypes.Registry_RegisterEx;
 
-        public override LedgerType PacketType => LedgerType.Registry;
+        public override LedgerType LedgerType => LedgerType.Registry;
 
         protected override Memory<byte> ParseSigned(ushort version, Memory<byte> spanBody, out SignedPacketBase syncedBlockBase)
         {
@@ -29,7 +29,7 @@ namespace O10.Transactions.Core.Parsers.Registry
             {
                 int readBytes = 0;
 
-                LedgerType referencedPacketType = (LedgerType)BinaryPrimitives.ReadUInt16LittleEndian(spanBody.Span);
+                LedgerType referencedLedgerType = (LedgerType)BinaryPrimitives.ReadUInt16LittleEndian(spanBody.Span);
                 readBytes += sizeof(ushort);
 
                 int paramsLength = BinaryPrimitives.ReadInt32LittleEndian(spanBody.Span[readBytes..]);
@@ -41,7 +41,7 @@ namespace O10.Transactions.Core.Parsers.Registry
 
                 RegistryRegisterExBlock transactionRegisterBlock = new RegistryRegisterExBlock
                 {
-                    ReferencedPacketType = referencedPacketType,
+                    ReferencedLedgerType = referencedLedgerType,
                     Parameters = (Dictionary<string, string>)paramBytes.DeSerialize()
                 };
 

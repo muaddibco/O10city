@@ -380,7 +380,7 @@ namespace O10.Gateway.DataLayer.Services
             }
         }
 
-        public TaskCompletionSource<WitnessPacket> StoreWitnessPacket(ulong syncBlockHeight, long round, ulong combinedBlockHeight, LedgerType referencedPacketType, ushort referencedBlockType, byte[] referencedBodyHash, byte[] referencedDestinationKey, byte[] referencedDestinationKey2, byte[] referencedTransactionKey, byte[] referencedKeyImage)
+        public TaskCompletionSource<WitnessPacket> StoreWitnessPacket(ulong syncBlockHeight, long round, ulong combinedBlockHeight, LedgerType referencedLedgerType, ushort referencedPacketType, byte[] referencedBodyHash, byte[] referencedDestinationKey, byte[] referencedDestinationKey2, byte[] referencedTransactionKey, byte[] referencedKeyImage)
         {
             try
             {
@@ -389,8 +389,8 @@ namespace O10.Gateway.DataLayer.Services
                     SyncBlockHeight = (long)syncBlockHeight,
                     Round = round,
                     CombinedBlockHeight = (long)combinedBlockHeight,
+                    ReferencedLedgerType = referencedLedgerType,
                     ReferencedPacketType = referencedPacketType,
-                    ReferencedBlockType = referencedBlockType,
                     ReferencedBodyHash = GetOrAddPacketHash(referencedBodyHash, (long)syncBlockHeight, (long)combinedBlockHeight),
                     ReferencedDestinationKey = referencedDestinationKey.ToHexString(),
                     ReferencedDestinationKey2 = referencedDestinationKey2.ToHexString(),

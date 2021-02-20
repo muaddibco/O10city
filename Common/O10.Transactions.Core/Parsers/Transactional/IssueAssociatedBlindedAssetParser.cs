@@ -26,9 +26,6 @@ namespace O10.Transactions.Core.Parsers.Transactional
             {
                 int readBytes = 0;
 
-                byte[] groupId = spanBody.Slice(readBytes, Globals.NODE_PUBLIC_KEY_SIZE).ToArray();
-                readBytes += Globals.NODE_PUBLIC_KEY_SIZE;
-
                 byte[] assetCommitment = spanBody.Slice(readBytes, Globals.NODE_PUBLIC_KEY_SIZE).ToArray();
                 readBytes += Globals.NODE_PUBLIC_KEY_SIZE;
 
@@ -37,7 +34,6 @@ namespace O10.Transactions.Core.Parsers.Transactional
 
                 block = new IssueAssociatedBlindedAsset
                 {
-                    GroupId = groupId,
                     AssetCommitment = assetCommitment,
                     RootAssetCommitment = rootAssetCommitment
                 };

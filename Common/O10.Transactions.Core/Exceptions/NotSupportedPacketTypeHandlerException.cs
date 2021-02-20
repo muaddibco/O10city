@@ -9,8 +9,8 @@ namespace O10.Transactions.Core.Exceptions
     public class NotSupportedPacketTypeHandlerException : Exception
     {
         public NotSupportedPacketTypeHandlerException() { }
-        public NotSupportedPacketTypeHandlerException(LedgerType packetType) : base(string.Format(Resources.ERR_NOT_SUPPORTED_PACKET_TYPE_HANDLER, packetType)) { }
-        public NotSupportedPacketTypeHandlerException(LedgerType packetType, Exception inner) : base(string.Format(Resources.ERR_NOT_SUPPORTED_PACKET_TYPE_HANDLER, packetType), inner) { }
+        public NotSupportedPacketTypeHandlerException(LedgerType ledgerType) : base(string.Format(Resources.ERR_NOT_SUPPORTED_PACKET_TYPE_HANDLER, ledgerType)) { }
+        public NotSupportedPacketTypeHandlerException(LedgerType ledgerType, Exception inner) : base(string.Format(Resources.ERR_NOT_SUPPORTED_PACKET_TYPE_HANDLER, ledgerType), inner) { }
         protected NotSupportedPacketTypeHandlerException(
           System.Runtime.Serialization.SerializationInfo info,
           System.Runtime.Serialization.StreamingContext context) : base(info, context) { }

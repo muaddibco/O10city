@@ -7,7 +7,7 @@ namespace O10.Transactions.Core.Serializers.Stealth
 {
 	public abstract class StealthTransactionSerializerBase<T> : StealthSerializerBase<T> where T : StealthTransactionBase
     {
-        public StealthTransactionSerializerBase(IServiceProvider serviceProvider, LedgerType packetType, ushort blockType) 
+        public StealthTransactionSerializerBase(IServiceProvider serviceProvider, LedgerType ledgerType, ushort blockType) 
             : base(serviceProvider, packetType, blockType)
         {
         }

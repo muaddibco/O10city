@@ -18,7 +18,6 @@ namespace O10.Transactions.Core.Serializers.Signed.Transactional
 		{
 			base.WriteBody(bw);
 
-			bw.Write(_block.GroupId);
 			bw.Write(_block.AssetCommitment);
             bw.Write(_block.KeyImage);
 			bw.Write(_block.UniquencessProof.C);

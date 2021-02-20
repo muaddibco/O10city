@@ -20,7 +20,7 @@ namespace O10.Transactions.Core.Parsers
 
         public abstract ushort BlockType { get; }
 
-        public abstract LedgerType PacketType { get; }
+        public abstract LedgerType LedgerType { get; }
 
         public virtual PacketBase Parse(Memory<byte> source)
         {
@@ -63,7 +63,7 @@ namespace O10.Transactions.Core.Parsers
 
         protected virtual Memory<byte> FillBlockBaseHeader(PacketBase blockBase, Memory<byte> spanHeader)
         {
-            LedgerType packetType = (LedgerType)BinaryPrimitives.ReadUInt16LittleEndian(spanHeader.Span);
+            LedgerType ledgerType = (LedgerType)BinaryPrimitives.ReadUInt16LittleEndian(spanHeader.Span);
             int readBytes = sizeof(ushort);
 
             blockBase.SyncHeight = BinaryPrimitives.ReadUInt64LittleEndian(spanHeader.Slice(readBytes).Span);
@@ -78,10 +78,10 @@ namespace O10.Transactions.Core.Parsers
             return spanHeader.Slice(readBytes);
         }
 
-        public static void GetPacketAndBlockTypes(Memory<byte> source, out LedgerType packetType, out ushort blockType)
+        public static void GetPacketAndBlockTypes(Memory<byte> source, out LedgerType ledgerType, out ushort blockType)
         {
             int blockTypePos = Globals.PACKET_TYPE_LENGTH + Globals.SYNC_BLOCK_HEIGHT_LENGTH + Globals.NONCE_LENGTH + Globals.POW_HASH_SIZE + Globals.VERSION_LENGTH;
-            packetType = (LedgerType)BinaryPrimitives.ReadUInt16LittleEndian(source.Span);
+            ledgerType = (LedgerType)BinaryPrimitives.ReadUInt16LittleEndian(source.Span);
             blockType = BinaryPrimitives.ReadUInt16LittleEndian(source.Span.Slice(blockTypePos));
         }
 

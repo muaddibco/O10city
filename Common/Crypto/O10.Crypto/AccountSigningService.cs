@@ -61,7 +61,7 @@ namespace O10.Crypto
 
             byte[] signature = Sign(packet.BodyBytes);
 
-            packetBase.Signer = PublicKeys[0];
+            packetBase.Source = PublicKeys[0];
             packetBase.Signature = signature;
         }
 
@@ -81,7 +81,7 @@ namespace O10.Crypto
 
             byte[] signature = packetBase.Signature.ToArray();
             byte[] message = packetBase.BodyBytes.ToArray();
-            byte[] publickKey = packetBase.Signer.Value.ToArray();
+            byte[] publickKey = packetBase.Source.Value.ToArray();
 
             return Ed25519.Verify(signature, message, publickKey);
         }

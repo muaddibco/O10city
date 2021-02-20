@@ -16,13 +16,13 @@ namespace O10.Node.DataLayer.DataAccess
             _nodeDataContexts = nodeDataContexts;
         }
 
-        public INodeDataContext GetInstance(LedgerType packetType, string dataProvider)
+        public INodeDataContext GetInstance(LedgerType ledgerType, string dataProvider)
         {
-            var dctx = _nodeDataContexts.FirstOrDefault(d => d.PacketType == packetType && d.DataProvider == dataProvider);
+            var dctx = _nodeDataContexts.FirstOrDefault(d => d.LedgerType == ledgerType && d.DataProvider == dataProvider);
 
             if(dctx == null)
             {
-                throw new NodeDataContextNotFoundException(packetType, dataProvider);
+                throw new NodeDataContextNotFoundException(ledgerType, dataProvider);
             }
 
             return dctx;

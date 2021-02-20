@@ -40,7 +40,7 @@ namespace O10.Node.Core.Synchronization
 
         public string Name => NAME;
 
-        public LedgerType PacketType => LedgerType.Synchronization;
+        public LedgerType LedgerType => LedgerType.Synchronization;
 
         public void Initialize(CancellationToken ct)
         {

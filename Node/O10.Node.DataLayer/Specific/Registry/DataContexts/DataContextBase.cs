@@ -7,7 +7,7 @@ namespace O10.Node.DataLayer.Specific.Registry.DataContexts
 {
     public abstract class RegistryDataContextBase : NodeDataContextBase
 	{
-        public override LedgerType PacketType => LedgerType.Registry;
+        public override LedgerType LedgerType => LedgerType.Registry;
 
         public DbSet<RegistryFullBlock> RegistryFullBlocks { get; set; }
 

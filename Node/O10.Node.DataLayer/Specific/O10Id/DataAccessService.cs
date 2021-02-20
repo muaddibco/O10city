@@ -7,11 +7,9 @@ using O10.Transactions.Core.Enums;
 using O10.Node.DataLayer.DataAccess;
 using O10.Node.DataLayer.Specific.O10Id.DataContexts;
 using O10.Node.DataLayer.Specific.O10Id.Model;
-using O10.Core;
 using O10.Core.Architecture;
 using O10.Core.Configuration;
 using O10.Core.ExtensionMethods;
-using O10.Core.HashCalculations;
 using O10.Core.Identity;
 using O10.Core.Logging;
 using O10.Core.Tracking;
@@ -22,34 +20,26 @@ namespace O10.Node.DataLayer.Specific.O10Id
     [RegisterExtension(typeof(IDataAccessService), Lifetime = LifetimeManagement.Singleton)]
     public class DataAccessService : NodeDataAccessServiceBase<O10IdDataContextBase>
     {
-        private readonly IHashCalculation _defaultHashCalculation;
         private Dictionary<IKey, AccountIdentity> _keyIdentityMap;
         private readonly IIdentityKeyProvider _identityKeyProvider;
 
 
-        public DataAccessService(IHashCalculationsRepository hashCalculationsRepository,
-                                 IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
+        public DataAccessService(IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
                                  INodeDataContextRepository dataContextRepository,
                                  ITrackingService trackingService,
                                  IConfigurationService configurationService,
                                  ILoggerService loggerService)
             : base(dataContextRepository, configurationService, trackingService, loggerService)
         {
-            if (hashCalculationsRepository is null)
-            {
-                throw new ArgumentNullException(nameof(hashCalculationsRepository));
-            }
-
             if (identityKeyProvidersRegistry is null)
             {
                 throw new ArgumentNullException(nameof(identityKeyProvidersRegistry));
             }
 
-            _defaultHashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
             _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
         }
 
-        public override LedgerType PacketType => LedgerType.O10State;
+        public override LedgerType LedgerType => LedgerType.O10State;
 
         protected override void PostInitTasks()
         {
@@ -83,7 +73,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
             return null;
         }
 
-        public AccountIdentity GetOrAddIdentity(IKey key)
+        public AccountIdentity GetOrAddAccountIdentity(IKey key)
         {
             if (key is null)
             {
@@ -108,7 +98,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
 
 #endregion Account Identities
 
-        public O10TransactionIdentity GetTransactionalIdentity(IKey key)
+        public O10TransactionSource GetTransactionSource(IKey key)
         {
             if (key == null)
             {
@@ -125,7 +115,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
             return GetTransactionalIdentity(accountIdentity);
         }
 
-        public O10TransactionIdentity GetTransactionalIdentity(AccountIdentity accountIdentity)
+        public O10TransactionSource GetTransactionalIdentity(AccountIdentity accountIdentity)
         {
             if (accountIdentity == null)
             {
@@ -138,9 +128,9 @@ namespace O10.Node.DataLayer.Specific.O10Id
             }
         }
 
-        public O10TransactionIdentity AddTransactionalIdentity(AccountIdentity accountIdentity)
+        public O10TransactionSource AddTransactionSource(AccountIdentity accountIdentity)
         {
-            O10TransactionIdentity transactionalIdentity = new O10TransactionIdentity
+            O10TransactionSource transactionalIdentity = new O10TransactionSource
             {
                 Identity = accountIdentity
             };
@@ -153,40 +143,40 @@ namespace O10.Node.DataLayer.Specific.O10Id
             return transactionalIdentity;
         }
 
-        public void AddTransactionalBlock(IKey key, long syncBlockHeight, ushort blockType, long blockHeight, byte[] blockContent)
+        public void AddTransaction(IKey source, long syncBlockHeight, ushort packetType, long height, string content, byte[] hash)
         {
-            if (key == null)
+            if (source == null)
             {
-                throw new ArgumentNullException(nameof(key));
+                throw new ArgumentNullException(nameof(source));
             }
 
-            if (blockContent == null)
+            if (content == null)
             {
-                throw new ArgumentNullException(nameof(blockContent));
+                throw new ArgumentNullException(nameof(content));
             }
 
-            O10TransactionIdentity transactionalIdentity = GetTransactionalIdentity(key);
+            O10TransactionSource transactionSource = GetTransactionSource(source);
 
-            if (transactionalIdentity == null)
+            if (transactionSource == null)
             {
-                AccountIdentity accountIdentity = GetOrAddIdentity(key);
-                transactionalIdentity = AddTransactionalIdentity(accountIdentity);
+                AccountIdentity accountIdentity = GetOrAddAccountIdentity(source);
+                transactionSource = AddTransactionSource(accountIdentity);
             }
 
             O10TransactionHashKey blockHashKey = new O10TransactionHashKey
             {
                 SyncBlockHeight = (ulong)syncBlockHeight,
-                Hash = _defaultHashCalculation.CalculateHash(blockContent).ToHexString()
+                Hash = hash.ToHexString()
             };
 
             O10Transaction transactionalBlock = new O10Transaction()
             {
-                Identity = transactionalIdentity,
+                Source = transactionSource,
                 HashKey = blockHashKey,
                 SyncBlockHeight = syncBlockHeight,
-                BlockContent = blockContent,
-                BlockHeight = blockHeight,
-                BlockType = blockType
+                Content = content,
+                Height = height,
+                PacketType = packetType
             };
 
             lock (Sync)
@@ -196,7 +186,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
             }
         }
 
-        public O10Transaction GetLastTransactionalBlock(O10TransactionIdentity transactionalIdentity)
+        public O10Transaction GetLastTransactionalBlock(O10TransactionSource transactionalIdentity)
         {
             if (transactionalIdentity == null)
             {
@@ -205,7 +195,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
 
             lock (Sync)
             {
-                return DataContext.TransactionalBlocks.Where(b => b.Identity == transactionalIdentity).OrderByDescending(b => b.BlockHeight).FirstOrDefault();
+                return DataContext.TransactionalBlocks.Where(b => b.Source == transactionalIdentity).OrderByDescending(b => b.Height).FirstOrDefault();
             }
         }
 
@@ -218,7 +208,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
                 throw new ArgumentNullException(nameof(key));
             }
 
-            O10TransactionIdentity transactionalIdentity = GetTransactionalIdentity(key);
+            O10TransactionSource transactionalIdentity = GetTransactionSource(key);
 
             if (transactionalIdentity != null)
             {
@@ -228,7 +218,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
             return transactionalBlock;
         }
 
-        public IEnumerable<O10TransactionIdentity> GetAllTransctionalIdentities()
+        public IEnumerable<O10TransactionSource> GetAllTransctionalIdentities()
         {
             lock (Sync)
             {

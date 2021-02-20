@@ -30,7 +30,7 @@ namespace O10.Node.DataLayer.DataServices
 				}
 				catch (System.Exception ex)
 				{
-					_logger.Error($"Failure during initializing chain data service {chainDataService.PacketType}", ex);
+					_logger.Error($"Failure during initializing chain data service {chainDataService.LedgerType}", ex);
 				}
 			}
 		}

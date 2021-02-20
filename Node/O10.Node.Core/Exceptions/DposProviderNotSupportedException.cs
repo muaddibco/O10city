@@ -9,8 +9,8 @@ namespace O10.Node.Core.Exceptions
     public class DposProviderNotSupportedException : Exception
     {
         public DposProviderNotSupportedException() { }
-        public DposProviderNotSupportedException(LedgerType packetType) : base(string.Format(Resources.ERR_DPOS_PROVIDER_NOT_SUPPORTED, packetType)) { }
-        public DposProviderNotSupportedException(LedgerType packetType, Exception inner) : base(string.Format(Resources.ERR_DPOS_PROVIDER_NOT_SUPPORTED, packetType), inner) { }
+        public DposProviderNotSupportedException(LedgerType ledgerType) : base(string.Format(Resources.ERR_DPOS_PROVIDER_NOT_SUPPORTED, ledgerType)) { }
+        public DposProviderNotSupportedException(LedgerType ledgerType, Exception inner) : base(string.Format(Resources.ERR_DPOS_PROVIDER_NOT_SUPPORTED, ledgerType), inner) { }
         protected DposProviderNotSupportedException(
           System.Runtime.Serialization.SerializationInfo info,
           System.Runtime.Serialization.StreamingContext context) : base(info, context) { }

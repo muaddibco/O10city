@@ -24,7 +24,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
         {
         }
 
-        public override LedgerType PacketType => LedgerType.Stealth;
+        public override LedgerType LedgerType => LedgerType.Stealth;
 
         public override void Add(PacketBase item)
         {
@@ -35,9 +35,9 @@ namespace O10.Node.DataLayer.Specific.Stealth
 
             Logger.Debug($"Storing {item.GetType().Name}");
 
-            if (item is StealthBase Stealth)
+            if (item is StealthBase stealth)
             {
-                Service.AddStealthBlock(Stealth.KeyImage, Stealth.SyncHeight, Stealth.PacketType, Stealth.DestinationKey, Stealth.RawData.ToArray());
+                Service.AddStealthBlock(stealth.KeyImage, stealth.SyncHeight, stealth.PacketType, stealth.DestinationKey, stealth.ToString());
             }
         }
 

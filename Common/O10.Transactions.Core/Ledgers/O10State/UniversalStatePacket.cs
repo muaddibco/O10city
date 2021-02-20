@@ -1,4 +1,5 @@
-﻿using O10.Transactions.Core.Enums;
+﻿using O10.Transactions.Core.Actions;
+using O10.Transactions.Core.Enums;
 
 namespace O10.Transactions.Core.Ledgers.O10State
 {
@@ -8,6 +9,6 @@ namespace O10.Transactions.Core.Ledgers.O10State
 
         public override ushort PacketType => PacketTypes.Transaction_UniversalTransport;
 
-        public string Payload { get; set; }
+        public ActionBase? Action { get; set; }
     }
 }

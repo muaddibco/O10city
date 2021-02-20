@@ -9,8 +9,8 @@ namespace O10.Transactions.Core.Exceptions
     public class BlockHandlerNotSupportedException : Exception
     {
         public BlockHandlerNotSupportedException() { }
-        public BlockHandlerNotSupportedException(LedgerType packetType) : base(string.Format(Resources.ERR_BLOCK_HANDLER_NOT_SUPPORTED, packetType)) { }
-        public BlockHandlerNotSupportedException(LedgerType packetType, Exception inner) : base(string.Format(Resources.ERR_BLOCK_HANDLER_NOT_SUPPORTED, packetType), inner) { }
+        public BlockHandlerNotSupportedException(LedgerType ledgerType) : base(string.Format(Resources.ERR_BLOCK_HANDLER_NOT_SUPPORTED, ledgerType)) { }
+        public BlockHandlerNotSupportedException(LedgerType ledgerType, Exception inner) : base(string.Format(Resources.ERR_BLOCK_HANDLER_NOT_SUPPORTED, ledgerType), inner) { }
         protected BlockHandlerNotSupportedException(
           System.Runtime.Serialization.SerializationInfo info,
           System.Runtime.Serialization.StreamingContext context) : base(info, context) { }

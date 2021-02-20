@@ -12,14 +12,14 @@ namespace O10.Transactions.Core.Serializers.Stealth
         protected int _prevSecretKeyIndex;
         protected byte[] _prevSecretKey;
 
-        public StealthSerializerBase(IServiceProvider serviceProvider, LedgerType packetType, ushort blockType) 
+        public StealthSerializerBase(IServiceProvider serviceProvider, LedgerType ledgerType, ushort blockType) 
             : base(serviceProvider, packetType, blockType)
         {
         }
 
         protected virtual void WriteHeader(BinaryWriter bw)
         {
-            bw.Write((ushort)PacketType);
+            bw.Write((ushort)LedgerType);
             bw.Write(_block.SyncHeight);
             bw.Write(_block.Nonce);
             bw.Write(_block.PowHash);

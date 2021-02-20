@@ -9,7 +9,7 @@ namespace O10.Transactions.Core.Accessors
 {
     public abstract class AccessorBase : IAccessor
     {
-        public abstract LedgerType PacketType { get; }
+        public abstract LedgerType LedgerType { get; }
 
         protected abstract IEnumerable<string> GetAccessingKeys();
 

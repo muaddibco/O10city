@@ -18,7 +18,7 @@ namespace O10.Transactions.Core.Accessors
 
         public IAccessor GetInstance(LedgerType key)
         {
-            var accessor = _accessors.FirstOrDefault(a => a.PacketType == key);
+            var accessor = _accessors.FirstOrDefault(a => a.LedgerType == key);
 
             if(accessor == null)
             {

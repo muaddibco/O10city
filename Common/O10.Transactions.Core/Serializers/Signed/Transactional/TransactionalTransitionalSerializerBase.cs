@@ -7,7 +7,7 @@ namespace O10.Transactions.Core.Serializers.Signed.Transactional
 {
 	public abstract class TransactionalTransitionalSerializerBase<T> : TransactionalSerializerBase<T> where T : TransactionalTransitionalPacketBase
 	{
-		public TransactionalTransitionalSerializerBase(IServiceProvider serviceProvider, LedgerType packetType, ushort blockType) 
+		public TransactionalTransitionalSerializerBase(IServiceProvider serviceProvider, LedgerType ledgerType, ushort blockType) 
 			: base(serviceProvider, packetType, blockType)
 		{
 		}

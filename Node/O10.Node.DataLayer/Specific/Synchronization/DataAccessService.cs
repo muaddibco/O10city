@@ -27,7 +27,7 @@ namespace O10.Node.DataLayer.Specific.Synchronization
         {
         }
 
-        public override LedgerType PacketType => LedgerType.Synchronization;
+        public override LedgerType LedgerType => LedgerType.Synchronization;
 
         #region Synchronization
 

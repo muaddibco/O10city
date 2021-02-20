@@ -7,7 +7,7 @@ namespace O10.Node.DataLayer.Specific.O10Id.DataContexts
 {
     public abstract class O10IdDataContextBase : NodeDataContextBase
 	{
-        public override LedgerType PacketType => LedgerType.O10State;
+        public override LedgerType LedgerType => LedgerType.O10State;
 
         public DbSet<AccountIdentity> AccountIdentities { get; set; }
 
@@ -15,7 +15,7 @@ namespace O10.Node.DataLayer.Specific.O10Id.DataContexts
 
         public DbSet<O10Transaction> TransactionalBlocks { get; set; }
 
-        public DbSet<O10TransactionIdentity> TransactionalIdentities { get; set; }
+        public DbSet<O10TransactionSource> TransactionalIdentities { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -30,7 +30,7 @@ namespace O10.Node.DataLayer.Specific.O10Id.DataContexts
             modelBuilder.Entity<O10TransactionHashKey>().HasIndex(a => a.SyncBlockHeight);
             modelBuilder.Entity<O10TransactionHashKey>().HasIndex(a => a.Hash);
             modelBuilder.Entity<O10Transaction>().HasIndex(a => a.SyncBlockHeight);
-            modelBuilder.Entity<O10Transaction>().HasIndex(a => a.BlockHeight);
+            modelBuilder.Entity<O10Transaction>().HasIndex(a => a.Height);
         }
     }
 }

@@ -20,12 +20,12 @@ namespace O10.Tests.Core
             _defaultPrivateKey = defaultPrivateKey;
         }
 
-        public byte[] GetSignedPacket(LedgerType packetType, ulong syncBlockHeight, uint nonce, byte[] powHash, ushort version, ushort blockType, ulong blockHeight, byte[] prevHash, byte[] body, out byte[] signature)
+        public byte[] GetSignedPacket(LedgerType ledgerType, ulong syncBlockHeight, uint nonce, byte[] powHash, ushort version, ushort blockType, ulong blockHeight, byte[] prevHash, byte[] body, out byte[] signature)
         {
-            return GetSignedPacket(packetType, syncBlockHeight, nonce, powHash, version, blockType, blockHeight, prevHash, body, _defaultPrivateKey, out signature);
+            return GetSignedPacket(ledgerType, syncBlockHeight, nonce, powHash, version, blockType, blockHeight, prevHash, body, _defaultPrivateKey, out signature);
         }
 
-        public static byte[] GetSignedPacket(LedgerType packetType, ulong syncBlockHeight, uint nonce, byte[] powHash, ushort version, ushort blockType, ulong blockHeight, byte[] prevHash, byte[] body, byte[] privateKey, out byte[] signature)
+        public static byte[] GetSignedPacket(LedgerType ledgerType, ulong syncBlockHeight, uint nonce, byte[] powHash, ushort version, ushort blockType, ulong blockHeight, byte[] prevHash, byte[] body, byte[] privateKey, out byte[] signature)
         {
             byte[] result = null;
 
@@ -35,7 +35,7 @@ namespace O10.Tests.Core
             {
                 using (BinaryWriter bw = new BinaryWriter(ms))
                 {
-                    bw.Write((ushort)packetType);
+                    bw.Write((ushort)ledgerType);
                     bw.Write(syncBlockHeight);
                     bw.Write(nonce);
                     bw.Write(powHash);
@@ -71,7 +71,7 @@ namespace O10.Tests.Core
             return result;
         }
 
-		public static byte[] GetStealthPacket(LedgerType packetType, ulong syncBlockHeight, uint nonce, byte[] powHash, ushort version, ushort blockType, byte[] keyImage, byte[] destinationKey, byte[] destinationKey2, byte[] transactionPublicKey, byte[] body, byte[][] pubKeys, byte[] secretKey, int secIndex, out RingSignature[] ringSignatures)
+		public static byte[] GetStealthPacket(LedgerType ledgerType, ulong syncBlockHeight, uint nonce, byte[] powHash, ushort version, ushort blockType, byte[] keyImage, byte[] destinationKey, byte[] destinationKey2, byte[] transactionPublicKey, byte[] body, byte[][] pubKeys, byte[] secretKey, int secIndex, out RingSignature[] ringSignatures)
         {
             byte[] bodyBytes = null;
             byte[] result = null;

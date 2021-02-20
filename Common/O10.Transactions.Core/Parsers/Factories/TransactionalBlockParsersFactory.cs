@@ -12,6 +12,6 @@ namespace O10.Transactions.Core.Parsers.Factories
         {
         }
 
-        public override LedgerType PacketType => LedgerType.O10State;
+        public override LedgerType LedgerType => LedgerType.O10State;
     }
 }

@@ -322,7 +322,7 @@ namespace O10.Gateway.WebApp.Common.Controllers
 
             PacketInfo packetInfo = new PacketInfo
             {
-                PacketType = LedgerType.O10State,
+                LedgerType = LedgerType.O10State,
                 BlockType = transaction.BlockType,
                 Content = transaction.Content
             };

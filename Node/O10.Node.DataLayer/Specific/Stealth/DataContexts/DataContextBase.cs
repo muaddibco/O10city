@@ -7,7 +7,7 @@ namespace O10.Node.DataLayer.Specific.Stealth.DataContexts
 {
     public abstract class StealthDataContextBase : NodeDataContextBase
 	{
-        public override LedgerType PacketType => LedgerType.Stealth;
+        public override LedgerType LedgerType => LedgerType.Stealth;
 
         public DbSet<StealthTransactionHashKey> BlockHashKeys { get; set; }
 

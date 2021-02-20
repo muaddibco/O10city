@@ -27,9 +27,9 @@ namespace O10.Node.DataLayer.Specific.Registry
         {
         }
 
-        public override LedgerType PacketType => LedgerType.Registry;
+        public override LedgerType LedgerType => LedgerType.Registry;
 
-        public void AddRegistryFullBlock(ulong syncBlockHeight, ulong round, int transactionsCount, byte[] content, byte[] hash)
+        public void AddRegistryFullBlock(ulong syncBlockHeight, ulong round, int transactionsCount, string content, byte[] hash)
         {
             RegistryFullBlock registryFullBlock = new RegistryFullBlock
             {

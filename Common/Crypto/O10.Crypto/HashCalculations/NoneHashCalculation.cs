@@ -13,5 +13,7 @@ namespace O10.Crypto.HashCalculations
         public byte[] CalculateHash(Memory<byte> input) => null;
 
         public byte[] CalculateHash(byte[] input) => null;
+
+        public byte[] CalculateHash(string input) => null;
     }
 }

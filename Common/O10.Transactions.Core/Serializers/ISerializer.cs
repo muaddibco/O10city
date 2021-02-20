@@ -8,9 +8,9 @@ namespace O10.Transactions.Core.Serializers
     [ExtensionPoint]
     public interface ISerializer : IPacketProvider, ITransactionKeyProvider
     {
-        LedgerType PacketType { get; }
+        LedgerType LedgerType { get; }
 
-        ushort BlockType { get; }
+        ushort PacketType { get; }
 
         void Initialize(PacketBase blockBase);
 

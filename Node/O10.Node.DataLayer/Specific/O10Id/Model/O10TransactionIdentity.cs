@@ -4,12 +4,12 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Node.DataLayer.Specific.O10Id.Model
 {
-    [Table("O10TransactionIdentities")]
-    public class O10TransactionIdentity
+    [Table("O10TransactionSources")]
+    public class O10TransactionSource
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public long O10TransactionIdentityId { get; set; }
+        public long O10TransactionSourceId { get; set; }
 
         public AccountIdentity Identity { get; set; }
 

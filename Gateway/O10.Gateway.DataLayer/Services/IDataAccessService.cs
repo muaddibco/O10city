@@ -18,7 +18,7 @@ namespace O10.Gateway.DataLayer.Services
         void StoreRegistryCombinedBlock(ulong height, byte[] content);
         void CutExcessedPackets(long combinedBlockHeight);
         void StoreRegistryFullBlock(ulong height, byte[] content);
-        TaskCompletionSource<WitnessPacket> StoreWitnessPacket(ulong syncBlockHeight, long round, ulong combinedBlockHeight, LedgerType referencedPacketType, ushort referencedBlockType, byte[] referencedBodyHash, byte[] referencedDestinationKey, byte[] referencedDestinationKey2, byte[] referencedTransactionKey, byte[] referencedKeyImage);
+        TaskCompletionSource<WitnessPacket> StoreWitnessPacket(ulong syncBlockHeight, long round, ulong combinedBlockHeight, LedgerType referencedLedgerType, ushort referencedPacketType, byte[] referencedBodyHash, byte[] referencedDestinationKey, byte[] referencedDestinationKey2, byte[] referencedTransactionKey, byte[] referencedKeyImage);
         WitnessPacket GetWitnessPacket(long witnessPacketId);
         Dictionary<long, List<WitnessPacket>> GetWitnessPackets(long combinedBlockHeightStart, long combinedBlockHeightEnd);
 

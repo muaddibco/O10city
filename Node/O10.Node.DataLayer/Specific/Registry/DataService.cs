@@ -44,7 +44,7 @@ namespace O10.Node.DataLayer.Specific.Registry
             _defaultHashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
         }
 
-        override public LedgerType PacketType => LedgerType.Registry;
+        override public LedgerType LedgerType => LedgerType.Registry;
         public override void Add(PacketBase item)
         {
             if (item is RegistryFullBlockPacket registryFullBlock)
@@ -98,8 +98,8 @@ namespace O10.Node.DataLayer.Specific.Registry
                 {
                     RegistryFullBlockDb[] registryFullBlocks = blocks.Select(b =>
                     {
-                        string hash = _defaultHashCalculation.CalculateHash(b.RawData).ToHexString();
-                        return new RegistryFullBlockDb { SyncBlockHeight = b.SyncHeight, Round = b.Height, TransactionsCount = b.StateWitnesses.Length + b.StealthWitnesses.Length, Content = b.RawData.ToArray(), Hash = hash, HashString = hash };
+                        string hash = _defaultHashCalculation.CalculateHash(b.ToString()).ToHexString();
+                        return new RegistryFullBlockDb { SyncBlockHeight = b.SyncHeight, Round = b.Height, TransactionsCount = b.StateWitnesses.Length + b.StealthWitnesses.Length, Content = b.ToString(), Hash = hash, HashString = hash };
                     }).ToArray();
 
                     foreach (var registryFullBlock in registryFullBlocks)

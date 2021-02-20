@@ -28,6 +28,15 @@ namespace O10.Crypto.HashCalculations
             }
         }
 
+        public byte[] CalculateHash(string input)
+        {
+            lock (_hash)
+            {
+                HashResult hashRes = _hash.ComputeString(input);
+                return hashRes.GetBytes();
+            }
+        }
+
         public byte[] CalculateHash(Memory<byte> input)
         {
             lock (_hash)

@@ -16,7 +16,7 @@ namespace O10.Transactions.Core.Ledgers.Registry
         {
             if(x != null && y != null)
             {
-                return x.SyncHeight == y.SyncHeight && x.Height == y.Height && x.Signer.Equals(y.Signer);
+                return x.SyncHeight == y.SyncHeight && x.Height == y.Height && x.Source.Equals(y.Source);
             }
 
             return x == null && y == null;
@@ -24,7 +24,7 @@ namespace O10.Transactions.Core.Ledgers.Registry
 
         public int GetHashCode(RegistryShortBlock obj)
         {
-            int hash = obj.SyncHeight.GetHashCode() ^ obj.Height.GetHashCode() ^ obj.Signer.GetHashCode();
+            int hash = obj.SyncHeight.GetHashCode() ^ obj.Height.GetHashCode() ^ obj.Source.GetHashCode();
 
             hash += hash << 13;
             hash ^= hash >> 7;

@@ -23,7 +23,7 @@ namespace O10.Node.Core.Synchronization
 			_loggerService = loggerService;
 		}
 
-        public LedgerType PacketType => LedgerType.Synchronization;
+        public LedgerType LedgerType => LedgerType.Synchronization;
 
         public bool ValidatePacket(PacketBase blockBase)
         {

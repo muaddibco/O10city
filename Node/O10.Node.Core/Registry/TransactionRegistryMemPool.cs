@@ -67,25 +67,25 @@ namespace O10.Node.Core.Registry
             {
                 bool witnessExist = false;
 
-                if(_transactionStateWitnessesBySender.ContainsKey(transactionWitness.Signer))
+                if(_transactionStateWitnessesBySender.ContainsKey(transactionWitness.Source))
                 {
-                    witnessExist = _transactionStateWitnessesBySender[transactionWitness.Signer].Any(t => t.Height == transactionWitness.Height);
+                    witnessExist = _transactionStateWitnessesBySender[transactionWitness.Source].Any(t => t.Height == transactionWitness.Height);
                 }
 
                 if(!witnessExist)
                 {
-                    if (!_transactionStateWitnessesBySender.ContainsKey(transactionWitness.Signer))
+                    if (!_transactionStateWitnessesBySender.ContainsKey(transactionWitness.Source))
                     {
-                        _transactionStateWitnessesBySender.Add(transactionWitness.Signer, new List<RegistryRegisterBlock>());
+                        _transactionStateWitnessesBySender.Add(transactionWitness.Source, new List<RegistryRegisterBlock>());
                     }
 
-                    _transactionStateWitnessesBySender[transactionWitness.Signer].Add(transactionWitness);
+                    _transactionStateWitnessesBySender[transactionWitness.Source].Add(transactionWitness);
                     _transactionStateWitnesses.Add(transactionWitness);
-                    _logger.Debug($"Witness for packet type {transactionWitness.ReferencedPacketType}, block type {transactionWitness.ReferencedBlockType} of sender {transactionWitness.Signer}  and BlockHeight {transactionWitness.Height} accepted into MemPool");
+                    _logger.Debug($"Witness for packet type {transactionWitness.ReferencedLedgerType}, block type {transactionWitness.ReferencedBlockType} of sender {transactionWitness.Source}  and BlockHeight {transactionWitness.Height} accepted into MemPool");
                 }
                 else
                 {
-                    _logger.Warning($"Witness for packet type {transactionWitness.ReferencedPacketType}, block type {transactionWitness.ReferencedBlockType} of sender {transactionWitness.Signer}  and BlockHeight {transactionWitness.Height} was already witnessed");
+                    _logger.Warning($"Witness for packet type {transactionWitness.ReferencedLedgerType}, block type {transactionWitness.ReferencedBlockType} of sender {transactionWitness.Source}  and BlockHeight {transactionWitness.Height} was already witnessed");
                 }
 
                 return witnessExist;
@@ -98,25 +98,25 @@ namespace O10.Node.Core.Registry
             {
                 bool witnessExist = false;
 
-                if (_transactionStateExWitnessesBySender.ContainsKey(transactionWitness.Signer))
+                if (_transactionStateExWitnessesBySender.ContainsKey(transactionWitness.Source))
                 {
-                    witnessExist = _transactionStateExWitnessesBySender[transactionWitness.Signer].Any(t => t.Height == transactionWitness.Height);
+                    witnessExist = _transactionStateExWitnessesBySender[transactionWitness.Source].Any(t => t.Height == transactionWitness.Height);
                 }
 
                 if (!witnessExist)
                 {
-                    if (!_transactionStateExWitnessesBySender.ContainsKey(transactionWitness.Signer))
+                    if (!_transactionStateExWitnessesBySender.ContainsKey(transactionWitness.Source))
                     {
-                        _transactionStateExWitnessesBySender.Add(transactionWitness.Signer, new List<RegistryRegisterExBlock>());
+                        _transactionStateExWitnessesBySender.Add(transactionWitness.Source, new List<RegistryRegisterExBlock>());
                     }
 
-                    _transactionStateExWitnessesBySender[transactionWitness.Signer].Add(transactionWitness);
+                    _transactionStateExWitnessesBySender[transactionWitness.Source].Add(transactionWitness);
                     _transactionStateExWitnesses.Add(transactionWitness);
-                    _logger.Debug($"Witness for packet type {transactionWitness.ReferencedPacketType}, action {transactionWitness.ReferencedAction} of sender {transactionWitness.Signer}  and BlockHeight {transactionWitness.Height} accepted into MemPool");
+                    _logger.Debug($"Witness for packet type {transactionWitness.ReferencedLedgerType}, action {transactionWitness.ReferencedAction} of sender {transactionWitness.Source}  and BlockHeight {transactionWitness.Height} accepted into MemPool");
                 }
                 else
                 {
-                    _logger.Warning($"Witness for packet type {transactionWitness.ReferencedPacketType}, action {transactionWitness.ReferencedAction} of sender {transactionWitness.Signer}  and BlockHeight {transactionWitness.Height} was already witnessed");
+                    _logger.Warning($"Witness for packet type {transactionWitness.ReferencedLedgerType}, action {transactionWitness.ReferencedAction} of sender {transactionWitness.Source}  and BlockHeight {transactionWitness.Height} was already witnessed");
                 }
 
                 return witnessExist;
@@ -138,7 +138,7 @@ namespace O10.Node.Core.Registry
                 {
                     if(!keyImageExist)
                     {
-                        _logger.Info($"Witness for packet type {transactionWitness.ReferencedPacketType}, block type {transactionWitness.ReferencedBlockType} and KeyImage {transactionWitness.KeyImage} accepted into MemPool");
+                        _logger.Info($"Witness for packet type {transactionWitness.ReferencedLedgerType}, block type {transactionWitness.ReferencedBlockType} and KeyImage {transactionWitness.KeyImage} accepted into MemPool");
 
                         _transactionUtxoWitnessesByKeyImage.Add(transactionWitness.KeyImage, transactionWitness);
                     }

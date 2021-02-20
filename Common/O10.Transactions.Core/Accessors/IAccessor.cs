@@ -11,7 +11,7 @@ namespace O10.Transactions.Core.Accessors
     [ExtensionPoint]
     public interface IAccessor
     {
-        LedgerType PacketType { get; }
+        LedgerType LedgerType { get; }
 
         Task<T> GetPacket<T>(EvidenceDescriptor accessDescriptor) where T : PacketBase;
     }

@@ -17,7 +17,7 @@ namespace O10.Transactions.Core.Serializers.Signed.Registry
 
         protected override void WriteBody(BinaryWriter bw)
         {
-            bw.Write((ushort)_block.ReferencedPacketType);
+            bw.Write((ushort)_block.ReferencedLedgerType);
             bw.Write(_block.ReferencedBlockType);
             bw.Write(_block.ReferencedBodyHash);
         }

@@ -123,8 +123,8 @@ namespace O10.Transactions.Core.Tests.SerializerTests
             ulong blockHeight = 9;
             byte[] prevHash = null;
 
-            LedgerType expectedReferencedPacketType = LedgerType.O10State;
-            ushort expectedReferencedBlockType = PacketTypes.Transaction_IssueBlindedAsset;
+            LedgerType expectedReferencedLedgerType = LedgerType.O10State;
+            ushort expectedReferencedPacketType = PacketTypes.Transaction_IssueBlindedAsset;
             byte[] expectedReferencedBodyHash = BinaryHelper.GetDefaultHash(473826643);
             byte[] expectedTarget = BinaryHelper.GetDefaultHash(BinaryHelper.GetRandomPublicKey());
 
@@ -134,8 +134,8 @@ namespace O10.Transactions.Core.Tests.SerializerTests
             {
                 using (BinaryWriter bw = new BinaryWriter(ms))
                 {
-                    bw.Write((ushort)expectedReferencedPacketType);
-                    bw.Write(expectedReferencedBlockType);
+                    bw.Write((ushort)expectedReferencedLedgerType);
+                    bw.Write(expectedReferencedPacketType);
                     bw.Write(expectedReferencedBodyHash);
                     bw.Write(expectedTarget);
                 }
@@ -155,8 +155,8 @@ namespace O10.Transactions.Core.Tests.SerializerTests
                 Nonce = nonce,
                 PowHash = powHash,
                 Height = blockHeight,
-                ReferencedPacketType = expectedReferencedPacketType,
-                ReferencedBlockType = expectedReferencedBlockType,
+                ReferencedLedgerType = expectedReferencedLedgerType,
+                ReferencedBlockType = expectedReferencedPacketType,
                 ReferencedBodyHash = expectedReferencedBodyHash,
                 ReferencedTarget = expectedTarget
             };
@@ -184,8 +184,8 @@ namespace O10.Transactions.Core.Tests.SerializerTests
 			ulong blockHeight = 9;
 			byte[] prevHash = null;
 
-			LedgerType expectedReferencedPacketType = LedgerType.O10State;
-			ushort expectedReferencedBlockType = PacketTypes.Transaction_transferAssetToStealth;
+			LedgerType expectedReferencedLedgerType = LedgerType.O10State;
+			ushort expectedReferencedPacketType = PacketTypes.Transaction_transferAssetToStealth;
 			byte[] expectedReferencedBodyHash = BinaryHelper.GetDefaultHash(473826643);
 			byte[] expectedTarget = BinaryHelper.GetDefaultHash(BinaryHelper.GetRandomPublicKey());
 			byte[] transactionKey = ConfidentialAssetsHelper.GetRandomSeed();
@@ -196,8 +196,8 @@ namespace O10.Transactions.Core.Tests.SerializerTests
 			{
 				using (BinaryWriter bw = new BinaryWriter(ms))
 				{
-					bw.Write((ushort)expectedReferencedPacketType);
-					bw.Write(expectedReferencedBlockType);
+					bw.Write((ushort)expectedReferencedLedgerType);
+					bw.Write(expectedReferencedPacketType);
 					bw.Write(expectedReferencedBodyHash);
 					bw.Write(expectedTarget);
 					bw.Write(transactionKey);
@@ -218,8 +218,8 @@ namespace O10.Transactions.Core.Tests.SerializerTests
 				Nonce = nonce,
 				PowHash = powHash,
 				Height = blockHeight,
-				ReferencedPacketType = expectedReferencedPacketType,
-				ReferencedBlockType = expectedReferencedBlockType,
+				ReferencedLedgerType = expectedReferencedLedgerType,
+				ReferencedBlockType = expectedReferencedPacketType,
 				ReferencedBodyHash = expectedReferencedBodyHash,
 				ReferencedTarget = expectedTarget,
 				ReferencedTransactionKey = transactionKey
@@ -256,8 +256,8 @@ namespace O10.Transactions.Core.Tests.SerializerTests
             byte[][] secretKeys = new byte[ringSize][];
             byte[][] pubkeys = new byte[ringSize][];
 
-            LedgerType expectedReferencedPacketType = LedgerType.O10State;
-            ushort expectedReferencedBlockType = PacketTypes.Stealth_OnboardingRequest;
+            LedgerType expectedReferencedLedgerType = LedgerType.O10State;
+            ushort expectedReferencedPacketType = PacketTypes.Stealth_OnboardingRequest;
             byte[] expectedReferencedBodyHash = BinaryHelper.GetDefaultHash(473826643);
             byte[] expectedTarget = BinaryHelper.GetDefaultHash(BinaryHelper.GetRandomPublicKey());
 
@@ -272,8 +272,8 @@ namespace O10.Transactions.Core.Tests.SerializerTests
             {
                 using (BinaryWriter bw = new BinaryWriter(ms))
                 {
-                    bw.Write((ushort)expectedReferencedPacketType);
-                    bw.Write(expectedReferencedBlockType);
+                    bw.Write((ushort)expectedReferencedLedgerType);
+                    bw.Write(expectedReferencedPacketType);
                     bw.Write(expectedReferencedBodyHash);
                 }
 
@@ -294,8 +294,8 @@ namespace O10.Transactions.Core.Tests.SerializerTests
                 DestinationKey = destinationKey,
 				DestinationKey2 = destinationKey2,
                 TransactionPublicKey = transactionPublicKey,
-                ReferencedPacketType = expectedReferencedPacketType,
-                ReferencedBlockType = expectedReferencedBlockType,
+                ReferencedLedgerType = expectedReferencedLedgerType,
+                ReferencedBlockType = expectedReferencedPacketType,
                 ReferencedBodyHash = expectedReferencedBodyHash,
                 PublicKeys = pubkeys.Select(p => new Key32(p)).ToArray(),
                 Signatures = expectedSignatures
@@ -397,8 +397,8 @@ namespace O10.Transactions.Core.Tests.SerializerTests
             ulong blockHeight = 9;
             byte[] prevHash = null;
 
-            LedgerType expectedReferencedPacketType = LedgerType.O10State;
-            ushort expectedReferencedBlockType = PacketTypes.Transaction_IssueBlindedAsset;
+            LedgerType expectedReferencedLedgerType = LedgerType.O10State;
+            ushort expectedReferencedPacketType = PacketTypes.Transaction_IssueBlindedAsset;
             byte[] expectedReferencedBodyHash = BinaryHelper.GetDefaultHash(473826643);
             byte[] expectedTarget = BinaryHelper.GetDefaultHash(BinaryHelper.GetRandomPublicKey());
 
@@ -416,8 +416,8 @@ namespace O10.Transactions.Core.Tests.SerializerTests
                     Nonce = nonce + i,
                     PowHash = BinaryHelper.GetPowHash(1234 + i),
                     Height = blockHeight,
-                    ReferencedPacketType = expectedReferencedPacketType,
-                    ReferencedBlockType = expectedReferencedBlockType,
+                    ReferencedLedgerType = expectedReferencedLedgerType,
+                    ReferencedBlockType = expectedReferencedPacketType,
                     ReferencedBodyHash = BinaryHelper.GetDefaultHash(473826643 + i),
                     ReferencedTarget = BinaryHelper.GetDefaultHash(BinaryHelper.GetRandomPublicKey())
                 };
@@ -436,8 +436,8 @@ namespace O10.Transactions.Core.Tests.SerializerTests
                     Nonce = nonce + i,
                     PowHash = BinaryHelper.GetPowHash(1234 + i),
                     DestinationKey = ConfidentialAssetsHelper.GetRandomSeed(),
-                    ReferencedPacketType = expectedReferencedPacketType,
-                    ReferencedBlockType = expectedReferencedBlockType,
+                    ReferencedLedgerType = expectedReferencedLedgerType,
+                    ReferencedBlockType = expectedReferencedPacketType,
 					DestinationKey2 = ConfidentialAssetsHelper.GetRandomSeed(),
                     ReferencedBodyHash = BinaryHelper.GetDefaultHash(473826643 + i),
                     KeyImage = new Key32(ConfidentialAssetsHelper.GetRandomSeed()),

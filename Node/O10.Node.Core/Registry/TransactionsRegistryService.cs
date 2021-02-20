@@ -179,7 +179,7 @@ namespace O10.Node.Core.Registry
                 Nonce = transactionsFullBlock.Nonce,
                 PowHash = transactionsFullBlock.PowHash,
                 Height = transactionsFullBlock.Height,
-                WitnessStateKeys = transactionsFullBlock.StateWitnesses.Select(w => new WitnessStateKey { PublicKey = w.Signer, Height = w.Height}).ToArray(),
+                WitnessStateKeys = transactionsFullBlock.StateWitnesses.Select(w => new WitnessStateKey { PublicKey = w.Source, Height = w.Height}).ToArray(),
                 WitnessUtxoKeys = transactionsFullBlock.StealthWitnesses.Select(w => new WitnessUtxoKey { KeyImage = w.KeyImage }).ToArray()
             };
 

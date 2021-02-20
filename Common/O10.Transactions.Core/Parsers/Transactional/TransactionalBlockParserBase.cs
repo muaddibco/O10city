@@ -14,7 +14,7 @@ namespace O10.Transactions.Core.Parsers.Transactional
         {
         }
 
-        public override LedgerType PacketType => LedgerType.O10State;
+        public override LedgerType LedgerType => LedgerType.O10State;
 
         protected override Memory<byte> ParseSigned(ushort version, Memory<byte> spanBody, out SignedPacketBase syncedBlockBase)
         {

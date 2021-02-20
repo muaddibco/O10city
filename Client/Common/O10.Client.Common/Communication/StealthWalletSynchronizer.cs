@@ -251,7 +251,7 @@ namespace O10.Client.Common.Communication
                     UserRootAttribute userRootAttribute = null;
                     foreach (var item in userRootAttributes)
                     {
-                        if (item.AssetId.Equals32(assetId) && packet.Signer.ToString() == item.Source)
+                        if (item.AssetId.Equals32(assetId) && packet.Source.ToString() == item.Source)
                         {
                             userRootAttribute = item;
                             break;
@@ -271,7 +271,7 @@ namespace O10.Client.Common.Communication
                         userRootAttribute.LastTransactionKey = packet.TransactionPublicKey;
                         userRootAttribute.NextKeyImage = keyImage;
                         userRootAttribute.LastDestinationKey = packet.DestinationKey;
-                        userRootAttribute.Source = packet.Signer.Value.ToHexString();
+                        userRootAttribute.Source = packet.Source.Value.ToHexString();
                         _dataAccessService.UpdateConfirmedRootAttribute(userRootAttribute);
                     }
                     else
@@ -279,7 +279,7 @@ namespace O10.Client.Common.Communication
                         userRootAttribute = new UserRootAttribute
                         {
                             AssetId = assetId,
-                            SchemeName = await _assetsService.GetAttributeSchemeName(assetId, packet.Signer.ToString()).ConfigureAwait(false),
+                            SchemeName = await _assetsService.GetAttributeSchemeName(assetId, packet.Source.ToString()).ConfigureAwait(false),
                             OriginalBlindingFactor = blindingFactor,
                             OriginalCommitment = packet.TransferredAsset.AssetCommitment,
                             IssuanceCommitment = packet.SurjectionProof.AssetCommitments[0],
@@ -288,7 +288,7 @@ namespace O10.Client.Common.Communication
                             LastTransactionKey = packet.TransactionPublicKey,
 							NextKeyImage = keyImage,
 							LastDestinationKey = packet.DestinationKey,
-                            Source = packet.Signer.Value.ToHexString()
+                            Source = packet.Source.Value.ToHexString()
                         };
                         _dataAccessService.AddUserRootAttribute(_accountId, userRootAttribute);
                     }

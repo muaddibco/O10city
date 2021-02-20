@@ -28,7 +28,7 @@ namespace O10.Node.Core.Storage
 
         public abstract string Name { get; }
 
-        public abstract LedgerType PacketType { get; }
+        public abstract LedgerType LedgerType { get; }
 
         public void Initialize(CancellationToken ct)
         {

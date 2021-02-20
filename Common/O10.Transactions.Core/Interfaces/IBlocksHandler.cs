@@ -10,7 +10,7 @@ namespace O10.Transactions.Core.Interfaces
     {
         string Name { get; }
 
-        LedgerType PacketType { get; }
+        LedgerType LedgerType { get; }
 
         void Initialize(CancellationToken ct);
         void ProcessBlock(PacketBase blockBase);

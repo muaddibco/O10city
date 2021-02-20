@@ -1,37 +1,22 @@
-﻿using O10.Transactions.Core.Enums;
-using O10.Transactions.Core.Parsers;
-using O10.Node.DataLayer.Specific.Registry.Model;
-using O10.Core.Architecture;
+﻿using O10.Core.Architecture;
 using O10.Core.Models;
 using O10.Core.Translators;
+using O10.Transactions.Core.Ledgers.Registry;
+using RegistryFullBlockDb = O10.Node.DataLayer.Specific.Registry.Model.RegistryFullBlock;
 
 namespace O10.Node.DataLayer.Mappers.Registry
 {
     [RegisterExtension(typeof(ITranslator), Lifetime = LifetimeManagement.Singleton)]
-    public class TransactionsRegistryBlockToBlockBaseMapper : TranslatorBase<RegistryFullBlock, PacketBase>
+    public class TransactionsRegistryBlockToBlockBaseMapper : TranslatorBase<RegistryFullBlockDb, PacketBase>
     {
-        private readonly IBlockParsersRepository _blockParsersRepository;
-
-        public TransactionsRegistryBlockToBlockBaseMapper(IBlockParsersRepositoriesRepository blockParsersFactoriesRepository)
-        {
-            if (blockParsersFactoriesRepository is null)
-            {
-                throw new System.ArgumentNullException(nameof(blockParsersFactoriesRepository));
-            }
-
-            _blockParsersRepository = blockParsersFactoriesRepository.GetBlockParsersRepository(LedgerType.Registry);
-        }
-
-        public override PacketBase Translate(RegistryFullBlock obj)
+        public override PacketBase Translate(RegistryFullBlockDb obj)
         {
             if(obj == null)
             {
                 return null;
             }
 
-            IBlockParser blockParser = _blockParsersRepository.GetInstance(PacketTypes.Registry_FullBlock);
-
-			return (Transactions.Core.Ledgers.Registry.RegistryFullBlock)blockParser.Parse(obj.Content);
+            return PacketBase.Create<RegistryFullBlock>(obj.Content);
         }
     }
 }

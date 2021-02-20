@@ -6,6 +6,6 @@ namespace O10.Transactions.Core.Parsers
     [ServiceContract]
     public interface IBlockParsersRepositoriesRepository
     {
-        IBlockParsersRepository GetBlockParsersRepository(LedgerType packetType);
+        IBlockParsersRepository GetBlockParsersRepository(LedgerType ledgerType);
     }
 }

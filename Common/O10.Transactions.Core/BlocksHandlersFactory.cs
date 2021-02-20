@@ -52,12 +52,12 @@ namespace O10.Transactions.Core
 
         public void RegisterInstance(IBlocksHandler obj)
         {
-            if(!_blocksHandlersRegistered.ContainsKey(obj.PacketType))
+            if(!_blocksHandlersRegistered.ContainsKey(obj.LedgerType))
             {
-                _blocksHandlersRegistered.Add(obj.PacketType, new HashSet<IBlocksHandler>());
+                _blocksHandlersRegistered.Add(obj.LedgerType, new HashSet<IBlocksHandler>());
             }
 
-            _blocksHandlersRegistered[obj.PacketType].Add(obj);
+            _blocksHandlersRegistered[obj.LedgerType].Add(obj);
         }
     }
 }

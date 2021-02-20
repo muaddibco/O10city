@@ -18,23 +18,23 @@ namespace O10.Network.Handlers
 
             foreach (var packetVerifier in packetVerifiers)
             {
-                if(!_packetVerifiers.ContainsKey(packetVerifier.PacketType))
+                if(!_packetVerifiers.ContainsKey(packetVerifier.LedgerType))
                 {
-                    _packetVerifiers.Add(packetVerifier.PacketType, packetVerifier);
+                    _packetVerifiers.Add(packetVerifier.LedgerType, packetVerifier);
                 }
             }
         }
 
-        public IPacketVerifier GetInstance(LedgerType packetType)
+        public IPacketVerifier GetInstance(LedgerType ledgerType)
         {
-            if (!_packetVerifiers.ContainsKey(packetType))
+            if (!_packetVerifiers.ContainsKey(ledgerType))
             {
-                _log.Debug($"No verifier found for packet type {packetType}");
+                _log.Debug($"No verifier found for packet type {ledgerType}");
 
                 return null;
             }
 
-            return _packetVerifiers[packetType];
+            return _packetVerifiers[ledgerType];
         }
     }
 }

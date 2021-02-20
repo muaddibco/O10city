@@ -35,7 +35,7 @@ namespace O10.Node.DataLayer.Specific.Synchronization
         {
         }
 
-        override public LedgerType PacketType => LedgerType.Synchronization;
+        override public LedgerType LedgerType => LedgerType.Synchronization;
 
 		override public void Add(PacketBase item)
         {

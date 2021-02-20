@@ -128,7 +128,7 @@ namespace O10.Node.Core.Tests
             foreach (ushort order in transactionHeaders.Keys)
             {
                 RegistryRegisterBlock registryRegisterBlock = transactionHeaders[order];
-                WitnessStateKey key = new WitnessStateKey { PublicKey = registryRegisterBlock.Signer, Height = registryRegisterBlock.Height };
+                WitnessStateKey key = new WitnessStateKey { PublicKey = registryRegisterBlock.Source, Height = registryRegisterBlock.Height };
 
                 transactionHeaderKeys[order] = key;
             }
@@ -138,8 +138,8 @@ namespace O10.Node.Core.Tests
 
         private static SortedList<ushort, RegistryRegisterBlock> GetTransactionHeaders(ulong syncBlockHeight, ulong blockHeight, uint nonce, ushort expectedCount)
         {
-            LedgerType expectedReferencedPacketType = LedgerType.O10State;
-            ushort expectedReferencedBlockType = PacketTypes.Transaction_IssueBlindedAsset;
+            LedgerType expectedReferencedLedgerType = LedgerType.O10State;
+            ushort expectedReferencedPacketType = PacketTypes.Transaction_IssueBlindedAsset;
 
             SortedList<ushort, RegistryRegisterBlock> transactionHeaders = new SortedList<ushort, RegistryRegisterBlock>(expectedCount);
             for (ushort j = 0; j < expectedCount; j++)
@@ -150,8 +150,8 @@ namespace O10.Node.Core.Tests
                     Nonce = nonce + j,
                     PowHash = BinaryHelper.GetPowHash(1234 + j),
                     Height = blockHeight,
-                    ReferencedPacketType = expectedReferencedPacketType,
-                    ReferencedBlockType = expectedReferencedBlockType,
+                    ReferencedLedgerType = expectedReferencedLedgerType,
+                    ReferencedBlockType = expectedReferencedPacketType,
                     ReferencedBodyHash = BinaryHelper.GetDefaultHash(473826643 + j),
                     ReferencedTarget = BinaryHelper.GetDefaultHash(BinaryHelper.GetRandomPublicKey())
                 };
@@ -187,7 +187,7 @@ namespace O10.Node.Core.Tests
             Ed25519.KeyPairFromSeed(out publicKey, out expandedPrivateKey, privateKey);
             signingService.WhenForAnyArgs(s => s.Sign(null, null)).Do(c => 
             {
-                ((SignedPacketBase)c.ArgAt<IPacket>(0)).Signer = new Key32() { Value = publicKey };
+                ((SignedPacketBase)c.ArgAt<IPacket>(0)).Source = new Key32() { Value = publicKey };
                 ((SignedPacketBase)c.ArgAt<IPacket>(0)).Signature = Ed25519.Sign(c.Arg<byte[]>(), expandedPrivateKey);
             });
             signingService.PublicKeys.Returns(new IKey[] { new Key32() { Value = publicKey } });

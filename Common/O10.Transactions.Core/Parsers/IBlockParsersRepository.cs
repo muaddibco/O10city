@@ -7,6 +7,6 @@ namespace O10.Transactions.Core.Parsers
     [ExtensionPoint]
     public interface IBlockParsersRepository : IRepository<IBlockParser, ushort>
     {
-        LedgerType PacketType { get; }
+        LedgerType LedgerType { get; }
     }
 }

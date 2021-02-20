@@ -24,10 +24,10 @@ namespace O10.Transactions.Core.Serializers
 
         private bool _disposed = false; // To detect redundant calls
 
-        public SerializerBase(IServiceProvider serviceProvider, LedgerType packetType, ushort blockType)
+        public SerializerBase(IServiceProvider serviceProvider, LedgerType ledgerType, ushort blockType)
         {
-            PacketType = packetType;
-            BlockType = blockType;
+            LedgerType = packetType;
+            PacketType = blockType;
 
             _memoryStream = new MemoryStream();
             _binaryWriter = new BinaryWriter(_memoryStream);
@@ -39,8 +39,8 @@ namespace O10.Transactions.Core.Serializers
             }
         }
 
-        public LedgerType PacketType { get; }
-        public ushort BlockType { get; }
+        public LedgerType LedgerType { get; }
+        public ushort PacketType { get; }
 
         public abstract void SerializeBody();
 

@@ -113,7 +113,7 @@ namespace O10.Network.Handlers
             _log.Debug(() => $"Packet being parsed {messagePacket.ToHexString()}");
 
             PacketBase blockBase = null;
-            LedgerType packetType = (LedgerType)BitConverter.ToUInt16(messagePacket, 0);
+            LedgerType ledgerType = (LedgerType)BitConverter.ToUInt16(messagePacket, 0);
             const int blockTypePos = Globals.PACKET_TYPE_LENGTH + Globals.SYNC_BLOCK_HEIGHT_LENGTH + Globals.NONCE_LENGTH + Globals.POW_HASH_SIZE + Globals.VERSION_LENGTH;
 
             if (messagePacket.Length < blockTypePos + 2)
@@ -125,9 +125,9 @@ namespace O10.Network.Handlers
             ushort blockType = BitConverter.ToUInt16(messagePacket, Globals.PACKET_TYPE_LENGTH + Globals.SYNC_BLOCK_HEIGHT_LENGTH + Globals.NONCE_LENGTH + Globals.POW_HASH_SIZE + Globals.VERSION_LENGTH);
             try
             {
-                _log.Debug($"Parsing packet of type {packetType} and block type {blockType}");
+                _log.Debug($"Parsing packet of type {ledgerType} and block type {blockType}");
 
-                IBlockParsersRepository blockParsersFactory = _blockParsersFactoriesRepository.GetBlockParsersRepository(packetType);
+                IBlockParsersRepository blockParsersFactory = _blockParsersFactoriesRepository.GetBlockParsersRepository(ledgerType);
 
                 if (blockParsersFactory != null)
                 {
@@ -139,17 +139,17 @@ namespace O10.Network.Handlers
                     }
                     else
                     {
-                        _log.Error($"Block parser of packet type {packetType} and block type {blockType} not found! Message: {messagePacket.ToHexString()}");
+                        _log.Error($"Block parser of packet type {ledgerType} and block type {blockType} not found! Message: {messagePacket.ToHexString()}");
                     }
                 }
                 else
                 {
-                    _log.Error($"Block parser factory of packet type {packetType} not found! Message: {messagePacket.ToHexString()}");
+                    _log.Error($"Block parser factory of packet type {ledgerType} not found! Message: {messagePacket.ToHexString()}");
                 }
             }
             catch (Exception ex)
             {
-                _log.Error($"Failed to parse message of packet type {packetType} and block type {blockType}: {messagePacket.ToHexString()}", ex);
+                _log.Error($"Failed to parse message of packet type {ledgerType} and block type {blockType}: {messagePacket.ToHexString()}", ex);
             }
 
             _trackingService.TrackMetric("ParsingThroughput", 1);

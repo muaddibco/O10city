@@ -134,7 +134,7 @@ namespace O10.Gateway.Common.Services
             EvidenceDescriptor evidenceDescriptor = new EvidenceDescriptor
             {
                 ActionType = packet.PacketType,
-                PacketType = (LedgerType)packet.LedgerType,
+                LedgerType = (LedgerType)packet.LedgerType,
                 Parameters = new Dictionary<string, string> { { "BodyHash", _hashCalculation.CalculateHash(packet.RawData).ToHexString() } }
             };
 

@@ -14,7 +14,7 @@ namespace O10.Transactions.Core.Parsers.Stealth
         {
         }
 
-        public override LedgerType PacketType => LedgerType.Stealth;
+        public override LedgerType LedgerType => LedgerType.Stealth;
 
         protected override Memory<byte> ParseStealth(ushort version, Memory<byte> spanBody, out StealthBase StealthBase)
         {

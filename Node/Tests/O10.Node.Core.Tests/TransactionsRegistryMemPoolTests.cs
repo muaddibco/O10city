@@ -56,7 +56,7 @@ namespace O10.Node.Core.Tests
 
             signingService.WhenForAnyArgs(s => s.Sign(null, null)).Do(c =>
             {
-                ((SignedPacketBase)c.ArgAt<IPacket>(0)).Signer = new Key32(publicKey);
+                ((SignedPacketBase)c.ArgAt<IPacket>(0)).Source = new Key32(publicKey);
                 ((SignedPacketBase)c.ArgAt<IPacket>(0)).Signature = Ed25519.Sign(c.Arg<byte[]>(), expandedPrivateKey);
             });
             signingService.PublicKeys.ReturnsForAnyArgs(new IKey[] { new Key32(publicKey) });

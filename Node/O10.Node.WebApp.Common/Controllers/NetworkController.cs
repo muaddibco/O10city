@@ -128,8 +128,8 @@ namespace O10.Node.WebApp.Common.Controllers
 					return new TransactionInfo
 					{
 						SyncBlockHeight = blockBase.SyncHeight,
-						PacketType = (LedgerType)blockBase.LedgerType,
-						BlockType = blockBase.PacketType,
+						LedgerType = (LedgerType)blockBase.LedgerType,
+						PacketType = blockBase.PacketType,
 						Content = blockBase.RawData.ToArray()
 					};
 				}
@@ -142,8 +142,8 @@ namespace O10.Node.WebApp.Common.Controllers
 						return new TransactionInfo
 						{
 							SyncBlockHeight = blockBase.SyncHeight,
-							PacketType = (LedgerType)blockBase.LedgerType,
-							BlockType = blockBase.PacketType,
+							LedgerType = (LedgerType)blockBase.LedgerType,
+							PacketType = blockBase.PacketType,
 							Content = blockBase.RawData.ToArray()
 						};
 					}
@@ -172,8 +172,8 @@ namespace O10.Node.WebApp.Common.Controllers
 					return new TransactionInfo
 					{
 						SyncBlockHeight = blockBase.SyncHeight,
-						PacketType = (LedgerType)blockBase.LedgerType,
-						BlockType = blockBase.PacketType,
+						LedgerType = (LedgerType)blockBase.LedgerType,
+						PacketType = blockBase.PacketType,
 						Content = blockBase.RawData.ToArray()
 					};
 				}
@@ -186,8 +186,8 @@ namespace O10.Node.WebApp.Common.Controllers
 						return new TransactionInfo
 						{
 							SyncBlockHeight = blockBase.SyncHeight,
-							PacketType = (LedgerType)blockBase.LedgerType,
-							BlockType = blockBase.PacketType,
+							LedgerType = (LedgerType)blockBase.LedgerType,
+							PacketType = blockBase.PacketType,
 							Content = blockBase.RawData.ToArray()
 						};
 					}

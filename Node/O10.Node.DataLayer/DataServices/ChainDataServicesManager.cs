@@ -18,7 +18,7 @@ namespace O10.Node.DataLayer.DataServices
 
 		public IChainDataService GetChainDataService(LedgerType chainType)
         {
-            return _chainDataServices.FirstOrDefault(c => c.PacketType == chainType);
+            return _chainDataServices.FirstOrDefault(c => c.LedgerType == chainType);
         }
     }
 }

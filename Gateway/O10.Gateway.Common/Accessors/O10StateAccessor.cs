@@ -9,7 +9,7 @@ namespace O10.Gateway.Common.Accessors
 {
     public class O10StateAccessor : AccessorBase
     {
-        public override LedgerType PacketType => LedgerType.O10State;
+        public override LedgerType LedgerType => LedgerType.O10State;
 
         protected override IEnumerable<string> GetAccessingKeys()
         {

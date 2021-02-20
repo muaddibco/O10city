@@ -13,7 +13,7 @@ namespace O10.Transactions.Core.Parsers.Factories
         {
             _blockParsers = new Dictionary<ushort, IBlockParser>();
 
-            foreach (IBlockParser blockParser in blockParsers.Where(bp => bp.PacketType == PacketType))
+            foreach (IBlockParser blockParser in blockParsers.Where(bp => bp.LedgerType == LedgerType))
             {
                 if (!_blockParsers.ContainsKey(blockParser.BlockType))
                 {
@@ -22,13 +22,13 @@ namespace O10.Transactions.Core.Parsers.Factories
             }
         }
 
-        public abstract LedgerType PacketType { get; }
+        public abstract LedgerType LedgerType { get; }
 
         public IBlockParser GetInstance(ushort blockType)
         {
             if (!_blockParsers.ContainsKey(blockType))
             {
-                throw new BlockTypeNotSupportedException(blockType, PacketType);
+                throw new BlockTypeNotSupportedException(blockType, LedgerType);
             }
 
             return _blockParsers[blockType];

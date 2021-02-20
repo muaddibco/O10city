@@ -22,7 +22,7 @@ namespace O10.Transactions.Core.Parsers.Registry
 
         public override ushort BlockType => PacketTypes.Registry_ShortBlock;
 
-        public override LedgerType PacketType => LedgerType.Registry;
+        public override LedgerType LedgerType => LedgerType.Registry;
 
         protected override Memory<byte> ParseSigned(ushort version, Memory<byte> spanBody, out SignedPacketBase syncedBlockBase)
         {

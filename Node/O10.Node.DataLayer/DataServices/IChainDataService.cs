@@ -8,7 +8,7 @@ namespace O10.Node.DataLayer.DataServices
     [ExtensionPoint]
     public interface IChainDataService : IDataService<PacketBase>
     {
-        LedgerType PacketType { get; }
+        LedgerType LedgerType { get; }
 
         IChainDataServicesManager ChainDataServicesManager { set; }
 

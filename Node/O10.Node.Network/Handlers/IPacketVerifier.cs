@@ -7,7 +7,7 @@ namespace O10.Network.Handlers
     [ExtensionPoint]
     public interface IPacketVerifier
     {
-        LedgerType PacketType { get; }
+        LedgerType LedgerType { get; }
 
         bool ValidatePacket(PacketBase block);
     }

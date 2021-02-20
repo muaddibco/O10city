@@ -10,16 +10,16 @@ namespace O10.Node.DataLayer.Specific.O10Id.Model
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public long O10TransactionId { get; set; }
 
-        public O10TransactionIdentity Identity { get; set; }
+        public O10TransactionSource Source { get; set; }
 
         public O10TransactionHashKey HashKey { get; set; }
 
         public long SyncBlockHeight { get; set; }
 
-        public long BlockHeight { get; set; }
+        public long Height { get; set; }
 
-        public ushort BlockType { get; set; }
+        public ushort PacketType { get; set; }
 
-        public byte[] BlockContent { get; set; }
+        public string Content { get; set; }
     }
 }

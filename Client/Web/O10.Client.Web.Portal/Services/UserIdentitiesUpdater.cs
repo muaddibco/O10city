@@ -60,7 +60,7 @@ namespace O10.Client.Web.Portal.Services
                         if (userRootAttribute != null)
                         {
                             _clientCryptoService.DecodeEcdhTuple(packet.TransferredAsset.EcdhTuple, packet.TransactionPublicKey, out byte[] blindingFactor, out byte[] assetId);
-                            await _assetsService.GetAttributeSchemeName(assetId, packet.Signer.ToString()).ContinueWith(t =>
+                            await _assetsService.GetAttributeSchemeName(assetId, packet.Source.ToString()).ContinueWith(t =>
                             {
                                 if (t.IsCompleted && !t.IsFaulted)
                                 {
@@ -69,7 +69,7 @@ namespace O10.Client.Web.Portal.Services
                                     new UserAttributeDto
                                     {
                                         SchemeName = t.Result,
-                                        Source = packet.Signer.ToString(),
+                                        Source = packet.Source.ToString(),
                                         Content = userRootAttribute.Content,
                                         Validated = true,
                                         IsOverriden = false
@@ -116,7 +116,7 @@ namespace O10.Client.Web.Portal.Services
         private async Task ObtainRegistrations(TransferAssetToStealth packet, byte[] assetId)
         {
             _logger.Debug($"[{_accountId}]: {nameof(ObtainRegistrations)}");
-            IEnumerable<RegistrationKeyDescriptionStore> userRegistrations = await _schemeResolverService.GetRegistrationCommitments(packet.Signer.ToString(), assetId.ToHexString()).ConfigureAwait(false);
+            IEnumerable<RegistrationKeyDescriptionStore> userRegistrations = await _schemeResolverService.GetRegistrationCommitments(packet.Source.ToString(), assetId.ToHexString()).ConfigureAwait(false);
             foreach (var userRegistration in userRegistrations)
             {
                 string groupOwnerName = await _schemeResolverService.ResolveIssuer(userRegistration.Key).ConfigureAwait(false);
@@ -140,7 +140,7 @@ namespace O10.Client.Web.Portal.Services
         private async Task ObtainRelations(TransferAssetToStealth packet, byte[] assetId)
         {
             _logger.Debug($"[{_accountId}]: {nameof(ObtainRelations)}");
-            IEnumerable<RegistrationKeyDescriptionStore> groupRelations = await _schemeResolverService.GetGroupRelations(packet.Signer.ToString(), assetId.ToHexString()).ConfigureAwait(false);
+            IEnumerable<RegistrationKeyDescriptionStore> groupRelations = await _schemeResolverService.GetGroupRelations(packet.Source.ToString(), assetId.ToHexString()).ConfigureAwait(false);
             foreach (var groupRelation in groupRelations)
             {
                 string groupOwnerName = await _schemeResolverService.ResolveIssuer(groupRelation.Key).ConfigureAwait(false);

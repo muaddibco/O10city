@@ -41,7 +41,12 @@ namespace O10.Core.Models
 
         public override string ToString()
         {
-            return GetType().Name;
+            return JsonConvert.SerializeObject(this, new ByteArrayJsonConverter(), new KeyJsonConverter(), new MemoryByteJsonConverter());
+        }
+
+        public static T Create<T>(string content) where T: PacketBase
+        {
+            return JsonConvert.DeserializeObject<T>(content, new ByteArrayJsonConverter(), new KeyJsonConverter(), new MemoryByteJsonConverter());
         }
     }
 }

@@ -88,7 +88,7 @@ namespace O10.Node.Core.Synchronization
 
         public string Name => NAME;
 
-        public LedgerType PacketType => LedgerType.Registry;
+        public LedgerType LedgerType => LedgerType.Registry;
 
         public void Initialize(CancellationToken ct)
         {

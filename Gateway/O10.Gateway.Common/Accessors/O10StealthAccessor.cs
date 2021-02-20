@@ -51,7 +51,7 @@ namespace O10.Gateway.Common.Accessors
             _logger = loggerService.GetLogger(nameof(O10StealthAccessor));
         }
 
-        public override LedgerType PacketType => LedgerType.Stealth;
+        public override LedgerType LedgerType => LedgerType.Stealth;
 
         protected override IEnumerable<string> GetAccessingKeys() => AccessingKeys;
 
@@ -93,12 +93,12 @@ namespace O10.Gateway.Common.Accessors
 
                 if (transactionInfo.Content?.Any() ?? false)
                 {
-                    _logger.Info($"Stealth packet with Packet Type {transactionInfo.PacketType} and BlockType {transactionInfo.BlockType} at SyncBlockHeight {transactionInfo.SyncBlockHeight} obtained");
+                    _logger.Info($"Stealth packet with Packet Type {transactionInfo.LedgerType} and BlockType {transactionInfo.PacketType} at SyncBlockHeight {transactionInfo.SyncBlockHeight} obtained");
                     StorePacket(tuple.Item1, t1.Result.Content);
                 }
                 else
                 {
-                    _logger.Error($"Empty Stealth packet with Packet Type {transactionInfo.PacketType} and BlockType {transactionInfo.BlockType} at SyncBlockHeight {transactionInfo.SyncBlockHeight}  obtained");
+                    _logger.Error($"Empty Stealth packet with Packet Type {transactionInfo.LedgerType} and BlockType {transactionInfo.PacketType} at SyncBlockHeight {transactionInfo.SyncBlockHeight}  obtained");
                 }
 
                 Tuple<WitnessPacket, TaskCompletionSource<WitnessPacket>> tuple = (Tuple<WitnessPacket, TaskCompletionSource<WitnessPacket>>)o2;

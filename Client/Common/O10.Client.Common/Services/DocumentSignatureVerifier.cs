@@ -39,12 +39,12 @@ namespace O10.Client.Common.Services
 			var packetInfoDocumentSignRecord = await _gatewayService.GetTransactionBySourceAndHeight(documentCreator.ToHexString(), signatureRecordBlockHeight).ConfigureAwait(false);
 			var packetInfoDocumentRecord = await _gatewayService.GetTransactionBySourceAndHeight(documentCreator.ToHexString(), documentRecordHeight).ConfigureAwait(false);
 
-			IBlockParsersRepository blockParsersRepository = _blockParsersRepositoriesRepository.GetBlockParsersRepository(packetInfoDocumentSignRecord.PacketType);
+			IBlockParsersRepository blockParsersRepository = _blockParsersRepositoriesRepository.GetBlockParsersRepository(packetInfoDocumentSignRecord.LedgerType);
 			IBlockParser blockParser = blockParsersRepository.GetInstance(packetInfoDocumentSignRecord.BlockType);
 
 			DocumentSignRecord documentSignRecord = blockParser.Parse(packetInfoDocumentSignRecord.Content) as DocumentSignRecord;
 
-			blockParsersRepository = _blockParsersRepositoriesRepository.GetBlockParsersRepository(packetInfoDocumentRecord.PacketType);
+			blockParsersRepository = _blockParsersRepositoriesRepository.GetBlockParsersRepository(packetInfoDocumentRecord.LedgerType);
 			blockParser = blockParsersRepository.GetInstance(packetInfoDocumentRecord.BlockType);
 
 			res.SignatureTransactionFound = documentSignRecord != null;

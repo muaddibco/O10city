@@ -101,8 +101,8 @@ namespace O10.Client.Common.Communication
 
                         foreach (var packetInfo in packetInfos)
                         {
-                            _logger.LogIfDebug(() => $"[{_accountId}]: processing packet PacketType={packetInfo.PacketType}, BlockType={packetInfo.BlockType}");
-                            IBlockParsersRepository blockParsersRepository = _blockParsersRepositoriesRepository.GetBlockParsersRepository(packetInfo.PacketType);
+                            _logger.LogIfDebug(() => $"[{_accountId}]: processing packet PacketType={packetInfo.LedgerType}, BlockType={packetInfo.BlockType}");
+                            IBlockParsersRepository blockParsersRepository = _blockParsersRepositoriesRepository.GetBlockParsersRepository(packetInfo.LedgerType);
                             IBlockParser blockParser = blockParsersRepository?.GetInstance(packetInfo.BlockType);
                             PacketBase packetBase = blockParser?.Parse(packetInfo.Content);
 

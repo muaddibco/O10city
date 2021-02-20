@@ -3,7 +3,6 @@ using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Ledgers.O10State;
 using O10.Core.Architecture;
 using O10.Core.Translators;
-using O10.Core.Identity;
 using O10.Core.Models;
 using System.Threading;
 using O10.Core.Logging;
@@ -16,20 +15,25 @@ using O10.Node.DataLayer.Exceptions;
 using System;
 using O10.Node.DataLayer.Specific.O10Id.Model;
 using O10.Core.Serialization;
+using O10.Core.HashCalculations;
+using O10.Core;
 
 namespace O10.Node.DataLayer.Specific.O10Id
 {
     [RegisterExtension(typeof(IChainDataService), Lifetime = LifetimeManagement.Singleton)]
     public class DataService : ChainDataServiceBase<DataAccessService>
     {
-		public override LedgerType PacketType => LedgerType.O10State;
+        private readonly IHashCalculation _defaultHashCalculation;
+        public override LedgerType LedgerType => LedgerType.O10State;
 
         public DataService(
             INodeDataAccessServiceRepository dataAccessServiceRepository,
+            IHashCalculationsRepository hashCalculationsRepository,
             ITranslatorsRepository translatorsRepository,
             ILoggerService loggerService)
             : base(dataAccessServiceRepository, translatorsRepository, loggerService)
         {
+            _defaultHashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
         }
 
         public override void Add(PacketBase packet)
@@ -43,9 +47,8 @@ namespace O10.Node.DataLayer.Specific.O10Id
 
             if (packet is TransactionalPacketBase transactionalBlockBase)
             {
-                IKey key = transactionalBlockBase.Signer;
-
-                Service.AddTransactionalBlock(key, (long)transactionalBlockBase.SyncHeight, transactionalBlockBase.PacketType, (long)transactionalBlockBase.Height, transactionalBlockBase.RawData.ToArray());
+                var hash = _defaultHashCalculation.CalculateHash(packet.ToString());
+                Service.AddTransaction(transactionalBlockBase.Source, (long)transactionalBlockBase.SyncHeight, transactionalBlockBase.PacketType, (long)transactionalBlockBase.Height, packet.ToString(), hash);
                 Logger?.LogIfDebug(() => $"Storing of {packet.GetType().Name} completed");
             }
             else

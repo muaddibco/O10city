@@ -19,7 +19,7 @@ namespace O10.Transactions.Core.Parsers.Registry
         {
         }
 
-        public override LedgerType PacketType => LedgerType.Registry;
+        public override LedgerType LedgerType => LedgerType.Registry;
 
         public override ushort BlockType => PacketTypes.Registry_RegisterStealth;
 
@@ -29,7 +29,7 @@ namespace O10.Transactions.Core.Parsers.Registry
             {
                 int readBytes = 0;
 
-                LedgerType referencedPacketType = (LedgerType)BinaryPrimitives.ReadUInt16LittleEndian(spanBody.Span);
+                LedgerType referencedLedgerType = (LedgerType)BinaryPrimitives.ReadUInt16LittleEndian(spanBody.Span);
                 readBytes += 2;
 
                 ushort referencedBlockType = BinaryPrimitives.ReadUInt16LittleEndian(spanBody.Span.Slice(readBytes));
@@ -40,7 +40,7 @@ namespace O10.Transactions.Core.Parsers.Registry
 
                 RegistryRegisterStealth registryRegisterStealthBlock = new RegistryRegisterStealth
                 {
-                    ReferencedPacketType = referencedPacketType,
+                    ReferencedLedgerType = referencedLedgerType,
                     ReferencedBlockType = referencedBlockType,
                     ReferencedBodyHash = referencedBlockHash,
                 };

@@ -9,7 +9,7 @@ namespace O10.Transactions.Core.Ledgers.Registry
 
         public override ushort Version => 1;
 
-        public LedgerType ReferencedPacketType { get; set; }
+        public LedgerType ReferencedLedgerType { get; set; }
 
         public ushort ReferencedAction { get; set; }
 

@@ -10,7 +10,7 @@ namespace O10.Node.Core.Tests
 {
     public static class PacketsBuilder
     {
-        public static RegistryRegisterBlock GetTransactionRegisterBlock(ulong syncBlockHeight, uint nonce, byte[] powHash, ulong blockHeight, LedgerType referencedPacketType, 
+        public static RegistryRegisterBlock GetTransactionRegisterBlock(ulong syncBlockHeight, uint nonce, byte[] powHash, ulong blockHeight, LedgerType referencedLedgerType, 
             ushort referencedBlockType, byte[] referencedBlockHash, byte[] referencedTarget, byte[] privateKey)
         {
             byte[] publicKey = Ed25519.PublicKeyFromSeed(privateKey);
@@ -20,11 +20,11 @@ namespace O10.Node.Core.Tests
                 Nonce = nonce,
                 PowHash = powHash??new byte[Globals.POW_HASH_SIZE],
                 Height = blockHeight,
-                ReferencedPacketType = referencedPacketType,
+                ReferencedLedgerType = referencedLedgerType,
                 ReferencedBlockType = referencedBlockType,
                 ReferencedBodyHash = referencedBlockHash,
                 ReferencedTarget = referencedTarget,
-                Signer = new Key32(publicKey)
+                Source = new Key32(publicKey)
             };
 
             return transactionRegisterBlock;
@@ -39,7 +39,7 @@ namespace O10.Node.Core.Tests
             ushort order = 0;
             foreach (var item in transactionRegisterBlocks)
             {
-                transactionHeaders[order++] = new WitnessStateKey { PublicKey = item.Signer, Height = item.Height };
+                transactionHeaders[order++] = new WitnessStateKey { PublicKey = item.Source, Height = item.Height };
             }
 
             RegistryShortBlock transactionsShortBlock = new RegistryShortBlock
@@ -49,7 +49,7 @@ namespace O10.Node.Core.Tests
                 PowHash = powHash ?? new byte[Globals.POW_HASH_SIZE],
                 Height = blockHeight,
                 WitnessStateKeys = transactionHeaders,
-                Signer = new Key32(publicKey)
+                Source = new Key32(publicKey)
             };
 
             return transactionsShortBlock;

@@ -65,8 +65,8 @@ namespace O10.Node.Worker.Services
 					{
 						RtPackage rtPackage = new RtPackage
 						{
-							CombinedBlock = new TransactionInfo { SyncBlockHeight = item.Item1.SyncHeight, PacketType = (LedgerType)item.Item1.LedgerType, BlockType = item.Item1.PacketType, Content = item.Item1.RawData.ToArray() },
-							RegistryFullBlock = new TransactionInfo { SyncBlockHeight = item.Item2.SyncHeight, PacketType = (LedgerType)item.Item2.LedgerType, BlockType = item.Item2.PacketType, Content = item.Item2.RawData.ToArray() },
+							CombinedBlock = new TransactionInfo { SyncBlockHeight = item.Item1.SyncHeight, LedgerType = (LedgerType)item.Item1.LedgerType, PacketType = item.Item1.PacketType, Content = item.Item1.RawData.ToArray() },
+							RegistryFullBlock = new TransactionInfo { SyncBlockHeight = item.Item2.SyncHeight, LedgerType = (LedgerType)item.Item2.LedgerType, PacketType = item.Item2.PacketType, Content = item.Item2.RawData.ToArray() },
 						};
 
 						_logger.Debug("Propagating package to Gateways");

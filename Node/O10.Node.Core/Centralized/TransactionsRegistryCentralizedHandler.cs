@@ -31,7 +31,7 @@ namespace O10.Node.Core.Centralized
 
         public string Name => NAME;
 
-        public LedgerType PacketType => LedgerType.Registry;
+        public LedgerType LedgerType => LedgerType.Registry;
 
         private readonly object _sync = new object();
         private readonly IRealTimeRegistryService _realTimeRegistryService;
@@ -180,7 +180,7 @@ namespace O10.Node.Core.Centralized
                 Nonce = transactionsFullBlock.Nonce,
                 PowHash = transactionsFullBlock.PowHash,
                 Height = transactionsFullBlock.Height,
-                WitnessStateKeys = transactionsFullBlock.StateWitnesses.Select(w => new WitnessStateKey { PublicKey = w.Signer, Height = w.Height }).ToArray(),
+                WitnessStateKeys = transactionsFullBlock.StateWitnesses.Select(w => new WitnessStateKey { PublicKey = w.Source, Height = w.Height }).ToArray(),
                 WitnessUtxoKeys = transactionsFullBlock.StealthWitnesses.Select(w => new WitnessUtxoKey { KeyImage = w.KeyImage }).ToArray()
             };
 

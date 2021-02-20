@@ -23,7 +23,7 @@ namespace O10.Transactions.Core.Parsers
 
             signedBlockBase.Height = blockHeight;
             signedBlockBase.Signature = spanPostBody.Slice(0, Globals.SIGNATURE_SIZE);
-            signedBlockBase.Signer = _signerIdentityKeyProvider.GetKey(spanPostBody.Slice(Globals.SIGNATURE_SIZE, Globals.NODE_PUBLIC_KEY_SIZE));
+            signedBlockBase.Source = _signerIdentityKeyProvider.GetKey(spanPostBody.Slice(Globals.SIGNATURE_SIZE, Globals.NODE_PUBLIC_KEY_SIZE));
 
             spanPostBody = spanPostBody.Slice(Globals.SIGNATURE_SIZE + Globals.NODE_PUBLIC_KEY_SIZE);
             return signedBlockBase;

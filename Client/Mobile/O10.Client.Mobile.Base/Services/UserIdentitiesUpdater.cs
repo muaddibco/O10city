@@ -72,7 +72,7 @@ namespace O10.Client.Mobile.Base.Services
                         {
                             _clientCryptoService.DecodeEcdhTuple(packet.TransferredAsset.EcdhTuple, packet.TransactionPublicKey, out byte[] blindingFactor, out byte[] assetId);
 
-                            string issuer = packet.Signer.ToString();
+                            string issuer = packet.Source.ToString();
 
                             await RecoverAssociatedAttributes(issuer, assetId).ConfigureAwait(false);
 
@@ -128,7 +128,7 @@ namespace O10.Client.Mobile.Base.Services
             {
                 UserAttributeId = userRootAttribute.UserAttributeId,
                 SchemeName = userRootAttribute.SchemeName,
-                Source = packet.Signer.Value.ToArray().ToHexString(),
+                Source = packet.Source.Value.ToArray().ToHexString(),
                 AssetId = assetId.ToHexString(),
                 OriginalBlindingFactor = blindingFactor.ToHexString(),
                 OriginalCommitment = packet.TransferredAsset.AssetCommitment.ToHexString(),

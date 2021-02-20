@@ -7,7 +7,7 @@ namespace O10.Node.DataLayer.DataServices
 	[ServiceContract]
     public interface IChainDataServicesManager
     {
-        IChainDataService GetChainDataService(LedgerType chainType);
+        IChainDataService GetChainDataService(LedgerType ledgerType);
 
 		IEnumerable<IChainDataService> GetAll();
     }

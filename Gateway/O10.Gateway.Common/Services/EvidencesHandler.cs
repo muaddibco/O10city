@@ -54,13 +54,13 @@ namespace O10.Gateway.Common.Services
 
         private bool ValidateEvidence(DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase> wrapper)
         {
-            if(wrapper.State.PacketType == LedgerType.Stealth || wrapper.State.PacketType == LedgerType.O10State)
+            if(wrapper.State.LedgerType == LedgerType.Stealth || wrapper.State.LedgerType == LedgerType.O10State)
             {
                 // TODO: replace this with an apporopriate logic that waits for packet to be stored in a node storage
                 return true;
             }
 
-            var accessor = _accessorProvider.GetInstance(wrapper.State.PacketType);
+            var accessor = _accessorProvider.GetInstance(wrapper.State.LedgerType);
             var packet = accessor.GetPacket<PacketBase>(wrapper.State);
 
             return packet != null;

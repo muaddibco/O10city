@@ -13,7 +13,7 @@ namespace O10.Transactions.Core.Parsers.Synchronization
         {
         }
 
-        public override LedgerType PacketType => LedgerType.Synchronization;
+        public override LedgerType LedgerType => LedgerType.Synchronization;
 
         protected override Memory<byte> ParseLinked(ushort version, Memory<byte> spanBody, out LinkedPacketBase syncedBlockBase)
         {

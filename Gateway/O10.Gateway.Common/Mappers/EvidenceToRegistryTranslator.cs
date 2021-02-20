@@ -18,7 +18,7 @@ namespace O10.Gateway.Common.Mappers
 
             var packet = new RegistryRegisterExBlock
             {
-                ReferencedPacketType = descriptor.PacketType,
+                ReferencedLedgerType = descriptor.LedgerType,
                 ReferencedAction = descriptor.ActionType,
                 Parameters = descriptor.Parameters
             };

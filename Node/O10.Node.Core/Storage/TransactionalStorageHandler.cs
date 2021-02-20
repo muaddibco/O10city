@@ -19,6 +19,6 @@ namespace O10.Node.Core.Storage
 
         public override string Name => NAME;
 
-        public override LedgerType PacketType => LedgerType.O10State;
+        public override LedgerType LedgerType => LedgerType.O10State;
     }
 }

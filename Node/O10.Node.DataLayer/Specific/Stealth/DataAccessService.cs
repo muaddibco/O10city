@@ -47,7 +47,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
             _defaultHashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
         }
 
-        public override LedgerType PacketType => LedgerType.Stealth;
+        public override LedgerType LedgerType => LedgerType.Stealth;
 
         protected override void PostInitTasks()
         {
@@ -65,7 +65,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
             return _keyImages.Contains(keyImage);
         }
 
-        public bool AddStealthBlock(IKey keyImage, ulong syncBlockHeight, ushort blockType, byte[] destinationKey, byte[] blockContent)
+        public bool AddStealthBlock(IKey keyImage, ulong syncBlockHeight, ushort blockType, byte[] destinationKey, string content)
         {
             if (keyImage is null)
             {
@@ -97,7 +97,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
             StealthTransactionHashKey blockHashKey = new StealthTransactionHashKey
             {
                 SyncBlockHeight = syncBlockHeight,
-                Hash = _defaultHashCalculation.CalculateHash(blockContent).ToHexString()
+                Hash = _defaultHashCalculation.CalculateHash(content).ToHexString()
             };
 
             StealthTransaction StealthBlock = new StealthTransaction
@@ -107,7 +107,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
                 SyncBlockHeight = syncBlockHeight,
                 BlockType = blockType,
                 DestinationKey = destinationKey.ToHexString(),
-                Content = blockContent
+                Content = content
             };
 
             lock (Sync)

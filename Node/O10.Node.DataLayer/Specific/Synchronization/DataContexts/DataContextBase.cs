@@ -7,7 +7,7 @@ namespace O10.Node.DataLayer.Specific.Synchronization.DataContexts
 {
     public abstract class SynchronizationDataContextBase : NodeDataContextBase
 	{
-        public override LedgerType PacketType => LedgerType.Synchronization;
+        public override LedgerType LedgerType => LedgerType.Synchronization;
 
         public DbSet<SynchronizationBlock> SynchronizationBlocks { get; set; }
 

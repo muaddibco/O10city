@@ -16,7 +16,7 @@ namespace O10.Node.DataLayer.DataAccess
                                        ITranslatorsRepository translatorsRepository,
                                        ILoggerService loggerService)
         {
-            Service = (T)dataAccessServiceRepository.GetInstance(PacketType);
+            Service = (T)dataAccessServiceRepository.GetInstance(LedgerType);
             TranslatorsRepository = translatorsRepository;
             Logger = loggerService.GetLogger(GetType().Name);
         }
@@ -25,7 +25,7 @@ namespace O10.Node.DataLayer.DataAccess
         protected ITranslatorsRepository TranslatorsRepository { get; }
         protected ILogger Logger { get; }
 
-        public abstract LedgerType PacketType { get; }
+        public abstract LedgerType LedgerType { get; }
         public IChainDataServicesManager ChainDataServicesManager { protected get; set; }
 
         public abstract void Add(PacketBase item);

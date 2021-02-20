@@ -17,9 +17,9 @@ namespace O10.Gateway.DataLayer.Model
 
         public long CombinedBlockHeight { get; set; }
 
-        public LedgerType ReferencedPacketType { get; set; }
+        public LedgerType ReferencedLedgerType { get; set; }
 
-        public ushort ReferencedBlockType { get; set; }
+        public ushort ReferencedPacketType { get; set; }
 
         public PacketHash ReferencedBodyHash { get; set; }
 

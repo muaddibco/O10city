@@ -8,7 +8,7 @@ namespace O10.Transactions.Core.Serializers.Signed
 {
     public abstract class LinkedSerializerBase<T> : SignatureSupportSerializerBase<T> where T : LinkedPacketBase
     {
-        public LinkedSerializerBase(IServiceProvider serviceProvider, LedgerType packetType, ushort blockType) 
+        public LinkedSerializerBase(IServiceProvider serviceProvider, LedgerType ledgerType, ushort blockType) 
             : base(serviceProvider, packetType, blockType)
         {
         }
