@@ -18,6 +18,7 @@ using O10.Network.Topology;
 using O10.Core.DataLayer;
 using O10.Node.Core.DataLayer;
 using O10.Node.Core.DataLayer.DataContexts;
+using O10.Crypto.Services;
 
 namespace O10.Node.WebApp.Common
 {

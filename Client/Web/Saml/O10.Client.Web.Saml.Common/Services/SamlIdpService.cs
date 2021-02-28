@@ -29,10 +29,11 @@ using System.Web;
 using O10.Client.Common.Communication.Notifications;
 using O10.Core.Models;
 using O10.Core.Notifications;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Client.Web.Saml.Common.Services
 {
-	public class SamlIdpService
+    public class SamlIdpService
 	{
 		private readonly ILogger _logger;
 		private readonly StealthPacketsExtractor _utxoPacketsExtractor;

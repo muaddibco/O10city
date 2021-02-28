@@ -6,6 +6,7 @@ using O10.Core.Architecture;
 using O10.Core.Configuration;
 using O10.Core.Models;
 using O10.Core.Notifications;
+using O10.Transactions.Core.Ledgers;
 using System;
 using System.Threading;
 using System.Threading.Tasks;

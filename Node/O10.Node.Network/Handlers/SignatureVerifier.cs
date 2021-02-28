@@ -1,7 +1,10 @@
 ﻿using O10.Core.Models;
 using O10.Core.Architecture;
-using O10.Core.Cryptography;
 using O10.Core.Logging;
+using O10.Transactions.Core.Ledgers;
+using O10.Crypto.Services;
+using O10.Crypto.Models;
+using System;
 
 namespace O10.Network.Handlers
 {
@@ -17,20 +20,35 @@ namespace O10.Network.Handlers
             _signingServicesRepository = signingServicesRepository;
         }
 
-        public bool VerifyBlock(PacketBase blockBase)
+        public bool VerifyBlock(IPacketBase packet)
         {
+            if (packet is null)
+            {
+                throw new ArgumentNullException(nameof(packet));
+            }
+
+            if(packet.Body == null || packet.Signature == null)
+            {
+                throw new ArgumentException("Packet must have both - body and signature", nameof(packet));
+            }
+
             bool res = false;
 
-            if (blockBase is SignedPacketBase)
+            if (packet.Body is SingleSourceTransactionBase && packet.Signature is SingleSourceSignature)
             {
-                res = _signingServicesRepository.GetInstance("AccountSigningService").Verify(blockBase);
+                res = _signingServicesRepository.GetInstance(nameof(Ed25519SigningService)).Verify(packet.Body, packet.Signature);
             }
-            else if(blockBase is StealthSignedPacketBase)
+            else if(packet.Body is StealthTransactionBase && packet.Signature is StealthSignature)
             {
-                res = _signingServicesRepository.GetInstance("UtxoSigningService").Verify(blockBase);
+                res = _signingServicesRepository.GetInstance(nameof(StealthSigningService)).Verify(packet.Body, packet.Signature);
 
 				//TODO: !!! urgently check why signatures validation fails
 				res = true;
+            }
+            else
+            {
+                _log.Error($"Failed to find the appropriate Signing Service for the Transaction of type {packet.Body.GetType().FullName} and Signature of type {packet.Signature.GetType().FullName}");
+                return false;
             }
 
 

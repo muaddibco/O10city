@@ -12,9 +12,9 @@ using O10.Core.Communication;
 using O10.Core.States;
 using O10.Core.Synchronization;
 using O10.Core.HashCalculations;
-using O10.Core.Models;
 using O10.Core;
 using O10.Node.DataLayer.DataServices;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Node.Core.Common
 {

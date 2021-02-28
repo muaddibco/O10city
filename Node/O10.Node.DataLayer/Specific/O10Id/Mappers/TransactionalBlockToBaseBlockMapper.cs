@@ -1,7 +1,7 @@
 ﻿using O10.Node.DataLayer.Specific.O10Id.Model;
 using O10.Core.Architecture;
-using O10.Core.Models;
 using O10.Core.Translators;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Node.DataLayer.Specific.O10Id.Mappers
 {
@@ -15,7 +15,7 @@ namespace O10.Node.DataLayer.Specific.O10Id.Mappers
                 return null;
             }
 
-            return PacketBase.Create<PacketBase>(transactionalBlock.Content);
+            return PacketBase.Create(transactionalBlock.Content);
         }
     }
 }

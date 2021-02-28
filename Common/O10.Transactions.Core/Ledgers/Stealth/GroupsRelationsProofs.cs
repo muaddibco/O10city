@@ -8,7 +8,7 @@ namespace O10.Transactions.Core.Ledgers.Stealth
     {
         public override ushort Version => 1;
 
-        public override ushort PacketType => PacketTypes.Stealth_GroupsRelationsProofs;
+        public override ushort TransactionType => TransactionTypes.Stealth_GroupsRelationsProofs;
 
         /// <summary>
         /// Contains encrypted blinding factor of AssetCommitment: x` = x ^ (r * A). To decrypt receiver makes (R * a) ^ x` = x.

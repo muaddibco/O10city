@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using O10.Transactions.Core.Ledgers.O10State;
 using O10.Client.Common.Interfaces;
-using O10.Core.Models;
 using O10.Core.ExtensionMethods;
 using O10.Client.Web.Common.Hubs;
 using O10.Client.DataLayer.Services;
@@ -20,6 +19,7 @@ using Newtonsoft.Json;
 using O10.Core.Serialization;
 using O10.Client.Common.Communication.Notifications;
 using O10.Core.Notifications;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Client.Web.Portal.Services
 {

@@ -61,11 +61,11 @@ namespace O10.Crypto.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Service {0} expects instance of packet of type {1} for signing and verifying.
+        ///   Looks up a localized string similar to Service {0} expects body of type {1} for verifying.
         /// </summary>
-        internal static string ERR_WRONG_PACKET_BASE_TYPE {
+        internal static string ERR_WRONG_BODY_TYPE {
             get {
-                return ResourceManager.GetString("ERR_WRONG_PACKET_BASE_TYPE", resourceCulture);
+                return ResourceManager.GetString("ERR_WRONG_BODY_TYPE", resourceCulture);
             }
         }
         
@@ -75,6 +75,15 @@ namespace O10.Crypto.Properties {
         internal static string ERR_WRONG_SECRECT_KEYS_NUMBER {
             get {
                 return ResourceManager.GetString("ERR_WRONG_SECRECT_KEYS_NUMBER", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Service {0} expects signature of type {1} for verifying.
+        /// </summary>
+        internal static string ERR_WRONG_SIGNATURE_TYPE {
+            get {
+                return ResourceManager.GetString("ERR_WRONG_SIGNATURE_TYPE", resourceCulture);
             }
         }
     }

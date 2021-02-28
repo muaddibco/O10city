@@ -7,6 +7,7 @@ using O10.Client.DataLayer.Services;
 using O10.Core.Logging;
 using O10.Core.Models;
 using O10.Core.Notifications;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Client.Common.Communication
 {

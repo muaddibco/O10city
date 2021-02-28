@@ -22,13 +22,13 @@ using O10.Core.Configuration;
 using O10.Core.ExtensionMethods;
 using O10.Core.HashCalculations;
 using O10.Core.Logging;
-using O10.Core.Models;
 using O10.Crypto.ConfidentialAssets;
 using O10.Client.Web.Portal.Dtos.ServiceProvider;
 using O10.Client.Web.Portal.Hubs;
 using Microsoft.Extensions.DependencyInjection;
 using O10.Core.Serialization;
 using O10.Core.Notifications;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Client.Web.Portal.Services
 {

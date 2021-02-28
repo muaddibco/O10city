@@ -333,7 +333,7 @@ namespace O10.Client.Common.Services
             byte[] groupId = new byte[32];
             Array.Copy(BitConverter.GetBytes(schemeId), 0, groupId, Globals.DEFAULT_HASH_SIZE, sizeof(long));
 
-            AssociatedProofs associatedProofs = associatedProofsList.FirstOrDefault(p => p.AssociatedAssetGroupId.Equals32(groupId));
+            AssociatedProofs associatedProofs = associatedProofsList.FirstOrDefault(p => p.SchemeName.Equals32(groupId));
             if (associatedProofs == null)
             {
                 throw new ValidationProofsWereNotCompleteException(validationCriteria);

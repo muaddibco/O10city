@@ -7,12 +7,13 @@ using O10.Core.HashCalculations;
 using O10.Core.Cryptography;
 using O10.Transactions.Core.Parsers;
 using O10.Crypto.HashCalculations;
-using O10.Core.Models;
 using O10.Crypto.ConfidentialAssets;
 using O10.Crypto;
 using O10.Tests.Core.Fixtures;
 using Xunit.Abstractions;
 using O10.Tests.Core;
+using O10.Crypto.Models;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Transactions.Core.Tests
 {
@@ -55,8 +56,8 @@ namespace O10.Transactions.Core.Tests
 
             _signingService.WhenForAnyArgs(s => s.Sign(null, null)).Do(c => 
             {
-                ((SignedPacketBase)c.ArgAt<IPacket>(0)).Source = new Key32(_publicKey);
-                ((SignedPacketBase)c.ArgAt<IPacket>(0)).Signature = Ed25519.Sign(((SignedPacketBase)c.ArgAt<IPacket>(0)).BodyBytes.ToArray(), _expandedPrivateKey);
+                ((OrderedTransactionBase)c.ArgAt<IPacket>(0)).Source = new Key32(_publicKey);
+                ((OrderedTransactionBase)c.ArgAt<IPacket>(0)).Signature = Ed25519.Sign(((OrderedTransactionBase)c.ArgAt<IPacket>(0)).BodyBytes.ToArray(), _expandedPrivateKey);
             });
             _signingService.PublicKeys.Returns(new IKey[] { new Key32() { Value = _publicKey } });
 

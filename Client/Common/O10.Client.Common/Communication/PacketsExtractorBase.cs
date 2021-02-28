@@ -11,6 +11,7 @@ using O10.Core.Logging;
 using O10.Core.Models;
 using O10.Core.Serialization;
 using O10.Transactions.Core.DTOs;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Client.Common.Communication
 {

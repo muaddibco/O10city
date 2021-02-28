@@ -127,10 +127,10 @@ namespace O10.Node.Core.Registry
         {
             lock (_sync)
             {
-				bool isService = transactionWitness.PacketType == PacketTypes.Stealth_TransitionCompromisedProofs || transactionWitness.PacketType == PacketTypes.Stealth_RevokeIdentity;
+				bool isService = transactionWitness.TransactionType == TransactionTypes.Stealth_TransitionCompromisedProofs || transactionWitness.TransactionType == TransactionTypes.Stealth_RevokeIdentity;
 				if(isService)
 				{
-					_logger.Info($"Service packet {transactionWitness.PacketType} witnessed");
+					_logger.Info($"Service packet {transactionWitness.TransactionType} witnessed");
 				}
 
                 bool keyImageExist = _transactionUtxoWitnessesByKeyImage.ContainsKey(transactionWitness.KeyImage);

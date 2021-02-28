@@ -11,7 +11,6 @@ using O10.Core.Cryptography;
 using O10.Core.HashCalculations;
 using O10.Core.Identity;
 using O10.Core.Logging;
-using O10.Core.Models;
 using O10.Core.States;
 using O10.Core.Synchronization;
 using O10.Crypto.ConfidentialAssets;
@@ -19,6 +18,8 @@ using O10.Crypto.HashCalculations;
 using O10.Node.Core.Synchronization;
 using O10.Tests.Core;
 using Xunit;
+using O10.Crypto.Models;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Node.Core.Tests
 {
@@ -62,7 +63,7 @@ namespace O10.Node.Core.Tests
             serializersFactory.Create(null).ReturnsForAnyArgs(c =>
             {
                 RegistryShortBlockSerializer registryShortBlockSerializer = new RegistryShortBlockSerializer(null);
-                registryShortBlockSerializer.Initialize(c.Arg<SignedPacketBase>());
+                registryShortBlockSerializer.Initialize(c.Arg<OrderedTransactionBase>());
                 return registryShortBlockSerializer;
             });
 
@@ -139,7 +140,7 @@ namespace O10.Node.Core.Tests
         private static SortedList<ushort, RegistryRegisterBlock> GetTransactionHeaders(ulong syncBlockHeight, ulong blockHeight, uint nonce, ushort expectedCount)
         {
             LedgerType expectedReferencedLedgerType = LedgerType.O10State;
-            ushort expectedReferencedPacketType = PacketTypes.Transaction_IssueBlindedAsset;
+            ushort expectedReferencedPacketType = TransactionTypes.Transaction_IssueBlindedAsset;
 
             SortedList<ushort, RegistryRegisterBlock> transactionHeaders = new SortedList<ushort, RegistryRegisterBlock>(expectedCount);
             for (ushort j = 0; j < expectedCount; j++)
@@ -187,8 +188,8 @@ namespace O10.Node.Core.Tests
             Ed25519.KeyPairFromSeed(out publicKey, out expandedPrivateKey, privateKey);
             signingService.WhenForAnyArgs(s => s.Sign(null, null)).Do(c => 
             {
-                ((SignedPacketBase)c.ArgAt<IPacket>(0)).Source = new Key32() { Value = publicKey };
-                ((SignedPacketBase)c.ArgAt<IPacket>(0)).Signature = Ed25519.Sign(c.Arg<byte[]>(), expandedPrivateKey);
+                ((OrderedTransactionBase)c.ArgAt<IPacket>(0)).Source = new Key32() { Value = publicKey };
+                ((OrderedTransactionBase)c.ArgAt<IPacket>(0)).Signature = Ed25519.Sign(c.Arg<byte[]>(), expandedPrivateKey);
             });
             signingService.PublicKeys.Returns(new IKey[] { new Key32() { Value = publicKey } });
             return signingService;

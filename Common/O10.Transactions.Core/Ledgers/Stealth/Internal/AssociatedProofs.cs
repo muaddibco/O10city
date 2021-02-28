@@ -4,7 +4,7 @@ namespace O10.Transactions.Core.Ledgers.Stealth.Internal
 {
     public class AssociatedProofs
 	{
-		public byte[] AssociatedAssetGroupId { get; set; }
+		public string SchemeName { get; set; }
 		public SurjectionProof AssociationProofs { get; set; }
 		public SurjectionProof RootProofs { get; set; }
 	}

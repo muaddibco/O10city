@@ -1,15 +1,12 @@
 ﻿using System;
-using System.Numerics;
-using O10.Transactions.Core.Enums;
 using O10.Core.Architecture;
-using O10.Core.ExtensionMethods;
 using O10.Core.Logging;
 using O10.Core.HashCalculations;
 using O10.Core.States;
 using O10.Core.Synchronization;
-using System.Linq;
-using O10.Core.Models;
 using O10.Core;
+using O10.Transactions.Core.Ledgers;
+using O10.Transactions.Core.Ledgers.Registry.Transactions;
 
 namespace O10.Network.Handlers
 {
@@ -27,90 +24,97 @@ namespace O10.Network.Handlers
             _proofOfWorkCalculation = hashCalculationsRepository.Create(Globals.POW_TYPE);
         }
 
-        public bool VerifyBlock(PacketBase packetBase)
+        public bool VerifyBlock(IPacketBase packet)
         {
-            ulong syncBlockHeight = packetBase.SyncHeight;
-
-            bool isInSyncRange = _synchronizationContext.LastBlockDescriptor != null ? 
-                (_synchronizationContext.LastBlockDescriptor.BlockHeight.Equals(syncBlockHeight) ||
-                (_synchronizationContext.LastBlockDescriptor.BlockHeight - 1).Equals(syncBlockHeight) ||
-                (_synchronizationContext.LastBlockDescriptor.BlockHeight - 2).Equals(syncBlockHeight))
-                : true;
-
-            if (!isInSyncRange)
+            if (packet is null)
             {
-                _log.Error($"Synchronization block height ({syncBlockHeight}) is outdated [{packetBase.GetType().Name}]: {packetBase.RawData.ToArray().ToHexString()}");
-                return false;
+                throw new ArgumentNullException(nameof(packet));
             }
 
-			return true;// CheckSyncPOW(packetBase);
-        }
-
-        private bool CheckSyncPOW(PacketBase packet)
-        {
-            ulong syncBlockHeight = packet.SyncHeight;
-
-            uint nonce = packet.Nonce;
-            byte[] powHash = packet.PowHash;
-            byte[] baseHash;
-            byte[] baseSyncHash;
-
-            if (packet.LedgerType != (ushort)LedgerType.Synchronization)
+            if (packet.Body is RegistryTransactionBase transaction)
             {
-                //TODO: make difficulty check dynamic
-                //if (powHash[0] != 0 || powHash[1] != 0)
-                //{
-                //    return false;
-                //}
-                BigInteger bigInteger;
-                baseSyncHash = new byte[Globals.DEFAULT_HASH_SIZE + 1]; // Adding extra 0 byte for avoiding negative values of BigInteger
-                lock (_synchronizationContext)
+                long syncBlockHeight = transaction.SyncHeight;
+
+                bool isInSyncRange = _synchronizationContext.LastBlockDescriptor == null 
+                    || (_synchronizationContext.LastBlockDescriptor.BlockHeight.Equals(syncBlockHeight) 
+                    || (_synchronizationContext.LastBlockDescriptor.BlockHeight - 1).Equals(syncBlockHeight) 
+                    || (_synchronizationContext.LastBlockDescriptor.BlockHeight - 2).Equals(syncBlockHeight));
+
+                if (!isInSyncRange)
                 {
-                    byte[] buf;
-                    if (_synchronizationContext.LastBlockDescriptor != null || _synchronizationContext.PrevBlockDescriptor != null)
-                    {
-                        buf = (syncBlockHeight == _synchronizationContext.LastBlockDescriptor?.BlockHeight) ? _synchronizationContext.LastBlockDescriptor.Hash : _synchronizationContext.PrevBlockDescriptor.Hash;
-                    }
-                    else
-                    {
-                        _log.Warning("CheckSyncPOW - BOTH LastBlockDescriptor and PrevBlockDescriptor are NULL");
-                        buf = new byte[Globals.DEFAULT_HASH_SIZE];
-                    }
-
-                    Array.Copy(buf, 0, baseSyncHash, 0, buf.Length);
+                    _log.Error($"Synchronization block height ({syncBlockHeight}) is outdated [{packet.GetType().Name}]: {packet}");
+                    return false;
                 }
-
-                bigInteger = new BigInteger(baseSyncHash);
-
-                bigInteger += nonce;
-                baseHash = bigInteger.ToByteArray().Take(Globals.DEFAULT_HASH_SIZE).ToArray();
-            }
-            else
-            {
-                lock (_synchronizationContext)
-                {
-                    if (_synchronizationContext.LastBlockDescriptor == null)
-                    {
-                        baseSyncHash = new byte[Globals.DEFAULT_HASH_SIZE];
-                    }
-                    else
-                    {
-                        baseSyncHash = (syncBlockHeight == _synchronizationContext.LastBlockDescriptor.BlockHeight) ? _synchronizationContext.LastBlockDescriptor.Hash : _synchronizationContext.PrevBlockDescriptor.Hash;
-                    }
-                }
-
-                baseHash = baseSyncHash;
-            }
-
-            byte[] computedHash = _proofOfWorkCalculation.CalculateHash(baseHash);
-
-            if (!computedHash.Equals24(powHash))
-            {
-                _log.Error($"Computed HASH differs from obtained one. PacketType is {packet.LedgerType}, BlockType is {packet.PacketType}. Reported SyncBlockHeight is {packet.SyncHeight}, Nonce is {packet.Nonce}, POW is {packet.PowHash.ToHexString()}. Hash of SyncBlock is {baseSyncHash.ToHexString()}, after adding Nonce is {baseHash.ToHexString()}, computed POW Hash is {computedHash.ToHexString()}");
-                return false;
             }
 
             return true;
         }
+
+        //private bool CheckSyncPOW(IPacketBase packet)
+        //{
+        //    ulong syncBlockHeight = packet.SyncHeight;
+
+        //    uint nonce = packet.Nonce;
+        //    byte[] powHash = packet.PowHash;
+        //    byte[] baseHash;
+        //    byte[] baseSyncHash;
+
+        //    if (packet.LedgerType != (ushort)LedgerType.Synchronization)
+        //    {
+        //        //TODO: make difficulty check dynamic
+        //        //if (powHash[0] != 0 || powHash[1] != 0)
+        //        //{
+        //        //    return false;
+        //        //}
+        //        BigInteger bigInteger;
+        //        baseSyncHash = new byte[Globals.DEFAULT_HASH_SIZE + 1]; // Adding extra 0 byte for avoiding negative values of BigInteger
+        //        lock (_synchronizationContext)
+        //        {
+        //            byte[] buf;
+        //            if (_synchronizationContext.LastBlockDescriptor != null || _synchronizationContext.PrevBlockDescriptor != null)
+        //            {
+        //                buf = (syncBlockHeight == _synchronizationContext.LastBlockDescriptor?.BlockHeight) ? _synchronizationContext.LastBlockDescriptor.Hash : _synchronizationContext.PrevBlockDescriptor.Hash;
+        //            }
+        //            else
+        //            {
+        //                _log.Warning("CheckSyncPOW - BOTH LastBlockDescriptor and PrevBlockDescriptor are NULL");
+        //                buf = new byte[Globals.DEFAULT_HASH_SIZE];
+        //            }
+
+        //            Array.Copy(buf, 0, baseSyncHash, 0, buf.Length);
+        //        }
+
+        //        bigInteger = new BigInteger(baseSyncHash);
+
+        //        bigInteger += nonce;
+        //        baseHash = bigInteger.ToByteArray().Take(Globals.DEFAULT_HASH_SIZE).ToArray();
+        //    }
+        //    else
+        //    {
+        //        lock (_synchronizationContext)
+        //        {
+        //            if (_synchronizationContext.LastBlockDescriptor == null)
+        //            {
+        //                baseSyncHash = new byte[Globals.DEFAULT_HASH_SIZE];
+        //            }
+        //            else
+        //            {
+        //                baseSyncHash = (syncBlockHeight == _synchronizationContext.LastBlockDescriptor.BlockHeight) ? _synchronizationContext.LastBlockDescriptor.Hash : _synchronizationContext.PrevBlockDescriptor.Hash;
+        //            }
+        //        }
+
+        //        baseHash = baseSyncHash;
+        //    }
+
+        //    byte[] computedHash = _proofOfWorkCalculation.CalculateHash(baseHash);
+
+        //    if (!computedHash.Equals24(powHash))
+        //    {
+        //        _log.Error($"Computed HASH differs from obtained one. PacketType is {packet.LedgerType}, BlockType is {packet.PacketType}. Reported SyncBlockHeight is {packet.SyncHeight}, Nonce is {packet.Nonce}, POW is {packet.PowHash.ToHexString()}. Hash of SyncBlock is {baseSyncHash.ToHexString()}, after adding Nonce is {baseHash.ToHexString()}, computed POW Hash is {computedHash.ToHexString()}");
+        //        return false;
+        //    }
+
+        //    return true;
+        //}
     }
 }

@@ -128,7 +128,7 @@ namespace O10.Client.Common.Services
 		private async Task<bool> CheckKnowledgeFactor(byte[] commitment, AssociatedProofs[] associatedProofsList, string issuer)
 		{
 			byte[] groupId = await _identityAttributesService.GetGroupId(AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD, issuer).ConfigureAwait(false);
-			AssociatedProofs associatedProofs = Array.Find(associatedProofsList, P => P.AssociatedAssetGroupId.Equals32(groupId));
+			AssociatedProofs associatedProofs = Array.Find(associatedProofsList, p => p.SchemeName.Equals32(groupId));
 
 			if(associatedProofs == null)
 			{

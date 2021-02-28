@@ -1,6 +1,6 @@
 ﻿using O10.Core.Architecture;
 using O10.Transactions.Core.Enums;
-using O10.Core.Models;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Network.Handlers
 {
@@ -9,6 +9,6 @@ namespace O10.Network.Handlers
     {
         LedgerType LedgerType { get; }
 
-        bool ValidatePacket(PacketBase block);
+        bool ValidatePacket(IPacketBase block);
     }
 }

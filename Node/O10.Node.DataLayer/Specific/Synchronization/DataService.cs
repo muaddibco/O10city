@@ -9,7 +9,6 @@ using O10.Transactions.Core.Ledgers.Synchronization;
 using O10.Transactions.Core.Enums;
 using O10.Core.Architecture;
 using O10.Core.ExtensionMethods;
-using O10.Core.Models;
 using O10.Core.Translators;
 using O10.Node.DataLayer.DataServices.Keys;
 using O10.Core.Logging;
@@ -17,6 +16,7 @@ using O10.Node.DataLayer.DataAccess;
 using O10.Node.DataLayer.DataServices;
 using O10.Node.DataLayer.Exceptions;
 using O10.Node.DataLayer.Specific.Synchronization.Model;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Node.DataLayer.Specific.Synchronization
 {
@@ -49,7 +49,7 @@ namespace O10.Node.DataLayer.Specific.Synchronization
 				throw new ArgumentNullException(nameof(key));
 			}
 
-            if (key is SingleByBlockTypeAndHeight blockTypeAndHeight && blockTypeAndHeight.BlockType == PacketTypes.Synchronization_RegistryCombinationBlock)
+            if (key is SingleByBlockTypeAndHeight blockTypeAndHeight && blockTypeAndHeight.BlockType == TransactionTypes.Synchronization_RegistryCombinationBlock)
             {
                 return Service.GetRegistryCombinedBlockByHeight(blockTypeAndHeight.Height)?.SyncBlockHeight ?? 0L;
             }
@@ -68,12 +68,12 @@ namespace O10.Node.DataLayer.Specific.Synchronization
             {
 				switch (singleByBlockTypeKey.BlockType)
 				{
-					case PacketTypes.Synchronization_RegistryCombinationBlock:
+					case TransactionTypes.Synchronization_RegistryCombinationBlock:
 						{
 							RegistryCombinedBlock block = Service.GetLastRegistryCombinedBlock();
 							return new List<PacketBase> { TranslatorsRepository.GetInstance<RegistryCombinedBlock, PacketBase>().Translate(block) };
 						}
-					case PacketTypes.Synchronization_ConfirmedBlock:
+					case TransactionTypes.Synchronization_ConfirmedBlock:
 						{
 							SynchronizationBlock block = Service.GetLastSynchronizationBlock();
 							return new List<PacketBase> { TranslatorsRepository.GetInstance<SynchronizationBlock, PacketBase>().Translate(block) };
@@ -84,22 +84,22 @@ namespace O10.Node.DataLayer.Specific.Synchronization
 			}
 			else if (key is BlockTypeLowHeightKey blockTypeLowHeightKey)
 			{
-				if (blockTypeLowHeightKey.BlockType == PacketTypes.Synchronization_ConfirmedBlock)
+				if (blockTypeLowHeightKey.BlockType == TransactionTypes.Synchronization_ConfirmedBlock)
 				{
 					return Service.GetAllLastSynchronizationBlocks(blockTypeLowHeightKey.Height).Select(b => TranslatorsRepository.GetInstance<SynchronizationBlock, PacketBase>().Translate(b));
 				}
-				else if (blockTypeLowHeightKey.BlockType == PacketTypes.Synchronization_RegistryCombinationBlock)
+				else if (blockTypeLowHeightKey.BlockType == TransactionTypes.Synchronization_RegistryCombinationBlock)
 				{
 					return Service.GetAllLastRegistryCombinedBlocks(blockTypeLowHeightKey.Height).OrderBy(b => b.RegistryCombinedBlockId).Select(b => TranslatorsRepository.GetInstance<RegistryCombinedBlock, PacketBase>().Translate(b));
 				}
 			}
 			else if (key is BlockTypeKey blockTypeKey)
 			{
-				if (blockTypeKey.BlockType == PacketTypes.Synchronization_ConfirmedBlock)
+				if (blockTypeKey.BlockType == TransactionTypes.Synchronization_ConfirmedBlock)
 				{
 					return Service.GetAllSynchronizationBlocks().Select(b => TranslatorsRepository.GetInstance<SynchronizationBlock, PacketBase>().Translate(b));
 				}
-				else if (blockTypeKey.BlockType == PacketTypes.Synchronization_RegistryCombinationBlock)
+				else if (blockTypeKey.BlockType == TransactionTypes.Synchronization_RegistryCombinationBlock)
 				{
 					return Service.GetAllRegistryCombinedBlocks().Select(b => TranslatorsRepository.GetInstance<RegistryCombinedBlock, PacketBase>().Translate(b));
 				}

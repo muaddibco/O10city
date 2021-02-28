@@ -1,5 +1,5 @@
 ﻿using O10.Core.Architecture;
-using O10.Core.Models;
+using O10.Transactions.Core.Ledgers;
 using System.Threading.Tasks.Dataflow;
 
 namespace O10.Client.Web.Common.Services

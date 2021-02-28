@@ -1,7 +1,7 @@
 ﻿using O10.Node.DataLayer.Specific.Stealth.Model;
 using O10.Core.Architecture;
-using O10.Core.Models;
 using O10.Core.Translators;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Node.DataLayer.Specific.Stealth.Mappers
 {

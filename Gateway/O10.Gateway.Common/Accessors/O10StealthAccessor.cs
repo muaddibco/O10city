@@ -4,7 +4,6 @@ using O10.Core;
 using O10.Core.Architecture;
 using O10.Core.Configuration;
 using O10.Core.Logging;
-using O10.Core.Models;
 using O10.Gateway.Common.Configuration;
 using O10.Gateway.DataLayer.Model;
 using O10.Gateway.DataLayer.Services;
@@ -19,6 +18,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using O10.Transactions.Core.DTOs;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Gateway.Common.Accessors
 {

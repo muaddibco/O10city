@@ -10,6 +10,7 @@ using O10.Gateway.Common.Services;
 using O10.Gateway.WebApp.Common.Services;
 using Microsoft.Extensions.DependencyInjection;
 using O10.Transactions.Core.Accessors;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Server.Gateway
 {

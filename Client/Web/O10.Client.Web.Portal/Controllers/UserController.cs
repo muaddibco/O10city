@@ -1543,7 +1543,6 @@ namespace O10.Client.Web.Portal.Controllers
                         assetsService.GetBlindingPoint(ConfidentialAssetsHelper.PasswordHash(relationsProofs.Password), userRootAttribute.AssetId, out byte[] blindingPoint, out byte[] blindingFactor);
 
                         byte[] rootOriginatingCommitment = assetsService.GetCommitmentBlindedByPoint(userRootAttribute.AssetId, blindingPoint);
-                        byte[] groupId = await _identityAttributesService.GetGroupId(AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD, relationsProofs.Source).ConfigureAwait(false);
                         byte[] protectionAssetId = await assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD, assetId, relationsProofs.Source).ConfigureAwait(false);
                         byte[] protectionAssetNonBlindedCommitment = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(protectionAssetId);
                         byte[] protectionAssetCommitment = ConfidentialAssetsHelper.SumCommitments(protectionAssetNonBlindedCommitment, blindingPoint);
@@ -1551,7 +1550,7 @@ namespace O10.Client.Web.Portal.Controllers
                         byte[] associatedCommitment = ConfidentialAssetsHelper.GetAssetCommitment(associatedBlindingFactor, protectionAssetId);
                         AssociatedProofPreparation associatedProofPreparation = new AssociatedProofPreparation
                         {
-                            GroupId = groupId,
+                            SchemeName = AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD,
                             Commitment = associatedCommitment,
                             CommitmentBlindingFactor = associatedBlindingFactor,
                             OriginatingAssociatedCommitment = protectionAssetCommitment,

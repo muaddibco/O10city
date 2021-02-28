@@ -8,6 +8,7 @@ using O10.Core.Communication;
 using O10.Core.Models;
 using O10.Transactions.Core.DTOs;
 using O10.Transactions.Core.Interfaces;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Gateway.Common.Services
 {

@@ -7,7 +7,7 @@ namespace O10.Transactions.Core.Ledgers.O10State
 	{
 		public override ushort Version => 1;
 
-		public override ushort PacketType => PacketTypes.Transaction_IssueBlindedAsset;
+		public override ushort PacketType => TransactionTypes.Transaction_IssueBlindedAsset;
 
         public byte[] AssetCommitment { get; set; }
 

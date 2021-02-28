@@ -6,7 +6,7 @@ namespace O10.Transactions.Core.Ledgers.O10State
     {
         public override ushort Version => 1;
 
-        public override ushort PacketType => PacketTypes.Transaction_CancelEmployeeRecord;
+        public override ushort PacketType => TransactionTypes.Transaction_CancelEmployeeRecord;
 
         public byte[] RegistrationCommitment { get; set; }
     }

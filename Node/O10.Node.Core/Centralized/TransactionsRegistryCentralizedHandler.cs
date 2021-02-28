@@ -8,7 +8,6 @@ using O10.Transactions.Core.Ledgers.Synchronization;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Interfaces;
 using O10.Core.Architecture;
-using O10.Core.Models;
 using O10.Core.States;
 using O10.Core.Logging;
 using O10.Core.Synchronization;
@@ -21,6 +20,10 @@ using O10.Node.DataLayer.DataServices;
 using Newtonsoft.Json;
 using O10.Node.DataLayer.DataServices.Keys;
 using O10.Core.Serialization;
+using O10.Transactions.Core.Ledgers;
+using O10.Transactions.Core.Ledgers.Synchronization.Transactions;
+using O10.Crypto.Models;
+using O10.Transactions.Core.Ledgers.Registry.Transactions;
 
 namespace O10.Node.Core.Centralized
 {
@@ -43,9 +46,9 @@ namespace O10.Node.Core.Centralized
         private readonly IHashCalculation _defaultTransactionHashCalculation;
         private readonly ILogger _logger;
 
-        private bool _isInitialized = false;
-        private BufferBlock<PacketBase> _packetsBuffer;
-        private SynchronizationRegistryCombinedBlock _lastCombinedBlock;
+        private bool _isInitialized;
+        private BufferBlock<IPacketBase> _packetsBuffer;
+        private AggregatedRegistrationsTransaction _lastCombinedBlock;
 
         public TransactionsRegistryCentralizedHandler(IRealTimeRegistryService realTimeRegistryService, IStatesRepository statesRepository, IChainDataServicesManager chainDataServicesManager, ISerializersFactory serializersFactory, IHashCalculationsRepository hashCalculationsRepository, ILoggerService loggerService)
         {
@@ -73,8 +76,8 @@ namespace O10.Node.Core.Centralized
                     return;
                 }
 
-                _packetsBuffer = new BufferBlock<PacketBase>(new DataflowBlockOptions() { CancellationToken = ct });
-                _lastCombinedBlock = _synchronizationChainDataService.Single<SynchronizationRegistryCombinedBlock>(new SingleByBlockTypeKey(PacketTypes.Synchronization_RegistryCombinationBlock));
+                _packetsBuffer = new BufferBlock<IPacketBase>(new DataflowBlockOptions() { CancellationToken = ct });
+                _lastCombinedBlock = _synchronizationChainDataService.Single<SynchronizationPacket>(new SingleByBlockTypeKey(TransactionTypes.Synchronization_RegistryCombinationBlock)).As<AggregatedRegistrationsTransaction>();
 
                 _logger.LogIfDebug(() => $"{nameof(Initialize)}, {nameof(_lastCombinedBlock)}: {JsonConvert.SerializeObject(_lastCombinedBlock, new ByteArrayJsonConverter())}");
 
@@ -84,42 +87,46 @@ namespace O10.Node.Core.Centralized
             }
         }
 
-        public void ProcessBlock(PacketBase packet)
+        public void ProcessBlock(IPacketBase packet)
         {
             _packetsBuffer.SendAsync(packet);
         }
 
-        private async Task ConsumePackets(IReceivableSourceBlock<PacketBase> source, CancellationToken cancellationToken)
+        private async Task ConsumePackets(IReceivableSourceBlock<IPacketBase> source, CancellationToken cancellationToken)
         {
             while (await source.OutputAvailableAsync(cancellationToken).ConfigureAwait(false))
             {
 				try
 				{
-					if (source.TryReceiveAll(out IList<PacketBase> packets))
+					if (source.TryReceiveAll(out IList<IPacketBase> packets))
 					{
-						ulong lastCombinedBlockHeight = _lastCombinedBlock?.Height ?? 0;
+						long lastCombinedBlockHeight = _lastCombinedBlock?.Height ?? 0;
 
 						if (lastCombinedBlockHeight % 100 == 0)
 						{
-							SynchronizationConfirmedBlock synchronizationConfirmedBlock = CreateSynchronizationConfirmedBlock(_synchronizationContext.LastBlockDescriptor?.BlockHeight ?? 0, _synchronizationContext.LastBlockDescriptor?.Hash ?? new byte[Globals.DEFAULT_HASH_SIZE]);
-							_synchronizationContext.UpdateLastSyncBlockDescriptor(new SynchronizationDescriptor(synchronizationConfirmedBlock.Height, _defaultTransactionHashCalculation.CalculateHash(synchronizationConfirmedBlock.RawData), synchronizationConfirmedBlock.ReportedTime, DateTime.UtcNow, synchronizationConfirmedBlock.Round));
+                            SynchronizationPacket synchronizationConfirmedBlock = CreateSynchronizationConfirmedBlock(_synchronizationContext.LastBlockDescriptor?.BlockHeight ?? 0, _synchronizationContext.LastBlockDescriptor?.Hash ?? new byte[Globals.DEFAULT_HASH_SIZE]);
+							_synchronizationContext.UpdateLastSyncBlockDescriptor(new SynchronizationDescriptor(synchronizationConfirmedBlock.Body.Height, _defaultTransactionHashCalculation.CalculateHash(synchronizationConfirmedBlock.ToByteArray()), synchronizationConfirmedBlock.As<SynchronizationConfirmedTransaction>().ReportedTime, DateTime.UtcNow, synchronizationConfirmedBlock.As<SynchronizationConfirmedTransaction>().Round));
 							_synchronizationChainDataService.Add(synchronizationConfirmedBlock);
 						}
 
-						RegistryFullBlock registryFullBlock = CreateRegistryFullBlock(
-                            packets.Where(p => p is RegistryRegisterBlock).Cast<RegistryRegisterBlock>().ToArray(), 
-                            packets.Where(p => p is RegistryRegisterStealth).Cast<RegistryRegisterStealth>().ToArray(), _synchronizationContext.LastBlockDescriptor?.BlockHeight ?? 0, lastCombinedBlockHeight);
-						RegistryShortBlock registryShortBlock = CreateRegistryShortBlock(registryFullBlock);
-						SerializeRegistryBlocks(registryFullBlock, registryShortBlock);
+						RegistryPacket registryFullBlock 
+                            = CreateRegistryFullBlock(
+                                packets.Where(p => p is RegistryPacket).Cast<RegistryPacket>().ToArray(), 
+                                _synchronizationContext.LastBlockDescriptor?.BlockHeight ?? 0, 
+                                lastCombinedBlockHeight);
+						//RegistryShortBlock registryShortBlock = CreateRegistryShortBlock((FullRegistryTransaction)registryFullBlock.Body);
+						//SignRegistryBlocks(registryFullBlock, registryShortBlock);
 
-						SynchronizationRegistryCombinedBlock combinedBlock = CreateCombinedBlock(registryFullBlock);
+                        registryFullBlock.Signature = (SingleSourceSignature)_nodeContext.SigningService.Sign(registryFullBlock.Body);
 
-						_lastCombinedBlock = combinedBlock;
+                        var combinedBlock = CreateCombinedBlock(registryFullBlock);
+
+						_lastCombinedBlock = combinedBlock.As<AggregatedRegistrationsTransaction>();
 
 						_synchronizationChainDataService.Add(combinedBlock);
 						_registryChainDataService.Add(registryFullBlock);
 
-						_realTimeRegistryService.PostPackets(combinedBlock, registryFullBlock);
+						_realTimeRegistryService.PostPackets(combinedBlock.As<AggregatedRegistrationsTransaction>(), registryFullBlock.As<FullRegistryTransaction>());
 					}
 				}
 				catch (Exception ex)
@@ -129,104 +136,91 @@ namespace O10.Node.Core.Centralized
             }
         }
 
-        private SynchronizationConfirmedBlock CreateSynchronizationConfirmedBlock(ulong prevSyncBlockHeight, byte[] prevSyncBlockHash)
+        private SynchronizationPacket CreateSynchronizationConfirmedBlock(long prevSyncBlockHeight, byte[] prevSyncBlockHash)
         {
-            SynchronizationConfirmedBlock synchronizationConfirmed = new SynchronizationConfirmedBlock
+            SynchronizationPacket synchronizationConfirmed = new SynchronizationPacket
             {
-                SyncHeight = prevSyncBlockHeight,
-                Height = prevSyncBlockHeight + 1,
-                HashPrev = prevSyncBlockHash,
-                PowHash = new byte[Globals.POW_HASH_SIZE],
-                ReportedTime = DateTime.UtcNow,
-                Round = 1,
-                PublicKeys = Array.Empty<byte[]>(),// retransmittedSyncBlocks.Select(b => b.ConfirmationPublicKey).ToArray(),
-                Signatures = Array.Empty<byte[]>() //retransmittedSyncBlocks.Select(b => b.ConfirmationSignature).ToArray()
+                Body = new SynchronizationConfirmedTransaction
+                {
+                    Height = prevSyncBlockHeight + 1,
+                    HashPrev = prevSyncBlockHash,
+                    ReportedTime = DateTime.UtcNow,
+                    Round = 1,
+                    PublicKeys = Array.Empty<byte[]>(),// retransmittedSyncBlocks.Select(b => b.ConfirmationPublicKey).ToArray(),
+                    Signatures = Array.Empty<byte[]>() //retransmittedSyncBlocks.Select(b => b.ConfirmationSignature).ToArray()
+                }
             };
 
-            ISerializer confirmationBlockSerializer = _serializersFactory.Create(synchronizationConfirmed);
-            confirmationBlockSerializer.SerializeBody();
-            _nodeContext.SigningService.Sign(synchronizationConfirmed);
-            confirmationBlockSerializer.SerializeFully();
+            synchronizationConfirmed.Signature = (SingleSourceSignature)_nodeContext.SigningService.Sign(synchronizationConfirmed.Body);
 
             return synchronizationConfirmed;
         }
 
-        private RegistryFullBlock CreateRegistryFullBlock(RegistryRegisterBlock[] stateWitnesses,
-                                                          RegistryRegisterStealth[] stealthWitnesses,
-                                                          RegistryRegisterExBlock[] witnesses,
-                                                          ulong syncBlockHeight,
-                                                          ulong registryFullBlockHeight)
+        private RegistryPacket CreateRegistryFullBlock(RegistryPacket[] witnesses, long syncBlockHeight, long registryFullBlockHeight)
         {
-            RegistryFullBlock transactionsFullBlock = new RegistryFullBlock
+            RegistryPacket transactionsFullBlock = new RegistryPacket
             {
-                SyncHeight = syncBlockHeight,
-                PowHash = new byte[Globals.POW_HASH_SIZE],
-                Height = registryFullBlockHeight,
-                StateWitnesses = stateWitnesses,
-                StealthWitnesses = stealthWitnesses,
-                UniversalWitnesses = witnesses
+                Body = new FullRegistryTransaction
+                {
+                    SyncHeight = syncBlockHeight,
+                    Height = registryFullBlockHeight,
+                    Witnesses = witnesses
+                }
             };
 
-            _logger.Debug($"Created RegistryFullBlock[{syncBlockHeight}:{registryFullBlockHeight}]: {stateWitnesses.Length} : {stealthWitnesses.Length}");
+            _logger.Debug($"Created {nameof(FullRegistryTransaction)} at syncHeight {syncBlockHeight} and height {registryFullBlockHeight} with {witnesses.Length} witnesses");
 
             return transactionsFullBlock;
         }
 
-        private RegistryShortBlock CreateRegistryShortBlock(RegistryFullBlock transactionsFullBlock)
-        {
-            RegistryShortBlock registryShortBlock = new RegistryShortBlock
-            {
-                SyncHeight = transactionsFullBlock.SyncHeight,
-                Nonce = transactionsFullBlock.Nonce,
-                PowHash = transactionsFullBlock.PowHash,
-                Height = transactionsFullBlock.Height,
-                WitnessStateKeys = transactionsFullBlock.StateWitnesses.Select(w => new WitnessStateKey { PublicKey = w.Source, Height = w.Height }).ToArray(),
-                WitnessUtxoKeys = transactionsFullBlock.StealthWitnesses.Select(w => new WitnessUtxoKey { KeyImage = w.KeyImage }).ToArray()
-            };
+        //private RegistryPacket CreateRegistryShortBlock(FullRegistryTransaction transactionsFullBlock)
+        //{
+        //    RegistryPacket registryShortBlock = new RegistryPacket
+        //    {
+        //        Body = new ShortRegistryTransaction
+        //        {
+        //            SyncHeight = transactionsFullBlock.SyncHeight,
+        //            Height = transactionsFullBlock.Height,
+        //        }
+        //        WitnessStateKeys = transactionsFullBlock.StateWitnesses.Select(w => new WitnessStateKey { PublicKey = w.Source, Height = w.Height }).ToArray(),
+        //        WitnessUtxoKeys = transactionsFullBlock.StealthWitnesses.Select(w => new WitnessUtxoKey { KeyImage = w.KeyImage }).ToArray()
+        //    };
 
-            _logger.Debug($"Created RegistryShortBlock[{registryShortBlock.SyncHeight}:{registryShortBlock.Height}]: {registryShortBlock.WitnessStateKeys.Length} : {registryShortBlock.WitnessUtxoKeys.Length}");
+        //    _logger.Debug($"Created RegistryShortBlock[{registryShortBlock.SyncHeight}:{registryShortBlock.Height}]: {registryShortBlock.WitnessStateKeys.Length} : {registryShortBlock.WitnessUtxoKeys.Length}");
 
-            return registryShortBlock;
-        }
+        //    return registryShortBlock;
+        //}
 
-        private void SerializeRegistryBlocks(RegistryFullBlock transactionsFullBlock, RegistryShortBlock transactionsShortBlock)
-        {
-            ISerializer fullBlockSerializer = _serializersFactory.Create(transactionsFullBlock);
-            ISerializer shortBlockSerializer = _serializersFactory.Create(transactionsShortBlock);
+        //private void SignRegistryBlocks(RegistryPacket transactionsFullBlock, RegistryPacket transactionsShortBlock)
+        //{
+        //    transactionsShortBlock.Signature = (SingleSourceSignature)_nodeContext.SigningService.Sign(transactionsShortBlock.Body);
 
-            shortBlockSerializer.SerializeBody();
-            _nodeContext.SigningService.Sign(transactionsShortBlock);
-            shortBlockSerializer.SerializeFully();
+        //    ((FullRegistryTransaction)transactionsFullBlock.Body).ShortBlockHash = _defaultTransactionHashCalculation.CalculateHash(transactionsShortBlock.ToByteArray());
+        //    transactionsFullBlock.Signature = (SingleSourceSignature)_nodeContext.SigningService.Sign(transactionsFullBlock.Body);
 
-            transactionsFullBlock.ShortBlockHash = _defaultTransactionHashCalculation.CalculateHash(transactionsShortBlock.RawData);
-            fullBlockSerializer.SerializeBody();
-            _nodeContext.SigningService.Sign(transactionsFullBlock);
-            fullBlockSerializer.SerializeFully();
+        //    _logger.Debug($"Sending FullBlock with {((FullRegistryTransaction)transactionsFullBlock.Body).Witnesses.Length} transactions and ShortBlock with {transactionsShortBlock.WitnessStateKeys.Length + transactionsShortBlock.WitnessUtxoKeys.Length} keys at round {transactionsFullBlock.Height}");
+        //}
 
-            _logger.Debug($"Sending FullBlock with {transactionsFullBlock.StateWitnesses.Length + transactionsFullBlock.StealthWitnesses.Length} transactions and ShortBlock with {transactionsShortBlock.WitnessStateKeys.Length + transactionsShortBlock.WitnessUtxoKeys.Length} keys at round {transactionsFullBlock.Height}");
-        }
-
-        private SynchronizationRegistryCombinedBlock CreateCombinedBlock(params RegistryFullBlock[] registryFullBlocks)
+        private SynchronizationPacket CreateCombinedBlock(params RegistryPacket[] registryFullBlocks)
         {
             lock (_synchronizationContext)
             {
-                byte[] prevHash = _lastCombinedBlock != null ? _defaultTransactionHashCalculation.CalculateHash(_lastCombinedBlock.RawData) : new byte[Globals.DEFAULT_HASH_SIZE];
+                byte[] prevHash = _lastCombinedBlock != null ? _defaultTransactionHashCalculation.CalculateHash(_lastCombinedBlock.ToByteArray()) : new byte[Globals.DEFAULT_HASH_SIZE];
 
                 //TODO: For initial POC there will be only one participant at Synchronization Layer, thus combination of FullBlocks won't be implemented fully
-                SynchronizationRegistryCombinedBlock synchronizationRegistryCombinedBlock = new SynchronizationRegistryCombinedBlock
+                SynchronizationPacket synchronizationRegistryCombinedBlock = new SynchronizationPacket
                 {
-                    SyncHeight = _synchronizationContext.LastBlockDescriptor?.BlockHeight ?? 0,
-                    PowHash = new byte[Globals.POW_HASH_SIZE],
-                    Height = ++_synchronizationContext.LastRegistrationCombinedBlockHeight,
-                    HashPrev = prevHash,
-                    ReportedTime = DateTime.Now,
-                    BlockHashes = registryFullBlocks.Select(b => _defaultTransactionHashCalculation.CalculateHash(b?.RawData ?? new byte[Globals.DEFAULT_HASH_SIZE])).ToArray()
+                    Body = new AggregatedRegistrationsTransaction
+                    {
+                        SyncHeight = _synchronizationContext.LastBlockDescriptor?.BlockHeight ?? 0,
+                        Height = ++_synchronizationContext.LastRegistrationCombinedBlockHeight,
+                        HashPrev = prevHash,
+                        ReportedTime = DateTime.Now,
+                        BlockHashes = registryFullBlocks.Select(b => _defaultTransactionHashCalculation.CalculateHash(b?.ToByteArray() ?? new byte[Globals.DEFAULT_HASH_SIZE])).ToArray()
+                    }
                 };
 
-                ISerializer combinedBlockSerializer = _serializersFactory.Create(synchronizationRegistryCombinedBlock);
-                combinedBlockSerializer.SerializeBody();
-                _nodeContext.SigningService.Sign(synchronizationRegistryCombinedBlock);
-                combinedBlockSerializer.SerializeFully();
+                synchronizationRegistryCombinedBlock.Signature = (SingleSourceSignature)_nodeContext.SigningService.Sign(synchronizationRegistryCombinedBlock.Body);
 
                 return synchronizationRegistryCombinedBlock;
             }

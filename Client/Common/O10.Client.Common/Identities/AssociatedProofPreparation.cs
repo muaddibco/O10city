@@ -2,7 +2,8 @@
 {
 	public class AssociatedProofPreparation
 	{
-		public byte[] GroupId { get; set; }
+		public string SchemeName { get; set; }
+
 		public byte[] Commitment { get; set; }
 
 		public byte[] CommitmentBlindingFactor { get; set; }

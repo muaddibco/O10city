@@ -5,27 +5,22 @@ using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Interfaces;
 using O10.Node.DataLayer.DataServices;
 using O10.Core.Logging;
-using O10.Core.Models;
-using O10.Core.States;
-using O10.Network.Interfaces;
-using O10.Node.Core.Common;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Node.Core.Centralized
 {
-	public abstract class StorageHandlerBase<T> : IBlocksHandler where T : PacketBase
+    public abstract class StorageHandlerBase<T> : IBlocksHandler where T : IPacketBase
     {
-        private readonly INodeContext _nodeContext;
-        private readonly IServerCommunicationServicesRegistry _communicationServicesRegistry;
         private readonly IChainDataServicesManager _chainDataServicesManager;
 		private readonly IRealTimeRegistryService _realTimeRegistryService;
 		private readonly ILogger _logger;
 		private ActionBlock<T> _storeBlock;
         private CancellationToken _cancellationToken;
 
-        public StorageHandlerBase(IStatesRepository statesRepository, IServerCommunicationServicesRegistry communicationServicesRegistry, IChainDataServicesManager chainDataServicesManager, IRealTimeRegistryService realTimeRegistryService, ILoggerService loggerService)
+        public StorageHandlerBase(IChainDataServicesManager chainDataServicesManager,
+                                  IRealTimeRegistryService realTimeRegistryService,
+                                  ILoggerService loggerService)
         {
-            _nodeContext = statesRepository.GetInstance<INodeContext>();
-            _communicationServicesRegistry = communicationServicesRegistry;
             _chainDataServicesManager = chainDataServicesManager;
 			_realTimeRegistryService = realTimeRegistryService;
 			_logger = loggerService.GetLogger(GetType().Name);
@@ -41,24 +36,24 @@ namespace O10.Node.Core.Centralized
             _storeBlock = new ActionBlock<T>(StoreBlock, new ExecutionDataflowBlockOptions { BoundedCapacity = int.MaxValue,  CancellationToken = _cancellationToken, MaxDegreeOfParallelism = 1 });
         }
 
-        public void ProcessBlock(PacketBase blockBase)
+        public void ProcessBlock(IPacketBase packet)
         {
-            _storeBlock.Post((T)blockBase);
-			_realTimeRegistryService.PostTransaction(blockBase);
+            _storeBlock.Post((T)packet);
+			_realTimeRegistryService.PostTransaction(packet);
         }
 
-        private void StoreBlock(T blockBase)
+        private void StoreBlock(T packet)
         {
-			_logger.Debug($"Storing packet {blockBase.GetType().Name}");
+			_logger.LogIfDebug(() => $"Storing packet {packet.GetType().Name}");
 
 			try
 			{
-				IChainDataService chainDataService = _chainDataServicesManager.GetChainDataService((LedgerType)blockBase.LedgerType);
-				chainDataService.Add(blockBase);
+				IChainDataService chainDataService = _chainDataServicesManager.GetChainDataService(packet.LedgerType);
+				chainDataService.Add(packet);
 			}
 			catch (Exception ex)
 			{
-				_logger.Error($"Storing packet {blockBase.GetType().Name} failed", ex);
+				_logger.Error($"Storing packet {packet.GetType().Name} failed", ex);
 			}
         }
     }

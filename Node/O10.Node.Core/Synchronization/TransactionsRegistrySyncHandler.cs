@@ -22,10 +22,10 @@ using O10.Core.Logging;
 using O10.Core.ExtensionMethods;
 using O10.Core.Configuration;
 using O10.Core;
-using O10.Core.Models;
 using O10.Node.Core.Common;
 using O10.Node.DataLayer.DataServices;
 using O10.Node.DataLayer.DataServices.Keys;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Node.Core.Synchronization
 {
@@ -36,7 +36,7 @@ namespace O10.Node.Core.Synchronization
 
         private readonly int _cyclePeriodMsec = 500;
 
-        private readonly BlockingCollection<RegistryBlockBase> _registryBlocks;
+        private readonly BlockingCollection<RegistryPacket> _registryBlocks;
         private readonly INodeContext _nodeContext;
         private readonly ISynchronizationContext _synchronizationContext;
         private readonly IIdentityKeyProvider _transactionHashKey;
@@ -69,7 +69,7 @@ namespace O10.Node.Core.Synchronization
             IChainDataServicesManager chainDataServicesManager, IRawPacketProvidersFactory rawPacketProvidersFactory,IConfigurationService configurationService, ILoggerService loggerService)
         {
             _configurationService = configurationService;
-            _registryBlocks = new BlockingCollection<RegistryBlockBase>();
+            _registryBlocks = new BlockingCollection<RegistryPacket>();
             _synchronizationContext = statesRepository.GetInstance<ISynchronizationContext>();
             _syncRegistryNeighborhoodState = statesRepository.GetInstance<ISyncRegistryNeighborhoodState>();
             _nodeContext = statesRepository.GetInstance<INodeContext>();
@@ -97,7 +97,7 @@ namespace O10.Node.Core.Synchronization
             _synchronizationConfiguration = _configurationService.Get<ISynchronizationConfiguration>();
             _communicationService = _communicationServicesRegistry.GetInstance(_synchronizationConfiguration.CommunicationServiceName);
             _syncContextChangedUnsibsciber = _synchronizationContext.SubscribeOnStateChange(new ActionBlock<string>(SynchronizationStateChanged));
-            _lastCombinedBlock = _synchronizationChainDataService.Single<SynchronizationRegistryCombinedBlock>(new SingleByBlockTypeKey(PacketTypes.Synchronization_RegistryCombinationBlock));
+            _lastCombinedBlock = _synchronizationChainDataService.Single<SynchronizationRegistryCombinedBlock>(new SingleByBlockTypeKey(TransactionTypes.Synchronization_RegistryCombinationBlock));
 
 			Task.Factory.StartNew(() => ProcessBlocks(ct), ct, TaskCreationOptions.LongRunning, TaskScheduler.Current);
         }
@@ -135,7 +135,7 @@ namespace O10.Node.Core.Synchronization
 
         private void ProcessBlocks(CancellationToken ct)
         {
-            foreach (RegistryBlockBase registryBlock in _registryBlocks.GetConsumingEnumerable(ct))
+            foreach (RegistryPacket registryBlock in _registryBlocks.GetConsumingEnumerable(ct))
             {
                 try
                 {

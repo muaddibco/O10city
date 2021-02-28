@@ -26,6 +26,7 @@ using O10.Gateway.Common.Services.Results;
 using O10.Core.Serialization;
 using O10.Core.Notifications;
 using O10.Transactions.Core.DTOs;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Gateway.WebApp.Common.Controllers
 {

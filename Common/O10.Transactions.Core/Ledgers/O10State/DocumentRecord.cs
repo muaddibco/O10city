@@ -6,7 +6,7 @@ namespace O10.Transactions.Core.Ledgers.O10State
     {
         public override ushort Version => 1;
 
-        public override ushort PacketType => PacketTypes.Transaction_DocumentRecord;
+        public override ushort PacketType => TransactionTypes.Transaction_DocumentRecord;
 
 		public byte[] DocumentHash { get; set; }
 

@@ -23,6 +23,7 @@ using O10.Core.Logging;
 using O10.Crypto.ConfidentialAssets;
 using O10.Core.Notifications;
 using O10.Transactions.Core.DTOs;
+using O10.Crypto.Models;
 
 namespace O10.Client.Common.Communication
 {
@@ -471,7 +472,7 @@ namespace O10.Client.Common.Communication
 
                 associatedProof = new AssociatedProofs
                 {
-                    AssociatedAssetGroupId = associatedProofPreparations[i].GroupId,
+                    SchemeName = associatedProofPreparations[i].SchemeName,
                     AssociationProofs = ConfidentialAssetsHelper.CreateSurjectionProof(assetCommitment, new byte[][] { associatedProofPreparations[i].OriginatingAssociatedCommitment }, 0, associatedBlindingFactorDiff),
                     RootProofs = ConfidentialAssetsHelper.CreateSurjectionProof(assetCommitment, new byte[][] { associatedProofPreparations[i].OriginatingRootCommitment }, 0, rootBlindingFactorDiff)
                 };
@@ -483,7 +484,7 @@ namespace O10.Client.Common.Communication
                 associatedProof = new AssociatedAssetProofs
                 {
                     AssociatedAssetCommitment = associatedProofPreparations[i].Commitment,
-                    AssociatedAssetGroupId = associatedProofPreparations[i].GroupId,
+                    SchemeName = associatedProofPreparations[i].SchemeName,
                     AssociationProofs = ConfidentialAssetsHelper.CreateSurjectionProof(associatedProofPreparations[i].Commitment, new byte[][] { associatedProofPreparations[i].OriginatingAssociatedCommitment }, 0, associatedBlindingFactorDiff),
                     RootProofs = ConfidentialAssetsHelper.CreateSurjectionProof(assetCommitment, new byte[][] { associatedProofPreparations[i].OriginatingRootCommitment }, 0, rootBlindingFactorDiff)
                 };

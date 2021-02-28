@@ -13,7 +13,6 @@ using O10.Client.Web.Common;
 using O10.Client.Web.Common.Configuration;
 using O10.Core.Architecture;
 using O10.Core.Configuration;
-using O10.Core.Models;
 using O10.Core.ExtensionMethods;
 using O10.Core.Cryptography;
 using Microsoft.AspNetCore.SignalR;
@@ -26,6 +25,7 @@ using Microsoft.Extensions.DependencyInjection;
 using O10.Client.Common.Exceptions;
 using O10.Core.Serialization;
 using O10.Core.Notifications;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Client.Web.Portal.Services.Inherence
 {

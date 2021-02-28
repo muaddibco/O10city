@@ -15,20 +15,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="Ledgers\Consensus\**" />
-    <Compile Remove="Parsers\Accounting\**" />
-    <Compile Remove="Parsers\Consensus\**" />
-    <Compile Remove="Parsers\Storage\**" />
-    <Compile Remove="Serializers\Transactional\**" />
     <EmbeddedResource Remove="Ledgers\Consensus\**" />
-    <EmbeddedResource Remove="Parsers\Accounting\**" />
-    <EmbeddedResource Remove="Parsers\Consensus\**" />
-    <EmbeddedResource Remove="Parsers\Storage\**" />
-    <EmbeddedResource Remove="Serializers\Transactional\**" />
     <None Remove="Ledgers\Consensus\**" />
-    <None Remove="Parsers\Accounting\**" />
-    <None Remove="Parsers\Consensus\**" />
-    <None Remove="Parsers\Storage\**" />
-    <None Remove="Serializers\Transactional\**" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Crypto\O10.Crypto\O10.Crypto.csproj" />

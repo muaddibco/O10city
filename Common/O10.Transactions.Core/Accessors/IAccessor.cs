@@ -1,6 +1,6 @@
 ﻿using O10.Core.Architecture;
-using O10.Core.Models;
 using O10.Transactions.Core.Enums;
+using O10.Transactions.Core.Ledgers;
 using System.Threading.Tasks;
 
 namespace O10.Transactions.Core.Accessors

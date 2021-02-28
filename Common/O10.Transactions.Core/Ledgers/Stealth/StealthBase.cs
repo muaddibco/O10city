@@ -1,11 +1,9 @@
-﻿using O10.Core.Models;
+﻿using O10.Crypto.Models;
 
 namespace O10.Transactions.Core.Ledgers.Stealth
 {
-    public abstract class StealthBase : StealthSignedPacketBase
+    public abstract class StealthBase : StealthTransactionBase
     {
-		public override ushort LedgerType => (ushort)Enums.LedgerType.Stealth;
-
 		/// <summary>
 		/// P = Hs(r * A) * G + B where A is receiver's Public View Key and B is receiver's Public Spend Key
 		/// </summary>

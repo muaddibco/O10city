@@ -1,6 +1,6 @@
 ﻿using O10.Core.Architecture;
-using O10.Core.Models;
 using O10.Core.Translators;
+using O10.Transactions.Core.Ledgers;
 using O10.Transactions.Core.Ledgers.Registry;
 using RegistryFullBlockDb = O10.Node.DataLayer.Specific.Registry.Model.RegistryFullBlock;
 

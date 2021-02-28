@@ -8,7 +8,7 @@ namespace O10.Transactions.Core.Ledgers.Stealth
     {
         public override ushort Version => 1;
 
-        public override ushort PacketType => PacketTypes.Stealth_UniversalTransport;
+        public override ushort TransactionType => TransactionTypes.Stealth_UniversalTransport;
 
         /// <summary>
         /// Contain Surjection Proofs to assets of source transaction which outputs were used to compose current one

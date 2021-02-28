@@ -52,7 +52,7 @@ namespace O10.Transactions.Core.Tests.SerializerTests
 			}
 
 			byte[] expectedPacket = BinaryHelper.GetSignedPacket(LedgerType.O10State, syncBlockHeight, nonce, powHash, version,
-				PacketTypes.Transaction_IssueBlindedAsset, blockHeight, null, body, _privateKey, out byte[] expectedSignature);
+				TransactionTypes.Transaction_IssueBlindedAsset, blockHeight, null, body, _privateKey, out byte[] expectedSignature);
 
 			IssueBlindedAsset issueBlindedAsset = new IssueBlindedAsset
 			{
@@ -137,7 +137,7 @@ namespace O10.Transactions.Core.Tests.SerializerTests
 			}
 
 			byte[] expectedPacket = BinaryHelper.GetSignedPacket(LedgerType.O10State, syncBlockHeight, nonce, powHash, version,
-				PacketTypes.Transaction_transferAssetToStealth, blockHeight, null, body, _privateKey, out byte[] expectedSignature);
+				TransactionTypes.Transaction_TransferAssetToStealth, blockHeight, null, body, _privateKey, out byte[] expectedSignature);
 
 			TransferAssetToStealth packet = new TransferAssetToStealth
 			{

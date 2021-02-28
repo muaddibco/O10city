@@ -4,6 +4,7 @@ using O10.Transactions.Core.Serializers;
 using O10.Core.Architecture;
 using O10.Core.Communication;
 using O10.Core.Identity;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Network.Topology
 {
@@ -14,6 +15,6 @@ namespace O10.Network.Topology
 
         IPAddress ResolveNodeAddress(IKey key);
 
-        IEnumerable<IKey> GetStorageNodeKeys(ITransactionKeyProvider transactionKeyProvider);
+        IEnumerable<IKey> GetStorageNodeKeys(PacketBase packetBase);
     }
 }

@@ -6,7 +6,6 @@ using O10.Transactions.Core.Ledgers.Stealth;
 using O10.Client.Common.Interfaces;
 using O10.Client.DataLayer.Services;
 using O10.Core.Cryptography;
-using O10.Core.Models;
 using O10.Core.ExtensionMethods;
 using O10.Crypto.ConfidentialAssets;
 using O10.Client.Web.Portal.Dtos;
@@ -34,6 +33,7 @@ using O10.Client.Common.Exceptions;
 using O10.Client.Common.Entities;
 using O10.Core.Serialization;
 using O10.Core.Notifications;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Client.Web.Portal.Services
 {

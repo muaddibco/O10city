@@ -13,7 +13,6 @@ using O10.Core.Architecture;
 using O10.Core.ExtensionMethods;
 using O10.Core.HashCalculations;
 using O10.Core.Logging;
-using O10.Core.Models;
 using O10.Core.Translators;
 using O10.Node.DataLayer.DataAccess;
 using RegistryFullBlockPacket = O10.Transactions.Core.Ledgers.Registry.RegistryFullBlock;
@@ -21,6 +20,7 @@ using RegistryFullBlockDb = O10.Node.DataLayer.Specific.Registry.Model.RegistryF
 using O10.Core.Tracking;
 using System.Globalization;
 using O10.Core;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Node.DataLayer.Specific.Registry
 {

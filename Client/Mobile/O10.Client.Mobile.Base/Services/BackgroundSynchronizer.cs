@@ -12,6 +12,7 @@ using System.Linq;
 using O10.Client.DataLayer.Enums;
 using O10.Core.Models;
 using O10.Client.Common.Communication.SynchronizerNotifications;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Client.Mobile.Base.Services
 {

@@ -8,7 +8,7 @@ namespace O10.Transactions.Core.Ledgers.Stealth
     {
         public override ushort Version => 1;
 
-        public override ushort PacketType => PacketTypes.Stealth_IdentityProofs;
+        public override ushort TransactionType => TransactionTypes.Stealth_IdentityProofs;
 
         public EcdhTupleProofs EncodedPayload { get; set; }
 

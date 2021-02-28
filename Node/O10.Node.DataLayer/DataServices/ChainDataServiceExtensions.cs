@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using O10.Node.DataLayer.DataServices.Keys;
-using O10.Core.Models;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Node.DataLayer.DataServices
 {
@@ -20,7 +20,7 @@ namespace O10.Node.DataLayer.DataServices
             return null;
         }
 
-        public static T Single<T>(this IChainDataService service, IDataKey key) where T : PacketBase
+        public static T Single<T>(this IChainDataService service, IDataKey key) where T : IPacketBase
         {
             if (service == null)
             {

@@ -10,6 +10,7 @@ using O10.Transactions.Core.Serializers;
 using System;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Gateway.Common.Services
 {

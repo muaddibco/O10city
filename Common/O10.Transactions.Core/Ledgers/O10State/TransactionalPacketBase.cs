@@ -1,8 +1,6 @@
-﻿using O10.Core.Models;
-
-namespace O10.Transactions.Core.Ledgers.O10State
+﻿namespace O10.Transactions.Core.Ledgers.O10State
 {
-    public abstract class TransactionalPacketBase : SignedPacketBase
+    public abstract class TransactionalPacketBase : OrderedTransactionBase
     {
         public override ushort LedgerType => (ushort)Enums.LedgerType.O10State;
 

@@ -3,8 +3,8 @@ using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Parsers;
 using O10.Node.DataLayer.Specific.Synchronization.Model;
 using O10.Core.Architecture;
-using O10.Core.Models;
 using O10.Core.Translators;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Node.DataLayer.Specific.Synchronization.Mappers
 {
@@ -31,7 +31,7 @@ namespace O10.Node.DataLayer.Specific.Synchronization.Mappers
                 return null;
             }
 
-            IBlockParser blockParser = _blockParsersRepository.GetInstance(PacketTypes.Synchronization_ConfirmedBlock);
+            IBlockParser blockParser = _blockParsersRepository.GetInstance(TransactionTypes.Synchronization_ConfirmedBlock);
 
             return blockParser.Parse(synchronizationBlock.BlockContent) as SynchronizationConfirmedBlock;
         }

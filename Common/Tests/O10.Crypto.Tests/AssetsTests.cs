@@ -13,6 +13,7 @@ using HashLib;
 using O10.Tests.Core;
 using O10.Tests.Core.Fixtures;
 using Xunit.Abstractions;
+using O10.Crypto.Services;
 
 namespace O10.Crypto.Tests
 {

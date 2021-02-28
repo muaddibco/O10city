@@ -10,7 +10,7 @@ namespace O10.Core.Synchronization
 
         SynchronizationDescriptor PrevBlockDescriptor { get; }
 
-        ulong LastRegistrationCombinedBlockHeight { get; set; }
+        long LastRegistrationCombinedBlockHeight { get; set; }
 
         /// <summary>
         /// Utility function that returns median value from provided array

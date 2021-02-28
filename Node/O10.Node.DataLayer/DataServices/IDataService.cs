@@ -5,7 +5,7 @@ using O10.Core.Models;
 
 namespace O10.Node.DataLayer.DataServices
 {
-	public interface IDataService<T> where T : Entity
+	public interface IDataService<T> where T : ISerializableEntity<T>
     {
         void Initialize(CancellationToken cancellationToken);
 

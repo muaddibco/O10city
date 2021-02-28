@@ -16,8 +16,8 @@ using O10.Core.States;
 using O10.Node.Core.Common;
 using O10.Core.Synchronization;
 using O10.Core.Logging;
-using O10.Core.Models;
 using O10.Core;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Node.Core.Registry
 {

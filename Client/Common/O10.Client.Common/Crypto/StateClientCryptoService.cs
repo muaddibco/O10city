@@ -7,13 +7,13 @@ using O10.Core.Cryptography;
 using O10.Core.ExtensionMethods;
 using O10.Core.HashCalculations;
 using O10.Core.Identity;
-using O10.Crypto;
 using O10.Crypto.ConfidentialAssets;
+using O10.Crypto.Services;
 
 namespace O10.Client.Common.Crypto
 {
-	[RegisterDefaultImplementation(typeof(IStateClientCryptoService), Lifetime = LifetimeManagement.Scoped)]
-	public class StateClientCryptoService : AccountSigningService, IStateClientCryptoService
+    [RegisterDefaultImplementation(typeof(IStateClientCryptoService), Lifetime = LifetimeManagement.Scoped)]
+	public class StateClientCryptoService : Ed25519SigningService, IStateClientCryptoService
 	{
         private byte[] _blindingSecretKey;
         private IKey _publicKey;

@@ -11,7 +11,6 @@ using O10.Client.DataLayer.Model;
 using O10.Client.DataLayer.Services;
 using O10.Core.ExtensionMethods;
 using O10.Core.Logging;
-using O10.Core.Models;
 using O10.Core.Tracking;
 using O10.Client.Mobile.Base.Interfaces;
 using O10.Client.Mobile.Base.Models;
@@ -21,6 +20,7 @@ using O10.Core.Architecture;
 using System.Threading;
 using O10.Client.Common.Communication.Notifications;
 using O10.Core.Notifications;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Client.Mobile.Base.Services
 {

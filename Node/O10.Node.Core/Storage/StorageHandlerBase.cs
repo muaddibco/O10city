@@ -4,14 +4,14 @@ using System.Threading.Tasks.Dataflow;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Interfaces;
 using O10.Node.DataLayer.DataServices;
-using O10.Core.Models;
 using O10.Core.States;
 using O10.Network.Interfaces;
 using O10.Node.Core.Common;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Node.Core.Storage
 {
-	public abstract class StorageHandlerBase<T> : IBlocksHandler where T : PacketBase
+    public abstract class StorageHandlerBase<T> : IBlocksHandler where T : PacketBase
     {
         private readonly INodeContext _nodeContext;
         private readonly IServerCommunicationServicesRegistry _communicationServicesRegistry;

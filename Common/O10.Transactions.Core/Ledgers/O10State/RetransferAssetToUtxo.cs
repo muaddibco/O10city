@@ -11,7 +11,7 @@ namespace O10.Transactions.Core.Ledgers.O10State
 	{
         public override ushort Version => 1;
 
-        public override ushort PacketType => PacketTypes.Transaction_RetransferAssetToStealth;
+        public override ushort PacketType => TransactionTypes.Transaction_RetransferAssetToStealth;
 
         public EncryptedAsset TransferedAsset { get; set; }
 

@@ -11,13 +11,14 @@ using O10.Core.Cryptography;
 using O10.Core.HashCalculations;
 using O10.Core.Identity;
 using O10.Core.Logging;
-using O10.Core.Models;
 using O10.Core.States;
 using O10.Core.Synchronization;
 using O10.Crypto.ConfidentialAssets;
 using O10.Crypto.HashCalculations;
 using O10.Node.Core.Registry;
 using Xunit;
+using O10.Crypto.Models;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Node.Core.Tests
 {
@@ -56,8 +57,8 @@ namespace O10.Node.Core.Tests
 
             signingService.WhenForAnyArgs(s => s.Sign(null, null)).Do(c =>
             {
-                ((SignedPacketBase)c.ArgAt<IPacket>(0)).Source = new Key32(publicKey);
-                ((SignedPacketBase)c.ArgAt<IPacket>(0)).Signature = Ed25519.Sign(c.Arg<byte[]>(), expandedPrivateKey);
+                ((OrderedTransactionBase)c.ArgAt<IPacket>(0)).Source = new Key32(publicKey);
+                ((OrderedTransactionBase)c.ArgAt<IPacket>(0)).Signature = Ed25519.Sign(c.Arg<byte[]>(), expandedPrivateKey);
             });
             signingService.PublicKeys.ReturnsForAnyArgs(new IKey[] { new Key32(publicKey) });
 
@@ -73,7 +74,7 @@ namespace O10.Node.Core.Tests
             for (ulong i = 0; i < (ulong)heights.Length; i++)
             {
                 RegistryRegisterBlock transactionRegisterBlock = PacketsBuilder.GetTransactionRegisterBlock(synchronizationContext.LastBlockDescriptor.BlockHeight, 1, null, 
-                    heights[i],LedgerType.O10State, PacketTypes.Transaction_IssueBlindedAsset, new byte[Globals.POW_HASH_SIZE], new byte[Globals.DEFAULT_HASH_SIZE],privateKey);
+                    heights[i],LedgerType.O10State, TransactionTypes.Transaction_IssueBlindedAsset, new byte[Globals.POW_HASH_SIZE], new byte[Globals.DEFAULT_HASH_SIZE],privateKey);
 
                 RegistryRegisterBlockSerializer serializer = new RegistryRegisterBlockSerializer(null);
                 serializer.Initialize(transactionRegisterBlock);

@@ -33,6 +33,7 @@ using O10.Core.Serialization;
 using O10.Core.Notifications;
 using O10.Transactions.Core.Accessors;
 using O10.Transactions.Core.DTOs;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Gateway.Common.Services
 {
@@ -452,7 +453,7 @@ namespace O10.Gateway.Common.Services
 						_logger.Info($"Packets were stored successfully");
 						WitnessPackage witnessPackage = new WitnessPackage
                         {
-                            StateWitnesses = t.Result.Where(w => w.ReferencedKeyImage == null).Select(w => new PacketWitness { WitnessId = w.WitnessPacketId, DestinationKey = w.ReferencedDestinationKey.HexStringToByteArray(), TransactionKey = w.ReferencedTransactionKey.HexStringToByteArray(), IsIdentityIssuing = (w.ReferencedLedgerType == LedgerType.O10State && (w.ReferencedPacketType == PacketTypes.Transaction_IssueBlindedAsset || w.ReferencedPacketType == PacketTypes.Transaction_IssueAssociatedBlindedAsset || w.ReferencedPacketType == PacketTypes.Transaction_transferAssetToStealth)) }).ToArray(),
+                            StateWitnesses = t.Result.Where(w => w.ReferencedKeyImage == null).Select(w => new PacketWitness { WitnessId = w.WitnessPacketId, DestinationKey = w.ReferencedDestinationKey.HexStringToByteArray(), TransactionKey = w.ReferencedTransactionKey.HexStringToByteArray(), IsIdentityIssuing = (w.ReferencedLedgerType == LedgerType.O10State && (w.ReferencedPacketType == TransactionTypes.Transaction_IssueBlindedAsset || w.ReferencedPacketType == TransactionTypes.Transaction_IssueAssociatedBlindedAsset || w.ReferencedPacketType == TransactionTypes.Transaction_TransferAssetToStealth)) }).ToArray(),
                             StealthWitnesses = t.Result.Where(w => w.ReferencedKeyImage != null).Select(w => new PacketWitness { WitnessId = w.WitnessPacketId, DestinationKey = w.ReferencedDestinationKey.HexStringToByteArray(), DestinationKey2 = w.ReferencedDestinationKey2.HexStringToByteArray(), KeyImage = w.ReferencedKeyImage.HexStringToByteArray(), TransactionKey = w.ReferencedTransactionKey.HexStringToByteArray() }).ToArray(),
                             CombinedBlockHeight = (ulong)o
                         };
@@ -622,7 +623,7 @@ namespace O10.Gateway.Common.Services
 						WitnessPackage witnessPackage = new WitnessPackage
 						{
 							CombinedBlockHeight = (ulong)key,
-							StateWitnesses = witnessPackets[key].Where(w => w.ReferencedKeyImage == null).Select(w => new PacketWitness { WitnessId = w.WitnessPacketId, DestinationKey = w.ReferencedDestinationKey.HexStringToByteArray(), TransactionKey = w.ReferencedTransactionKey.HexStringToByteArray(), IsIdentityIssuing = (w.ReferencedLedgerType == LedgerType.O10State && (w.ReferencedPacketType == PacketTypes.Transaction_IssueBlindedAsset || w.ReferencedPacketType == PacketTypes.Transaction_IssueAssociatedBlindedAsset || w.ReferencedPacketType == PacketTypes.Transaction_transferAssetToStealth)) }).ToArray(),
+							StateWitnesses = witnessPackets[key].Where(w => w.ReferencedKeyImage == null).Select(w => new PacketWitness { WitnessId = w.WitnessPacketId, DestinationKey = w.ReferencedDestinationKey.HexStringToByteArray(), TransactionKey = w.ReferencedTransactionKey.HexStringToByteArray(), IsIdentityIssuing = (w.ReferencedLedgerType == LedgerType.O10State && (w.ReferencedPacketType == TransactionTypes.Transaction_IssueBlindedAsset || w.ReferencedPacketType == TransactionTypes.Transaction_IssueAssociatedBlindedAsset || w.ReferencedPacketType == TransactionTypes.Transaction_TransferAssetToStealth)) }).ToArray(),
 							StealthWitnesses = witnessPackets[key].Where(w => w.ReferencedKeyImage != null).Select(w => new PacketWitness { WitnessId = w.WitnessPacketId, DestinationKey = w.ReferencedDestinationKey.HexStringToByteArray(), DestinationKey2 = w.ReferencedDestinationKey2.HexStringToByteArray(), TransactionKey = w.ReferencedTransactionKey.HexStringToByteArray(), KeyImage = w.ReferencedKeyImage.HexStringToByteArray() }).ToArray()
 						};
 
@@ -773,25 +774,25 @@ namespace O10.Gateway.Common.Services
 				{
 					switch (packet.PacketType)
 					{
-						case PacketTypes.Transaction_IssueBlindedAsset:
+						case TransactionTypes.Transaction_IssueBlindedAsset:
 							StoreIssueBlindedAsset(wp.WitnessPacketId, registryCombinedBlockHeight, (IssueBlindedAsset)packet);
 							break;
-						case PacketTypes.Transaction_IssueAssociatedBlindedAsset:
+						case TransactionTypes.Transaction_IssueAssociatedBlindedAsset:
 							StoreIssueAssociatedBlindedAsset(wp.WitnessPacketId, registryCombinedBlockHeight, (IssueAssociatedBlindedAsset)packet);
 							break;
-						case PacketTypes.Transaction_transferAssetToStealth:
+						case TransactionTypes.Transaction_TransferAssetToStealth:
 							StoreTransferAsset(wp.WitnessPacketId, registryCombinedBlockHeight, (TransferAssetToStealth)packet);
 							break;
-						case PacketTypes.Transaction_EmployeeRecord:
+						case TransactionTypes.Transaction_EmployeeRecord:
 							StoreEmployeeRecordPacket(wp.WitnessPacketId, registryCombinedBlockHeight, (EmployeeRecord)packet);
 							break;
-						case PacketTypes.Transaction_CancelEmployeeRecord:
+						case TransactionTypes.Transaction_CancelEmployeeRecord:
 							StoreCancelEmployeeRecordPacket(wp.WitnessPacketId, registryCombinedBlockHeight, (CancelEmployeeRecord)packet);
 							break;
-						case PacketTypes.Transaction_DocumentRecord:
+						case TransactionTypes.Transaction_DocumentRecord:
 							StoreDocumentRecord(wp.WitnessPacketId, registryCombinedBlockHeight, (DocumentRecord)packet);
 							break;
-						case PacketTypes.Transaction_DocumentSignRecord:
+						case TransactionTypes.Transaction_DocumentSignRecord:
 							StoreDocumentSignRecord(wp.WitnessPacketId, registryCombinedBlockHeight, (DocumentSignRecord)packet);
 							break;
 					}
@@ -800,10 +801,10 @@ namespace O10.Gateway.Common.Services
 				{
 					switch (packet.PacketType)
 					{
-						case PacketTypes.Stealth_TransitionCompromisedProofs:
+						case TransactionTypes.Stealth_TransitionCompromisedProofs:
 							_dataAccessService.AddCompromisedKeyImage(((TransitionCompromisedProofs)packet).CompromisedKeyImage.ToHexString());
 							break;
-						case PacketTypes.Stealth_RevokeIdentity:
+						case TransactionTypes.Stealth_RevokeIdentity:
 							ProcessRevokeIdentity((RevokeIdentity)packet, registryCombinedBlockHeight);
 							break;
 					}
@@ -918,7 +919,7 @@ namespace O10.Gateway.Common.Services
 				SyncBlockHeight = packet.SyncHeight,
 				CombinedRegistryBlockHeight = registryCombinedBlockHeight,
                 WitnessId = witnessId,
-				BlockType = packet.PacketType,
+				BlockType = packet.TransactionType,
 				Commitment = packet.AssetCommitment,
 				Destination = packet.DestinationKey,
 				DestinationKey2 = packet.DestinationKey2,

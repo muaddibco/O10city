@@ -41,14 +41,14 @@ namespace O10.Node.Core.Synchronization
 
             try
             {
-                SynchronizationConfirmedBlock synchronizationConfirmedBlock = _chainDataService.Single<SynchronizationConfirmedBlock>(new SingleByBlockTypeKey(PacketTypes.Synchronization_ConfirmedBlock));
+                SynchronizationConfirmedBlock synchronizationConfirmedBlock = _chainDataService.Single<SynchronizationConfirmedBlock>(new SingleByBlockTypeKey(TransactionTypes.Synchronization_ConfirmedBlock));
 
                 if (synchronizationConfirmedBlock != null)
                 {
                     _synchronizationContext.UpdateLastSyncBlockDescriptor(new SynchronizationDescriptor(synchronizationConfirmedBlock.Height, _hashCalculation.CalculateHash(synchronizationConfirmedBlock.RawData), synchronizationConfirmedBlock.ReportedTime, DateTime.Now, synchronizationConfirmedBlock.Round));
                 }
 
-                SynchronizationRegistryCombinedBlock combinedBlock = _chainDataService.Single<SynchronizationRegistryCombinedBlock>(new SingleByBlockTypeKey(PacketTypes.Synchronization_RegistryCombinationBlock));
+                SynchronizationRegistryCombinedBlock combinedBlock = _chainDataService.Single<SynchronizationRegistryCombinedBlock>(new SingleByBlockTypeKey(TransactionTypes.Synchronization_RegistryCombinationBlock));
                 if(combinedBlock != null)
                 {
                     _synchronizationContext.LastRegistrationCombinedBlockHeight = combinedBlock.Height;

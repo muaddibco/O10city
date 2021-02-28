@@ -18,6 +18,7 @@ using O10.Core.States;
 using O10.Core.Synchronization;
 using O10.Network.Handlers;
 using O10.Transactions.Core.DTOs;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Node.WebApp.Common.Controllers
 {
@@ -86,7 +87,7 @@ namespace O10.Node.WebApp.Common.Controllers
 		[HttpGet("LastRegistryCombinedBlock")]
 		public ActionResult<RegistryCombinedBlockModel> GetLastRegistryCombinedBlock()
 		{
-			SynchronizationRegistryCombinedBlock combinedBlock = _synchronizationDataService.Single<SynchronizationRegistryCombinedBlock>(new SingleByBlockTypeKey(PacketTypes.Synchronization_RegistryCombinationBlock));
+			SynchronizationRegistryCombinedBlock combinedBlock = _synchronizationDataService.Single<SynchronizationRegistryCombinedBlock>(new SingleByBlockTypeKey(TransactionTypes.Synchronization_RegistryCombinationBlock));
 
 			byte[] content = combinedBlock?.RawData.ToArray() ?? new byte[] { };
 			return Ok(new RegistryCombinedBlockModel(combinedBlock?.Height??0, content, _hashCalculation.CalculateHash(content)));

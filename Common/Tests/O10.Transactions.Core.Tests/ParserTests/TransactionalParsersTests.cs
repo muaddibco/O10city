@@ -87,7 +87,7 @@ namespace O10.Transactions.Core.Tests.ParserTests
 			}
 
 			byte[] packet = BinaryHelper.GetSignedPacket(LedgerType.O10State, syncBlockHeight, nonce, powHash, version,
-				PacketTypes.Transaction_IssueBlindedAsset, blockHeight, null, body, _privateKey, out byte[] expectedSignature);
+				TransactionTypes.Transaction_IssueBlindedAsset, blockHeight, null, body, _privateKey, out byte[] expectedSignature);
 
 			IssueBlindedAssetParser parser = new IssueBlindedAssetParser(_identityKeyProvidersRegistry);
 			IssueBlindedAsset block = (IssueBlindedAsset)parser.Parse(packet);
@@ -165,7 +165,7 @@ namespace O10.Transactions.Core.Tests.ParserTests
 				LedgerType.Synchronization,
 				syncBlockHeight,
 				nonce, powHash, version,
-				PacketTypes.Transaction_transferAssetToStealth, blockHeight, null, body, _privateKey, out byte[] expectedSignature);
+				TransactionTypes.Transaction_TransferAssetToStealth, blockHeight, null, body, _privateKey, out byte[] expectedSignature);
 
 			transferAssetToStealthParser parser = new transferAssetToStealthParser(_identityKeyProvidersRegistry);
 			TransferAssetToStealth block = (TransferAssetToStealth)parser.Parse(packet);

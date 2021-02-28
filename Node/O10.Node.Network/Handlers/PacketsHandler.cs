@@ -8,8 +8,8 @@ using O10.Core.Logging;
 using O10.Transactions.Core.Parsers;
 using System.Collections.Generic;
 using O10.Core.Tracking;
-using O10.Core.Models;
 using O10.Transactions.Core.Serializers;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Network.Handlers
 {

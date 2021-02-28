@@ -8,9 +8,9 @@ using O10.Transactions.Core.Parsers;
 using O10.Core;
 using O10.Core.ExtensionMethods;
 using O10.Core.Logging;
-using O10.Core.Models;
 using O10.Core.Tracking;
 using O10.Transactions.Core.Serializers;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Network.Handlers
 {
@@ -166,68 +166,64 @@ namespace O10.Network.Handlers
             return blockBase;
         }
 
-        private bool ValidateBlock(PacketBase block)
+        private bool ValidateBlock(IPacketBase packet)
         {
-            if (block == null)
+            if (packet == null)
             {
                 return false;
             }
 
-            _log.Debug(() => $"Validating block {block.GetType().Name}");
+            _log.Debug(() => $"Validating block {packet.GetType().Name}");
 
             try
             {
-				//TODO: !!! need to find proper solution for the problem of checking mandatory conditions
-                if (!(block.LedgerType == (ushort)LedgerType.Registry && block.PacketType == PacketTypes.Registry_RegisterStealth))
+                foreach (ICoreVerifier coreVerifier in _coreVerifiers)
                 {
-                    foreach (ICoreVerifier coreVerifier in _coreVerifiers)
+                    if (!coreVerifier.VerifyBlock(packet))
                     {
-                        if (!coreVerifier.VerifyBlock(block))
-                        {
-                            _log.Error($"Verifier {coreVerifier.GetType().Name} found block {block.GetType().Name} is invalid");
-                            return false;
-                        }
+                        _log.Error($"Verifier {coreVerifier.GetType().Name} found packet {packet.GetType().Name} is invalid");
+                        return false;
                     }
                 }
 
-                IPacketVerifier packetVerifier = _chainTypeValidationHandlersFactory.GetInstance((LedgerType)block.LedgerType);
+                IPacketVerifier packetVerifier = _chainTypeValidationHandlersFactory.GetInstance(packet.LedgerType);
 
-                bool res = packetVerifier?.ValidatePacket(block) ?? true;
+                bool res = packetVerifier?.ValidatePacket(packet) ?? true;
 
                 return res;
             }
             catch (Exception ex)
             {
-                _log.Error($"Failed to validate block {block.RawData.ToHexString()}", ex);
+                _log.Error($"Failed to validate packet {packet}", ex);
                 return false;
             }
         }
 
-        private void DispatchBlock(PacketBase block)
+        private void DispatchBlock(IPacketBase packet)
         {
-            if (block != null)
+            if (packet != null)
             {
-                _log.Debug($"Block being dispatched PacketType = {(LedgerType)block.LedgerType}, BlockType = {block.PacketType}");
+                _log.Debug($"Packet being dispatched is {packet.GetType().FullName}");
 
 				//TODO: !!! need to find proper solution for the problem of checking mandatory conditions
-                if (!ValidateBlock(block))
+                if (!ValidateBlock(packet))
                 {
                     return;
                 }
 
                 try
                 {
-                    _log.Debug(() => $"Dispatching block {block.GetType().Name}");
+                    _log.Debug(() => $"Dispatching block {packet.GetType().Name}");
 
-                    foreach (IBlocksHandler blocksHandler in _blocksHandlersRegistry.GetBulkInstances((LedgerType)block.LedgerType))
+                    foreach (IBlocksHandler blocksHandler in _blocksHandlersRegistry.GetBulkInstances((LedgerType)packet.LedgerType))
 					{
-						_log.Debug(() => $"Dispatching block {block.GetType().Name} to {blocksHandler.GetType().Name}");
-						blocksHandler.ProcessBlock(block);
+						_log.Debug(() => $"Dispatching block {packet.GetType().Name} to {blocksHandler.GetType().Name}");
+						blocksHandler.ProcessBlock(packet);
 					}
                 }
                 catch (Exception ex)
                 {
-                    _log.Error($"Failed to dispatch block {block.RawData.ToHexString()}", ex);
+                    _log.Error($"Failed to dispatch block {packet.RawData.ToHexString()}", ex);
                 }
             }
         }

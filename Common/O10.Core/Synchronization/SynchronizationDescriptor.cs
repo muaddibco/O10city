@@ -5,7 +5,7 @@ namespace O10.Core.Synchronization
 {
     public class SynchronizationDescriptor
     {
-        public SynchronizationDescriptor(ulong blockHeight, byte[] hash, DateTime medianTime, DateTime updateTime, ushort round)
+        public SynchronizationDescriptor(long blockHeight, byte[] hash, DateTime medianTime, DateTime updateTime, ushort round)
         {
             BlockHeight = blockHeight;
             Hash = hash;
@@ -17,7 +17,7 @@ namespace O10.Core.Synchronization
         /// <summary>
         /// Last synchronization block obtained from Network
         /// </summary>
-        public ulong BlockHeight { get; private set; }
+        public long BlockHeight { get; private set; }
 
         public ushort Round { get; set; }
 

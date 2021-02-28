@@ -117,10 +117,13 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="ERR_WRONG_PACKET_BASE_TYPE" xml:space="preserve">
-    <value>Service {0} expects instance of packet of type {1} for signing and verifying</value>
+  <data name="ERR_WRONG_BODY_TYPE" xml:space="preserve">
+    <value>Service {0} expects body of type {1} for verifying</value>
   </data>
   <data name="ERR_WRONG_SECRECT_KEYS_NUMBER" xml:space="preserve">
     <value>Service {0} expects exactly {1} secret keys</value>
+  </data>
+  <data name="ERR_WRONG_SIGNATURE_TYPE" xml:space="preserve">
+    <value>Service {0} expects signature of type {1} for verifying</value>
   </data>
 </root>

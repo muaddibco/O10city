@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using O10.Core.Communication;
 using O10.Core.Models;
 using O10.Client.Common.Communication;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Server.IdentityProvider.Common.Services
 {

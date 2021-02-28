@@ -9,6 +9,7 @@ using O10.Client.Common.Interfaces.Inputs;
 using System.Threading.Tasks;
 using O10.Core.Notifications;
 using O10.Transactions.Core.DTOs;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Client.Common.Interfaces
 {

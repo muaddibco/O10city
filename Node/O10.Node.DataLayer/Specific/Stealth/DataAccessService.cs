@@ -72,7 +72,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
                 throw new ArgumentNullException(nameof(keyImage));
             }
 
-            bool isService = blockType == PacketTypes.Stealth_TransitionCompromisedProofs || blockType == PacketTypes.Stealth_RevokeIdentity;
+            bool isService = blockType == TransactionTypes.Stealth_TransitionCompromisedProofs || blockType == TransactionTypes.Stealth_RevokeIdentity;
             bool keyImageExist = _keyImages.Contains(keyImage);
             if (keyImageExist)
             {

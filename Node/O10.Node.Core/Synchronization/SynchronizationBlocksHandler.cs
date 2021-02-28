@@ -8,7 +8,7 @@ using O10.Network.Interfaces;
 using O10.Core.Architecture;
 using O10.Core.States;
 using O10.Core.Synchronization;
-using O10.Core.Models;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Node.Core.Synchronization
 {
@@ -25,7 +25,7 @@ namespace O10.Node.Core.Synchronization
         private readonly IServerCommunicationServicesRegistry _communicationServicesRegistry;
         private readonly ISyncRegistryMemPool _syncRegistryMemPool;
 
-        private readonly BlockingCollection<SynchronizationBlockBase> _synchronizationBlocks;
+        private readonly BlockingCollection<SynchronizationPacket> _synchronizationBlocks;
         
 
         public SynchronizationBlocksHandler(IStatesRepository statesRepository,
@@ -35,7 +35,7 @@ namespace O10.Node.Core.Synchronization
             _synchronizationContext = statesRepository.GetInstance<ISynchronizationContext>();
             _communicationServicesRegistry = communicationServicesRegistry;
             _syncRegistryMemPool = syncRegistryMemPool;
-            _synchronizationBlocks = new BlockingCollection<SynchronizationBlockBase>();
+            _synchronizationBlocks = new BlockingCollection<SynchronizationPacket>();
         }
 
         public string Name => NAME;
@@ -49,7 +49,7 @@ namespace O10.Node.Core.Synchronization
 
         public void ProcessBlock(PacketBase blockBase)
         {
-            if (blockBase is SynchronizationBlockBase synchronizationBlock && !_synchronizationBlocks.IsAddingCompleted)
+            if (blockBase is SynchronizationPacket synchronizationBlock && !_synchronizationBlocks.IsAddingCompleted)
             {
                 _synchronizationBlocks.Add(synchronizationBlock);
             }
@@ -59,7 +59,7 @@ namespace O10.Node.Core.Synchronization
 
         private void ProcessBlocks(CancellationToken ct)
         {
-            foreach (SynchronizationBlockBase synchronizationBlock in _synchronizationBlocks.GetConsumingEnumerable(ct))
+            foreach (SynchronizationPacket synchronizationBlock in _synchronizationBlocks.GetConsumingEnumerable(ct))
             {
                 ulong lastBlockHeight = _synchronizationContext.LastBlockDescriptor?.BlockHeight ?? 0;
                 if (lastBlockHeight + 1 > synchronizationBlock.Height)

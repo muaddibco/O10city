@@ -9,6 +9,7 @@ using O10.Core.Configuration;
 using O10.Core.Identity;
 using O10.Core.States;
 using O10.Gateway.Common.Configuration;
+using O10.Crypto.Services;
 
 namespace O10.Gateway.Common.Services
 {

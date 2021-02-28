@@ -4,9 +4,9 @@ using O10.Transactions.Core.Enums;
 using O10.Node.DataLayer.DataServices;
 using O10.Node.DataLayer.DataServices.Keys;
 using O10.Core.Logging;
-using O10.Core.Models;
 using O10.Core.Translators;
 using O10.Node.DataLayer.Exceptions;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Node.DataLayer.DataAccess
 {
