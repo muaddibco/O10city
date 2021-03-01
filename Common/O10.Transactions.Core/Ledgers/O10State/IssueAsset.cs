@@ -3,7 +3,7 @@ using O10.Transactions.Core.Enums;
 
 namespace O10.Transactions.Core.Ledgers.O10State
 {
-    public class IssueAsset : TransactionalPacketBase
+    public class IssueAsset : O10StatePacket
     {
         public override ushort Version => 1;
 

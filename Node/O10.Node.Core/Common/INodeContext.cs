@@ -10,7 +10,7 @@ namespace O10.Node.Core.Common
     {
         IKey AccountKey { get; }
 
-        List<SynchronizationGroupParticipant> SyncGroupParticipants { get; }
+        //List<SynchronizationGroupParticipant> SyncGroupParticipants { get; }
 
         void Initialize(ISigningService signingService);
 

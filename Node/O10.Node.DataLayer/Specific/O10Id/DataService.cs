@@ -45,7 +45,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
 
             Logger?.LogIfDebug(() => $"Storing {packet.GetType().Name}: {JsonConvert.SerializeObject(packet, new ByteArrayJsonConverter())}");
 
-            if (packet is TransactionalPacketBase transactionalBlockBase)
+            if (packet is O10StatePacket transactionalBlockBase)
             {
                 var hash = _defaultHashCalculation.CalculateHash(packet.ToString());
                 Service.AddTransaction(transactionalBlockBase.Source, (long)transactionalBlockBase.SyncHeight, transactionalBlockBase.PacketType, (long)transactionalBlockBase.Height, packet.ToString(), hash);

@@ -348,7 +348,7 @@ namespace O10.Client.Common.Communication
             return transferAssetToStealth;
         }
 
-        private void FillHeightInfo(TransactionalPacketBase transactionalBlockBase)
+        private void FillHeightInfo(O10StatePacket transactionalBlockBase)
         {
             transactionalBlockBase.Height = _lastHeight++;
         }

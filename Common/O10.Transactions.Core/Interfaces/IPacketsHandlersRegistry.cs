@@ -5,7 +5,7 @@ using O10.Core.Architecture;
 namespace O10.Transactions.Core.Interfaces
 {
     [ServiceContract]
-    public interface IBlocksHandlersRegistry : IRepository<IBlocksHandler, string>, IBulkRegistry<IBlocksHandler, LedgerType>
+    public interface IPacketsHandlersRegistry : IRepository<IPacketsHandler, string>, IBulkRegistry<IPacketsHandler, LedgerType>
     {
     }
 }

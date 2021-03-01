@@ -233,7 +233,7 @@ namespace O10.Gateway.Common.Services
 			}
 		}
 
-		public async Task SendEphemeralPacket(StealthBase packet)
+		public async Task SendEphemeralPacket(StealthTransaction packet)
         {
 
         }

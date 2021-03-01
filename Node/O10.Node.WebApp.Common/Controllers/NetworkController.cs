@@ -104,7 +104,7 @@ namespace O10.Node.WebApp.Common.Controllers
 			}
 
 			IKey key = _identityKeyProvider.GetKey(keyBytes);
-			TransactionalPacketBase transactionalBlockBase = _transactionalDataService.Single<TransactionalPacketBase>(new UniqueKey(key));
+			O10StatePacket transactionalBlockBase = _transactionalDataService.Single<O10StatePacket>(new UniqueKey(key));
 
 			return new StatePacketInfo
 			{

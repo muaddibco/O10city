@@ -9,9 +9,9 @@ namespace O10.Node.Core.Storage
     public class StorageModule : ModuleBase
     {
         public const string NAME = nameof(StorageModule);
-        private readonly IBlocksHandlersRegistry _blocksHandlersFactory;
+        private readonly IPacketsHandlersRegistry _blocksHandlersFactory;
 
-        public StorageModule(ILoggerService loggerService, IBlocksHandlersRegistry blocksHandlersFactory) : base(loggerService)
+        public StorageModule(ILoggerService loggerService, IPacketsHandlersRegistry blocksHandlersFactory) : base(loggerService)
         {
             _blocksHandlersFactory = blocksHandlersFactory;
         }
@@ -25,10 +25,10 @@ namespace O10.Node.Core.Storage
 
         protected override void InitializeInner()
         {
-            IBlocksHandler transactionalStorageBlocksHandler = _blocksHandlersFactory.GetInstance(TransactionalStorageHandler.NAME);
+            IPacketsHandler transactionalStorageBlocksHandler = _blocksHandlersFactory.GetInstance(TransactionalStorageHandler.NAME);
             _blocksHandlersFactory.RegisterInstance(transactionalStorageBlocksHandler);
             transactionalStorageBlocksHandler.Initialize(_cancellationToken);
-            IBlocksHandler StealthStorageBlocksHandler = _blocksHandlersFactory.GetInstance(StealthStorageHandler.NAME);
+            IPacketsHandler StealthStorageBlocksHandler = _blocksHandlersFactory.GetInstance(StealthStorageHandler.NAME);
             _blocksHandlersFactory.RegisterInstance(StealthStorageBlocksHandler);
             StealthStorageBlocksHandler.Initialize(_cancellationToken);
         }

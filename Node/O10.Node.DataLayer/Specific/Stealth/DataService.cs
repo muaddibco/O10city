@@ -35,7 +35,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
 
             Logger.Debug($"Storing {item.GetType().Name}");
 
-            if (item is StealthBase stealth)
+            if (item is Transactions.Core.Ledgers.Stealth.StealthTransaction stealth)
             {
                 Service.AddStealthBlock(stealth.KeyImage, stealth.SyncHeight, stealth.TransactionType, stealth.DestinationKey, stealth.ToString());
             }
@@ -50,17 +50,17 @@ namespace O10.Node.DataLayer.Specific.Stealth
 
             if (key is SyncHashKey syncHashKey)
             {
-                StealthTransaction Stealth = Service.GetStealthBySyncAndHash(syncHashKey.SyncBlockHeight, syncHashKey.Hash);
+                Model.StealthTransaction Stealth = Service.GetStealthBySyncAndHash(syncHashKey.SyncBlockHeight, syncHashKey.Hash);
 
                 if (Stealth != null)
                 {
-                    return new List<PacketBase> { TranslatorsRepository.GetInstance<StealthTransaction, PacketBase>().Translate(Stealth) };
+                    return new List<PacketBase> { TranslatorsRepository.GetInstance<Model.StealthTransaction, PacketBase>().Translate(Stealth) };
                 }
             }
             else if (key is CombinedHashKey combinedHashKey)
             {
                 ulong syncBlockHeight = ChainDataServicesManager.GetChainDataService(LedgerType.Synchronization).GetScalar(new SingleByBlockTypeAndHeight(TransactionTypes.Synchronization_RegistryCombinationBlock, combinedHashKey.CombinedBlockHeight));
-                StealthTransaction Stealth = Service.GetStealthBySyncAndHash(syncBlockHeight, combinedHashKey.Hash);
+                Model.StealthTransaction Stealth = Service.GetStealthBySyncAndHash(syncBlockHeight, combinedHashKey.Hash);
 
                 if (Stealth == null)
                 {
@@ -76,7 +76,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
 
                 if (Stealth != null)
                 {
-                    return new List<PacketBase> { TranslatorsRepository.GetInstance<StealthTransaction, PacketBase>().Translate(Stealth) };
+                    return new List<PacketBase> { TranslatorsRepository.GetInstance<Model.StealthTransaction, PacketBase>().Translate(Stealth) };
                 }
             }
 

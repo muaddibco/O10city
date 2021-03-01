@@ -19,14 +19,14 @@ namespace O10.Node.Core.Common
 
         public NodeContext()
         {
-            SyncGroupParticipants = new List<SynchronizationGroupParticipant>();
+            //SyncGroupParticipants = new List<SynchronizationGroupParticipant>();
         }
 
         public string Name => NAME;
 
         public IKey AccountKey { get; private set; }
 
-        public List<SynchronizationGroupParticipant> SyncGroupParticipants { get; private set; }
+        //public List<SynchronizationGroupParticipant> SyncGroupParticipants { get; private set; }
 
         public ISigningService SigningService { get; private set; }
 

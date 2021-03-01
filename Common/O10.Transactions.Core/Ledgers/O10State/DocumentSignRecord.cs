@@ -3,7 +3,7 @@ using O10.Core.Cryptography;
 
 namespace O10.Transactions.Core.Ledgers.O10State
 {
-	public class DocumentSignRecord : TransactionalPacketBase
+	public class DocumentSignRecord : O10StatePacket
 	{
 		public override ushort Version => 1;
 

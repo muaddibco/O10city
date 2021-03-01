@@ -12,7 +12,7 @@ namespace O10.Node.Core.Centralized
     public class CentralizedModule : ModuleBase
     {
         private readonly ILoggerService _loggerService;
-        private readonly IBlocksHandlersRegistry _blocksHandlersRegistry;
+        private readonly IPacketsHandlersRegistry _blocksHandlersRegistry;
 		private readonly INotificationsService _notificationsService;
 		private readonly IRealTimeRegistryService _realTimeRegistryService;
         private readonly IChainDataServicesManager _chainDataServicesManager;
@@ -21,7 +21,7 @@ namespace O10.Node.Core.Centralized
 
 
         public CentralizedModule(ILoggerService loggerService,
-                                 IBlocksHandlersRegistry blocksHandlersFactory,
+                                 IPacketsHandlersRegistry blocksHandlersFactory,
                                  INotificationsService notificationsService,
                                  IRealTimeRegistryService realTimeRegistryService,
                                  IChainDataServicesManager chainDataServicesManager,
@@ -48,11 +48,11 @@ namespace O10.Node.Core.Centralized
 
         protected override void InitializeInner()
         {
-            IBlocksHandler blocksHandler = _blocksHandlersRegistry.GetInstance(TransactionsRegistryCentralizedHandler.NAME);
+            IPacketsHandler blocksHandler = _blocksHandlersRegistry.GetInstance(TransactionsRegistryCentralizedHandler.NAME);
             _blocksHandlersRegistry.RegisterInstance(blocksHandler);
             blocksHandler.Initialize(_cancellationToken);
 
-			blocksHandler = _blocksHandlersRegistry.GetInstance(TransactionalStorageHandler.NAME);
+			blocksHandler = _blocksHandlersRegistry.GetInstance(O10StateStorageHandler.NAME);
 			_blocksHandlersRegistry.RegisterInstance(blocksHandler);
 			blocksHandler.Initialize(_cancellationToken);
 

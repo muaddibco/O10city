@@ -28,7 +28,7 @@ namespace O10.Network.Handlers
 
         public PacketsHandler(IPacketVerifiersRepository packetTypeHandlersFactory,
                               IBlockParsersRepositoriesRepository blockParsersFactoriesRepository,
-                              IBlocksHandlersRegistry blocksProcessorFactory,
+                              IPacketsHandlersRegistry blocksProcessorFactory,
                               ICoreVerifiersBulkFactory coreVerifiersBulkFactory,
                               ISerializersFactory serializersFactory,
                               ITrackingService trackingService,

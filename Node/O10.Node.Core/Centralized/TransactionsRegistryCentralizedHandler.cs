@@ -13,7 +13,6 @@ using O10.Core.Logging;
 using O10.Core.Synchronization;
 using System.Linq;
 using O10.Core.HashCalculations;
-using O10.Transactions.Core.Serializers;
 using O10.Core;
 using O10.Node.Core.Common;
 using O10.Node.DataLayer.DataServices;
@@ -27,8 +26,8 @@ using O10.Transactions.Core.Ledgers.Registry.Transactions;
 
 namespace O10.Node.Core.Centralized
 {
-    [RegisterExtension(typeof(IBlocksHandler), Lifetime = LifetimeManagement.Singleton)]
-    public class TransactionsRegistryCentralizedHandler : IBlocksHandler
+    [RegisterExtension(typeof(IPacketsHandler), Lifetime = LifetimeManagement.Singleton)]
+    public class TransactionsRegistryCentralizedHandler : IPacketsHandler
     {
         public const string NAME = "TransactionsRegistryCentralized";
 
@@ -38,7 +37,6 @@ namespace O10.Node.Core.Centralized
 
         private readonly object _sync = new object();
         private readonly IRealTimeRegistryService _realTimeRegistryService;
-        private readonly ISerializersFactory _serializersFactory;
         private readonly INodeContext _nodeContext;
         private readonly ISynchronizationContext _synchronizationContext;
         private readonly IChainDataService _synchronizationChainDataService;
@@ -50,10 +48,13 @@ namespace O10.Node.Core.Centralized
         private BufferBlock<IPacketBase> _packetsBuffer;
         private AggregatedRegistrationsTransaction _lastCombinedBlock;
 
-        public TransactionsRegistryCentralizedHandler(IRealTimeRegistryService realTimeRegistryService, IStatesRepository statesRepository, IChainDataServicesManager chainDataServicesManager, ISerializersFactory serializersFactory, IHashCalculationsRepository hashCalculationsRepository, ILoggerService loggerService)
+        public TransactionsRegistryCentralizedHandler(IRealTimeRegistryService realTimeRegistryService,
+                                                      IStatesRepository statesRepository,
+                                                      IChainDataServicesManager chainDataServicesManager,
+                                                      IHashCalculationsRepository hashCalculationsRepository,
+                                                      ILoggerService loggerService)
         {
             _realTimeRegistryService = realTimeRegistryService;
-            _serializersFactory = serializersFactory;
             _synchronizationContext = statesRepository.GetInstance<ISynchronizationContext>();
             _nodeContext = statesRepository.GetInstance<INodeContext>();
             _synchronizationChainDataService = chainDataServicesManager.GetChainDataService(LedgerType.Synchronization);

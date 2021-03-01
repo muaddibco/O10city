@@ -19,7 +19,7 @@ namespace O10.Network.Handlers
         private readonly IEnumerable<ICoreVerifier> _coreVerifiers;
         private readonly IPacketVerifiersRepository _chainTypeValidationHandlersFactory;
         private readonly IBlockParsersRepositoriesRepository _blockParsersFactoriesRepository;
-        private readonly IBlocksHandlersRegistry _blocksHandlersRegistry;
+        private readonly IPacketsHandlersRegistry _blocksHandlersRegistry;
         private readonly ISerializersFactory _serializersFactory;
         private readonly ITrackingService _trackingService;
         private readonly ILogger _log;
@@ -32,7 +32,7 @@ namespace O10.Network.Handlers
                                   ICoreVerifiersBulkFactory coreVerifiersBulkFactory,
                                   IPacketVerifiersRepository packetTypeHandlersFactory,
                                   IBlockParsersRepositoriesRepository blockParsersFactoriesRepository,
-                                  IBlocksHandlersRegistry blocksProcessorFactory,
+                                  IPacketsHandlersRegistry blocksProcessorFactory,
                                   ISerializersFactory serializersFactory,
                                   ITrackingService trackingService,
                                   ILoggerService loggerService)
@@ -215,9 +215,9 @@ namespace O10.Network.Handlers
                 {
                     _log.Debug(() => $"Dispatching block {packet.GetType().Name}");
 
-                    foreach (IBlocksHandler blocksHandler in _blocksHandlersRegistry.GetBulkInstances((LedgerType)packet.LedgerType))
+                    foreach (Transactions.Core.Interfaces.IPacketsHandler blocksHandler in _blocksHandlersRegistry.GetBulkInstances((LedgerType)packet.LedgerType))
 					{
-						_log.Debug(() => $"Dispatching block {packet.GetType().Name} to {blocksHandler.GetType().Name}");
+                        _log.Debug(() => $"Dispatching block {packet.GetType().Name} to {blocksHandler.GetType().Name}");
 						blocksHandler.ProcessBlock(packet);
 					}
                 }

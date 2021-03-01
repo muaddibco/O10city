@@ -9,7 +9,7 @@ using O10.Transactions.Core.Ledgers;
 
 namespace O10.Node.Core.Centralized
 {
-    public abstract class StorageHandlerBase<T> : IBlocksHandler where T : IPacketBase
+    public abstract class StorageHandlerBase<T> : IPacketsHandler where T : IPacketBase
     {
         private readonly IChainDataServicesManager _chainDataServicesManager;
 		private readonly IRealTimeRegistryService _realTimeRegistryService;

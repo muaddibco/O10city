@@ -2,7 +2,7 @@
 
 namespace O10.Transactions.Core.Ledgers.O10State
 {
-	public class DocumentRecord : TransactionalPacketBase
+	public class DocumentRecord : O10StatePacket
     {
         public override ushort Version => 1;
 

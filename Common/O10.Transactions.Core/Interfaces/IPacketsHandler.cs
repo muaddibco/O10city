@@ -6,7 +6,7 @@ using O10.Transactions.Core.Ledgers;
 namespace O10.Transactions.Core.Interfaces
 {
     [ExtensionPoint]
-    public interface IBlocksHandler
+    public interface IPacketsHandler
     {
         string Name { get; }
 

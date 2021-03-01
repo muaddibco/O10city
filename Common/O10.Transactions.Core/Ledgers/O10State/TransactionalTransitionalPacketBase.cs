@@ -3,7 +3,7 @@ using O10.Core.Serialization;
 
 namespace O10.Transactions.Core.Ledgers.O10State
 {
-    public abstract class TransactionalTransitionalPacketBase : TransactionalPacketBase
+    public abstract class TransactionalTransitionalPacketBase : O10StatePacket
 	{
 
 		[JsonConverter(typeof(ByteArrayJsonConverter))]

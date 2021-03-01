@@ -9,10 +9,10 @@ namespace O10.Node.Core.Registry
     public class TransactionsRegistrationModule : ModuleBase
     {
         public const string NAME = nameof(TransactionsRegistrationModule);
-        private readonly IBlocksHandlersRegistry _blocksHandlersFactory;
+        private readonly IPacketsHandlersRegistry _blocksHandlersFactory;
         private readonly ITransactionsRegistryService _transactionsRegistryService;
 
-        public TransactionsRegistrationModule(ILoggerService loggerService, IBlocksHandlersRegistry blocksHandlersFactory, ITransactionsRegistryService transactionsRegistryService) : base(loggerService)
+        public TransactionsRegistrationModule(ILoggerService loggerService, IPacketsHandlersRegistry blocksHandlersFactory, ITransactionsRegistryService transactionsRegistryService) : base(loggerService)
         {
             _blocksHandlersFactory = blocksHandlersFactory;
             _transactionsRegistryService = transactionsRegistryService;
@@ -27,7 +27,7 @@ namespace O10.Node.Core.Registry
 
         protected override void InitializeInner()
         {
-            IBlocksHandler blocksHandler = _blocksHandlersFactory.GetInstance(TransactionsRegistryHandler.NAME);
+            IPacketsHandler blocksHandler = _blocksHandlersFactory.GetInstance(TransactionsRegistryHandler.NAME);
             _blocksHandlersFactory.RegisterInstance(blocksHandler);
             blocksHandler.Initialize(_cancellationToken);
 

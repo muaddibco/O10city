@@ -9,7 +9,7 @@ namespace O10.Transactions.Core.Ledgers.O10State
     ///   1. Commitment and Surjection Proof to base attribute
     ///   2. Commitment that will be stored into AssociatedEncryptedCommitment - that is commitment to the same base attribute commitment
     /// </summary>
-    public class IssueAssociatedBlindedAsset : TransactionalPacketBase
+    public class IssueAssociatedBlindedAsset : O10StatePacket
 	{
 		public override ushort Version => 1;
 

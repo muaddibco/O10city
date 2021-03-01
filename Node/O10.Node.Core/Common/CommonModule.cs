@@ -9,9 +9,9 @@ namespace O10.Node.Core.Common
     public class CommonModule : ModuleBase
     {
         public const string NAME = nameof(CommonModule);
-        private readonly IBlocksHandlersRegistry _blocksHandlersFactory;
+        private readonly IPacketsHandlersRegistry _blocksHandlersFactory;
 
-        public CommonModule(ILoggerService loggerService, IBlocksHandlersRegistry blocksHandlersFactory) : base(loggerService)
+        public CommonModule(ILoggerService loggerService, IPacketsHandlersRegistry blocksHandlersFactory) : base(loggerService)
         {
             _blocksHandlersFactory = blocksHandlersFactory;
         }
@@ -24,7 +24,7 @@ namespace O10.Node.Core.Common
 
         protected override void InitializeInner()
         {
-            IBlocksHandler blocksHandler = _blocksHandlersFactory.GetInstance(SynchronizationReceivingHandler.NAME);
+            IPacketsHandler blocksHandler = _blocksHandlersFactory.GetInstance(SynchronizationReceivingHandler.NAME);
             _blocksHandlersFactory.RegisterInstance(blocksHandler);
             blocksHandler.Initialize(_cancellationToken);
         }
