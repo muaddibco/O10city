@@ -10,15 +10,12 @@ using O10.Gateway.DataLayer.Services;
 using O10.Transactions.Core.Accessors;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Exceptions;
-using O10.Transactions.Core.Parsers;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using O10.Transactions.Core.DTOs;
-using O10.Transactions.Core.Ledgers;
 
 namespace O10.Gateway.Common.Accessors
 {
@@ -83,7 +80,7 @@ namespace O10.Gateway.Common.Accessors
             else
             {
                 Url url = _synchronizerConfiguration.NodeApiUri
-                    .AppendPathSegment("StealthTransactionInfo")
+                    .AppendPathSegment("StealthTransaction")
                     .SetQueryParam("combinedBlockHeight", combinedRegistryBlockHeight)
                     .SetQueryParam("hash", accessDescriptor.Parameters[Hash]);
 

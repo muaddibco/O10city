@@ -1,8 +1,11 @@
-﻿namespace O10.Transactions.Core.DTOs
+﻿using O10.Transactions.Core.Ledgers.Registry;
+using O10.Transactions.Core.Ledgers.Synchronization;
+
+namespace O10.Transactions.Core.DTOs
 {
     public class RtPackage
     {
-        public TransactionInfo CombinedBlock { get; set; }
-        public TransactionInfo RegistryFullBlock { get; set; }
+        public SynchronizationPacket? AggregatedRegistrations { get; set; }
+        public RegistryPacket? FullRegistrations { get; set; }
     }
 }

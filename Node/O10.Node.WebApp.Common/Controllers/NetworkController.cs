@@ -19,6 +19,7 @@ using O10.Core.Synchronization;
 using O10.Network.Handlers;
 using O10.Transactions.Core.DTOs;
 using O10.Transactions.Core.Ledgers;
+using O10.Transactions.Core.Ledgers.Synchronization.Transactions;
 
 namespace O10.Node.WebApp.Common.Controllers
 {
@@ -71,7 +72,7 @@ namespace O10.Node.WebApp.Common.Controllers
 		}
 
 		[HttpPost("Packet")]
-		public IActionResult Post([FromBody] PacketBase packet)
+		public IActionResult Post([FromBody] IPacketBase packet)
 		{
 			_packetsHandler.Push(packet);
 
@@ -79,18 +80,17 @@ namespace O10.Node.WebApp.Common.Controllers
 		}
 
 		[HttpGet("GetLastSyncBlock")]
-		public ActionResult<SyncBlockModel> GetLastSyncBlock()
+		public ActionResult<SyncInfoDTO> GetLastSyncBlock()
 		{
-			return new SyncBlockModel(_synchronizationContext.LastBlockDescriptor?.BlockHeight ?? 0, _synchronizationContext.LastBlockDescriptor?.Hash ?? new byte[Globals.DEFAULT_HASH_SIZE]);
+			return new SyncInfoDTO(_synchronizationContext.LastBlockDescriptor?.BlockHeight ?? 0, _synchronizationContext.LastBlockDescriptor?.Hash ?? new byte[Globals.DEFAULT_HASH_SIZE]);
 		}
 
-		[HttpGet("LastRegistryCombinedBlock")]
-		public ActionResult<RegistryCombinedBlockModel> GetLastRegistryCombinedBlock()
+		[HttpGet("LastAggregatedRegistrations")]
+		public ActionResult<AggregatedRegistrationsTransactionDTO> LastAggregatedRegistrations()
 		{
-			SynchronizationRegistryCombinedBlock combinedBlock = _synchronizationDataService.Single<SynchronizationRegistryCombinedBlock>(new SingleByBlockTypeKey(TransactionTypes.Synchronization_RegistryCombinationBlock));
+			AggregatedRegistrationsTransaction combinedBlock = _synchronizationDataService.Single<SynchronizationPacket>(new SingleByBlockTypeKey(TransactionTypes.Synchronization_RegistryCombinationBlock))?.As<AggregatedRegistrationsTransaction>();
 
-			byte[] content = combinedBlock?.RawData.ToArray() ?? new byte[] { };
-			return Ok(new RegistryCombinedBlockModel(combinedBlock?.Height??0, content, _hashCalculation.CalculateHash(content)));
+			return Ok(new AggregatedRegistrationsTransactionDTO { Height = combinedBlock.Height });
 		}
 
 		[HttpGet("GetLastStatePacketInfo")]
@@ -108,98 +108,74 @@ namespace O10.Node.WebApp.Common.Controllers
 
 			return new StatePacketInfo
 			{
-				Height = transactionalBlockBase?.Height ?? 0,
+				Height = transactionalBlockBase.Body?.Height ?? 0,
 				//TODO: !!! need to reconsider hash calculation here since it is potential point of DoS attack
-				Hash = (transactionalBlockBase != null ? _hashCalculation.CalculateHash(transactionalBlockBase.RawData) : new byte[Globals.DEFAULT_HASH_SIZE]).ToHexString(),
+				Hash = (transactionalBlockBase != null ? _hashCalculation.CalculateHash(transactionalBlockBase.ToByteArray()) : new byte[Globals.DEFAULT_HASH_SIZE]).ToHexString(),
 			};
 		}
 
-		[HttpGet("GetTransactionInfoState")]
-		public ActionResult<TransactionInfo> GetTransactionInfoState([FromQuery] string combinedBlockHeight, [FromQuery] string hash)
+		[HttpGet("O10StateTransaction")]
+		public ActionResult<IPacketBase> GetO10StateTransaction([FromQuery] string combinedBlockHeight, [FromQuery] string hash)
 		{
-			_logger.LogIfDebug(() => $"{nameof(GetTransactionInfoState)}({combinedBlockHeight}, {hash})");
+			_logger.LogIfDebug(() => $"{nameof(GetO10StateTransaction)}({combinedBlockHeight}, {hash})");
 
 			byte[] hashBytes = hash.HexStringToByteArray();
 			try
 			{
-				PacketBase blockBase = _transactionalDataService.Get(new CombinedHashKey(ulong.Parse(combinedBlockHeight), hashBytes)).Single();
+				var blockBase = _transactionalDataService.Get(new CombinedHashKey(ulong.Parse(combinedBlockHeight), hashBytes)).Single();
 
-				if (blockBase != null)
-				{
-					return new TransactionInfo
-					{
-						SyncBlockHeight = blockBase.SyncHeight,
-						LedgerType = (LedgerType)blockBase.LedgerType,
-						PacketType = blockBase.PacketType,
-						Content = blockBase.RawData.ToArray()
-					};
-				}
-				else
+				if(blockBase == null)
 				{
 					blockBase = _transactionalDataService.Get(new CombinedHashKey(ulong.Parse(combinedBlockHeight) - 1, hashBytes)).Single();
-
-					if (blockBase != null)
-					{
-						return new TransactionInfo
-						{
-							SyncBlockHeight = blockBase.SyncHeight,
-							LedgerType = (LedgerType)blockBase.LedgerType,
-							PacketType = blockBase.PacketType,
-							Content = blockBase.RawData.ToArray()
-						};
-					}
 				}
+			
+				if(blockBase != null)
+                {
+					return Ok(blockBase);
+				}
+				else
+				{
+					_logger.Error($"{nameof(GetO10StateTransaction)}({combinedBlockHeight}, {hash}) not found");
+				}
+
+				return NotFound();
 			}
 			catch (Exception ex)
 			{
 				_logger.Error($"Failed to retrieve block for CombinedBlockHeight {combinedBlockHeight} and ReferencedHash {hash}", ex);
+				throw;
 			}
-
-			_logger.Error($"{nameof(GetTransactionInfoState)}({combinedBlockHeight}, {hash}) not found");
-
-			return new TransactionInfo();
 		}
 
-		[HttpGet("StealthTransactionInfo")]
-		public ActionResult<TransactionInfo> GetStealthTransactionInfo([FromQuery] string combinedBlockHeight, [FromQuery] string hash)
+		[HttpGet("StealthTransaction")]
+		public ActionResult<IPacketBase> GetStealthTransaction([FromQuery] string combinedBlockHeight, [FromQuery] string hash)
 		{
 			byte[] hashBytes = hash.HexStringToByteArray();
 			try
 			{
-				PacketBase blockBase = _stealthDataService.Get(new CombinedHashKey(ulong.Parse(combinedBlockHeight), hashBytes)).Single();
+				IPacketBase blockBase = _stealthDataService.Get(new CombinedHashKey(ulong.Parse(combinedBlockHeight), hashBytes)).Single();
+
+				if(blockBase == null)
+				{
+					blockBase = _stealthDataService.Get(new CombinedHashKey(ulong.Parse(combinedBlockHeight) - 1, hashBytes)).Single();
+				}
 
 				if (blockBase != null)
 				{
-					return new TransactionInfo
-					{
-						SyncBlockHeight = blockBase.SyncHeight,
-						LedgerType = (LedgerType)blockBase.LedgerType,
-						PacketType = blockBase.PacketType,
-						Content = blockBase.RawData.ToArray()
-					};
+					return Ok(blockBase);
 				}
 				else
 				{
-					blockBase = _stealthDataService.Get(new CombinedHashKey(ulong.Parse(combinedBlockHeight) - 1, hashBytes)).Single();
-
-					if (blockBase != null)
-					{
-						return new TransactionInfo
-						{
-							SyncBlockHeight = blockBase.SyncHeight,
-							LedgerType = (LedgerType)blockBase.LedgerType,
-							PacketType = blockBase.PacketType,
-							Content = blockBase.RawData.ToArray()
-						};
-					}
+					_logger.Error($"{nameof(GetStealthTransaction)}({combinedBlockHeight}, {hash}) not found");
 				}
+
+				return NotFound();
 			}
 			catch (Exception ex)
 			{
 				_logger.Error($"Failed to retrieve block for CombinedBlockHeight {combinedBlockHeight} and ReferencedHash {hash}", ex);
+				throw;
 			}
-
-			return new TransactionInfo();
 		}
 
 		[HttpGet("HashByKeyImage/{keyImage}")]

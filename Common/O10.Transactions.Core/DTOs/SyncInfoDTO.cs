@@ -1,14 +1,14 @@
 ﻿namespace O10.Transactions.Core.DTOs
 {
-    public class SyncBlockModel
+    public class SyncInfoDTO
     {
-        public SyncBlockModel(ulong height, byte[] hash)
+        public SyncInfoDTO(long height, byte[] hash)
         {
             Height = height;
             Hash = hash;
         }
 
-        public ulong Height { get; }
+        public long Height { get; }
         public byte[] Hash { get; set; }
     }
 }

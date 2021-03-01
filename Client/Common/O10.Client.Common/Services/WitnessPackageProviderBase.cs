@@ -135,9 +135,9 @@ namespace O10.Client.Common.Services
 			{
 				_logger.Debug($"[{_accountId}]: starting {nameof(AscertainAccountIsUpToDate)}");
 
-				RegistryCombinedBlockModel registryCombinedBlockModel = await _gatewayService.GetLastRegistryCombinedBlock().ConfigureAwait(false);
+				AggregatedRegistrationsTransactionDTO registryCombinedBlockModel = await _gatewayService.GetLastRegistryCombinedBlock().ConfigureAwait(false);
 
-				_logger.LogIfDebug(() => $"[{_accountId}]: LastRegistryCombinedBlock = {JsonConvert.SerializeObject(registryCombinedBlockModel, new ByteArrayJsonConverter())}");
+				_logger.LogIfDebug(() => $"[{_accountId}]: LastAggregatedRegistrations = {JsonConvert.SerializeObject(registryCombinedBlockModel, new ByteArrayJsonConverter())}");
 
 				if (registryCombinedBlockModel != null)
 				{

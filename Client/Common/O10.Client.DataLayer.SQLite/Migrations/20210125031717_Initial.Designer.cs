@@ -112,7 +112,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                     b.Property<bool>("IsPrivate")
                         .HasColumnType("INTEGER");
 
-                    b.Property<ulong>("LastRegistryCombinedBlock")
+                    b.Property<ulong>("LastAggregatedRegistrations")
                         .HasColumnType("INTEGER");
 
                     b.Property<byte[]>("PublicSpendKey")

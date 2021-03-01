@@ -112,16 +112,16 @@ namespace O10.Client.DataLayer.Services
 
         void ClearAccountCompromised(long accountId);
 
-		long AddAccount(byte accountType, string accountInfo, byte[] secretSpendKeyEnc, byte[] secretViewKeyEnc, byte[] publicSpendKey, byte[] publicViewKey, ulong lastRegistryCombinedBlock, bool isPrivate = false);
+		long AddAccount(byte accountType, string accountInfo, byte[] secretSpendKeyEnc, byte[] secretViewKeyEnc, byte[] publicSpendKey, byte[] publicViewKey, ulong lastAggregatedRegistrations, bool isPrivate = false);
 		void UpdateAccount(long accountId, string accountInfo, byte[] publicSpendKey, byte[] publicViewKey);
-		void ResetAccount(long accountId, byte[] secretSpendKeyEnc, byte[] secretViewKeyEnc, byte[] publicSpendKey, byte[] publicViewKey, ulong lastRegistryCombinedBlock);
+		void ResetAccount(long accountId, byte[] secretSpendKeyEnc, byte[] secretViewKeyEnc, byte[] publicSpendKey, byte[] publicViewKey, ulong lastAggregatedRegistrations);
 		bool GetAccountId(byte[] publicKey, out long accountId);
 		bool GetAccountId(byte[] publicSpendKey, byte[] publicViewKey, out long accountId);
         void RemoveAccount(long accountId);
 
 		long DuplicateUserAccount(long accountId, string accountInfo);
 
-		void OverrideUserAccount(long accountId, byte[] secretSpendKeyEnc, byte[] secretViewKeyEnc, byte[] publicSpendKey, byte[] publicViewKey, ulong lastRegistryCombinedBlock);
+		void OverrideUserAccount(long accountId, byte[] secretSpendKeyEnc, byte[] secretViewKeyEnc, byte[] publicSpendKey, byte[] publicViewKey, ulong lastAggregatedRegistrations);
 
 		byte[] GetAesInitializationVector();
 

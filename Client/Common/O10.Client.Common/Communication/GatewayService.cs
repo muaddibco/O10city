@@ -70,12 +70,12 @@ namespace O10.Client.Common.Communication
 			}
 		}
 
-		public async Task<RegistryCombinedBlockModel> GetLastRegistryCombinedBlock()
+		public async Task<AggregatedRegistrationsTransactionDTO> GetLastRegistryCombinedBlock()
 		{
 			Url url = _gatewayUri.AppendPathSegments("api", "synchronization", "GetLastRegistryCombinedBlock");
 			try
 			{
-				RegistryCombinedBlockModel registryCombinedBlockDescriptor = await _restClientService.Request(url).GetJsonAsync<RegistryCombinedBlockModel>().ConfigureAwait(false);
+				AggregatedRegistrationsTransactionDTO registryCombinedBlockDescriptor = await _restClientService.Request(url).GetJsonAsync<AggregatedRegistrationsTransactionDTO>().ConfigureAwait(false);
 
 				return registryCombinedBlockDescriptor;
 
@@ -87,11 +87,11 @@ namespace O10.Client.Common.Communication
 			}
 		}
 
-		public async Task<SyncBlockModel> GetLastSyncBlock()
+		public async Task<SyncInfoDTO> GetLastSyncBlock()
 		{
 			Url url = _gatewayUri.AppendPathSegments("api", "synchronization", "GetLastSyncBlock");
 
-			SyncBlockModel registryCombinedBlockDescriptor = await _restClientService.Request(url).GetJsonAsync<SyncBlockModel>().ConfigureAwait(false);
+			SyncInfoDTO registryCombinedBlockDescriptor = await _restClientService.Request(url).GetJsonAsync<SyncInfoDTO>().ConfigureAwait(false);
 
 			return registryCombinedBlockDescriptor;
 		}

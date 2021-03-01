@@ -129,7 +129,7 @@ namespace O10.Gateway.WebApp.Common.Controllers
         [HttpGet("GetLastSyncBlockOnNode")]
         public async Task<IActionResult> GetLastSyncBlockOnNode()
         {
-            return Ok(await _synchronizerConfiguration.NodeApiUri.AppendPathSegment("GetLastSyncBlock").GetJsonAsync<SyncBlockModel>().ConfigureAwait(false));
+            return Ok(await _synchronizerConfiguration.NodeApiUri.AppendPathSegment("GetLastSyncBlock").GetJsonAsync<SyncInfoDTO>().ConfigureAwait(false));
         }
 
         [HttpGet("GetWitnessesRange/{combinedBlockHeightStart}/{combinedBlockHeightEnd}")]

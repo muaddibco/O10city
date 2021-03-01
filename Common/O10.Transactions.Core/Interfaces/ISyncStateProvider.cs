@@ -9,9 +9,9 @@ namespace O10.Transactions.Core.Interfaces
     [ServiceContract]
     public interface ISyncStateProvider
     {
-        Task<SyncBlockModel> GetLastSyncBlock();
+        Task<SyncInfoDTO> GetLastSyncBlock();
 
-        Task<RegistryCombinedBlockModel> GetLastRegistryCombinedBlock();
+        Task<AggregatedRegistrationsTransactionDTO> GetLastRegistryCombinedBlock();
 
         Task<IEnumerable<PacketInfo>> GetPacketInfos(IEnumerable<long> witnessIds);
 

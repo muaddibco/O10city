@@ -2,7 +2,7 @@
 {
     public class StatePacketInfo
     {
-        public ulong Height { get; set; }
+        public long Height { get; set; }
         public string Hash { get; set; }
     }
 }

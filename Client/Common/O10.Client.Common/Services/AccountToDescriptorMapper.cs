@@ -29,7 +29,7 @@ namespace O10.Client.Common.Services
                 AccountInfo = account.AccountInfo,
                 AccountId = account.AccountId,
                 IsCompromised = account.IsCompromised,
-                LastRegistryCombinedBlock = account.LastRegistryCombinedBlock,
+                LastAggregatedRegistrations = account.LastAggregatedRegistrations,
                 IsPrivate = account.IsPrivate,
                 IsActive = account.PublicSpendKey != null
             };

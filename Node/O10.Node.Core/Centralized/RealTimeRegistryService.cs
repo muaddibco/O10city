@@ -12,13 +12,15 @@ using O10.Core.Logging;
 using O10.Transactions.Core.Ledgers;
 using O10.Transactions.Core.Ledgers.Synchronization.Transactions;
 using O10.Transactions.Core.Ledgers.Registry.Transactions;
+using O10.Transactions.Core.Ledgers.Synchronization;
+using O10.Transactions.Core.Ledgers.Registry;
 
 namespace O10.Node.Core.Centralized
 {
     [RegisterDefaultImplementation(typeof(IRealTimeRegistryService), Lifetime = LifetimeManagement.Singleton)]
     public class RealTimeRegistryService : IRealTimeRegistryService
     {
-        private readonly BlockingCollection<Tuple<AggregatedRegistrationsTransaction, FullRegistryTransaction>> _registrationPackets = new BlockingCollection<Tuple<AggregatedRegistrationsTransaction, FullRegistryTransaction>>();
+        private readonly BlockingCollection<Tuple<SynchronizationPacket, RegistryPacket>> _registrationPackets = new BlockingCollection<Tuple<SynchronizationPacket, RegistryPacket>>();
 		private readonly ConcurrentDictionary<byte[], TaskCompletionSource<Tuple<byte[], IPacketBase>>> _packetTriggers = new ConcurrentDictionary<byte[], TaskCompletionSource<Tuple<byte[], IPacketBase>>>(new Byte32EqualityComparer());
 		private readonly ConcurrentDictionary<long, Dictionary<byte[], IPacketBase>> _packetsPerAggregatedRegistrations = new ConcurrentDictionary<long, Dictionary<byte[], IPacketBase>>();
 		private readonly IHashCalculation _hashCalculation;
@@ -46,14 +48,16 @@ namespace O10.Node.Core.Centralized
 			return null;
 		}
 
-		public IEnumerable<Tuple<AggregatedRegistrationsTransaction, FullRegistryTransaction>> GetRegistryConsumingEnumerable(CancellationToken cancellationToken)
+		public IEnumerable<Tuple<SynchronizationPacket, RegistryPacket>> GetRegistryConsumingEnumerable(CancellationToken cancellationToken)
         {
             return _registrationPackets.GetConsumingEnumerable(cancellationToken);
         }
 
-        public void PostPackets(AggregatedRegistrationsTransaction aggregatedRegistrations, FullRegistryTransaction registryTransaction)
+        public void PostPackets(SynchronizationPacket aggregatedRegistrationsPacket, RegistryPacket registrationsPacket)
         {
-            _logger.Debug($"Received combined and registryFullBlock with {registryTransaction.Witnesses.Length} Witnesses. Wait for transaction packets...");
+			var registryTransaction = registrationsPacket.As<FullRegistryTransaction>();
+
+			_logger.Debug($"Received combined and registryFullBlock with {registryTransaction.Witnesses.Length} Witnesses. Wait for transaction packets...");
 			List<Task<Tuple<byte[], IPacketBase>>> tasks = new List<Task<Tuple<byte[], IPacketBase>>>();
 
 			foreach (var item in registryTransaction.Witnesses)
@@ -68,7 +72,7 @@ namespace O10.Node.Core.Centralized
 				tasks.Add(taskCompletionSource.Task);
 			}
 
-			ProcessAdding(aggregatedRegistrations, registryTransaction, tasks);
+			ProcessAdding(aggregatedRegistrationsPacket, registrationsPacket, tasks);
         }
 
 		public void PostTransaction(IPacketBase packet)
@@ -87,15 +91,16 @@ namespace O10.Node.Core.Centralized
 			taskCompletionSource.SetResult(new Tuple<byte[], IPacketBase>(hash, packet));
 		}
 
-		private void ProcessAdding(AggregatedRegistrationsTransaction aggregatedRegistrations, FullRegistryTransaction registryTransaction, List<Task<Tuple<byte[], IPacketBase>>> tasks)
+		private void ProcessAdding(SynchronizationPacket aggregatedRegistrationsPacket, RegistryPacket registrationsPacket, List<Task<Tuple<byte[], IPacketBase>>> tasks)
 		{
 			Task.WhenAll(tasks).ContinueWith((t, o) => 
 			{
-				Tuple<AggregatedRegistrationsTransaction, FullRegistryTransaction> tuple = (Tuple<AggregatedRegistrationsTransaction, FullRegistryTransaction>)o;
-				_logger.Debug($"Transaction packet(s) for aggregated registrations of height {tuple.Item1.Height} received");
+				Tuple<SynchronizationPacket, RegistryPacket> tuple = (Tuple<SynchronizationPacket, RegistryPacket>)o;
+				var aggregatedRegistrations = tuple.Item1.As<AggregatedRegistrationsTransaction>();
+				var registryTransaction = tuple.Item2.As<FullRegistryTransaction>();
+				_logger.Debug($"Transaction packet(s) for aggregated registrations of height {aggregatedRegistrations.Height} received");
 
-				var aggregatedRegistation = tuple.Item1;
-				Dictionary<byte[], IPacketBase> packets = _packetsPerAggregatedRegistrations.GetOrAdd(aggregatedRegistation.Height, new Dictionary<byte[], IPacketBase>(new Byte32EqualityComparer()));
+				Dictionary<byte[], IPacketBase> packets = _packetsPerAggregatedRegistrations.GetOrAdd(aggregatedRegistrations.Height, new Dictionary<byte[], IPacketBase>(new Byte32EqualityComparer()));
 				foreach (var item in t.Result)
 				{
 					byte[] packetHash = item.Item1;
@@ -110,7 +115,7 @@ namespace O10.Node.Core.Centralized
 				{
 					_lowestCombinedBlockHeight = aggregatedRegistrations.Height;
 				}
-			}, new Tuple<AggregatedRegistrationsTransaction, FullRegistryTransaction>(aggregatedRegistrations, registryTransaction), TaskScheduler.Current);
+			}, new Tuple<SynchronizationPacket, RegistryPacket>(aggregatedRegistrationsPacket, registrationsPacket), TaskScheduler.Current);
 		}
 	}
 }

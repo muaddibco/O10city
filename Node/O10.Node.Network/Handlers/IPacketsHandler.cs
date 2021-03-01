@@ -18,7 +18,7 @@ namespace O10.Network.Handlers
         /// </summary>
         /// <param name="messagePacket">Bytes of complete message for following processing</param>
         void Push(byte[] messagePacket);
-        void Push(PacketBase packet);
+        void Push(IPacketBase packet);
 
         void Start();
     }

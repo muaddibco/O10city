@@ -54,8 +54,8 @@ namespace O10.Gateway.Common.Services
 
 		private CancellationToken _cancellationToken;
 		private bool _isInitialized;
-		private SyncBlockModel _lastSyncDescriptor;
-		private RegistryCombinedBlockModel _lastCombinedBlockDescriptor;
+		private SyncInfoDTO _lastSyncDescriptor;
+		private AggregatedRegistrationsTransactionDTO _lastCombinedBlockDescriptor;
 
 		public NetworkSynchronizer(IDataAccessService dataAccessService,
 								   IHashCalculationsRepository hashCalculationsRepository,
@@ -89,7 +89,7 @@ namespace O10.Gateway.Common.Services
 
 		public ITargetBlock<TaskCompletionWrapper<PacketBase>> PipeIn { get; }
 
-		public async Task<RegistryCombinedBlockModel> GetLastRegistryCombinedBlock() => await Task.FromResult(_lastCombinedBlockDescriptor).ConfigureAwait(false);
+		public async Task<AggregatedRegistrationsTransactionDTO> GetLastRegistryCombinedBlock() => await Task.FromResult(_lastCombinedBlockDescriptor).ConfigureAwait(false);
 
 		public void SendPacket(TaskCompletionWrapper<PacketBase> wrapper)
         {
@@ -192,7 +192,7 @@ namespace O10.Gateway.Common.Services
 		}
 
 
-		public async Task<SyncBlockModel> GetLastSyncBlock()
+		public async Task<SyncInfoDTO> GetLastSyncBlock()
 		{
 			return await Task.FromResult(_lastSyncDescriptor).ConfigureAwait(false);
 		}
@@ -201,7 +201,7 @@ namespace O10.Gateway.Common.Services
 		{
 			_logger.LogIfDebug(() => $"[N2G]: {nameof(ProcessRtPackage)}, rtPackage: {JsonConvert.SerializeObject(rtPackage, new ByteArrayJsonConverter())}");
 
-			if ((_lastSyncDescriptor?.Height ?? 0) < rtPackage.CombinedBlock.SyncBlockHeight)
+			if ((_lastSyncDescriptor?.Height ?? 0) < rtPackage.AggregatedRegistrations.SyncBlockHeight)
 			{
 				try
 				{
@@ -214,8 +214,8 @@ namespace O10.Gateway.Common.Services
 				}
 			}
 
-			SynchronizationRegistryCombinedBlock combinedBlock = ExtractRegistryCombinedBlock(rtPackage.CombinedBlock);
-			RegistryFullBlock registryFullBlock = ExtractRegistryFullBlock(rtPackage.RegistryFullBlock);
+			SynchronizationRegistryCombinedBlock combinedBlock = ExtractRegistryCombinedBlock(rtPackage.AggregatedRegistrations);
+			RegistryFullBlock registryFullBlock = ExtractRegistryFullBlock(rtPackage.FullRegistrations);
 
 			try
 			{
@@ -263,11 +263,11 @@ namespace O10.Gateway.Common.Services
 
 			if (_dataAccessService.GetLastRegistryCombinedBlock(out ulong combinedBlockHeight, out byte[] combinedBlockContent))
 			{
-				_lastCombinedBlockDescriptor = new RegistryCombinedBlockModel(combinedBlockHeight, combinedBlockContent, _defaultHashCalculation.CalculateHash(combinedBlockContent));
+				_lastCombinedBlockDescriptor = new AggregatedRegistrationsTransactionDTO(combinedBlockHeight, combinedBlockContent, _defaultHashCalculation.CalculateHash(combinedBlockContent));
 			}
 			else
 			{
-				_lastCombinedBlockDescriptor = new RegistryCombinedBlockModel(0, null, new byte[32]);
+				_lastCombinedBlockDescriptor = new AggregatedRegistrationsTransactionDTO(0, null, new byte[32]);
 			}
 		}
 
@@ -350,7 +350,7 @@ namespace O10.Gateway.Common.Services
 		{
 			try
 			{
-				SyncBlockModel syncBlockModel = await _synchronizerConfiguration.NodeApiUri.AppendPathSegment("GetLastSyncBlock").GetJsonAsync<SyncBlockModel>().ConfigureAwait(false);
+				SyncInfoDTO syncBlockModel = await _synchronizerConfiguration.NodeApiUri.AppendPathSegment("GetLastSyncBlock").GetJsonAsync<SyncInfoDTO>().ConfigureAwait(false);
 				if (syncBlockModel != null)
 				{
 					_lastSyncDescriptor = syncBlockModel;
@@ -358,7 +358,7 @@ namespace O10.Gateway.Common.Services
 				}
 				else
 				{
-					_lastSyncDescriptor = new SyncBlockModel(0, new byte[32]);
+					_lastSyncDescriptor = new SyncInfoDTO(0, new byte[32]);
 				}
 			}
 			catch (Exception ex)
@@ -372,7 +372,7 @@ namespace O10.Gateway.Common.Services
 		{
 			try
 			{
-				RegistryCombinedBlockModel registryCombinedBlock = await _synchronizerConfiguration.NodeApiUri.AppendPathSegment("LastRegistryCombinedBlock").GetJsonAsync<RegistryCombinedBlockModel>().ConfigureAwait(false);
+				AggregatedRegistrationsTransactionDTO registryCombinedBlock = await _synchronizerConfiguration.NodeApiUri.AppendPathSegment("LastAggregatedRegistrations").GetJsonAsync<AggregatedRegistrationsTransactionDTO>().ConfigureAwait(false);
 				if (registryCombinedBlock != null)
 				{
 					_dataAccessService.CutExcessedPackets((long)registryCombinedBlock.Height);
@@ -435,7 +435,7 @@ namespace O10.Gateway.Common.Services
             {
 				if(_lastCombinedBlockDescriptor == null)
                 {
-					_lastCombinedBlockDescriptor = new RegistryCombinedBlockModel(0, null, new byte[32]);
+					_lastCombinedBlockDescriptor = new AggregatedRegistrationsTransactionDTO(0, null, new byte[32]);
 				}
                 _lastCombinedBlockDescriptor.Height = combinedBlock.Height;
             }
@@ -533,7 +533,7 @@ namespace O10.Gateway.Common.Services
 			{
 				WitnessPacket witnessPacket = t.Result;
 				TaskCompletionSource<WitnessPacket> completionSource = (TaskCompletionSource<WitnessPacket>)o;
-				Url url = _synchronizerConfiguration.NodeApiUri.AppendPathSegment("GetTransactionInfoState").SetQueryParam("combinedBlockHeight", t.Result.CombinedBlockHeight).SetQueryParam("hash", t.Result.ReferencedBodyHash.Hash);
+				Url url = _synchronizerConfiguration.NodeApiUri.AppendPathSegment("O10StateTransaction").SetQueryParam("combinedBlockHeight", t.Result.CombinedBlockHeight).SetQueryParam("hash", t.Result.ReferencedBodyHash.Hash);
 				_logger.Info($"Querying Transactional packet with URL {url}");
 				
 				try
@@ -568,7 +568,7 @@ namespace O10.Gateway.Common.Services
 
             witnessStoreCompletionSource.Task.ContinueWith((t, o) =>
             {
-				Url url = _synchronizerConfiguration.NodeApiUri.AppendPathSegment("StealthTransactionInfo").SetQueryParam("combinedBlockHeight", t.Result.CombinedBlockHeight).SetQueryParam("hash", t.Result.ReferencedBodyHash.Hash);
+				Url url = _synchronizerConfiguration.NodeApiUri.AppendPathSegment("StealthTransaction").SetQueryParam("combinedBlockHeight", t.Result.CombinedBlockHeight).SetQueryParam("hash", t.Result.ReferencedBodyHash.Hash);
 				_logger.Info($"Querying Stealth packet with URL {url}");
 				url.GetJsonAsync<TransactionInfo>()
 				.ContinueWith((t1, o2) =>
@@ -715,7 +715,7 @@ namespace O10.Gateway.Common.Services
 		{
 			_logger.Warning($"{nameof(StealthPacket)} for WitnessId {witness.WitnessPacketId} is missing. Retry to obtain");
 
-			Url url = _synchronizerConfiguration.NodeApiUri.AppendPathSegment("StealthTransactionInfo").SetQueryParam("combinedBlockHeight", witness.CombinedBlockHeight).SetQueryParam("hash", witness.ReferencedBodyHash.Hash);
+			Url url = _synchronizerConfiguration.NodeApiUri.AppendPathSegment("StealthTransaction").SetQueryParam("combinedBlockHeight", witness.CombinedBlockHeight).SetQueryParam("hash", witness.ReferencedBodyHash.Hash);
 			_logger.Info($"Querying UTXO packet with URL {url}");
             TransactionInfo transactionInfo = await url.GetJsonAsync<TransactionInfo>().ConfigureAwait(false);
 			StorePacket(witness, transactionInfo.Content);
@@ -732,7 +732,7 @@ namespace O10.Gateway.Common.Services
 		{
 			_logger.Warning($"{nameof(StatePacket)} for WitnessId {witness.WitnessPacketId} is missing. Retry to obtain");
 
-			Url url = _synchronizerConfiguration.NodeApiUri.AppendPathSegment("GetTransactionInfoState").SetQueryParam("combinedBlockHeight", witness.CombinedBlockHeight).SetQueryParam("hash", witness.ReferencedBodyHash.Hash);
+			Url url = _synchronizerConfiguration.NodeApiUri.AppendPathSegment("O10StateTransaction").SetQueryParam("combinedBlockHeight", witness.CombinedBlockHeight).SetQueryParam("hash", witness.ReferencedBodyHash.Hash);
 			_logger.Info($"Querying Transactional packet with URL {url}");
             TransactionInfo transactionInfo = await url.GetJsonAsync<TransactionInfo>().ConfigureAwait(false);
 			StorePacket(witness, transactionInfo.Content);

@@ -13,7 +13,7 @@ namespace O10.Client.Common.Entities
 		public byte[] PwdHash { get; set; }
 		public long AccountId { get; set; }
         public bool IsCompromised { get; set; }
-        public ulong LastRegistryCombinedBlock { get; set; }
+        public ulong LastAggregatedRegistrations { get; set; }
         public bool IsPrivate { get; set; }
         public bool IsActive { get; set; }
     }

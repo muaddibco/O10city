@@ -65,7 +65,7 @@ namespace O10.Client.Mobile.Base.ViewModels
 
                 if (accountDescriptor != null)
                 {
-                    string rawContent = $"dis://{accountDescriptor.SecretSpendKey.ToHexString()}:{accountDescriptor.SecretViewKey.ToHexString()}:{_dataAccessService.GetAccount(_executionContext.AccountId).LastRegistryCombinedBlock}";
+                    string rawContent = $"dis://{accountDescriptor.SecretSpendKey.ToHexString()}:{accountDescriptor.SecretViewKey.ToHexString()}:{_dataAccessService.GetAccount(_executionContext.AccountId).LastAggregatedRegistrations}";
                     SecretsContent = rawContent.EncodeToString64();
                     ShowSecrets = true;
                 }

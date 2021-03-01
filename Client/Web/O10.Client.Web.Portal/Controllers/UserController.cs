@@ -1630,7 +1630,7 @@ namespace O10.Client.Web.Portal.Controllers
 
             if (accountDescriptor != null)
             {
-                string qr = $"dis://{accountDescriptor.SecretSpendKey.ToHexString()}:{accountDescriptor.SecretViewKey.ToHexString()}:{account.LastRegistryCombinedBlock}";
+                string qr = $"dis://{accountDescriptor.SecretSpendKey.ToHexString()}:{accountDescriptor.SecretViewKey.ToHexString()}:{account.LastAggregatedRegistrations}";
                 return Ok(new { qr = qr.EncodeToString64() });
             }
 

@@ -20,7 +20,7 @@ namespace O10.Client.DataLayer.Model
         public string AccountInfo { get; set; }
 		public bool IsCompromised { get; set; }
 
-		public ulong LastRegistryCombinedBlock { get; set; }
+		public ulong LastAggregatedRegistrations { get; set; }
 
 		public bool IsPrivate { get; set; }
 	}

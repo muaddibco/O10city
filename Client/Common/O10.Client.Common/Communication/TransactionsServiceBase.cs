@@ -85,7 +85,7 @@ namespace O10.Client.Common.Communication
 
 		protected void FillSyncData(PacketBase packet)
 		{
-			SyncBlockModel lastSyncBlock = AsyncUtil.RunSync(() => _gatewayService.GetLastSyncBlock());
+			SyncInfoDTO lastSyncBlock = AsyncUtil.RunSync(() => _gatewayService.GetLastSyncBlock());
 			packet.SyncHeight = lastSyncBlock?.Height ?? 0;
 			packet.PowHash = GetPowHash(lastSyncBlock?.Hash ?? new byte[Globals.DEFAULT_HASH_SIZE], 0);
 		}

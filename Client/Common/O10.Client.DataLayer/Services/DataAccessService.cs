@@ -1056,7 +1056,7 @@ namespace O10.Client.DataLayer.Services
             return false;
         }
 
-        public long AddAccount(byte accountType, string accountInfo, byte[] secretSpendKeyEnc, byte[] secretViewKeyEnc, byte[] publicSpendKey, byte[] publicViewKey, ulong lastRegistryCombinedBlock, bool isPrivate = false)
+        public long AddAccount(byte accountType, string accountInfo, byte[] secretSpendKeyEnc, byte[] secretViewKeyEnc, byte[] publicSpendKey, byte[] publicViewKey, ulong lastAggregatedRegistrations, bool isPrivate = false)
         {
             lock (_sync)
             {
@@ -1068,7 +1068,7 @@ namespace O10.Client.DataLayer.Services
                     SecretViewKey = secretViewKeyEnc,
                     PublicSpendKey = publicSpendKey,
                     PublicViewKey = publicViewKey,
-                    LastRegistryCombinedBlock = lastRegistryCombinedBlock,
+                    LastAggregatedRegistrations = lastAggregatedRegistrations,
                     IsPrivate = isPrivate
                 };
 
@@ -1077,7 +1077,7 @@ namespace O10.Client.DataLayer.Services
                 SynchronizationStatus synchronizationStatus = new SynchronizationStatus
                 {
                     Account = account,
-                    LastUpdatedCombinedBlockHeight = lastRegistryCombinedBlock
+                    LastUpdatedCombinedBlockHeight = lastAggregatedRegistrations
                 };
 
                 _dataContext.SynchronizationStatuses.Add(synchronizationStatus);
@@ -1104,7 +1104,7 @@ namespace O10.Client.DataLayer.Services
             }
         }
 
-        public void ResetAccount(long accountId, byte[] secretSpendKeyEnc, byte[] secretViewKeyEnc, byte[] publicSpendKey, byte[] publicViewKey, ulong lastRegistryCombinedBlock)
+        public void ResetAccount(long accountId, byte[] secretSpendKeyEnc, byte[] secretViewKeyEnc, byte[] publicSpendKey, byte[] publicViewKey, ulong lastAggregatedRegistrations)
         {
             lock (_sync)
             {
@@ -1112,7 +1112,7 @@ namespace O10.Client.DataLayer.Services
                 if (account != null)
                 {
                     account.IsCompromised = false;
-                    account.LastRegistryCombinedBlock = lastRegistryCombinedBlock;
+                    account.LastAggregatedRegistrations = lastAggregatedRegistrations;
                     account.SecretSpendKey = secretSpendKeyEnc;
                     account.SecretViewKey = secretViewKeyEnc;
                     account.PublicSpendKey = publicSpendKey;
@@ -1189,7 +1189,7 @@ namespace O10.Client.DataLayer.Services
                         PublicViewKey = accountSource.PublicViewKey,
                         SecretSpendKey = accountSource.SecretSpendKey,
                         SecretViewKey = accountSource.SecretViewKey,
-                        LastRegistryCombinedBlock = accountSource.LastRegistryCombinedBlock
+                        LastAggregatedRegistrations = accountSource.LastAggregatedRegistrations
                     };
 
                     _dataContext.Accounts.Add(accountTarget);
@@ -1200,7 +1200,7 @@ namespace O10.Client.DataLayer.Services
                         SynchronizationStatus synchronizationStatus = new SynchronizationStatus
                         {
                             Account = accountTarget,
-                            LastUpdatedCombinedBlockHeight = accountSource.LastRegistryCombinedBlock
+                            LastUpdatedCombinedBlockHeight = accountSource.LastAggregatedRegistrations
                         };
 
                         _dataContext.SynchronizationStatuses.Add(synchronizationStatus);
@@ -2342,7 +2342,7 @@ namespace O10.Client.DataLayer.Services
             }
         }
 
-        public void OverrideUserAccount(long accountId, byte[] secretSpendKeyEnc, byte[] secretViewKeyEnc, byte[] publicSpendKey, byte[] publicViewKey, ulong lastRegistryCombinedBlock)
+        public void OverrideUserAccount(long accountId, byte[] secretSpendKeyEnc, byte[] secretViewKeyEnc, byte[] publicSpendKey, byte[] publicViewKey, ulong lastAggregatedRegistrations)
         {
             lock (_sync)
             {
@@ -2352,10 +2352,10 @@ namespace O10.Client.DataLayer.Services
                 account.PublicSpendKey = publicSpendKey;
                 account.PublicViewKey = publicViewKey;
                 account.IsCompromised = false;
-                account.LastRegistryCombinedBlock = lastRegistryCombinedBlock;
+                account.LastAggregatedRegistrations = lastAggregatedRegistrations;
 
                 SynchronizationStatus synchronizationStatus = _dataContext.SynchronizationStatuses.Include(s => s.Account).FirstOrDefault(s => s.Account.AccountId == accountId);
-                synchronizationStatus.LastUpdatedCombinedBlockHeight = lastRegistryCombinedBlock;
+                synchronizationStatus.LastUpdatedCombinedBlockHeight = lastAggregatedRegistrations;
 
                 UserSettings userSettings = GetLocalAwareUserSettings(accountId);
 

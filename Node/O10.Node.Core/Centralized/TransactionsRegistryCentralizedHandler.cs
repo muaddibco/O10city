@@ -110,7 +110,7 @@ namespace O10.Node.Core.Centralized
 							_synchronizationChainDataService.Add(synchronizationConfirmedBlock);
 						}
 
-						RegistryPacket registryFullBlock 
+						RegistryPacket fullRegistrationsPacket 
                             = CreateRegistryFullBlock(
                                 packets.Where(p => p is RegistryPacket).Cast<RegistryPacket>().ToArray(), 
                                 _synchronizationContext.LastBlockDescriptor?.BlockHeight ?? 0, 
@@ -118,16 +118,16 @@ namespace O10.Node.Core.Centralized
 						//RegistryShortBlock registryShortBlock = CreateRegistryShortBlock((FullRegistryTransaction)registryFullBlock.Body);
 						//SignRegistryBlocks(registryFullBlock, registryShortBlock);
 
-                        registryFullBlock.Signature = (SingleSourceSignature)_nodeContext.SigningService.Sign(registryFullBlock.Body);
+                        fullRegistrationsPacket.Signature = (SingleSourceSignature)_nodeContext.SigningService.Sign(fullRegistrationsPacket.Body);
 
-                        var combinedBlock = CreateCombinedBlock(registryFullBlock);
+                        var aggregatedRegistrationsPacket = CreateCombinedBlock(fullRegistrationsPacket);
 
-						_lastCombinedBlock = combinedBlock.As<AggregatedRegistrationsTransaction>();
+						_lastCombinedBlock = aggregatedRegistrationsPacket.As<AggregatedRegistrationsTransaction>();
 
-						_synchronizationChainDataService.Add(combinedBlock);
-						_registryChainDataService.Add(registryFullBlock);
+						_synchronizationChainDataService.Add(aggregatedRegistrationsPacket);
+						_registryChainDataService.Add(fullRegistrationsPacket);
 
-						_realTimeRegistryService.PostPackets(combinedBlock.As<AggregatedRegistrationsTransaction>(), registryFullBlock.As<FullRegistryTransaction>());
+						_realTimeRegistryService.PostPackets(aggregatedRegistrationsPacket, fullRegistrationsPacket);
 					}
 				}
 				catch (Exception ex)

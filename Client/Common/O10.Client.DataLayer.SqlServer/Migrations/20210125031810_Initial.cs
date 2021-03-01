@@ -35,7 +35,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                     AccountType = table.Column<byte>(nullable: false),
                     AccountInfo = table.Column<string>(nullable: true),
                     IsCompromised = table.Column<bool>(nullable: false),
-                    LastRegistryCombinedBlock = table.Column<decimal>(nullable: false),
+                    LastAggregatedRegistrations = table.Column<decimal>(nullable: false),
                     IsPrivate = table.Column<bool>(nullable: false)
                 },
                 constraints: table =>

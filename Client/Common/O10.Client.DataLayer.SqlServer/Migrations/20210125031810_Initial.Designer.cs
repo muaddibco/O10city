@@ -119,7 +119,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                     b.Property<bool>("IsPrivate")
                         .HasColumnType("bit");
 
-                    b.Property<decimal>("LastRegistryCombinedBlock")
+                    b.Property<decimal>("LastAggregatedRegistrations")
                         .HasColumnType("decimal(20,0)");
 
                     b.Property<byte[]>("PublicSpendKey")
