@@ -12,6 +12,7 @@ using O10.Core.Models;
 using O10.Core.Serialization;
 using O10.Transactions.Core.DTOs;
 using O10.Transactions.Core.Ledgers;
+using O10.Transactions.Core.Ledgers.Stealth;
 
 namespace O10.Client.Common.Communication
 {
@@ -91,7 +92,7 @@ namespace O10.Client.Common.Communication
                     if (witnessesToMe.Count > 0)
                     {
                         _logger.LogIfDebug(() => $"[{_accountId}]: Obtaining packets for witnesses [{string.Join(',', witnessesToMe.Select(w => w.WitnessId).ToArray())}]");
-                        IEnumerable<PacketInfo> packetInfos = await _syncStateProvider.GetPacketInfos(witnessesToMe.Select(w => w.WitnessId)).ConfigureAwait(false);
+                        IEnumerable<IPacketBase> packetInfos = await _syncStateProvider.GetPacketInfos(witnessesToMe.Select(w => w.WitnessId)).ConfigureAwait(false);
 
                         if (packetInfos?.Any() != true)
                         {
@@ -100,25 +101,22 @@ namespace O10.Client.Common.Communication
                             return;
                         }
 
-                        foreach (var packetInfo in packetInfos)
+                        foreach (var packet in packetInfos)
                         {
-                            _logger.LogIfDebug(() => $"[{_accountId}]: processing packet PacketType={packetInfo.LedgerType}, BlockType={packetInfo.BlockType}");
-                            IBlockParsersRepository blockParsersRepository = _blockParsersRepositoriesRepository.GetBlockParsersRepository(packetInfo.LedgerType);
-                            IBlockParser blockParser = blockParsersRepository?.GetInstance(packetInfo.BlockType);
-                            PacketBase packetBase = blockParser?.Parse(packetInfo.Content);
+                            _logger.LogIfDebug(() => $"[{_accountId}]: processing packet {packet.GetType().Name}");
 
-                            if (packetBase != null)
+                            if (packet != null)
                             {
-                                if (packetBase is StealthSignedPacketBase packet)
+                                if (packet is StealthTransaction stealthTransaction)
                                 {
-                                    _logger.LogIfDebug(() => $"[{_accountId}]: Obtained packet {packetBase.GetType().Name} with {nameof(packet.KeyImage)}={packet.KeyImage}");
+                                    _logger.LogIfDebug(() => $"[{_accountId}]: Obtained packet {stealthTransaction.GetType().Name} with {nameof(stealthTransaction.Body.KeyImage)}={stealthTransaction.Body.KeyImage}");
                                 }
                                 else
                                 {
-                                    _logger.LogIfDebug(() => $"[{_accountId}]: Obtained packet {JsonConvert.SerializeObject(packetBase, new ByteArrayJsonConverter())}");
+                                    _logger.LogIfDebug(() => $"[{_accountId}]: Obtained packet {JsonConvert.SerializeObject(packet, new ByteArrayJsonConverter())}");
                                 }
 
-                                var packetWrapper = new TaskCompletionWrapper<PacketBase>(packetBase);
+                                var packetWrapper = new TaskCompletionWrapper<IPacketBase>(packet);
                                 allPacketsProcessedTasks.Add(packetWrapper.TaskCompletion.Task);
 
                                 await _propagator.SendAsync(packetWrapper).ConfigureAwait(false);

@@ -22,8 +22,6 @@ namespace O10.Client.Common.Communication
 {
     public abstract class TransactionsServiceBase : ITransactionsService
 	{
-		protected readonly ISerializersFactory _serializersFactory;
-		protected readonly IBlockParsersRepositoriesRepository _blockParsersRepositoriesRepository;
 		protected readonly IGatewayService _gatewayService;
 		protected readonly IHashCalculation _hashCalculation;
 		protected readonly IHashCalculation _proofOfWorkCalculation;
@@ -37,14 +35,10 @@ namespace O10.Client.Common.Communication
 		protected TransactionsServiceBase(
             IHashCalculationsRepository hashCalculationsRepository,
             IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
-            ISerializersFactory serializersFactory,
-            IBlockParsersRepositoriesRepository blockParsersRepositoriesRepository,
 			ISigningService signingService,
 			IGatewayService gatewayService,
             ILoggerService loggerService)
 		{
-			_serializersFactory = serializersFactory;
-			_blockParsersRepositoriesRepository = blockParsersRepositoriesRepository;
 			_hashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
 			_proofOfWorkCalculation = hashCalculationsRepository.Create(Globals.POW_TYPE);
 			_identityKeyProvider = identityKeyProvidersRegistry.GetInstance();

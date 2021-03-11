@@ -16,7 +16,10 @@ namespace O10.Client.Common.Interfaces
     [ServiceContract]
     public interface IGatewayService : ISyncStateProvider
 	{
-		ITargetBlock<TaskCompletionWrapper<PacketBase>> PipeInTransactions { get; }
+        /// <summary>
+        /// Pipeline for sending transactions to gateways
+        /// </summary>
+		ITargetBlock<TaskCompletionWrapper<IPacketBase>> PipeInTransactions { get; }
         ISourceBlock<NotificationBase> PipeOutNotifications { get; }
 
 

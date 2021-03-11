@@ -1,22 +1,22 @@
-﻿using O10.Transactions.Core.Enums;
-using O10.Core.Cryptography;
+﻿//using O10.Transactions.Core.Enums;
+//using O10.Core.Cryptography;
 
-namespace O10.Transactions.Core.Ledgers.Stealth
-{
-    public class RevokeIdentity : StealthTransactionBase
-	{
-		public override ushort Version => 1;
+//namespace O10.Transactions.Core.Ledgers.Stealth
+//{
+//    public class RevokeIdentity : StealthTransactionBase
+//    {
+//        public override ushort Version => 1;
 
-		public override ushort TransactionType => TransactionTypes.Stealth_RevokeIdentity;
+//        public override ushort TransactionType => TransactionTypes.Stealth_RevokeIdentity;
 
-		/// <summary>
-		/// Contain Surjection Proofs to assets of source transaction which outputs were used to compose current one
-		/// </summary>
-		public SurjectionProof OwnershipProof { get; set; }
+//        /// <summary>
+//        /// Contain Surjection Proofs to assets of source transaction which outputs were used to compose current one
+//        /// </summary>
+//        public SurjectionProof OwnershipProof { get; set; }
 
-		/// <summary>
-		/// Contain Surjection Proofs to assets issued by Asset Issuer specified at EcdhTuple for checking eligibility purposes
-		/// </summary>
-		public SurjectionProof EligibilityProof { get; set; }
-	}
-}
+//        /// <summary>
+//        /// Contain Surjection Proofs to assets issued by Asset Issuer specified at EcdhTuple for checking eligibility purposes
+//        /// </summary>
+//        public SurjectionProof EligibilityProof { get; set; }
+//    }
+//}

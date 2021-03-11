@@ -1,21 +1,21 @@
 ﻿using Newtonsoft.Json;
+using O10.Core.Identity;
 using O10.Core.Serialization;
 
-namespace O10.Transactions.Core.Ledgers.O10State
+namespace O10.Transactions.Core.Ledgers.O10State.Transactions
 {
-    public abstract class TransactionalTransitionalPacketBase : O10StatePacket
+    public abstract class O10StateTransitionalTransactionBase : O10StateTransactionBase
 	{
-
 		[JsonConverter(typeof(ByteArrayJsonConverter))]
 		/// <summary>
 		/// P = Hs(r * A) * G + B where A is receiver's Public View Key and B is receiver's Public Spend Key
 		/// </summary>
-		public byte[] DestinationKey { get; set; }
+		public IKey? DestinationKey { get; set; }
 
 		[JsonConverter(typeof(ByteArrayJsonConverter))]
 		/// <summary>
 		/// R = r * G. 'r' can be erased after transaction sent unless sender wants to proof he sent funds to particular destination address.
 		/// </summary>
-		public byte[] TransactionPublicKey { get; set; }
+		public IKey? TransactionPublicKey { get; set; }
 	}
 }

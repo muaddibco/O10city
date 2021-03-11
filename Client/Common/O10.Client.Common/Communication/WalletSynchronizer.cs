@@ -8,6 +8,7 @@ using O10.Core.Logging;
 using O10.Core.Models;
 using O10.Core.Notifications;
 using O10.Transactions.Core.Ledgers;
+using O10.Transactions.Core.Ledgers.Stealth;
 
 namespace O10.Client.Common.Communication
 {
@@ -15,12 +16,12 @@ namespace O10.Client.Common.Communication
     {
         private bool _disposedValue; // To detect redundant calls
 
-        private readonly IPropagatorBlock<PacketBase, PacketBase> _pipeOutPackets;
+        private readonly IPropagatorBlock<IPacketBase, IPacketBase> _pipeOutPackets;
         private readonly IPropagatorBlock<NotificationBase, NotificationBase> _pipeOutNotifications;
 
         protected long _accountId;
         protected readonly IDataAccessService _dataAccessService;
-        private readonly ITargetBlock<TaskCompletionWrapper<PacketBase>> _pipeInPackets;
+        private readonly ITargetBlock<TaskCompletionWrapper<IPacketBase>> _pipeInPackets;
         private readonly ITargetBlock<WitnessPackage> _pipeInPackage;
         protected readonly IClientCryptoService _clientCryptoService;
         protected ILogger _logger;
@@ -31,13 +32,13 @@ namespace O10.Client.Common.Communication
             _clientCryptoService = clientCryptoService;
             _logger = loggerService.GetLogger(GetType().Name);
 
-            _pipeInPackets = new ActionBlock<TaskCompletionWrapper<PacketBase>>(async p =>
+            _pipeInPackets = new ActionBlock<TaskCompletionWrapper<IPacketBase>>(async p =>
             {
                 try
                 {
-                    if (p.State is StealthSignedPacketBase packet)
+                    if (p.State is StealthTransaction packet)
                     {
-                        _logger.LogIfDebug(() => $"[{_accountId}]: Processing {packet.GetType().Name} with {nameof(packet.KeyImage)}={packet.KeyImage}");
+                        _logger.LogIfDebug(() => $"[{_accountId}]: Processing {packet.GetType().Name} with {nameof(packet.Body.KeyImage)}={packet.Body.KeyImage}");
                     }
                     else
                     {
@@ -113,7 +114,7 @@ namespace O10.Client.Common.Communication
             throw new InvalidOperationException($"No target blocks are available for type {typeof(T).FullName}");
         }
 
-        protected virtual async Task StorePacket(PacketBase packetBase)
+        protected virtual async Task StorePacket(IPacketBase packetBase)
         {
             await _pipeOutPackets.SendAsync(packetBase).ConfigureAwait(false);
         }

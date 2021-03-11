@@ -1,9 +1,9 @@
-﻿using O10.Transactions.Core.Accessors;
+﻿using O10.Crypto.Models;
+using O10.Transactions.Core.Accessors;
 using O10.Transactions.Core.Enums;
-using O10.Transactions.Core.Ledgers;
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Threading.Tasks;
 
 namespace O10.Gateway.Common.Accessors
 {
@@ -11,12 +11,22 @@ namespace O10.Gateway.Common.Accessors
     {
         public override LedgerType LedgerType => LedgerType.O10State;
 
+        public override Task<Memory<byte>> GetPacket(EvidenceDescriptor evidence)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Task<bool> VerifyPacket(EvidenceDescriptor evidence, Memory<byte> packet)
+        {
+            throw new NotImplementedException();
+        }
+
         protected override IEnumerable<string> GetAccessingKeys()
         {
             throw new NotImplementedException();
         }
 
-        protected override PacketBase GetPacketInner(EvidenceDescriptor accessDescriptor)
+        protected override Task<TransactionBase> GetTransactionInner(EvidenceDescriptor accessDescriptor)
         {
             throw new NotImplementedException();
         }

@@ -7,6 +7,6 @@ namespace O10.Crypto.Models
     public abstract class SingleSourceTransactionBase : TransactionBase
     {
         [JsonConverter(typeof(KeyJsonConverter))]
-        public IKey Source { get; set; }
+        public IKey? Source { get; set; }
     }
 }

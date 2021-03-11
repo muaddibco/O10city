@@ -28,7 +28,7 @@ namespace O10.Core.Synchronization
 
         public string Name => nameof(ISynchronizationContext);
 
-        public ulong LastRegistrationCombinedBlockHeight { get; set; }
+        public long LastRegistrationCombinedBlockHeight { get; set; }
 
         /// <summary>
         /// Utility function that returns median value from provided array

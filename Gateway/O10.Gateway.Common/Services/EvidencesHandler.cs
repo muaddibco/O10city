@@ -62,7 +62,7 @@ namespace O10.Gateway.Common.Services
             }
 
             var accessor = _accessorProvider.GetInstance(wrapper.State.LedgerType);
-            var packet = accessor.GetPacket<PacketBase>(wrapper.State);
+            var packet = accessor.GetTransaction<PacketBase>(wrapper.State);
 
             return packet != null;
         }

@@ -1,8 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk" ToolsVersion="Current">
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <FileUpgradeFlags>40</FileUpgradeFlags>
-    <OldToolsVersion>2.0</OldToolsVersion>
+    <Nullable>enable</Nullable>
     <AssemblyName>O10.Crypto</AssemblyName>
     <RootNamespace>O10.Crypto</RootNamespace>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>

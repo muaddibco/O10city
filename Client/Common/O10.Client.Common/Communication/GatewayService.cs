@@ -23,6 +23,7 @@ using O10.Client.Common.Communication.Notifications;
 using O10.Core.Notifications;
 using O10.Transactions.Core.DTOs;
 using O10.Transactions.Core.Ledgers;
+using O10.Transactions.Core.Ledgers.Stealth;
 
 namespace O10.Client.Common.Communication
 {
@@ -43,7 +44,7 @@ namespace O10.Client.Common.Communication
 			_propagatorBlockNotifications = new TransformBlock<NotificationBase, NotificationBase>(p => p);
 		}
 
-		public ITargetBlock<TaskCompletionWrapper<PacketBase>> PipeInTransactions { get; private set; }
+		public ITargetBlock<TaskCompletionWrapper<IPacketBase>> PipeInTransactions { get; private set; }
 		public ISourceBlock<NotificationBase> PipeOutNotifications => _propagatorBlockNotifications;
 
 		public async Task<byte[][]> GetIssuanceCommitments(Memory<byte> issuer, int amount)
@@ -124,7 +125,7 @@ namespace O10.Client.Common.Communication
 
             _gatewayUri = gatewayUri;
 
-			PipeInTransactions = new ActionBlock<TaskCompletionWrapper<PacketBase>>(async p =>
+			PipeInTransactions = new ActionBlock<TaskCompletionWrapper<IPacketBase>>(async p =>
 			{
                 try
                 {
@@ -140,10 +141,10 @@ namespace O10.Client.Common.Communication
 					{
 						if (!string.IsNullOrEmpty(response.ExistingHash))
 						{
-							_logger.Error($"Failed to send transaction {p.State.GetType().Name} because key image {((StealthSignedPacketBase)p.State).KeyImage} was already witnessed");
+							_logger.Error($"Failed to send transaction {p.State.GetType().Name} because key image {((StealthTransaction)p.State).Body.KeyImage} was already witnessed");
 							KeyImageCorruptedNotification keyImageCorrupted = new KeyImageCorruptedNotification
 							{
-								KeyImage = ((StealthSignedPacketBase)p.State).KeyImage.ToByteArray(),
+								KeyImage = ((StealthTransaction)p.State).Body.KeyImage.ToByteArray(),
 								ExistingHash = response.ExistingHash.HexStringToByteArray()
 							};
 							await _propagatorBlockNotifications.SendAsync(keyImageCorrupted).ConfigureAwait(false);
@@ -176,7 +177,7 @@ namespace O10.Client.Common.Communication
 			return true;
         }
 
-		public async Task<IEnumerable<PacketInfo>> GetPacketInfos(IEnumerable<long> witnessIds)
+		public async Task<IEnumerable<IPacketBase>> GetPacketInfos(IEnumerable<long> witnessIds)
 		{
 			_logger.Debug($"Getting packet infos for witnesses with Ids {string.Join(',', witnessIds)}");
 

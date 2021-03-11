@@ -1,6 +1,6 @@
-﻿using O10.Transactions.Core.Enums;
+﻿using O10.Crypto.Models;
+using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Exceptions;
-using O10.Transactions.Core.Ledgers;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -13,11 +13,11 @@ namespace O10.Transactions.Core.Accessors
 
         protected abstract IEnumerable<string> GetAccessingKeys();
 
-        protected virtual string ValidateEvidence(EvidenceDescriptor accessDescriptor) => string.Empty;
+        protected virtual string ValidateEvidence(EvidenceDescriptor evidence) => string.Empty;
 
-        protected abstract Task<PacketBase> GetPacketInner(EvidenceDescriptor accessDescriptor);
+        protected abstract Task<TransactionBase> GetTransactionInner(EvidenceDescriptor accessDescriptor);
 
-        public virtual async Task<T> GetPacket<T>(EvidenceDescriptor accessDescriptor) where T : PacketBase
+        public virtual async Task<T> GetTransaction<T>(EvidenceDescriptor accessDescriptor) where T : TransactionBase
         {
             if (accessDescriptor is null)
             {
@@ -32,7 +32,7 @@ namespace O10.Transactions.Core.Accessors
                 throw new AccessorValidationFailedException(msg);
             }
 
-            var packet = await GetPacketInner(accessDescriptor).ConfigureAwait(false);
+            var packet = await GetTransactionInner(accessDescriptor).ConfigureAwait(false);
         
             if (packet is T resultPacket)
             {
@@ -58,5 +58,8 @@ namespace O10.Transactions.Core.Accessors
                 throw new AccessorValidationFailedException($"The provided access descriptor misses the following key(s): {string.Join(',', missedKeys)}");
             }
         }
-	}
+
+        public abstract Task<Memory<byte>> GetPacket(EvidenceDescriptor evidence);
+        public abstract Task<bool> VerifyPacket(EvidenceDescriptor evidence, Memory<byte> packet);
+    }
 }

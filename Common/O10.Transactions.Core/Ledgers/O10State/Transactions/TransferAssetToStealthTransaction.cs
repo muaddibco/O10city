@@ -4,7 +4,7 @@ using O10.Transactions.Core.Ledgers.O10State.Internal;
 
 namespace O10.Transactions.Core.Ledgers.O10State.Transactions
 {
-    public class TransferAssetToStealthTransaction : O10StateTransactionBase
+    public class TransferAssetToStealthTransaction : O10StateTransitionalTransactionBase
     {
         public override ushort TransactionType => TransactionTypes.Transaction_TransferAssetToStealth;
 

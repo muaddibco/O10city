@@ -89,7 +89,7 @@ namespace O10.Client.Common.Services
 
             _transactionsService.Initialize(scopeInitializationParams.AccountId);
             utxoWalletPacketsExtractor.Initialize(scopeInitializationParams.AccountId);
-            _transactionsService.GetSourcePipe<TaskCompletionWrapper<PacketBase>>().LinkTo(_gatewayService.PipeInTransactions);
+            _transactionsService.GetSourcePipe<TaskCompletionWrapper<IPacketBase>>().LinkTo(_gatewayService.PipeInTransactions);
             _transactionsService.GetSourcePipe<byte[]>().LinkTo(utxoWalletPacketsExtractor.GetTargetPipe<byte[]>());
 
             IUpdater userIdentitiesUpdater = _updaterRegistry.GetInstance();

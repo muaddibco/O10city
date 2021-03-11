@@ -783,10 +783,10 @@ namespace O10.Gateway.Common.Services
 						case TransactionTypes.Transaction_TransferAssetToStealth:
 							StoreTransferAsset(wp.WitnessPacketId, registryCombinedBlockHeight, (TransferAssetToStealth)packet);
 							break;
-						case TransactionTypes.Transaction_EmployeeRecord:
+						case TransactionTypes.Transaction_RelationRecord:
 							StoreEmployeeRecordPacket(wp.WitnessPacketId, registryCombinedBlockHeight, (EmployeeRecord)packet);
 							break;
-						case TransactionTypes.Transaction_CancelEmployeeRecord:
+						case TransactionTypes.Transaction_CancelEmployment:
 							StoreCancelEmployeeRecordPacket(wp.WitnessPacketId, registryCombinedBlockHeight, (CancelEmployeeRecord)packet);
 							break;
 						case TransactionTypes.Transaction_DocumentRecord:

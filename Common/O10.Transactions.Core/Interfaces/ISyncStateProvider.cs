@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using O10.Core.Architecture;
 using O10.Core.Identity;
 using O10.Transactions.Core.DTOs;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Transactions.Core.Interfaces
 {
@@ -13,7 +14,7 @@ namespace O10.Transactions.Core.Interfaces
 
         Task<AggregatedRegistrationsTransactionDTO> GetLastRegistryCombinedBlock();
 
-        Task<IEnumerable<PacketInfo>> GetPacketInfos(IEnumerable<long> witnessIds);
+        Task<IEnumerable<IPacketBase>> GetPacketInfos(IEnumerable<long> witnessIds);
 
         Task<StatePacketInfo> GetLastPacketInfo(IKey accountPublicKey);
         Task<StatePacketInfo> GetLastPacketInfo(string accountPublicKey);

@@ -39,15 +39,11 @@ namespace O10.Client.Common.Communication
                                        IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
                                        IStealthClientCryptoService clientCryptoService,
                                        IBoundedAssetsService relationsBindingService,
-                                       ISerializersFactory serializersFactory,
-                                       IBlockParsersRepositoriesRepository blockParsersRepositoriesRepository,
                                        IEligibilityProofsProvider eligibilityProofsProvider,
                                        IGatewayService gatewayService,
                                        ILoggerService loggerService)
             : base(hashCalculationsRepository,
                    identityKeyProvidersRegistry,
-                   serializersFactory,
-                   blockParsersRepositoriesRepository,
                    clientCryptoService,
                    gatewayService,
                    loggerService)
