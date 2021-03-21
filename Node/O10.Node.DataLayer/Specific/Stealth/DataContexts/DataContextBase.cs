@@ -24,9 +24,9 @@ namespace O10.Node.DataLayer.Specific.Stealth.DataContexts
 
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<StealthTransactionHashKey>().HasIndex(a => a.SyncBlockHeight);
+            modelBuilder.Entity<StealthTransactionHashKey>().HasIndex(a => a.RegistryHeight);
             modelBuilder.Entity<StealthTransactionHashKey>().HasIndex(a => a.Hash);
-            modelBuilder.Entity<StealthTransaction>().HasIndex(a => a.SyncBlockHeight);
+            modelBuilder.Entity<StealthTransaction>().HasIndex(a => a.RegistryHeight);
             modelBuilder.Entity<KeyImage>().HasIndex(a => a.Value);
         }
     }

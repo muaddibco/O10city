@@ -5,6 +5,7 @@ using O10.Transactions.Core.Enums;
 using O10.Core.DataLayer;
 using System.Timers;
 using O10.Core.Tracking;
+using Microsoft.EntityFrameworkCore;
 
 namespace O10.Node.DataLayer.DataAccess
 {
@@ -53,7 +54,16 @@ namespace O10.Node.DataLayer.DataAccess
         private void ChangeTracker_StateChanged(object sender, Microsoft.EntityFrameworkCore.ChangeTracking.EntityStateChangedEventArgs e)
 		{
 			Logger.LogIfDebug(() => $"State of {e.Entry.Entity.GetType().Name} changed {e.OldState} -> {e.NewState}");
+            if (e.OldState == EntityState.Added && e.NewState == EntityState.Unchanged)
+            {
+				ProcessEntitySaved(e.Entry.Entity);
+            }
 		}
+
+		protected virtual void ProcessEntitySaved(object entity)
+        {
+
+        }
 
 		private void _timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
 		{

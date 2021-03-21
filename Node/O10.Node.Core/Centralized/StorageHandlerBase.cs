@@ -11,9 +11,10 @@ namespace O10.Node.Core.Centralized
 {
     public abstract class StorageHandlerBase<T> : IPacketsHandler where T : IPacketBase
     {
-        private readonly IChainDataServicesManager _chainDataServicesManager;
-		private readonly IRealTimeRegistryService _realTimeRegistryService;
+        private readonly IChainDataService _chainDataService;
+        private readonly IRealTimeRegistryService _realTimeRegistryService;
 		private readonly ILogger _logger;
+
 		private ActionBlock<T> _storeBlock;
         private CancellationToken _cancellationToken;
 
@@ -21,8 +22,8 @@ namespace O10.Node.Core.Centralized
                                   IRealTimeRegistryService realTimeRegistryService,
                                   ILoggerService loggerService)
         {
-            _chainDataServicesManager = chainDataServicesManager;
-			_realTimeRegistryService = realTimeRegistryService;
+            _chainDataService = chainDataServicesManager.GetChainDataService(LedgerType);
+            _realTimeRegistryService = realTimeRegistryService;
 			_logger = loggerService.GetLogger(GetType().Name);
 		}
 
@@ -39,7 +40,6 @@ namespace O10.Node.Core.Centralized
         public void ProcessBlock(IPacketBase packet)
         {
             _storeBlock.Post((T)packet);
-			_realTimeRegistryService.PostTransaction(packet);
         }
 
         private void StoreBlock(T packet)
@@ -48,10 +48,9 @@ namespace O10.Node.Core.Centralized
 
 			try
 			{
-				IChainDataService chainDataService = _chainDataServicesManager.GetChainDataService(packet.LedgerType);
-				chainDataService.Add(packet);
-			}
-			catch (Exception ex)
+                _realTimeRegistryService.PostTransaction(_chainDataService.Add(packet));
+            }
+            catch (Exception ex)
 			{
 				_logger.Error($"Storing packet {packet.GetType().Name} failed", ex);
 			}

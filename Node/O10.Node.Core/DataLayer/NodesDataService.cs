@@ -70,7 +70,7 @@ namespace O10.Node.Core.DataLayer
                 }
             }
 
-            throw new ArgumentException(nameof(key));
+            throw new ArgumentOutOfRangeException(nameof(key));
         }
 
         public void Initialize(CancellationToken cancellationToken)

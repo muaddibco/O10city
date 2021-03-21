@@ -17,6 +17,10 @@ using O10.Core.Serialization;
 using O10.Core.HashCalculations;
 using O10.Core;
 using O10.Transactions.Core.Ledgers;
+using O10.Node.DataLayer.DataServices.Notifications;
+using O10.Transactions.Core.Ledgers.O10State.Transactions;
+using O10.Core.Models;
+using O10.Core.Identity;
 
 namespace O10.Node.DataLayer.Specific.O10Id
 {
@@ -30,13 +34,14 @@ namespace O10.Node.DataLayer.Specific.O10Id
             INodeDataAccessServiceRepository dataAccessServiceRepository,
             IHashCalculationsRepository hashCalculationsRepository,
             ITranslatorsRepository translatorsRepository,
+            IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
             ILoggerService loggerService)
-            : base(dataAccessServiceRepository, translatorsRepository, loggerService)
+            : base(dataAccessServiceRepository, translatorsRepository, identityKeyProvidersRegistry, loggerService)
         {
             _defaultHashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
         }
 
-        public override void Add(PacketBase packet)
+        public override TaskCompletionWrapper<IKey> Add(IPacketBase packet)
         {
             if (packet == null)
             {
@@ -45,74 +50,88 @@ namespace O10.Node.DataLayer.Specific.O10Id
 
             Logger?.LogIfDebug(() => $"Storing {packet.GetType().Name}: {JsonConvert.SerializeObject(packet, new ByteArrayJsonConverter())}");
 
-            if (packet is O10StatePacket transactionalBlockBase)
+            if (packet is O10StatePacket statePacket)
             {
                 var hash = _defaultHashCalculation.CalculateHash(packet.ToString());
-                Service.AddTransaction(transactionalBlockBase.Source, (long)transactionalBlockBase.SyncHeight, transactionalBlockBase.PacketType, (long)transactionalBlockBase.Height, packet.ToString(), hash);
+
+                var addCompletionWrapper = new TaskCompletionWrapper<IKey>(IdentityKeyProvider.GetKey(hash));
+                var addCompletion = Service.AddTransaction(statePacket.Body.Source, statePacket.Body.TransactionType, statePacket.As<O10StateTransactionBase>().Height, packet.ToString(), hash);
+                addCompletion.Task.ContinueWith((t, o) => 
+                {
+                    var w = (TaskCompletionWrapper<IPacketBase>)o;
+                    if(t.IsCompletedSuccessfully)
+                    {
+                        w.TaskCompletion.SetResult(new ItemAddedNotification(new LedgerAndIdKey(w.State.LedgerType, t.Result.O10TransactionId)));
+                    }
+                }, addCompletionWrapper, TaskScheduler.Default);
+
                 Logger?.LogIfDebug(() => $"Storing of {packet.GetType().Name} completed");
+                return addCompletionWrapper;
             }
-            else
-            {
-                Logger?.Error("Attempt to store improper packet type");
-            }
+
+            Logger?.Error($"Attempt to store an improper packet type {packet.GetType().FullName}");
+            throw new Exception($"Attempt to store an improper packet type {packet.GetType().FullName}");
         }
 
-        public override IEnumerable<PacketBase> Get(IDataKey key)
+        public override IEnumerable<IPacketBase> Get(IDataKey key)
+            => key switch
+            {
+                UniqueKey uniqueKey => GetByUniqueKey(uniqueKey),
+                CombinedHashKey combinedHashKey => GetByCombinedHashKey(combinedHashKey),
+                _ => throw new DataKeyNotSupportedException(key),
+            };
+
+        private IEnumerable<IPacketBase> GetByUniqueKey(UniqueKey uniqueKey)
         {
-            if (key == null)
+            O10Transaction transactionalBlock = Service.GetLastTransactionalBlock(uniqueKey.IdentityKey);
+
+            if (transactionalBlock != null)
             {
-                throw new ArgumentNullException(nameof(key));
+                ITranslator<O10Transaction, IPacketBase> mapper = TranslatorsRepository.GetInstance<O10Transaction, IPacketBase>();
+
+                var block = mapper?.Translate(transactionalBlock);
+
+                return new List<IPacketBase> { block };
             }
 
-            if (key is UniqueKey uniqueKey)
+            return new List<IPacketBase>();
+        }
+
+        private IEnumerable<IPacketBase> GetByCombinedHashKey(CombinedHashKey combinedHashKey)
+        {
+            O10Transaction transactionalBlock = Service.GetTransactionalBySyncAndHash(combinedHashKey.CombinedBlockHeight, combinedHashKey.Hash);
+
+            //TODO: this is very ugly implementation!!!
+            if (transactionalBlock == null)
             {
-                O10Transaction transactionalBlock = Service.GetLastTransactionalBlock(uniqueKey.IdentityKey);
+                Task.Delay(200).Wait();
+                transactionalBlock = Service.GetTransactionalBySyncAndHash(combinedHashKey.CombinedBlockHeight, combinedHashKey.Hash);
 
-                if (transactionalBlock != null)
+                if (transactionalBlock == null)
                 {
-                    ITranslator<O10Transaction, PacketBase> mapper = TranslatorsRepository.GetInstance<O10Transaction, PacketBase>();
-
-                    PacketBase block = mapper?.Translate(transactionalBlock);
-
-                    return new List<PacketBase> { block };
+                    Task.Delay(200).Wait();
+                    transactionalBlock = Service.GetTransactionalBySyncAndHash(combinedHashKey.CombinedBlockHeight, combinedHashKey.Hash);
                 }
-
-                return new List<PacketBase>();
             }
-            else if(key is SyncHashKey syncHashKey)
+
+            if (transactionalBlock != null)
             {
-                O10Transaction transactionalBlock = Service.GetTransactionalBySyncAndHash(syncHashKey.SyncBlockHeight, syncHashKey.Hash);
-
-                return new List<PacketBase> { TranslatorsRepository.GetInstance<O10Transaction, PacketBase>().Translate(transactionalBlock) };
-            }
-            else if (key is CombinedHashKey combinedHashKey)
-            {
-                ulong syncBlockHeight = ChainDataServicesManager.GetChainDataService(LedgerType.Synchronization).GetScalar(new SingleByBlockTypeAndHeight(TransactionTypes.Synchronization_RegistryCombinationBlock, combinedHashKey.CombinedBlockHeight));
-                O10Transaction transactionalBlock = Service.GetTransactionalBySyncAndHash(syncBlockHeight, combinedHashKey.Hash);
-
-				if(transactionalBlock == null)
-				{
-					Task.Delay(200).Wait();
-                    transactionalBlock = Service.GetTransactionalBySyncAndHash(syncBlockHeight, combinedHashKey.Hash);
-
-                    if (transactionalBlock == null)
-					{
-						Task.Delay(200).Wait();
-                        transactionalBlock = Service.GetTransactionalBySyncAndHash(syncBlockHeight, combinedHashKey.Hash);
-                    }
-				}
-
-                if (transactionalBlock != null)
-                {
-                    return new List<PacketBase> { TranslatorsRepository.GetInstance<O10Transaction, PacketBase>().Translate(transactionalBlock) };
-				}
+                return new List<IPacketBase> { TranslatorsRepository.GetInstance<O10Transaction, IPacketBase>().Translate(transactionalBlock) };
             }
 
-            throw new DataKeyNotSupportedException(key);
+            return new List<IPacketBase>();
         }
 
         public override void Initialize(CancellationToken cancellationToken)
         {
+        }
+
+        public override void AddDataKey(IDataKey key, IDataKey newKey)
+        {
+            if(key is IdKey idKey && newKey is CombinedHashKey combined)
+            {
+                Service.UpdateRegistryInfo(idKey.Id, combined.CombinedBlockHeight);
+            }
         }
     }
 }

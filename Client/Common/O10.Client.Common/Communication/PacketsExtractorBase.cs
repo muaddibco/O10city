@@ -107,7 +107,7 @@ namespace O10.Client.Common.Communication
 
                             if (packet != null)
                             {
-                                if (packet is StealthTransaction stealthTransaction)
+                                if (packet is StealthPacket stealthTransaction)
                                 {
                                     _logger.LogIfDebug(() => $"[{_accountId}]: Obtained packet {stealthTransaction.GetType().Name} with {nameof(stealthTransaction.Body.KeyImage)}={stealthTransaction.Body.KeyImage}");
                                 }

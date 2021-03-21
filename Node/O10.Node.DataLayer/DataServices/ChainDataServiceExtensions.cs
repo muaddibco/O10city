@@ -8,9 +8,19 @@ namespace O10.Node.DataLayer.DataServices
 {
     public static class ChainDataServiceExtensions
     {
-        public static IEnumerable<T> Get<T>(this IChainDataService service, IDataKey key) where T : PacketBase
+        public static IEnumerable<T> Get<T>(this IChainDataService service, IDataKey key) where T : IPacketBase
         {
-            IEnumerable<PacketBase> packets = service.Get(key);
+            if (service is null)
+            {
+                throw new ArgumentNullException(nameof(service));
+            }
+
+            if (key is null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
+            IEnumerable<IPacketBase> packets = service.Get(key);
 
             if(packets != null)
             {
@@ -27,7 +37,12 @@ namespace O10.Node.DataLayer.DataServices
                 throw new ArgumentNullException(nameof(service));
             }
 
-            IEnumerable<PacketBase> packets = service.Get(key);
+            if (key is null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
+            IEnumerable<IPacketBase> packets = service.Get(key);
 
             if (packets != null)
             {

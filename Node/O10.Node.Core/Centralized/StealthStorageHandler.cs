@@ -8,7 +8,7 @@ using O10.Core.Logging;
 namespace O10.Node.Core.Centralized
 {
     [RegisterExtension(typeof(IPacketsHandler), Lifetime = LifetimeManagement.Singleton)]
-    public class StealthStorageHandler : StorageHandlerBase<StealthTransaction>
+    public class StealthStorageHandler : StorageHandlerBase<StealthPacket>
     {
         public const string NAME = "StealthStorage";
 

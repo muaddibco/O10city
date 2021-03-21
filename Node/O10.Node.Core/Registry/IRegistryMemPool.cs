@@ -8,14 +8,11 @@ namespace O10.Node.Core.Registry
     [ServiceContract]
     public interface IRegistryMemPool
     {
-        bool EnqueueTransactionWitness(RegistryRegisterBlock transactionWitness);
-        bool EnqueueTransactionWitness(RegistryRegisterExBlock transactionWitness);
-        bool EnqueueTransactionWitness(RegistryRegisterStealth transactionWitness);
+        bool EnqueueTransactionWitness(RegistryPacket witness);
 
-        SortedList<ushort, RegistryRegisterBlock> DequeueStateWitnessBulk();
-        SortedList<ushort, RegistryRegisterStealth> DequeueUtxoWitnessBulk();
+        SortedList<ushort, RegistryPacket> DequeueWitnessBulk();
 
-        void ClearWitnessed(RegistryShortBlock transactionsShortBlock);
+        //void ClearWitnessed(RegistryShortBlock transactionsShortBlock);
 
 		bool IsKeyImageWitnessed(IKey keyImage);
     }

@@ -36,7 +36,7 @@ namespace O10.Client.Common.Communication
             {
                 try
                 {
-                    if (p.State is StealthTransaction packet)
+                    if (p.State is StealthPacket packet)
                     {
                         _logger.LogIfDebug(() => $"[{_accountId}]: Processing {packet.GetType().Name} with {nameof(packet.Body.KeyImage)}={packet.Body.KeyImage}");
                     }

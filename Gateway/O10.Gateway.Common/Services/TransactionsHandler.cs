@@ -94,7 +94,7 @@ namespace O10.Gateway.Common.Services
             bool res = true;
             string existingHash = null;
 
-            if (packet is StealthTransaction stealth)
+            if (packet is StealthPacket stealth)
             {
                 var keyImage = stealth.KeyImage.ToString();
 

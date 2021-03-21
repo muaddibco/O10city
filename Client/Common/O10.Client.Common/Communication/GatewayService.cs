@@ -141,10 +141,10 @@ namespace O10.Client.Common.Communication
 					{
 						if (!string.IsNullOrEmpty(response.ExistingHash))
 						{
-							_logger.Error($"Failed to send transaction {p.State.GetType().Name} because key image {((StealthTransaction)p.State).Body.KeyImage} was already witnessed");
+							_logger.Error($"Failed to send transaction {p.State.GetType().Name} because key image {((StealthPacket)p.State).Body.KeyImage} was already witnessed");
 							KeyImageCorruptedNotification keyImageCorrupted = new KeyImageCorruptedNotification
 							{
-								KeyImage = ((StealthTransaction)p.State).Body.KeyImage.ToByteArray(),
+								KeyImage = ((StealthPacket)p.State).Body.KeyImage.ToByteArray(),
 								ExistingHash = response.ExistingHash.HexStringToByteArray()
 							};
 							await _propagatorBlockNotifications.SendAsync(keyImageCorrupted).ConfigureAwait(false);

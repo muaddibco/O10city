@@ -21,6 +21,9 @@ using O10.Core.Tracking;
 using System.Globalization;
 using O10.Core;
 using O10.Transactions.Core.Ledgers;
+using O10.Core.Identity;
+using O10.Core.Models;
+using O10.Transactions.Core.Ledgers.Registry;
 
 namespace O10.Node.DataLayer.Specific.Registry
 {
@@ -36,16 +39,17 @@ namespace O10.Node.DataLayer.Specific.Registry
             INodeDataAccessServiceRepository dataAccessServiceRepository,
             ITranslatorsRepository translatorsRepository,
             IHashCalculationsRepository hashCalculationsRepository,
+            IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
             ILoggerService loggerService,
             ITrackingService trackingService)
-            : base(dataAccessServiceRepository, translatorsRepository, loggerService)
+            : base(dataAccessServiceRepository, translatorsRepository, identityKeyProvidersRegistry, loggerService)
         {
             _trackingService = trackingService;
             _defaultHashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
         }
 
         override public LedgerType LedgerType => LedgerType.Registry;
-        public override void Add(PacketBase item)
+        public override TaskCompletionWrapper<IKey> Add(IPacketBase item)
         {
             if (item is RegistryFullBlockPacket registryFullBlock)
             {
@@ -53,26 +57,27 @@ namespace O10.Node.DataLayer.Specific.Registry
             }
         }
 
-        public override IEnumerable<PacketBase> Get(IDataKey key)
+        public override IEnumerable<IPacketBase> Get(IDataKey key)
         {
-            if (key is SyncHashKey syncTransactionKey)
-            {
-                RegistryFullBlockDb transactionsRegistryBlock =
-                    FetchRegistryBlock(syncTransactionKey.SyncBlockHeight, syncTransactionKey.Hash)
-                    ?? FetchRegistryBlock(syncTransactionKey.SyncBlockHeight - 1, syncTransactionKey.Hash)
-                    ?? FetchRegistryBlock(syncTransactionKey.SyncBlockHeight - 2, syncTransactionKey.Hash);
+            throw new NotImplementedException();
+            //if (key is SyncHashKey syncTransactionKey)
+            //{
+            //    RegistryFullBlockDb transactionsRegistryBlock =
+            //        FetchRegistryBlock(syncTransactionKey.SyncBlockHeight, syncTransactionKey.Hash)
+            //        ?? FetchRegistryBlock(syncTransactionKey.SyncBlockHeight - 1, syncTransactionKey.Hash)
+            //        ?? FetchRegistryBlock(syncTransactionKey.SyncBlockHeight - 2, syncTransactionKey.Hash);
 
-                PacketBase blockBase = null;
+            //    PacketBase blockBase = null;
 
-                if (transactionsRegistryBlock != null)
-                {
-                    blockBase = TranslatorsRepository.GetInstance<RegistryFullBlockDb, PacketBase>().Translate(transactionsRegistryBlock);
-                }
+            //    if (transactionsRegistryBlock != null)
+            //    {
+            //        blockBase = TranslatorsRepository.GetInstance<RegistryFullBlockDb, PacketBase>().Translate(transactionsRegistryBlock);
+            //    }
 
-                return new List<PacketBase> { blockBase };
-            }
+            //    return new List<PacketBase> { blockBase };
+            //}
 
-            throw new ArgumentException(nameof(key));
+            //throw new ArgumentException(nameof(key));
         }
 
         public override void Initialize(CancellationToken cancellationToken)
@@ -90,11 +95,11 @@ namespace O10.Node.DataLayer.Specific.Registry
 
         #region Private Functions
 
-        private async Task ConsumeSynchronizationRegistryCombinedBlock(IReceivableSourceBlock<RegistryFullBlockPacket> source, CancellationToken cancellationToken)
+        private async Task ConsumeSynchronizationRegistryCombinedBlock(IReceivableSourceBlock<RegistryPacket> source, CancellationToken cancellationToken)
         {
             while (await source.OutputAvailableAsync(cancellationToken).ConfigureAwait(false))
             {
-                if (source.TryReceiveAll(out IList<RegistryFullBlockPacket> blocks))
+                if (source.TryReceiveAll(out IList<RegistryPacket> blocks))
                 {
                     RegistryFullBlockDb[] registryFullBlocks = blocks.Select(b =>
                     {
@@ -124,6 +129,11 @@ namespace O10.Node.DataLayer.Specific.Registry
             _trackingService.TrackDependency(nameof(DataService), nameof(FetchRegistryBlock), $"syncBlockHeight: {syncBlockHeight.ToString(CultureInfo.InvariantCulture)}", start, stopwatch.Elapsed);
 
             return transactionsRegistryBlock;
+        }
+
+        public override void AddDataKey(IDataKey key, IDataKey newKey)
+        {
+            throw new NotImplementedException();
         }
 
         #endregion Private Functions

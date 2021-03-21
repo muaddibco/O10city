@@ -15,6 +15,7 @@ using O10.Core.Identity;
 using O10.Core.Logging;
 using O10.Core.Tracking;
 using O10.Core.DataLayer;
+using System.Threading.Tasks;
 
 namespace O10.Node.DataLayer.Specific.Stealth
 {
@@ -24,6 +25,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
         private readonly IIdentityKeyProvider _identityKeyProvider;
         private readonly IHashCalculation _defaultHashCalculation;
         private HashSet<IKey> _keyImages = new HashSet<IKey>(new Key32());
+        private readonly Dictionary<StealthTransaction, TaskCompletionSource<StealthTransaction>> _addCompletions = new Dictionary<StealthTransaction, TaskCompletionSource<StealthTransaction>>();
 
         public DataAccessService(INodeDataContextRepository dataContextRepository,
                                     IConfigurationService configurationService,
@@ -55,6 +57,14 @@ namespace O10.Node.DataLayer.Specific.Stealth
             base.PostInitTasks();
         }
 
+        protected override void ProcessEntitySaved(object entity)
+        {
+            if (entity is StealthTransaction transaction)
+            {
+                _addCompletions[transaction].SetResult(transaction);
+            }
+        }
+
         public void LoadAllImageKeys()
         {
             _keyImages = new HashSet<IKey>(DataContext.StealthKeyImages.Select(k => _identityKeyProvider.GetKey(k.Value.HexStringToByteArray())).AsEnumerable(), new Key32());
@@ -65,13 +75,14 @@ namespace O10.Node.DataLayer.Specific.Stealth
             return _keyImages.Contains(keyImage);
         }
 
-        public bool AddStealthBlock(IKey keyImage, ulong syncBlockHeight, ushort blockType, byte[] destinationKey, string content)
+        public TaskCompletionSource<StealthTransaction> AddStealthBlock(IKey keyImage, ushort blockType, IKey destinationKey, string content, string hashString)
         {
             if (keyImage is null)
             {
                 throw new ArgumentNullException(nameof(keyImage));
             }
 
+            //TODO: seems this peace of code is completely unneeded since check for KeyImage duplication is done in another place
             bool isService = blockType == TransactionTypes.Stealth_TransitionCompromisedProofs || blockType == TransactionTypes.Stealth_RevokeIdentity;
             bool keyImageExist = _keyImages.Contains(keyImage);
             if (keyImageExist)
@@ -83,7 +94,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
                 }
                 else
                 {
-                    return false;
+                    return null;
                 }
             }
             else
@@ -96,41 +107,60 @@ namespace O10.Node.DataLayer.Specific.Stealth
 
             StealthTransactionHashKey blockHashKey = new StealthTransactionHashKey
             {
-                SyncBlockHeight = syncBlockHeight,
-                Hash = _defaultHashCalculation.CalculateHash(content).ToHexString()
+                Hash = hashString
             };
 
-            StealthTransaction StealthBlock = new StealthTransaction
+            StealthTransaction stealthBlock = new StealthTransaction
             {
                 KeyImage = StealthKeyImage,
                 HashKey = blockHashKey,
-                SyncBlockHeight = syncBlockHeight,
                 BlockType = blockType,
-                DestinationKey = destinationKey.ToHexString(),
+                DestinationKey = destinationKey.ToString(),
                 Content = content
             };
+
+            var addCompletion = new TaskCompletionSource<StealthTransaction>();
+            _addCompletions.Add(stealthBlock, new TaskCompletionSource<StealthTransaction>());
 
             lock (Sync)
             {
                 DataContext.StealthKeyImages.Add(StealthKeyImage);
                 DataContext.BlockHashKeys.Add(blockHashKey);
-                DataContext.StealthBlocks.Add(StealthBlock);
+                DataContext.StealthBlocks.Add(stealthBlock);
             }
 
-            return true;
+            return addCompletion;
         }
 
-        public StealthTransaction GetStealthBySyncAndHash(ulong syncBlockHeight, byte[] hash)
+        public void UpdateRegistryInfo(long transactionId, long aggregatedRegistrationHeight)
         {
-            string hashString = hash.ToHexString();
+            var transaction = GetLocalAwareStealthTransactionPacketById(transactionId);
+            if (transaction != null)
+            {
+                lock (Sync)
+                {
+                    transaction.RegistryHeight = aggregatedRegistrationHeight;
+                    transaction.HashKey.RegistryHeight = aggregatedRegistrationHeight;
+                }
+            }
+        }
+
+        public StealthTransaction GetStealthBySyncAndHash(long aggregatedRegistryHeight, IKey hash)
+        {
+            if (hash is null)
+            {
+                throw new ArgumentNullException(nameof(hash));
+            }
+
+            string hashString = hash.ToString();
             try
             {
                 lock (Sync)
                 {
-                    StealthTransactionHashKey hashKey = GetLocalAwareHashKey(hashString, syncBlockHeight);
+                    StealthTransactionHashKey hashKey = GetLocalAwareHashKey(hashString, aggregatedRegistryHeight);
                     if (hashKey == null)
                     {
-                        Logger.Error($"Failed to find Hash Key {hashString} with Sync Block Ids {syncBlockHeight} or {syncBlockHeight - 1}");
+                        Logger.Error($"Failed to find Hash Key {hashString} with Aggregated Regsitry Height {aggregatedRegistryHeight} or {aggregatedRegistryHeight - 1}");
                         return null;
                     }
 
@@ -139,7 +169,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
             }
             catch (Exception ex)
             {
-                Logger.Error($"Failure during obtaining Confidential Packet with hash {hashString} and Sync Block Height {syncBlockHeight} or {syncBlockHeight - 1}", ex);
+                Logger.Error($"Failure during obtaining Confidential Packet with hash {hashString} and Sync Block Height {aggregatedRegistryHeight} or {aggregatedRegistryHeight - 1}", ex);
                 return null;
             }
         }
@@ -156,19 +186,51 @@ namespace O10.Node.DataLayer.Specific.Stealth
             }
         }
 
-        private StealthTransactionHashKey GetLocalAwareHashKey(string hashString, ulong syncBlockHeight)
+        private StealthTransactionHashKey GetLocalAwareHashKey(string hashString, long aggregatedRegistryHeight)
         {
             StealthTransactionHashKey hashKey = DataContext.BlockHashKeys.Local.FirstOrDefault(h =>
-                        (h.SyncBlockHeight == syncBlockHeight || h.SyncBlockHeight == (syncBlockHeight - 1))
+                        (h.RegistryHeight == aggregatedRegistryHeight || h.RegistryHeight == (aggregatedRegistryHeight - 1))
                         && h.Hash == hashString);
 
             if (hashKey == null)
             {
                 hashKey = DataContext.BlockHashKeys.FirstOrDefault(h =>
-                        (h.SyncBlockHeight == syncBlockHeight || h.SyncBlockHeight == (syncBlockHeight - 1))
+                        (h.RegistryHeight == aggregatedRegistryHeight || h.RegistryHeight == (aggregatedRegistryHeight - 1))
                         && h.Hash == hashString);
             }
             return hashKey;
+        }
+
+        private StealthTransaction GetLocalAwareStealthTransactionPacketById(long transactionId)
+        {
+            Logger.LogIfDebug(() => $"{nameof(GetLocalAwareStealthTransactionPacketById)}({transactionId})");
+            var transaction =
+                DataContext.StealthBlocks.Local
+                    .FirstOrDefault(b => b.StealthTransactionId == transactionId);
+
+            if (transaction == null)
+            {
+                Logger.LogIfDebug(() => $"{nameof(GetLocalAwareStealthTransactionPacketById)} not found in local");
+
+                transaction =
+                    DataContext.StealthBlocks
+                        .FirstOrDefault(b => b.StealthTransactionId == transactionId);
+            }
+            else
+            {
+                Logger.LogIfDebug(() => $"{nameof(GetLocalAwareStealthTransactionPacketById)} found in local");
+            }
+
+            if (transaction != null)
+            {
+                Logger.LogIfDebug(() => $"{nameof(GetLocalAwareStealthTransactionPacketById)}: {transaction.StealthTransactionId}");
+            }
+            else
+            {
+                Logger.Warning($"{nameof(GetLocalAwareStealthTransactionPacketById)}: {nameof(StealthTransaction)} not found");
+            }
+
+            return transaction;
         }
     }
 }

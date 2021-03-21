@@ -2,11 +2,11 @@
 using System.Collections.Generic;
 using System.Threading;
 using O10.Core.Architecture;
-using O10.Transactions.Core.Ledgers;
-using O10.Transactions.Core.Ledgers.Synchronization.Transactions;
-using O10.Transactions.Core.Ledgers.Registry.Transactions;
 using O10.Transactions.Core.Ledgers.Synchronization;
 using O10.Transactions.Core.Ledgers.Registry;
+using O10.Node.DataLayer.DataServices;
+using O10.Core.Models;
+using O10.Core.Identity;
 
 namespace O10.Node.Core.Centralized
 {
@@ -16,8 +16,8 @@ namespace O10.Node.Core.Centralized
         IEnumerable<Tuple<SynchronizationPacket, RegistryPacket>> GetRegistryConsumingEnumerable(CancellationToken cancellationToken);
 
         void PostPackets(SynchronizationPacket aggregatedRegistrationsPacket, RegistryPacket registrationsPacket);
-        void PostTransaction(IPacketBase packet);
+        void PostTransaction(TaskCompletionWrapper<IKey> completionWrapperByTransactionHashKey);
 		long GetLowestCombinedBlockHeight();
-		IPacketBase GetPacket(long combinedBlockHeight, byte[] hash);
+        void RegisterInternalChainDataService(IChainDataService chainDataService);
     }
 }

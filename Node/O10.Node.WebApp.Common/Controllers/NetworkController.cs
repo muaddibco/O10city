@@ -119,14 +119,14 @@ namespace O10.Node.WebApp.Common.Controllers
 		{
 			_logger.LogIfDebug(() => $"{nameof(GetO10StateTransaction)}({combinedBlockHeight}, {hash})");
 
-			byte[] hashBytes = hash.HexStringToByteArray();
+			IKey hashKey = _identityKeyProvider.GetKey(hash.HexStringToByteArray());
 			try
 			{
-				var blockBase = _transactionalDataService.Get(new CombinedHashKey(ulong.Parse(combinedBlockHeight), hashBytes)).Single();
+				var blockBase = _transactionalDataService.Get(new CombinedHashKey(long.Parse(combinedBlockHeight), hashKey)).Single();
 
 				if(blockBase == null)
 				{
-					blockBase = _transactionalDataService.Get(new CombinedHashKey(ulong.Parse(combinedBlockHeight) - 1, hashBytes)).Single();
+					blockBase = _transactionalDataService.Get(new CombinedHashKey(long.Parse(combinedBlockHeight) - 1, hashKey)).Single();
 				}
 			
 				if(blockBase != null)
@@ -151,13 +151,14 @@ namespace O10.Node.WebApp.Common.Controllers
 		public ActionResult<IPacketBase> GetStealthTransaction([FromQuery] string combinedBlockHeight, [FromQuery] string hash)
 		{
 			byte[] hashBytes = hash.HexStringToByteArray();
+			IKey hashKey = _identityKeyProvider.GetKey(hash.HexStringToByteArray());
 			try
 			{
-				IPacketBase blockBase = _stealthDataService.Get(new CombinedHashKey(ulong.Parse(combinedBlockHeight), hashBytes)).Single();
+				IPacketBase blockBase = _stealthDataService.Get(new CombinedHashKey(long.Parse(combinedBlockHeight), hashKey)).Single();
 
 				if(blockBase == null)
 				{
-					blockBase = _stealthDataService.Get(new CombinedHashKey(ulong.Parse(combinedBlockHeight) - 1, hashBytes)).Single();
+					blockBase = _stealthDataService.Get(new CombinedHashKey(long.Parse(combinedBlockHeight) - 1, hashKey)).Single();
 				}
 
 				if (blockBase != null)

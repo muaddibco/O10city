@@ -233,7 +233,7 @@ namespace O10.Gateway.Common.Services
 			}
 		}
 
-		public async Task SendEphemeralPacket(StealthTransaction packet)
+		public async Task SendEphemeralPacket(Transactions.Core.Ledgers.Stealth.StealthPacket packet)
         {
 
         }
@@ -656,7 +656,7 @@ namespace O10.Gateway.Common.Services
 
 					if (witness.ReferencedKeyImage != null)
 					{
-						StealthPacket utxoIncomingBlock = _dataAccessService.GetUtxoIncomingBlock(witnessId);
+                        DataLayer.Model.StealthPacket utxoIncomingBlock = _dataAccessService.GetUtxoIncomingBlock(witnessId);
 
 						if(utxoIncomingBlock == null)
 						{
@@ -711,7 +711,7 @@ namespace O10.Gateway.Common.Services
 			return statePacketInfo;
 		}
 
-		private async Task<StealthPacket> RetryObtainUtxoPacket(WitnessPacket witness)
+		private async Task<DataLayer.Model.StealthPacket> RetryObtainUtxoPacket(WitnessPacket witness)
 		{
 			_logger.Warning($"{nameof(StealthPacket)} for WitnessId {witness.WitnessPacketId} is missing. Retry to obtain");
 
@@ -719,7 +719,7 @@ namespace O10.Gateway.Common.Services
 			_logger.Info($"Querying UTXO packet with URL {url}");
             TransactionInfo transactionInfo = await url.GetJsonAsync<TransactionInfo>().ConfigureAwait(false);
 			StorePacket(witness, transactionInfo.Content);
-			StealthPacket utxoIncomingBlock = _dataAccessService.GetUtxoIncomingBlock(witness.WitnessPacketId);
+            DataLayer.Model.StealthPacket utxoIncomingBlock = _dataAccessService.GetUtxoIncomingBlock(witness.WitnessPacketId);
 			if (utxoIncomingBlock == null)
 			{
 				_logger.Error($"Failed retry to obtain {nameof(StealthPacket)} for WitnessId {witness.WitnessPacketId}");

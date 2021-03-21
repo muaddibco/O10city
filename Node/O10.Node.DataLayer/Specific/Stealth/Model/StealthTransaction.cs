@@ -12,7 +12,7 @@ namespace O10.Node.DataLayer.Specific.Stealth.Model
 
         public StealthTransactionHashKey HashKey { get; set; }
 
-        public ulong SyncBlockHeight { get; set; }
+        public long RegistryHeight { get; set; }
 
         public KeyImage KeyImage { get; set; }
 

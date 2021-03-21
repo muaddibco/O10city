@@ -1,16 +1,18 @@
-﻿namespace O10.Node.DataLayer.DataServices.Keys
+﻿using O10.Core.Identity;
+
+namespace O10.Node.DataLayer.DataServices.Keys
 {
     public class CombinedHashKey : IDataKey
     {
-        public CombinedHashKey(ulong combinedBlockHeight, byte[] hash)
+        public CombinedHashKey(long combinedBlockHeight, IKey hash)
         {
             CombinedBlockHeight = combinedBlockHeight;
             Hash = hash;
         }
 
-        public ulong CombinedBlockHeight { get; set; }
+        public long CombinedBlockHeight { get; set; }
 
-        public byte[] Hash { get; set; }
+        public IKey Hash { get; set; }
 
     }
 }

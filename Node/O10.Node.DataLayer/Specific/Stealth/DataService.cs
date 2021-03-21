@@ -11,72 +11,92 @@ using O10.Core.Architecture;
 using O10.Node.DataLayer.DataAccess;
 using O10.Node.DataLayer.Exceptions;
 using O10.Transactions.Core.Ledgers;
+using O10.Core.Models;
+using O10.Core.Identity;
+using Newtonsoft.Json;
+using O10.Core.Serialization;
+using O10.Core.HashCalculations;
+using O10.Core;
+using O10.Core.Translators;
+using O10.Core.Logging;
+using O10.Node.DataLayer.DataServices.Notifications;
 
 namespace O10.Node.DataLayer.Specific.Stealth
 {
     [RegisterExtension(typeof(IChainDataService), Lifetime = LifetimeManagement.Singleton)]
     public class DataService : ChainDataServiceBase<DataAccessService>, IStealthDataService
     {
+        private readonly IHashCalculation _defaultHashCalculation;
+
         public DataService(INodeDataAccessServiceRepository dataAccessServiceRepository,
-                              Core.Translators.ITranslatorsRepository translatorsRepository,
-                              Core.Logging.ILoggerService loggerService)
-            : base(dataAccessServiceRepository, translatorsRepository, loggerService)
+                           IHashCalculationsRepository hashCalculationsRepository,
+                           ITranslatorsRepository translatorsRepository,
+                           IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
+                           ILoggerService loggerService)
+            : base(dataAccessServiceRepository, translatorsRepository, identityKeyProvidersRegistry, loggerService)
         {
+            _defaultHashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
         }
 
         public override LedgerType LedgerType => LedgerType.Stealth;
 
-        public override void Add(PacketBase item)
+        public override TaskCompletionWrapper<IKey> Add(IPacketBase packet)
         {
-            if (item == null)
+            if (packet == null)
             {
-                throw new ArgumentNullException(nameof(item));
+                throw new ArgumentNullException(nameof(packet));
             }
 
-            Logger.Debug($"Storing {item.GetType().Name}");
+            Logger?.LogIfDebug(() => $"Storing {packet.GetType().Name}: {JsonConvert.SerializeObject(packet, new ByteArrayJsonConverter())}");
 
-            if (item is Transactions.Core.Ledgers.Stealth.StealthTransaction stealth)
+            if (packet is StealthPacket stealth)
             {
-                Service.AddStealthBlock(stealth.KeyImage, stealth.SyncHeight, stealth.TransactionType, stealth.DestinationKey, stealth.ToString());
+                var hash = _defaultHashCalculation.CalculateHash(packet.ToString());
+                var addCompletionWrapper = new TaskCompletionWrapper<IKey>(IdentityKeyProvider.GetKey(hash));
+                var addCompletion = Service.AddStealthBlock(stealth.Body.KeyImage, stealth.Body.TransactionType, stealth.Body.DestinationKey, stealth.ToString(), hash.ToString());
+                addCompletion.Task.ContinueWith((t, o) =>
+                {
+                    var w = (TaskCompletionWrapper<IPacketBase>)o;
+                    if (t.IsCompletedSuccessfully)
+                    {
+                        w.TaskCompletion.SetResult(new ItemAddedNotification(new LedgerAndIdKey(w.State.LedgerType, t.Result.StealthTransactionId)));
+                    }
+                }, addCompletionWrapper, TaskScheduler.Default);
+
+                Logger?.LogIfDebug(() => $"Storing of {packet.GetType().Name} completed");
+                return addCompletionWrapper;
             }
+        
+            Logger?.Error($"Attempt to store an improper packet type {packet.GetType().FullName}");
+            throw new Exception($"Attempt to store an improper packet type {packet.GetType().FullName}");
         }
 
-        public override IEnumerable<PacketBase> Get(IDataKey key)
+        public override IEnumerable<IPacketBase> Get(IDataKey key)
         {
             if (key == null)
             {
                 throw new ArgumentNullException(nameof(key));
             }
 
-            if (key is SyncHashKey syncHashKey)
+            if (key is CombinedHashKey combinedHashKey)
             {
-                Model.StealthTransaction Stealth = Service.GetStealthBySyncAndHash(syncHashKey.SyncBlockHeight, syncHashKey.Hash);
+                StealthTransaction stealth = Service.GetStealthBySyncAndHash(combinedHashKey.CombinedBlockHeight, combinedHashKey.Hash);
 
-                if (Stealth != null)
-                {
-                    return new List<PacketBase> { TranslatorsRepository.GetInstance<Model.StealthTransaction, PacketBase>().Translate(Stealth) };
-                }
-            }
-            else if (key is CombinedHashKey combinedHashKey)
-            {
-                ulong syncBlockHeight = ChainDataServicesManager.GetChainDataService(LedgerType.Synchronization).GetScalar(new SingleByBlockTypeAndHeight(TransactionTypes.Synchronization_RegistryCombinationBlock, combinedHashKey.CombinedBlockHeight));
-                Model.StealthTransaction Stealth = Service.GetStealthBySyncAndHash(syncBlockHeight, combinedHashKey.Hash);
-
-                if (Stealth == null)
+                if (stealth == null)
                 {
                     Task.Delay(200).Wait();
-                    Stealth = Service.GetStealthBySyncAndHash(syncBlockHeight, combinedHashKey.Hash);
+                    stealth = Service.GetStealthBySyncAndHash(combinedHashKey.CombinedBlockHeight, combinedHashKey.Hash);
 
-                    if (Stealth == null)
+                    if (stealth == null)
                     {
                         Task.Delay(200).Wait();
-                        Stealth = Service.GetStealthBySyncAndHash(syncBlockHeight, combinedHashKey.Hash);
+                        stealth = Service.GetStealthBySyncAndHash(combinedHashKey.CombinedBlockHeight, combinedHashKey.Hash);
                     }
                 }
 
-                if (Stealth != null)
+                if (stealth != null)
                 {
-                    return new List<PacketBase> { TranslatorsRepository.GetInstance<Model.StealthTransaction, PacketBase>().Translate(Stealth) };
+                    return new List<IPacketBase> { TranslatorsRepository.GetInstance<Model.StealthTransaction, IPacketBase>().Translate(stealth) };
                 }
             }
 
@@ -100,6 +120,14 @@ namespace O10.Node.DataLayer.Specific.Stealth
             }
 
             throw new DataKeyNotSupportedException(dataKey);
+        }
+
+        public override void AddDataKey(IDataKey key, IDataKey newKey)
+        {
+            if (key is IdKey idKey && newKey is CombinedHashKey combined)
+            {
+                Service.UpdateRegistryInfo(idKey.Id, combined.CombinedBlockHeight);
+            }
         }
     }
 }

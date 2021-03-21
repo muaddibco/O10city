@@ -14,7 +14,7 @@ namespace O10.Node.DataLayer.Specific.O10Id.Model
 
         public O10TransactionHashKey HashKey { get; set; }
 
-        public long SyncBlockHeight { get; set; }
+        public long RegistryHeight { get; set; }
 
         public long Height { get; set; }
 

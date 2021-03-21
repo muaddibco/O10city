@@ -27,9 +27,9 @@ namespace O10.Node.DataLayer.Specific.O10Id.DataContexts
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.Entity<AccountIdentity>().HasIndex(a => a.KeyHash);
-            modelBuilder.Entity<O10TransactionHashKey>().HasIndex(a => a.SyncBlockHeight);
+            modelBuilder.Entity<O10TransactionHashKey>().HasIndex(a => a.RegistryHeight);
             modelBuilder.Entity<O10TransactionHashKey>().HasIndex(a => a.Hash);
-            modelBuilder.Entity<O10Transaction>().HasIndex(a => a.SyncBlockHeight);
+            modelBuilder.Entity<O10Transaction>().HasIndex(a => a.RegistryHeight);
             modelBuilder.Entity<O10Transaction>().HasIndex(a => a.Height);
         }
     }

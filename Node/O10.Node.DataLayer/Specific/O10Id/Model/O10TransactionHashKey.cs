@@ -10,9 +10,7 @@ namespace O10.Node.DataLayer.Specific.O10Id.Model
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public long O10TransactionHashKeyId { get; set; }
 
-        public ulong CombinedBlockHeight { get; set; }
-
-        public ulong SyncBlockHeight { get; set; }
+        public long RegistryHeight { get; set; }
 
 		[Column(TypeName = "varbinary(64)")]
 		public string Hash { get; set; }
