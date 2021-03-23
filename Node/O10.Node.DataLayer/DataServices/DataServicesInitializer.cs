@@ -26,7 +26,6 @@ namespace O10.Node.DataLayer.DataServices
 				try
 				{
 					chainDataService.Initialize(cancellationToken);
-					chainDataService.ChainDataServicesManager = _chainDataServicesManager;
 				}
 				catch (System.Exception ex)
 				{

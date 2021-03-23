@@ -11,9 +11,14 @@ namespace O10.Transactions.Core.Ledgers
     {
         public TTransaction? Body { get; set; }
 
-        public T? As<T>() where T : TTransaction
+        public T? With<T>() where T : TTransaction
         {
             return Body as T;
+        }
+
+        public T? AsPacket<T>() where T : class, IPacketBase
+        {
+            return this as T;
         }
 
         public TSignature? Signature { get; set; }
@@ -21,6 +26,7 @@ namespace O10.Transactions.Core.Ledgers
         public abstract LedgerType LedgerType { get; }
 
         TransactionBase? IPacketBase.Body { get => Body; }
+
         SignatureBase? IPacketBase.Signature { get => Signature; }
     }
 
@@ -31,5 +37,7 @@ namespace O10.Transactions.Core.Ledgers
         TransactionBase? Body { get; }
 
         SignatureBase? Signature { get; }
+
+        T? AsPacket<T>() where T: class, IPacketBase;
     }
 }

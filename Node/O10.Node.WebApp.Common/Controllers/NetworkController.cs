@@ -88,7 +88,7 @@ namespace O10.Node.WebApp.Common.Controllers
 		[HttpGet("LastAggregatedRegistrations")]
 		public ActionResult<AggregatedRegistrationsTransactionDTO> LastAggregatedRegistrations()
 		{
-			AggregatedRegistrationsTransaction combinedBlock = _synchronizationDataService.Single<SynchronizationPacket>(new SingleByBlockTypeKey(TransactionTypes.Synchronization_RegistryCombinationBlock))?.As<AggregatedRegistrationsTransaction>();
+			AggregatedRegistrationsTransaction combinedBlock = _synchronizationDataService.Single<SynchronizationPacket>(new SingleByBlockTypeKey(TransactionTypes.Synchronization_RegistryCombinationBlock))?.With<AggregatedRegistrationsTransaction>();
 
 			return Ok(new AggregatedRegistrationsTransactionDTO { Height = combinedBlock.Height });
 		}

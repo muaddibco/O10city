@@ -10,7 +10,7 @@ namespace O10.Node.DataLayer.Specific.Synchronization.Mappers
 {
 
     [RegisterExtension(typeof(ITranslator), Lifetime = LifetimeManagement.Singleton)]
-    public class SynchronizationBlockToBlockBaseMapper : TranslatorBase<SynchronizationBlock, PacketBase>
+    public class SynchronizationBlockToBlockBaseMapper : TranslatorBase<Model.SynchronizationPacket, PacketBase>
     {
         private readonly IBlockParsersRepository _blockParsersRepository;
 
@@ -24,7 +24,7 @@ namespace O10.Node.DataLayer.Specific.Synchronization.Mappers
             _blockParsersRepository = blockParsersFactoriesRepository.GetBlockParsersRepository(LedgerType.Synchronization);
         }
 
-        public override PacketBase Translate(SynchronizationBlock synchronizationBlock)
+        public override PacketBase Translate(Model.SynchronizationPacket synchronizationBlock)
         {
             if(synchronizationBlock == null)
             {
@@ -33,7 +33,7 @@ namespace O10.Node.DataLayer.Specific.Synchronization.Mappers
 
             IBlockParser blockParser = _blockParsersRepository.GetInstance(TransactionTypes.Synchronization_ConfirmedBlock);
 
-            return blockParser.Parse(synchronizationBlock.BlockContent) as SynchronizationConfirmedBlock;
+            return blockParser.Parse(synchronizationBlock.Content) as SynchronizationConfirmedBlock;
         }
     }
 }

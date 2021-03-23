@@ -9,9 +9,9 @@ namespace O10.Node.DataLayer.Specific.Synchronization.DataContexts
 	{
         public override LedgerType LedgerType => LedgerType.Synchronization;
 
-        public DbSet<SynchronizationBlock> SynchronizationBlocks { get; set; }
+        public DbSet<SynchronizationPacket> SynchronizationBlocks { get; set; }
 
-        public DbSet<RegistryCombinedBlock> RegistryCombinedBlocks { get; set; }
+        public DbSet<AggregatedRegistrationsTransaction> RegistryCombinedBlocks { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -22,7 +22,7 @@ namespace O10.Node.DataLayer.Specific.Synchronization.DataContexts
 
             base.OnModelCreating(modelBuilder);
 
-			modelBuilder.Entity<RegistryCombinedBlock>().HasIndex(a => a.SyncBlockHeight);
+			modelBuilder.Entity<AggregatedRegistrationsTransaction>().HasIndex(a => a.SyncBlockHeight);
         }
 	}
 }

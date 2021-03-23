@@ -17,7 +17,7 @@ namespace O10.Node.DataLayer.DataServices
         /// </summary>
         /// <param name="item"></param>
         /// <returns></returns>
-        TaskCompletionWrapper<IKey> Add(T item);
+        TaskCompletionWrapper<T> Add(T item);
 
         void AddDataKey(IDataKey key, IDataKey newKey);
 

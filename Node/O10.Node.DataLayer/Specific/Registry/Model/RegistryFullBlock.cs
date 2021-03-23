@@ -10,9 +10,9 @@ namespace O10.Node.DataLayer.Specific.Registry.Model
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public long RegistryFullBlockId { get; set; }
 
-        public ulong SyncBlockHeight { get; set; }
+        public long SyncBlockHeight { get; set; }
 
-        public ulong Round { get; set; }
+        public long Round { get; set; }
 
         public int TransactionsCount { get; set; }
 

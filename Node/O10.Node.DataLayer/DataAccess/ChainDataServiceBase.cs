@@ -31,14 +31,13 @@ namespace O10.Node.DataLayer.DataAccess
         protected ILogger Logger { get; }
 
         public abstract LedgerType LedgerType { get; }
-        public IChainDataServicesManager ChainDataServicesManager { protected get; set; }
 
-        public abstract TaskCompletionWrapper<IKey> Add(IPacketBase item);
+        public abstract TaskCompletionWrapper<IPacketBase> Add(IPacketBase item);
         public abstract IEnumerable<IPacketBase> Get(IDataKey key);
         public abstract void Initialize(CancellationToken cancellationToken);
 
         //TODO: not clear why does this virtual exists?
-        public virtual ulong GetScalar(IDataKey dataKey)
+        public virtual long GetScalar(IDataKey dataKey)
         {
             if (dataKey == null)
             {

@@ -40,7 +40,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
 
         public override LedgerType LedgerType => LedgerType.Stealth;
 
-        public override TaskCompletionWrapper<IKey> Add(IPacketBase packet)
+        public override TaskCompletionWrapper<IPacketBase> Add(IPacketBase packet)
         {
             if (packet == null)
             {
@@ -52,16 +52,18 @@ namespace O10.Node.DataLayer.Specific.Stealth
             if (packet is StealthPacket stealth)
             {
                 var hash = _defaultHashCalculation.CalculateHash(packet.ToString());
-                var addCompletionWrapper = new TaskCompletionWrapper<IKey>(IdentityKeyProvider.GetKey(hash));
+                var hashKey = IdentityKeyProvider.GetKey(hash);
+                var addCompletionWrapper = new TaskCompletionWrapper<IPacketBase>(packet);
                 var addCompletion = Service.AddStealthBlock(stealth.Body.KeyImage, stealth.Body.TransactionType, stealth.Body.DestinationKey, stealth.ToString(), hash.ToString());
                 addCompletion.Task.ContinueWith((t, o) =>
                 {
-                    var w = (TaskCompletionWrapper<IPacketBase>)o;
+                    var w = ((Tuple<TaskCompletionWrapper<IPacketBase>, IKey>)o).Item1;
+                    var h = ((Tuple<TaskCompletionWrapper<IPacketBase>, IKey>)o).Item2;
                     if (t.IsCompletedSuccessfully)
                     {
-                        w.TaskCompletion.SetResult(new ItemAddedNotification(new LedgerAndIdKey(w.State.LedgerType, t.Result.StealthTransactionId)));
+                        w.TaskCompletion.SetResult(new ItemAddedNotification(new HashAndIdKey(h, t.Result.StealthTransactionId)));
                     }
-                }, addCompletionWrapper, TaskScheduler.Default);
+                }, new Tuple<TaskCompletionWrapper<IPacketBase>, IKey>(addCompletionWrapper, hashKey), TaskScheduler.Default);
 
                 Logger?.LogIfDebug(() => $"Storing of {packet.GetType().Name} completed");
                 return addCompletionWrapper;

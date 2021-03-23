@@ -53,7 +53,7 @@ namespace O10.Node.Core.Centralized
 
         public void PostPackets(SynchronizationPacket aggregatedRegistrationsPacket, RegistryPacket registrationsPacket)
         {
-			var registryTransaction = registrationsPacket.As<FullRegistryTransaction>();
+			var registryTransaction = registrationsPacket.With<FullRegistryTransaction>();
 
 			_logger.Debug($"Received combined and registryFullBlock with {registryTransaction.Witnesses.Length} Witnesses. Wait for transaction packets...");
 
@@ -73,9 +73,9 @@ namespace O10.Node.Core.Centralized
 
 			_registrationPackets.Add(new Tuple<SynchronizationPacket, RegistryPacket>(aggregatedRegistrationsPacket, registrationsPacket));
 
-			if (_lowestCombinedBlockHeight > aggregatedRegistrationsPacket.As<AggregatedRegistrationsTransaction>().Height)
+			if (_lowestCombinedBlockHeight > aggregatedRegistrationsPacket.With<AggregatedRegistrationsTransaction>().Height)
 			{
-				_lowestCombinedBlockHeight = aggregatedRegistrationsPacket.As<AggregatedRegistrationsTransaction>().Height;
+				_lowestCombinedBlockHeight = aggregatedRegistrationsPacket.With<AggregatedRegistrationsTransaction>().Height;
 			}
         }
 
@@ -85,10 +85,10 @@ namespace O10.Node.Core.Centralized
             {
                 var notification = await t.Result.TaskCompletion.Task.ConfigureAwait(false);
                 var syncPacket = o as SynchronizationPacket;
-                if (notification is ItemAddedNotification itemAdded && itemAdded.DataKey is LedgerAndIdKey key)
+                if (notification is ItemAddedNotification itemAdded && itemAdded.DataKey is HashAndIdKey key)
                 {
-                    _chainDataServices.First(s => s.LedgerType == key.LedgerType)
-                        .AddDataKey(key, new CombinedHashKey(syncPacket.As<AggregatedRegistrationsTransaction>().Height, t.Result.State));        
+                    _chainDataServices.First(s => s.LedgerType == key.HashKey)
+                        .AddDataKey(key, new CombinedHashKey(syncPacket.With<AggregatedRegistrationsTransaction>().Height, t.Result.State));        
                 }
             }, aggregatedRegistrationsPacket, TaskScheduler.Default);
         }

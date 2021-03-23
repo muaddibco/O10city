@@ -6,9 +6,9 @@ using O10.Transactions.Core.Ledgers;
 namespace O10.Node.DataLayer.Specific.O10Id.Mappers
 {
     [RegisterExtension(typeof(ITranslator), Lifetime = LifetimeManagement.Singleton)]
-    public class TransactionalBlockToBaseBlockMapper : TranslatorBase<O10Transaction, PacketBase>
+    public class TransactionalBlockToBaseBlockMapper : TranslatorBase<O10Transaction, IPacketBase>
     {
-        public override PacketBase Translate(O10Transaction transactionalBlock)
+        public override IPacketBase Translate(O10Transaction transactionalBlock)
         {
             if(transactionalBlock == null)
             {

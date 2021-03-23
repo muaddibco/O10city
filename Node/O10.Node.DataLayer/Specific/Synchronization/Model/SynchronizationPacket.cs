@@ -4,17 +4,17 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Node.DataLayer.Specific.Synchronization.Model
 {
-	[Table("SynchronizationBlocks")]
-    public class SynchronizationBlock
+	[Table("SynchronizationPackets")]
+    public class SynchronizationPacket
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.None)]
-        public long SynchronizationBlockId { get; set; }
+        public long SynchronizationPacketId { get; set; }
 
         public DateTime ReceiveTime { get; set; }
 
         public DateTime MedianTime { get; set; }
 
-        public byte[] BlockContent { get; set; }
+        public string Content { get; set; }
     }
 }

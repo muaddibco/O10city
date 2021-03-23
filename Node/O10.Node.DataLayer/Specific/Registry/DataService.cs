@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,20 +9,19 @@ using O10.Transactions.Core.Enums;
 using O10.Node.DataLayer.DataServices;
 using O10.Node.DataLayer.DataServices.Keys;
 using O10.Core.Architecture;
-using O10.Core.ExtensionMethods;
 using O10.Core.HashCalculations;
 using O10.Core.Logging;
 using O10.Core.Translators;
 using O10.Node.DataLayer.DataAccess;
-using RegistryFullBlockPacket = O10.Transactions.Core.Ledgers.Registry.RegistryFullBlock;
 using RegistryFullBlockDb = O10.Node.DataLayer.Specific.Registry.Model.RegistryFullBlock;
 using O10.Core.Tracking;
-using System.Globalization;
 using O10.Core;
 using O10.Transactions.Core.Ledgers;
 using O10.Core.Identity;
 using O10.Core.Models;
 using O10.Transactions.Core.Ledgers.Registry;
+using O10.Transactions.Core.Ledgers.Registry.Transactions;
+using O10.Node.DataLayer.DataServices.Notifications;
 
 namespace O10.Node.DataLayer.Specific.Registry
 {
@@ -31,8 +29,8 @@ namespace O10.Node.DataLayer.Specific.Registry
     public class DataService : ChainDataServiceBase<DataAccessService>
     {
         private readonly IHashCalculation _defaultHashCalculation;
-        private BufferBlock<RegistryFullBlockPacket> _packets;
-        private readonly ConcurrentDictionary<ulong, ConcurrentBag<RegistryFullBlockDb>> _registryFullBlocks = new ConcurrentDictionary<ulong, ConcurrentBag<RegistryFullBlockDb>>();
+        private BufferBlock<TaskCompletionWrapper<KeyedEntity<IPacketBase>>> _packets;
+        private readonly ConcurrentDictionary<long, ConcurrentBag<RegistryFullBlockDb>> _registryFullBlocks = new ConcurrentDictionary<long, ConcurrentBag<RegistryFullBlockDb>>();
         private readonly ITrackingService _trackingService;
 
         public DataService(
@@ -49,12 +47,32 @@ namespace O10.Node.DataLayer.Specific.Registry
         }
 
         override public LedgerType LedgerType => LedgerType.Registry;
-        public override TaskCompletionWrapper<IKey> Add(IPacketBase item)
+
+        public override TaskCompletionWrapper<IPacketBase> Add(IPacketBase item)
         {
-            if (item is RegistryFullBlockPacket registryFullBlock)
+            if (item is RegistryPacket registryPacket && registryPacket.Body is FullRegistryTransaction)
             {
-                _packets.Post(registryFullBlock);
+                var completionWithKey = new TaskCompletionWrapper<IPacketBase>(item);
+
+                var completionWithPacket = new TaskCompletionWrapper<KeyedEntity<IPacketBase>>(new KeyedEntity<IPacketBase>(registryPacket));
+                _packets.Post(completionWithPacket);
+
+                completionWithPacket.TaskCompletion.Task.ContinueWith((t, o) => 
+                { 
+                    if(t.IsCompletedSuccessfully)
+                    {
+                        ((TaskCompletionWrapper<IPacketBase>)o).TaskCompletion.SetResult(t.Result);
+                    }
+                    else
+                    {
+                        ((TaskCompletionWrapper<IPacketBase>)o).TaskCompletion.SetException(t.Exception);
+                    }
+                }, completionWithKey, TaskScheduler.Default);
+
+                return completionWithKey;
             }
+
+            return null;
         }
 
         public override IEnumerable<IPacketBase> Get(IDataKey key)
@@ -82,7 +100,7 @@ namespace O10.Node.DataLayer.Specific.Registry
 
         public override void Initialize(CancellationToken cancellationToken)
         {
-            _packets = new BufferBlock<RegistryFullBlockPacket>(new DataflowBlockOptions { CancellationToken = cancellationToken });
+            _packets = new BufferBlock<TaskCompletionWrapper<KeyedEntity<IPacketBase>>>(new DataflowBlockOptions { CancellationToken = cancellationToken });
 
             foreach (var registryFullBlock in Service.GetAllRegistryFullBlocks())
             {
@@ -95,16 +113,25 @@ namespace O10.Node.DataLayer.Specific.Registry
 
         #region Private Functions
 
-        private async Task ConsumeSynchronizationRegistryCombinedBlock(IReceivableSourceBlock<RegistryPacket> source, CancellationToken cancellationToken)
+        private async Task ConsumeSynchronizationRegistryCombinedBlock(IReceivableSourceBlock<TaskCompletionWrapper<KeyedEntity<IPacketBase>>> source, CancellationToken cancellationToken)
         {
             while (await source.OutputAvailableAsync(cancellationToken).ConfigureAwait(false))
             {
-                if (source.TryReceiveAll(out IList<RegistryPacket> blocks))
+                if (source.TryReceiveAll(out IList<TaskCompletionWrapper<KeyedEntity<IPacketBase>>> blocks))
                 {
                     RegistryFullBlockDb[] registryFullBlocks = blocks.Select(b =>
                     {
-                        string hash = _defaultHashCalculation.CalculateHash(b.ToString()).ToHexString();
-                        return new RegistryFullBlockDb { SyncBlockHeight = b.SyncHeight, Round = b.Height, TransactionsCount = b.StateWitnesses.Length + b.StealthWitnesses.Length, Content = b.ToString(), Hash = hash, HashString = hash };
+                        b.State.Key = IdentityKeyProvider.GetKey(_defaultHashCalculation.CalculateHash(b.State.Entity.ToString()));
+                        
+                        return new RegistryFullBlockDb 
+                        { 
+                            SyncBlockHeight = b.State.Entity.AsPacket<RegistryPacket>().With<FullRegistryTransaction>().SyncHeight, 
+                            Round = b.State.Entity.AsPacket<RegistryPacket>().With<FullRegistryTransaction>().Height, 
+                            TransactionsCount = b.State.Entity.AsPacket<RegistryPacket>().With<FullRegistryTransaction>().Witnesses.Length, 
+                            Content = b.State.Entity.ToString(), 
+                            Hash = b.State.Key.ToString(), 
+                            HashString = b.State.Key.ToString()
+                        };
                     }).ToArray();
 
                     foreach (var registryFullBlock in registryFullBlocks)
@@ -114,22 +141,27 @@ namespace O10.Node.DataLayer.Specific.Registry
                     }
 
                     Service.AddRegistryFullBlocks(registryFullBlocks);
+
+                    foreach (var item in blocks)
+                    {
+                        item.TaskCompletion.SetResult(new ItemAddedNotification(new UniqueKey(item.State.Key)));
+                    }
                 }
             }
         }
 
-        private RegistryFullBlockDb FetchRegistryBlock(ulong syncBlockHeight, byte[] hash)
-        {
-            string hashString = hash.ToHexString();
-            DateTimeOffset start = DateTimeOffset.UtcNow;
-            Stopwatch stopwatch = Stopwatch.StartNew();
-            List<RegistryFullBlockDb> transactionsRegistryBlocks = _registryFullBlocks.GetOrAdd(syncBlockHeight, _ => new ConcurrentBag<RegistryFullBlockDb>()).ToList();
-            RegistryFullBlockDb transactionsRegistryBlock = transactionsRegistryBlocks.Find(t => hashString == t.Hash);
-            stopwatch.Stop();
-            _trackingService.TrackDependency(nameof(DataService), nameof(FetchRegistryBlock), $"syncBlockHeight: {syncBlockHeight.ToString(CultureInfo.InvariantCulture)}", start, stopwatch.Elapsed);
+        //private RegistryFullBlockDb FetchRegistryBlock(long syncBlockHeight, IKey hash)
+        //{
+        //    string hashString = hash.ToString();
+        //    DateTimeOffset start = DateTimeOffset.UtcNow;
+        //    Stopwatch stopwatch = Stopwatch.StartNew();
+        //    List<RegistryFullBlockDb> transactionsRegistryBlocks = _registryFullBlocks.GetOrAdd(syncBlockHeight, _ => new ConcurrentBag<RegistryFullBlockDb>()).ToList();
+        //    RegistryFullBlockDb transactionsRegistryBlock = transactionsRegistryBlocks.Find(t => hashString == t.Hash);
+        //    stopwatch.Stop();
+        //    _trackingService.TrackDependency(nameof(DataService), nameof(FetchRegistryBlock), $"syncBlockHeight: {syncBlockHeight.ToString(CultureInfo.InvariantCulture)}", start, stopwatch.Elapsed);
 
-            return transactionsRegistryBlock;
-        }
+        //    return transactionsRegistryBlock;
+        //}
 
         public override void AddDataKey(IDataKey key, IDataKey newKey)
         {

@@ -10,8 +10,6 @@ namespace O10.Node.DataLayer.DataServices
     {
         LedgerType LedgerType { get; }
 
-        IChainDataServicesManager ChainDataServicesManager { set; }
-
-        ulong GetScalar(IDataKey dataKey);
+        long GetScalar(IDataKey dataKey);
     }
 }

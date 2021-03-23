@@ -31,21 +31,21 @@ namespace O10.Node.DataLayer.Specific.Synchronization
 
         #region Synchronization
 
-        public void AddSynchronizationBlock(ulong blockHeight, DateTime receiveTime, DateTime medianTime, byte[] content)
+        public void AddSynchronizationBlock(long height, DateTime receiveTime, DateTime medianTime, string content)
         {
             lock (Sync)
             {
-                DataContext.SynchronizationBlocks.Add(new SynchronizationBlock
+                DataContext.SynchronizationBlocks.Add(new SynchronizationPacket
                 {
-                    SynchronizationBlockId = (long)blockHeight,
+                    SynchronizationPacketId = height,
                     ReceiveTime = receiveTime,
                     MedianTime = medianTime,
-                    BlockContent = content
+                    Content = content
                 });
             }
         }
 
-		public void AddSynchronizationBlocks(SynchronizationBlock[] blocks)
+		public void AddSynchronizationBlocks(SynchronizationPacket[] blocks)
 		{
 			lock (Sync)
 			{
@@ -53,29 +53,29 @@ namespace O10.Node.DataLayer.Specific.Synchronization
 			}
 		}
 
-		public SynchronizationBlock GetLastSynchronizationBlock()
+		public SynchronizationPacket GetLastSynchronizationBlock()
         {
             lock (Sync)
             {
-                return DataContext.SynchronizationBlocks.OrderByDescending(b => b.SynchronizationBlockId).FirstOrDefault();
+                return DataContext.SynchronizationBlocks.OrderByDescending(b => b.SynchronizationPacketId).FirstOrDefault();
             }
         }
 
-        public IEnumerable<SynchronizationBlock> GetAllLastSynchronizationBlocks(ulong height)
+        public IEnumerable<SynchronizationPacket> GetAllLastSynchronizationBlocks(ulong height)
         {
             lock (Sync)
             {
                 DateTimeOffset start = DateTimeOffset.UtcNow;
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 //TODO: change back to queriable
-                List<SynchronizationBlock> lastSyncBlocks = DataContext.SynchronizationBlocks.OrderByDescending(b => b.SynchronizationBlockId).Where(b => b.SynchronizationBlockId > (long)height).ToList();
+                List<SynchronizationPacket> lastSyncBlocks = DataContext.SynchronizationBlocks.OrderByDescending(b => b.SynchronizationPacketId).Where(b => b.SynchronizationPacketId > (long)height).ToList();
                 stopwatch.Stop();
                 TrackingService.TrackDependency(nameof(DataAccessService), nameof(GetAllLastSynchronizationBlocks), $"height: {height.ToString(CultureInfo.InvariantCulture)}", start, stopwatch.Elapsed);
                 return lastSyncBlocks;
             }
         }
 
-        public IEnumerable<SynchronizationBlock> GetAllSynchronizationBlocks()
+        public IEnumerable<SynchronizationPacket> GetAllSynchronizationBlocks()
         {
             lock (Sync)
             {
@@ -83,7 +83,7 @@ namespace O10.Node.DataLayer.Specific.Synchronization
             }
         }
 
-        public IEnumerable<RegistryCombinedBlock> GetAllRegistryCombinedBlocks()
+        public IEnumerable<AggregatedRegistrationsTransaction> GetAllRegistryCombinedBlocks()
         {
             lock (Sync)
             {
@@ -91,56 +91,56 @@ namespace O10.Node.DataLayer.Specific.Synchronization
             }
         }
 
-        public IEnumerable<RegistryCombinedBlock> GetAllLastRegistryCombinedBlocks(ulong height)
+        public IEnumerable<AggregatedRegistrationsTransaction> GetAllLastRegistryCombinedBlocks(ulong height)
         {
             lock (Sync)
             {
                 DateTimeOffset start = DateTimeOffset.UtcNow;
                 Stopwatch stopwatch = Stopwatch.StartNew();
-                var registryCombinedBlocks = DataContext.RegistryCombinedBlocks.Where(b => b.RegistryCombinedBlockId > (long)height).OrderByDescending(b => b.RegistryCombinedBlockId).ToList();
+                var registryCombinedBlocks = DataContext.RegistryCombinedBlocks.Where(b => b.AggregatedRegistrationsTransactionId > (long)height).OrderByDescending(b => b.AggregatedRegistrationsTransactionId).ToList();
                 stopwatch.Stop();
                 TrackingService.TrackDependency(nameof(DataAccessService), nameof(GetAllLastRegistryCombinedBlocks), $"{nameof(height)}: {height.ToString(CultureInfo.InvariantCulture)}", start, stopwatch.Elapsed);
                 return registryCombinedBlocks;
             }
         }
 
-        public void AddSynchronizationRegistryCombinedBlock(ulong blockHeight, ulong syncBlockHeight, byte[] content, byte[][] hashes)
+        public void AddSynchronizationRegistryCombinedBlock(long height, long syncBlockHeight, string content, string[] hashes)
         {
-            Logger.LogIfDebug(() => $"Storing RegistryCombinedBlock with height {blockHeight}");
+            Logger.LogIfDebug(() => $"Storing RegistryCombinedBlock with height {height}");
             lock (Sync)
             {
-				DataContext.RegistryCombinedBlocks.Add(new RegistryCombinedBlock
+				DataContext.RegistryCombinedBlocks.Add(new AggregatedRegistrationsTransaction
 				{
-					RegistryCombinedBlockId = (long)blockHeight,
+					AggregatedRegistrationsTransactionId = height,
 					SyncBlockHeight = syncBlockHeight,
 					Content = content,
-					FullBlockHashes = string.Join(",", hashes.Select(h => h.ToHexString()))
+					FullBlockHashes = string.Join(",", hashes)
                 });
             }
         }
 
-		public void AddSynchronizationRegistryCombinedBlocks(RegistryCombinedBlock[] blocks)
+		public void AddSynchronizationRegistryCombinedBlocks(AggregatedRegistrationsTransaction[] blocks)
 		{
 			lock (Sync)
 			{
-                Logger.LogIfDebug(() => $"Storing bulk of RegistryCombinedBlock with heights {string.Join(',', blocks.Select(b => b.RegistryCombinedBlockId))}");
+                Logger.LogIfDebug(() => $"Storing bulk of RegistryCombinedBlock with heights {string.Join(',', blocks.Select(b => b.AggregatedRegistrationsTransactionId))}");
 				DataContext.RegistryCombinedBlocks.AddRange(blocks);
 			}
 		}
 
-		public RegistryCombinedBlock GetLastRegistryCombinedBlock()
+		public AggregatedRegistrationsTransaction GetLastRegistryCombinedBlock()
         {
             lock (Sync)
             {
-                return DataContext.RegistryCombinedBlocks.OrderByDescending(b => b.RegistryCombinedBlockId).FirstOrDefault();
+                return DataContext.RegistryCombinedBlocks.OrderByDescending(b => b.AggregatedRegistrationsTransactionId).FirstOrDefault();
             }
         }
 
-        public RegistryCombinedBlock GetRegistryCombinedBlockByHeight(ulong combinedBlockHeight) => GetLocalAwareRegistryCombinedBlock(combinedBlockHeight);
+        public AggregatedRegistrationsTransaction GetRegistryCombinedBlockByHeight(ulong combinedBlockHeight) => GetLocalAwareRegistryCombinedBlock(combinedBlockHeight);
 
-        private RegistryCombinedBlock GetLocalAwareRegistryCombinedBlock(ulong combinedBlockHeight) =>
-            DataContext.RegistryCombinedBlocks.Local.FirstOrDefault(c => c.RegistryCombinedBlockId == (long)combinedBlockHeight)
-                ?? DataContext.RegistryCombinedBlocks.FirstOrDefault(c => c.RegistryCombinedBlockId == (long)combinedBlockHeight);
+        private AggregatedRegistrationsTransaction GetLocalAwareRegistryCombinedBlock(ulong combinedBlockHeight) =>
+            DataContext.RegistryCombinedBlocks.Local.FirstOrDefault(c => c.AggregatedRegistrationsTransactionId == (long)combinedBlockHeight)
+                ?? DataContext.RegistryCombinedBlocks.FirstOrDefault(c => c.AggregatedRegistrationsTransactionId == (long)combinedBlockHeight);
 
         #endregion Synchronization
     }

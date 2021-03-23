@@ -9,7 +9,7 @@ using O10.Transactions.Core.Ledgers;
 namespace O10.Node.DataLayer.Specific.Synchronization.Mappers
 {
     [RegisterExtension(typeof(ITranslator), Lifetime = LifetimeManagement.Singleton)]
-    public class RegistryCombinedBlockToBlockBaseMapper : TranslatorBase<RegistryCombinedBlock, PacketBase>
+    public class RegistryCombinedBlockToBlockBaseMapper : TranslatorBase<AggregatedRegistrationsTransaction, PacketBase>
     {
         private readonly IBlockParsersRepository _blockParsersRepository;
 
@@ -23,7 +23,7 @@ namespace O10.Node.DataLayer.Specific.Synchronization.Mappers
             _blockParsersRepository = blockParsersFactoriesRepository.GetBlockParsersRepository(LedgerType.Synchronization);
         }
 
-        public override PacketBase Translate(RegistryCombinedBlock registryCombinedBlock)
+        public override PacketBase Translate(AggregatedRegistrationsTransaction registryCombinedBlock)
         {
             if (registryCombinedBlock == null)
             {

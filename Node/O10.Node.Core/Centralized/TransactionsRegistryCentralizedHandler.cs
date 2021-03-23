@@ -78,7 +78,7 @@ namespace O10.Node.Core.Centralized
                 }
 
                 _packetsBuffer = new BufferBlock<IPacketBase>(new DataflowBlockOptions() { CancellationToken = ct });
-                _lastCombinedBlock = _synchronizationChainDataService.Single<SynchronizationPacket>(new SingleByBlockTypeKey(TransactionTypes.Synchronization_RegistryCombinationBlock)).As<AggregatedRegistrationsTransaction>();
+                _lastCombinedBlock = _synchronizationChainDataService.Single<SynchronizationPacket>(new SingleByBlockTypeKey(TransactionTypes.Synchronization_RegistryCombinationBlock)).With<AggregatedRegistrationsTransaction>();
 
                 _logger.LogIfDebug(() => $"{nameof(Initialize)}, {nameof(_lastCombinedBlock)}: {JsonConvert.SerializeObject(_lastCombinedBlock, new ByteArrayJsonConverter())}");
 
@@ -106,7 +106,7 @@ namespace O10.Node.Core.Centralized
 						if (lastCombinedBlockHeight % 100 == 0)
 						{
                             SynchronizationPacket synchronizationConfirmedBlock = CreateSynchronizationConfirmedBlock(_synchronizationContext.LastBlockDescriptor?.BlockHeight ?? 0, _synchronizationContext.LastBlockDescriptor?.Hash ?? new byte[Globals.DEFAULT_HASH_SIZE]);
-							_synchronizationContext.UpdateLastSyncBlockDescriptor(new SynchronizationDescriptor(synchronizationConfirmedBlock.Body.Height, _defaultTransactionHashCalculation.CalculateHash(synchronizationConfirmedBlock.ToByteArray()), synchronizationConfirmedBlock.As<SynchronizationConfirmedTransaction>().ReportedTime, DateTime.UtcNow, synchronizationConfirmedBlock.As<SynchronizationConfirmedTransaction>().Round));
+							_synchronizationContext.UpdateLastSyncBlockDescriptor(new SynchronizationDescriptor(synchronizationConfirmedBlock.Body.Height, _defaultTransactionHashCalculation.CalculateHash(synchronizationConfirmedBlock.ToByteArray()), synchronizationConfirmedBlock.With<SynchronizationConfirmedTransaction>().ReportedTime, DateTime.UtcNow, synchronizationConfirmedBlock.With<SynchronizationConfirmedTransaction>().Round));
 							_synchronizationChainDataService.Add(synchronizationConfirmedBlock);
 						}
 
@@ -122,7 +122,7 @@ namespace O10.Node.Core.Centralized
 
                         var aggregatedRegistrationsPacket = CreateCombinedBlock(fullRegistrationsPacket);
 
-						_lastCombinedBlock = aggregatedRegistrationsPacket.As<AggregatedRegistrationsTransaction>();
+						_lastCombinedBlock = aggregatedRegistrationsPacket.With<AggregatedRegistrationsTransaction>();
 
 						_synchronizationChainDataService.Add(aggregatedRegistrationsPacket);
 						_registryChainDataService.Add(fullRegistrationsPacket);
