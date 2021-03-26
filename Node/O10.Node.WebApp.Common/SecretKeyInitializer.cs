@@ -79,7 +79,7 @@ namespace O10.Node.WebApp.Common
             try
             {
                 byte[] secretKey = GetSecretKey(cancellationToken);
-                ISigningService signingService = _signingServicesRepository.GetInstance("AccountSigningService");
+                ISigningService signingService = _signingServicesRepository.GetInstance(_nodeWebAppConfiguration.SigningServiceName);
                 signingService.Initialize(secretKey);
                 _nodeContext.Initialize(signingService);
 

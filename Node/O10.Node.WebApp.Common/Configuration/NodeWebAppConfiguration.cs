@@ -12,8 +12,15 @@ namespace O10.Node.WebApp.Common.Configuration
         {
         }
 
+        //TODO: need to move to use IAzureConfiguration
+        #region Azure Configuration
+
         public string AzureADCertThumbprint { get; set; }
         public string KeyVaultName { get; set; }
         public string AzureADApplicationId { get; set; }
+
+        #endregion Azure Confugration
+
+        public string SigningServiceName { get; set; }
     }
 }
