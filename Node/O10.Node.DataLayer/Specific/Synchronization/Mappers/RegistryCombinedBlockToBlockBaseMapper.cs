@@ -13,7 +13,7 @@ namespace O10.Node.DataLayer.Specific.Synchronization.Mappers
         {
             if (registryCombinedBlock == null)
             {
-                throw new System.ArgumentNullException(nameof(registryCombinedBlock));
+                return null;
             }
 
             return SerializableEntity<IPacketBase>.Create(registryCombinedBlock.Content);

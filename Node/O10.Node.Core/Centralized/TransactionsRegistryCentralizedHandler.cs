@@ -78,7 +78,7 @@ namespace O10.Node.Core.Centralized
                 }
 
                 _packetsBuffer = new BufferBlock<IPacketBase>(new DataflowBlockOptions() { CancellationToken = ct });
-                _lastCombinedBlock = _synchronizationChainDataService.Single<SynchronizationPacket>(new SingleByBlockTypeKey(TransactionTypes.Synchronization_RegistryCombinationBlock)).With<AggregatedRegistrationsTransaction>();
+                _lastCombinedBlock = _synchronizationChainDataService.Single<SynchronizationPacket>(new SingleByBlockTypeKey(TransactionTypes.Synchronization_RegistryCombinationBlock))?.With<AggregatedRegistrationsTransaction>();
 
                 _logger.LogIfDebug(() => $"{nameof(Initialize)}, {nameof(_lastCombinedBlock)}: {JsonConvert.SerializeObject(_lastCombinedBlock, new ByteArrayJsonConverter())}");
 

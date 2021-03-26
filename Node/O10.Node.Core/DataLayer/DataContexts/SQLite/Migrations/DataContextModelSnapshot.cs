@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using O10.Node.Core.DataLayer.DataContexts.SQLite;
 
-namespace O10.Node.Core.DataLayer.DataContexts.SQLite
+namespace O10.Node.Core.DataLayer.DataContexts.SQLite.Migrations
 {
     [DbContext(typeof(DataContext))]
     partial class DataContextModelSnapshot : ModelSnapshot

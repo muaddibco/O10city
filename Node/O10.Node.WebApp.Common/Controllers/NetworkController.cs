@@ -98,7 +98,7 @@ namespace O10.Node.WebApp.Common.Controllers
 
 			return new StatePacketInfo
 			{
-				Height = transactionalBlockBase.Body?.Height ?? 0,
+				Height = transactionalBlockBase?.Body?.Height ?? 0,
 				//TODO: !!! need to reconsider hash calculation here since it is potential point of DoS attack
 				Hash = (transactionalBlockBase != null ? _hashCalculation.CalculateHash(transactionalBlockBase.ToByteArray()) : new byte[Globals.DEFAULT_HASH_SIZE]).ToHexString(),
 			};

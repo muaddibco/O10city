@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using O10.Node.Core.DataLayer.DataContexts.SqlServer;
 
-namespace O10.Node.Core.DataLayer.DataContexts.SqlServer
+namespace O10.Node.Core.DataLayer.DataContexts.SqlServer.Migrations
 {
     [DbContext(typeof(DataContext))]
     partial class DataContextModelSnapshot : ModelSnapshot

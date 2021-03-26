@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace O10.Node.Core.DataLayer.DataContexts.SQLite
+namespace O10.Node.Core.DataLayer.DataContexts.SQLite.Migrations
 {
     public partial class Initial : Migration
     {
