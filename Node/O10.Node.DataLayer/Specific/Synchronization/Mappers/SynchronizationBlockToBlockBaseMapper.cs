@@ -1,39 +1,22 @@
-﻿using O10.Transactions.Core.Ledgers.Synchronization;
-using O10.Transactions.Core.Enums;
-using O10.Transactions.Core.Parsers;
-using O10.Node.DataLayer.Specific.Synchronization.Model;
-using O10.Core.Architecture;
+﻿using O10.Core.Architecture;
 using O10.Core.Translators;
 using O10.Transactions.Core.Ledgers;
+using O10.Core.Models;
 
 namespace O10.Node.DataLayer.Specific.Synchronization.Mappers
 {
 
     [RegisterExtension(typeof(ITranslator), Lifetime = LifetimeManagement.Singleton)]
-    public class SynchronizationBlockToBlockBaseMapper : TranslatorBase<Model.SynchronizationPacket, PacketBase>
+    public class SynchronizationBlockToBlockBaseMapper : TranslatorBase<Model.SynchronizationPacket, IPacketBase>
     {
-        private readonly IBlockParsersRepository _blockParsersRepository;
-
-        public SynchronizationBlockToBlockBaseMapper(IBlockParsersRepositoriesRepository blockParsersFactoriesRepository)
-        {
-            if (blockParsersFactoriesRepository is null)
-            {
-                throw new System.ArgumentNullException(nameof(blockParsersFactoriesRepository));
-            }
-
-            _blockParsersRepository = blockParsersFactoriesRepository.GetBlockParsersRepository(LedgerType.Synchronization);
-        }
-
-        public override PacketBase Translate(Model.SynchronizationPacket synchronizationBlock)
+        public override IPacketBase Translate(Model.SynchronizationPacket synchronizationBlock)
         {
             if(synchronizationBlock == null)
             {
-                return null;
+                throw new System.ArgumentNullException(nameof(synchronizationBlock));
             }
 
-            IBlockParser blockParser = _blockParsersRepository.GetInstance(TransactionTypes.Synchronization_ConfirmedBlock);
-
-            return blockParser.Parse(synchronizationBlock.Content) as SynchronizationConfirmedBlock;
+            return SerializableEntity<IPacketBase>.Create(synchronizationBlock.Content);
         }
     }
 }

@@ -2,6 +2,7 @@
 using O10.Core.Architecture;
 using O10.Core.Translators;
 using O10.Transactions.Core.Ledgers;
+using O10.Core.Models;
 
 namespace O10.Node.DataLayer.Specific.O10Id.Mappers
 {
@@ -12,10 +13,10 @@ namespace O10.Node.DataLayer.Specific.O10Id.Mappers
         {
             if(transactionalBlock == null)
             {
-                return null;
+                throw new System.ArgumentNullException(nameof(transactionalBlock));
             }
 
-            return PacketBase.Create(transactionalBlock.Content);
+            return SerializableEntity<IPacketBase>.Create(transactionalBlock.Content);
         }
     }
 }

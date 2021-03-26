@@ -18,6 +18,7 @@ using System.Linq;
 using O10.Core.Models;
 using O10.Node.DataLayer.DataServices.Notifications;
 using O10.Node.DataLayer.DataServices.Keys;
+using O10.Transactions.Core.Ledgers;
 
 namespace O10.Node.Core.Centralized
 {
@@ -26,7 +27,7 @@ namespace O10.Node.Core.Centralized
     {
 		private readonly IIdentityKeyProvider _identityKeyProvider;
 		private readonly BlockingCollection<Tuple<SynchronizationPacket, RegistryPacket>> _registrationPackets = new BlockingCollection<Tuple<SynchronizationPacket, RegistryPacket>>();
-		private readonly ConcurrentDictionary<IKey, TaskCompletionSource<TaskCompletionWrapper<IKey>>> _packetTriggers = new ConcurrentDictionary<IKey, TaskCompletionSource<TaskCompletionWrapper<IKey>>>(new KeyEqualityComparer());
+		private readonly ConcurrentDictionary<IKey, TaskCompletionSource<KeyValuePair<HashAndIdKey, IPacketBase>>> _packetTriggers = new ConcurrentDictionary<IKey, TaskCompletionSource<KeyValuePair<HashAndIdKey, IPacketBase>>>(new KeyEqualityComparer());
 		private readonly HashSet<IChainDataService> _chainDataServices = new HashSet<IChainDataService>();
 		private readonly IHashCalculation _hashCalculation;
         private readonly ILogger _logger;
@@ -63,7 +64,7 @@ namespace O10.Node.Core.Centralized
                 {
                     var hashString = transaction.Parameters[RegisterTransaction.REFERENCED_BODY_HASH];
                     var hash = hashString.HexStringToByteArray();
-                    TaskCompletionSource<TaskCompletionWrapper<IKey>> taskCompletionSource = new TaskCompletionSource<TaskCompletionWrapper<IKey>>();
+                    TaskCompletionSource<KeyValuePair<HashAndIdKey, IPacketBase>> taskCompletionSource = new TaskCompletionSource<KeyValuePair<HashAndIdKey, IPacketBase>>();
                     _logger.LogIfDebug(() => $"Adding Witness TaskCompletionSource by hash {hashString}");
                     taskCompletionSource = _packetTriggers.GetOrAdd(_identityKeyProvider.GetKey(hash), taskCompletionSource);
 
@@ -79,35 +80,56 @@ namespace O10.Node.Core.Centralized
 			}
         }
 
-        private void WaitForPacketStoredAndUpdateIt(SynchronizationPacket aggregatedRegistrationsPacket, TaskCompletionSource<TaskCompletionWrapper<IKey>> taskCompletionSource)
+        private void WaitForPacketStoredAndUpdateIt(SynchronizationPacket aggregatedRegistrationsPacket, TaskCompletionSource<KeyValuePair<HashAndIdKey, IPacketBase>> taskCompletionSource)
         {
-            taskCompletionSource.Task.ContinueWith(async (t, o) =>
+            taskCompletionSource.Task.ContinueWith((t, o) =>
             {
-                var notification = await t.Result.TaskCompletion.Task.ConfigureAwait(false);
-                var syncPacket = o as SynchronizationPacket;
-                if (notification is ItemAddedNotification itemAdded && itemAdded.DataKey is HashAndIdKey key)
+                if (t.IsCompletedSuccessfully)
                 {
-                    _chainDataServices.First(s => s.LedgerType == key.HashKey)
-                        .AddDataKey(key, new CombinedHashKey(syncPacket.With<AggregatedRegistrationsTransaction>().Height, t.Result.State));        
+                    var syncPacket = o as SynchronizationPacket;
+                        _chainDataServices.First(s => s.LedgerType == t.Result.Value.LedgerType)
+                            .AddDataKey(
+                                t.Result.Key, 
+                                new CombinedHashKey(syncPacket.With<AggregatedRegistrationsTransaction>().Height, t.Result.Key.HashKey));
+                }
+                else
+                {
+                    _logger.Error($"Failed to update the height of {nameof(AggregatedRegistrationsTransaction)} due to an error", t.Exception.InnerException);
                 }
             }, aggregatedRegistrationsPacket, TaskScheduler.Default);
         }
 
-        public void PostTransaction(TaskCompletionWrapper<IKey> completionWrapperByTransactionHashKey)
+        public void PostTransaction(TaskCompletionWrapper<IPacketBase> completionWrapper)
 		{
-            if (completionWrapperByTransactionHashKey is null)
+            if (completionWrapper is null)
             {
-                throw new ArgumentNullException(nameof(completionWrapperByTransactionHashKey));
+                throw new ArgumentNullException(nameof(completionWrapper));
             }
 
-            byte[] hash = _hashCalculation.CalculateHash(completionWrapperByTransactionHashKey.State.ToByteArray());
+            _logger.LogIfDebug(() => $"Posted packet {completionWrapper.State.GetType().Name}");
 
-			_logger.LogIfDebug(() => $"Posted packet {completionWrapperByTransactionHashKey.State.GetType().Name} with hash {hash.ToHexString()}");
+            completionWrapper.TaskCompletion.Task.ContinueWith((t, o) => 
+            {
+                if(t.IsCompletedSuccessfully)
+                {
+                    var packet = (IPacketBase)o;
+                    if(t.Result is ItemAddedNotification notification && notification.DataKey is HashAndIdKey hashAndIdKey)
+                    {
+                        _logger.LogIfDebug(() => $"Continue with a packet {packet.GetType().Name} with hash {hashAndIdKey.HashKey}");
+                        TaskCompletionSource<KeyValuePair<HashAndIdKey, IPacketBase>> taskCompletionSource = new TaskCompletionSource<KeyValuePair<HashAndIdKey, IPacketBase>>();
+                        taskCompletionSource = _packetTriggers.GetOrAdd(hashAndIdKey.HashKey, taskCompletionSource);
+                        taskCompletionSource.SetResult(new KeyValuePair<HashAndIdKey, IPacketBase>(hashAndIdKey, packet));
+                    }
+                    else
+                    {
+                        _logger.Error($"Failed to continue with a packet {packet.GetType().Name} due to an error", t.Exception.InnerException);
+                    }
+                }
+                else
+                {
 
-			TaskCompletionSource<TaskCompletionWrapper<IKey>> taskCompletionSource = new TaskCompletionSource<TaskCompletionWrapper<IKey>>();
-			var hashKey = _identityKeyProvider.GetKey(hash);
-			taskCompletionSource = _packetTriggers.GetOrAdd(hashKey, taskCompletionSource);
-			taskCompletionSource.SetResult(completionWrapperByTransactionHashKey);
+                }
+            }, completionWrapper.State, TaskScheduler.Default);
 		}
 	}
 }

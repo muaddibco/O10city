@@ -68,7 +68,7 @@ namespace O10.Node.Core.Registry
 
         public void Start()
         {
-            _syncContextUnsubscriber = _synchronizationContext.SubscribeOnStateChange(new ActionBlock<string>((Action<string>)OnSyncContextChanged));
+            _syncContextUnsubscriber = _synchronizationContext.SubscribeOnStateChange(new ActionBlock<string>(OnSyncContextChanged));
         }
 
         public void Stop()

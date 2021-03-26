@@ -1,7 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net;
-using O10.Transactions.Core.Serializers;
 using O10.Core.Architecture;
 using O10.Core.Communication;
 using O10.Core.Identity;
@@ -46,7 +45,7 @@ namespace O10.Network.Topology
             _nodeAddresses.AddOrUpdate(nodeAddress.Key, nodeAddress, (k, v) => nodeAddress);
         }
 
-        public IEnumerable<IKey> GetStorageNodeKeys(PacketBase packetBase)
+        public IEnumerable<IKey> GetStorageNodeKeys(IPacketBase packetBase)
         {
             //TODO: need to understand logic of distribution of transactions between storage nodes
             //IKey key = transactionKeyProvider.GetKey();

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace O10.Core.Models
 {
-    public abstract class SerializableEntity<T>: ISerializableEntity<T> where T: SerializableEntity<T>
+    public abstract class SerializableEntity<T>: ISerializableEntity<T> where T: ISerializableEntity<T>
     {
         public override string ToString()
         {

@@ -98,7 +98,6 @@ namespace O10.Network.Communication
 			_offsetReceive = _socketReceiveAsyncEventArgs.Offset;
 			_offsetSend = _socketSendAsyncEventArgs.Offset;
 
-			ParseReceivedData();
 			StartSend();
 		}
 
@@ -416,100 +415,6 @@ namespace O10.Network.Communication
 		#endregion Private functions
 
 		#region Parsing functionality
-
-		private Task ParseReceivedData()
-		{
-			return Task.Factory.StartNew(() =>
-			{
-				byte[] currentPacket = null;
-				byte[] tempLengthBuf = new byte[8]; // Packet size can include up to 8 bytes because if length bytes values are equal to either DLE or STX they'll be encoded with DLE
-				byte tempLengthBufSize = 0;
-				bool lengthIsSet = false;
-				bool packetStartFound = false;
-				bool lastPrevBufByteIsDle = false;
-				uint packetLengthExpected = 0, packetLengthRemained = 0;
-
-				foreach (byte[] currentBuf in _packets.GetConsumingEnumerable(_cancellationToken))
-				{
-					try
-					{
-						_trackingService.TrackMetric("ParsingQueueSize", -1);
-
-						if (currentBuf == null)
-							continue;
-
-						_log.Debug(() => $"Picked bytes for parsing: {currentBuf.ToHexString()}");
-
-						int offset = 0;
-
-						do
-						{
-							if (!packetStartFound)
-							{
-								packetStartFound = CheckPacketStart(ref lastPrevBufByteIsDle, currentBuf, ref offset);
-
-								_log.Debug(() => $"Packet start found at position {offset}: {currentBuf.ToHexString()}");
-							}
-
-							if (packetStartFound)
-							{
-								if (!lengthIsSet)
-								{
-									lengthIsSet = TryGetPacketLength(ref offset, currentBuf, out packetLengthExpected, out packetLengthRemained, tempLengthBuf, ref tempLengthBufSize);
-									if (lengthIsSet)
-									{
-										_log.Debug(() => $"Length set to value {packetLengthExpected}, remained {packetLengthRemained}: {currentBuf.ToHexString()}");
-									}
-									else
-									{
-										_log.Debug("Length still not set");
-									}
-								}
-
-								if (lengthIsSet)
-								{
-									if (currentPacket == null)
-									{
-										currentPacket = new byte[packetLengthExpected];
-									}
-
-									if (currentBuf.Length > offset)
-									{
-										ushort bytesToCopy = (ushort)Math.Min(currentBuf.Length - offset, packetLengthRemained);
-										//TODO: seems will be bug with huge packets!!!
-										Buffer.BlockCopy(currentBuf, offset, currentPacket, (int)(packetLengthExpected - packetLengthRemained), bytesToCopy);
-
-										_log.Debug(() => $"Current Packet is {currentPacket.ToHexString()}");
-
-										packetLengthRemained -= bytesToCopy;
-
-										_log.Debug($"Remained {packetLengthRemained} bytes to copy");
-
-										offset += bytesToCopy;
-
-										if (packetLengthRemained == 0)
-										{
-											_packetsHandler.Push(currentPacket);
-											currentPacket = null;
-											lengthIsSet = false;
-											packetStartFound = false;
-											lastPrevBufByteIsDle = false;
-											packetLengthExpected = 0;
-											packetLengthRemained = 0;
-											tempLengthBufSize = 0;
-										}
-									}
-								}
-							}
-						} while (currentBuf.Length > offset);
-					}
-					catch (Exception ex)
-					{
-						_log.Error("Failed to parse packet", ex);
-					}
-				}
-			}, _cancellationToken, TaskCreationOptions.LongRunning, TaskScheduler.Current);
-		}
 
 		private static bool CheckPacketStart(ref bool lastPrevBufByteIsDle, byte[] currentBuf, ref int offset)
 		{

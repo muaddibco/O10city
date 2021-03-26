@@ -5,10 +5,8 @@ using O10.Core.Architecture;
 using O10.Core.ExtensionMethods;
 using O10.Transactions.Core.Interfaces;
 using O10.Core.Logging;
-using O10.Transactions.Core.Parsers;
 using System.Collections.Generic;
 using O10.Core.Tracking;
-using O10.Transactions.Core.Serializers;
 using O10.Transactions.Core.Ledgers;
 
 namespace O10.Network.Handlers
@@ -18,7 +16,7 @@ namespace O10.Network.Handlers
     {
         private readonly ILogger _log;
         private readonly BlockingCollection<byte[]> _messagePackets;
-        private readonly BlockingCollection<PacketBase> _packets;
+        private readonly BlockingCollection<IPacketBase> _packets;
         private readonly PacketHandlingFlow[] _handlingFlows;
         private readonly int _maxDegreeOfParallelism;
         private readonly ITrackingService _trackingService;
@@ -27,16 +25,14 @@ namespace O10.Network.Handlers
         public bool IsInitialized { get; private set; }
 
         public PacketsHandler(IPacketVerifiersRepository packetTypeHandlersFactory,
-                              IBlockParsersRepositoriesRepository blockParsersFactoriesRepository,
                               IPacketsHandlersRegistry blocksProcessorFactory,
                               ICoreVerifiersBulkFactory coreVerifiersBulkFactory,
-                              ISerializersFactory serializersFactory,
                               ITrackingService trackingService,
                               ILoggerService loggerService)
         {
             _log = loggerService.GetLogger(GetType().Name);
             _messagePackets = new BlockingCollection<byte[]>();
-            _packets = new BlockingCollection<PacketBase>();
+            _packets = new BlockingCollection<IPacketBase>();
 
             _maxDegreeOfParallelism = 4;
 
@@ -44,7 +40,12 @@ namespace O10.Network.Handlers
 
             for (int i = 0; i < _maxDegreeOfParallelism; i++)
             {
-                _handlingFlows[i] = new PacketHandlingFlow(i, coreVerifiersBulkFactory, packetTypeHandlersFactory, blockParsersFactoriesRepository, blocksProcessorFactory, serializersFactory, trackingService, loggerService);
+                _handlingFlows[i] = new PacketHandlingFlow(i,
+                                                           coreVerifiersBulkFactory,
+                                                           packetTypeHandlersFactory,
+                                                           blocksProcessorFactory,
+                                                           trackingService,
+                                                           loggerService);
             }
 
             _trackingService = trackingService;
@@ -59,21 +60,7 @@ namespace O10.Network.Handlers
             }
         }
 
-        /// <summary>
-        /// Bytes being pushed to <see cref="IPacketsHandler"/> must form complete packet for following validation and processing
-        /// </summary>
-        /// <param name="messagePacket">Bytes of complete message for following processing</param>
-        public void Push(byte[] messagePacket)
-        {
-            _trackingService.TrackMetric("PushedForHandlingTransactionsThroughput", 1);
-
-            _log.Debug(() => $"Pushed packer for handling: {messagePacket.ToHexString()}");
-
-            _messagePackets.Add(messagePacket);
-            _trackingService.TrackMetric("MessagesQueueSize", 1);
-        }
-
-        public void Push(PacketBase packet)
+        public void Push(IPacketBase packet)
         {
             _trackingService.TrackMetric("PushedForHandlingPacketsThroughput", 1);
 
@@ -91,34 +78,10 @@ namespace O10.Network.Handlers
 
             for (int i = 0; i < _maxDegreeOfParallelism; i++)
             {
-                tasks.Add(Task.Factory.StartNew(o => Parse((int)o), i, _cancellationToken, TaskCreationOptions.LongRunning, TaskScheduler.Current));
                 tasks.Add(Task.Factory.StartNew(o => Process((int)o), i, _cancellationToken, TaskCreationOptions.LongRunning, TaskScheduler.Current));
             }
 
             _log.Debug(() => "PacketsHandler started");
-        }
-
-        private void Parse(int iteration)
-        {
-            _log.Debug(() => $"Parse function #{iteration} starting");
-
-            try
-            {
-                _trackingService.TrackMetric("ParallelParsers", 1);
-
-                foreach (byte[] messagePacket in _messagePackets.GetConsumingEnumerable(_cancellationToken))
-                {
-					_log.Debug(() => $"Picked for handling flow #{iteration} packet {messagePacket.ToHexString()}");
-
-					_trackingService.TrackMetric("MessagesQueueSize", -1);
-                    _handlingFlows[iteration].PostMessage(messagePacket);
-                }
-            }
-            finally
-            {
-                _log.Debug(() => "Parse function finished");
-                _trackingService.TrackMetric("ParallelParsers", -1);
-            }
         }
 
         private void Process(int iteration)
@@ -129,7 +92,7 @@ namespace O10.Network.Handlers
             {
                 _trackingService.TrackMetric("ParallelProcesses", 1);
 
-                foreach (PacketBase packet in _packets.GetConsumingEnumerable(_cancellationToken))
+                foreach (var packet in _packets.GetConsumingEnumerable(_cancellationToken))
                 {
                     _log.Debug(() => $"Picked for handling flow #{iteration} packet {packet.GetType().Name}");
 

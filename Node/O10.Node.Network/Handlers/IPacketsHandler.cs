@@ -13,11 +13,6 @@ namespace O10.Network.Handlers
     {
         void Initialize(CancellationToken ct);
 
-        /// <summary>
-        /// Bytes being pushed to <see cref="IPacketsHandler"/> must form complete packet for following validation and processing
-        /// </summary>
-        /// <param name="messagePacket">Bytes of complete message for following processing</param>
-        void Push(byte[] messagePacket);
         void Push(IPacketBase packet);
 
         void Start();
