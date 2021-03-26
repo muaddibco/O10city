@@ -61,16 +61,6 @@ namespace O10.Node.WebApp.Common.Controllers
 			return new List<InfoMessage> { new InfoMessage { Context = "Node", InfoType="Version", Message = version } };
 		}
 
-		// POST api/values
-		[HttpPost]
-		public async void Post()
-		{
-			string packet = await Request.GetRawBodyStringAsync().ConfigureAwait(false);
-			byte[] packetBytes = packet.HexStringToByteArray();
-
-			_packetsHandler.Push(packetBytes);
-		}
-
 		[HttpPost("Packet")]
 		public IActionResult Post([FromBody] IPacketBase packet)
 		{

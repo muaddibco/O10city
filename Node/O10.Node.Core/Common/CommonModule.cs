@@ -24,9 +24,9 @@ namespace O10.Node.Core.Common
 
         protected override void InitializeInner()
         {
-            IPacketsHandler blocksHandler = _blocksHandlersFactory.GetInstance(SynchronizationReceivingHandler.NAME);
-            _blocksHandlersFactory.RegisterInstance(blocksHandler);
-            blocksHandler.Initialize(_cancellationToken);
+            //IPacketsHandler blocksHandler = _blocksHandlersFactory.GetInstance(SynchronizationReceivingHandler.NAME);
+            //_blocksHandlersFactory.RegisterInstance(blocksHandler);
+            //blocksHandler.Initialize(_cancellationToken);
         }
     }
 }

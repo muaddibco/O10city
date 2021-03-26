@@ -9,6 +9,8 @@ using O10.Core.ExtensionMethods;
 using System;
 using O10.Network.Topology;
 using O10.Core.DataLayer;
+using O10.Core.Models;
+using O10.Core.Notifications;
 
 namespace O10.Node.Core.DataLayer
 {
@@ -35,7 +37,7 @@ namespace O10.Node.Core.DataLayer
             _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
         }
 
-        public void Add(Network.Topology.Node item)
+        public TaskCompletionWrapper<Network.Topology.Node> Add(Network.Topology.Node item)
         {
             if (item is null)
             {
@@ -43,6 +45,15 @@ namespace O10.Node.Core.DataLayer
             }
 
             _dataAccessService.AddNode(item.Key, (byte)item.NodeRole, item.IPAddress);
+
+            var wrapper = new TaskCompletionWrapper<Network.Topology.Node>(item);
+            wrapper.TaskCompletion.SetResult(new SucceededNotification());
+
+            return wrapper;
+        }
+
+        public void AddDataKey(IDataKey key, IDataKey newKey)
+        {
         }
 
         public IEnumerable<Network.Topology.Node> Get(IDataKey key)

@@ -52,7 +52,7 @@ namespace O10.Node.Core.DataLayer
             _keyToNodeMap = new ConcurrentDictionary<IKey, NodeRecord>(new KeyEqualityComparer());
         }
 
-        protected override DataContexts.InternalDataContextBase GetDataContext(string connectionType)
+        protected override InternalDataContextBase GetDataContext(string connectionType)
         {
             return _dataContextRepository.GetInstance<InternalDataContextBase>(connectionType);
         }
@@ -129,6 +129,7 @@ namespace O10.Node.Core.DataLayer
                 {
                     node = new NodeRecord { PublicKey = publicKey, IPAddress = ipAddress.ToString(), NodeRole = nodeRole };
                     DataContext.NodeRecords.Add(node);
+                    DataContext.SaveChanges();
                     _keyToNodeMap.AddOrUpdate(key, node, (_, __) => node);
                     return true;
                 }
@@ -167,6 +168,8 @@ namespace O10.Node.Core.DataLayer
                     _keyToNodeMap.AddOrUpdate(key, node, (_, __) => node);
                     DataContext.Update(node);
                 }
+
+                DataContext.SaveChanges();
             }
 
             return false;
@@ -232,6 +235,7 @@ namespace O10.Node.Core.DataLayer
                 if(gateway != null)
                 {
                     DataContext.Gateways.Remove(gateway);
+                    DataContext.SaveChanges();
                 }
 
                 return gateway;
