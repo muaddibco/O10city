@@ -1,11 +1,11 @@
 ﻿using System;
-using O10.Core.ExtensionMethods;
+using O10.Core.Identity;
 
 namespace O10.Core.Synchronization
 {
     public class SynchronizationDescriptor
     {
-        public SynchronizationDescriptor(long blockHeight, byte[] hash, DateTime medianTime, DateTime updateTime, ushort round)
+        public SynchronizationDescriptor(long blockHeight, IKey hash, DateTime medianTime, DateTime updateTime, ushort round)
         {
             BlockHeight = blockHeight;
             Hash = hash;
@@ -21,7 +21,7 @@ namespace O10.Core.Synchronization
 
         public ushort Round { get; set; }
 
-        public byte[] Hash { get; private set; }
+        public IKey Hash { get; private set; }
 
         public DateTime MedianTime { get; private set; }
 
@@ -32,7 +32,7 @@ namespace O10.Core.Synchronization
 
         public override string ToString()
         {
-            return $"[{BlockHeight} @ {UpdateTime}]: {MedianTime}; Hash = {Hash.ToHexString()}";
+            return $"[{BlockHeight} @ {UpdateTime}]: {MedianTime}; Hash = {Hash}";
         }
     }
 }

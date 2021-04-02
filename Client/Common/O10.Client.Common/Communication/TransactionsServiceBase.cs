@@ -58,15 +58,6 @@ namespace O10.Client.Common.Communication
 			return packetWrapper.TaskCompletion;
 		}
 
-		protected byte[] GetPowHash(byte[] hash, ulong nonce)
-		{
-			BigInteger bigInteger = new BigInteger(hash);
-			bigInteger += nonce;
-			byte[] hashNonce = bigInteger.ToByteArray();
-			byte[] powHash = _proofOfWorkCalculation.CalculateHash(hashNonce);
-			return powHash;
-		}
-
 		protected virtual void FillAndSign(PacketBase packet, object signingArgs = null)
 		{
 			ISerializer serializer = _serializersFactory.Create(packet);
@@ -77,11 +68,10 @@ namespace O10.Client.Common.Communication
 			_logger.LogIfDebug(() => $"[{_accountId}]: Sending packet {packet.GetType().Name}: {JsonConvert.SerializeObject(packet, new ByteArrayJsonConverter())}");
 		}
 
-		protected void FillSyncData(PacketBase packet)
+		protected void FillSyncData(IPacketBase packet)
 		{
 			SyncInfoDTO lastSyncBlock = AsyncUtil.RunSync(() => _gatewayService.GetLastSyncBlock());
 			packet.SyncHeight = lastSyncBlock?.Height ?? 0;
-			packet.PowHash = GetPowHash(lastSyncBlock?.Hash ?? new byte[Globals.DEFAULT_HASH_SIZE], 0);
 		}
 
 		public virtual ISourceBlock<T> GetSourcePipe<T>(string name = null)

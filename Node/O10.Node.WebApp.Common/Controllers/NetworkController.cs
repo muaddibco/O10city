@@ -28,6 +28,7 @@ namespace O10.Node.WebApp.Common.Controllers
 	public class NetworkController : ControllerBase
 	{
 		private readonly IPacketsHandler _packetsHandler;
+        private readonly IChainDataServicesManager _chainDataServicesManager;
         private readonly IChainDataService _transactionalDataService;
 		private readonly IStealthDataService _stealthDataService;
 		private readonly IChainDataService _synchronizationDataService;
@@ -44,6 +45,7 @@ namespace O10.Node.WebApp.Common.Controllers
 						   ILoggerService loggerService)
 		{
 			_packetsHandler = packetsHandler;
+            _chainDataServicesManager = chainDataServicesManager;
             _transactionalDataService = chainDataServicesManager.GetChainDataService(LedgerType.O10State);
 			_stealthDataService = (IStealthDataService)chainDataServicesManager.GetChainDataService(LedgerType.Stealth);
 			_synchronizationDataService = chainDataServicesManager.GetChainDataService(LedgerType.Synchronization);
@@ -72,7 +74,9 @@ namespace O10.Node.WebApp.Common.Controllers
 		[HttpGet("GetLastSyncBlock")]
 		public ActionResult<SyncInfoDTO> GetLastSyncBlock()
 		{
-			return new SyncInfoDTO(_synchronizationContext.LastBlockDescriptor?.BlockHeight ?? 0, _synchronizationContext.LastBlockDescriptor?.Hash ?? new byte[Globals.DEFAULT_HASH_SIZE]);
+			return new SyncInfoDTO(
+				_synchronizationContext.LastBlockDescriptor?.BlockHeight ?? 0, 
+				_synchronizationContext.LastBlockDescriptor?.Hash);
 		}
 
 		[HttpGet("LastAggregatedRegistrations")]
@@ -102,6 +106,45 @@ namespace O10.Node.WebApp.Common.Controllers
 				//TODO: !!! need to reconsider hash calculation here since it is potential point of DoS attack
 				Hash = (transactionalBlockBase != null ? _hashCalculation.CalculateHash(transactionalBlockBase.ToByteArray()) : new byte[Globals.DEFAULT_HASH_SIZE]).ToHexString(),
 			};
+		}
+
+		[HttpGet("Ledger/{ledgerType}/Transaction")]
+		public ActionResult<IPacketBase> GetTransaction([FromRoute]LedgerType ledgerType, [FromQuery] string combinedBlockHeight, [FromQuery] string hash)
+		{
+			_logger.LogIfDebug(() => $"{nameof(GetTransaction)}({ledgerType}, {combinedBlockHeight}, {hash})");
+
+			IKey hashKey = _identityKeyProvider.GetKey(hash.HexStringToByteArray());
+			try
+			{
+				var dataService = _chainDataServicesManager.GetChainDataService(ledgerType);
+				if(dataService == null)
+                {
+					return BadRequest($"Ledger Type {ledgerType} is not supported");
+                }
+
+				var blockBase = dataService.Get(new CombinedHashKey(long.Parse(combinedBlockHeight), hashKey)).Single();
+
+				if (blockBase == null)
+				{
+					blockBase = dataService.Get(new CombinedHashKey(long.Parse(combinedBlockHeight) - 1, hashKey)).Single();
+				}
+
+				if (blockBase != null)
+				{
+					return Ok(blockBase);
+				}
+				else
+				{
+					_logger.Error($"{nameof(GetTransaction)}({ledgerType}, {combinedBlockHeight}, {hash}) didn't find any packet");
+				}
+
+				return NotFound();
+			}
+			catch (Exception ex)
+			{
+				_logger.Error($"Failed to retrieve block for CombinedBlockHeight {combinedBlockHeight} and ReferencedHash {hash}", ex);
+				throw;
+			}
 		}
 
 		[HttpGet("O10StateTransaction")]

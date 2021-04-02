@@ -18,7 +18,8 @@ namespace O10.Gateway.DataLayer.Model
 		[Column(TypeName = "varbinary(64)")]
 		public string Commitment { get; set; }
 
-        public byte[] OriginatingCommitment { get; set; }
+        [Column(TypeName = "varbinary(64)")]
+        public string? OriginatingCommitment { get; set; }
 
         public bool IsOverriden { get; set; }
     }

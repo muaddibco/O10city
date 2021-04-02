@@ -16,6 +16,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using O10.Transactions.Core.DTOs;
+using O10.Crypto.Models;
 
 namespace O10.Gateway.Common.Accessors
 {
@@ -33,17 +34,14 @@ namespace O10.Gateway.Common.Accessors
             = new ReadOnlyCollection<string>(new[] { "SyncBlockHeight", "CombinedRegistryBlockHeight", "Hash" });
 
         private readonly IDataAccessService _dataAccessService;
-        private readonly IBlockParsersRepository _blockParsersRepository;
         private readonly ISynchronizerConfiguration _synchronizerConfiguration;
         private readonly ILogger _logger;
 
         public O10StealthAccessor(IDataAccessService dataAccessService,
-                                  IBlockParsersRepositoriesRepository blockParsersRepositoriesRepository,
                                   IConfigurationService configurationService,
                                   ILoggerService loggerService)
         {
             _dataAccessService = dataAccessService;
-            _blockParsersRepository = blockParsersRepositoriesRepository.GetBlockParsersRepository(LedgerType.Stealth);
             _synchronizerConfiguration = configurationService.Get<ISynchronizerConfiguration>();
             _logger = loggerService.GetLogger(nameof(O10StealthAccessor));
         }
@@ -52,7 +50,7 @@ namespace O10.Gateway.Common.Accessors
 
         protected override IEnumerable<string> GetAccessingKeys() => AccessingKeys;
 
-        protected override async Task<PacketBase> GetPacketInner(EvidenceDescriptor accessDescriptor)
+        protected override async Task<TransactionBase> GetTransactionInner(EvidenceDescriptor accessDescriptor)
         {
             if(!long.TryParse(accessDescriptor.Parameters[SyncBlockHeight], out long syncBlockHeight))
             {

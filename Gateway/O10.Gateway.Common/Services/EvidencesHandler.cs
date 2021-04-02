@@ -4,43 +4,41 @@ using O10.Core.Models;
 using O10.Core.States;
 using O10.Core.Translators;
 using O10.Transactions.Core.Accessors;
-using O10.Transactions.Core.Ledgers.Registry;
 using O10.Transactions.Core.Enums;
-using O10.Transactions.Core.Serializers;
 using System;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using O10.Transactions.Core.Ledgers;
+using O10.Crypto.Models;
+using O10.Transactions.Core.Exceptions;
+using O10.Transactions.Core.Ledgers.Registry;
 
 namespace O10.Gateway.Common.Services
 {
     [RegisterDefaultImplementation(typeof(IEvidencesHandler), Lifetime = LifetimeManagement.Singleton)]
     public class EvidencesHandler : IEvidencesHandler
     {
-        private readonly ITranslator<EvidenceDescriptor, RegistryRegisterExBlock> _translator;
+        private readonly ITranslator<EvidenceDescriptor, RegistryPacket> _translator;
         private readonly IAccessorProvider _accessorProvider;
         private readonly INetworkSynchronizer _networkSynchronizer;
         private readonly IGatewayContext _gatewayContext;
-        private readonly ISerializersFactory _serializersFactory;
 
-        private IPropagatorBlock<DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>, DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>> _inputPipe;
-        private IPropagatorBlock<DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>, TaskCompletionWrapper<PacketBase>> _produceRegistrationPacket;
+        private IPropagatorBlock<DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase>, DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase>> _inputPipe;
+        private IPropagatorBlock<DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase>, TaskCompletionWrapper<IPacketBase>> _produceRegistrationPacket;
 
         public EvidencesHandler(ITranslatorsRepository translatorsRepository,
                                 IAccessorProvider accessorProvider,
                                 INetworkSynchronizer networkSynchronizer,
-                                IStatesRepository statesRepository,
-                                ISerializersFactory serializersFactory)
+                                IStatesRepository statesRepository)
         {
-            _inputPipe = new TransformBlock<DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>, DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>>(d => d);
-            _produceRegistrationPacket = new TransformBlock<DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>, TaskCompletionWrapper<PacketBase>>(e => CreateRegisterPacket(e));
+            _inputPipe = new TransformBlock<DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase>, DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase>>(d => d);
+            _produceRegistrationPacket = new TransformBlock<DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase>, TaskCompletionWrapper<IPacketBase>>(e => CreateRegisterPacket(e));
 
-            _translator = translatorsRepository.GetInstance<EvidenceDescriptor, RegistryRegisterExBlock>();
+            _translator = translatorsRepository.GetInstance<EvidenceDescriptor, RegistryPacket>();
             _inputPipe.LinkTo(_produceRegistrationPacket, ValidateEvidence);
             _accessorProvider = accessorProvider;
             _networkSynchronizer = networkSynchronizer;
             _gatewayContext = statesRepository.GetInstance<IGatewayContext>();
-            _serializersFactory = serializersFactory;
         }
 
         public ISourceBlock<T> GetSourcePipe<T>(string name = null)
@@ -53,7 +51,7 @@ namespace O10.Gateway.Common.Services
             return (ITargetBlock<T>)_inputPipe;
         }
 
-        private bool ValidateEvidence(DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase> wrapper)
+        private bool ValidateEvidence(DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase> wrapper)
         {
             if(wrapper.State.LedgerType == LedgerType.Stealth || wrapper.State.LedgerType == LedgerType.O10State)
             {
@@ -62,12 +60,15 @@ namespace O10.Gateway.Common.Services
             }
 
             var accessor = _accessorProvider.GetInstance(wrapper.State.LedgerType);
-            var packet = accessor.GetTransaction<PacketBase>(wrapper.State);
+            if(accessor == null)
+            {
+                throw new AccessorNotSupportedException(wrapper.State.LedgerType);
+            }
 
-            return packet != null;
+            return accessor.GetTransaction<TransactionBase>(wrapper.State) != null;
         }
 
-        private async Task<TaskCompletionWrapper<PacketBase>> CreateRegisterPacket(DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase> wrapper)
+        private async Task<TaskCompletionWrapper<IPacketBase>> CreateRegisterPacket(DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase> wrapper)
         {
             var evidence = wrapper.State;
             try
@@ -75,19 +76,16 @@ namespace O10.Gateway.Common.Services
                 var packet = _translator.Translate(evidence);
 
                 var lastPacketInfo = await _gatewayContext.GetLastPacketInfo().ConfigureAwait(false);
-                packet.Height = lastPacketInfo.Height;
-                packet.PowHash = new byte[Globals.DEFAULT_HASH_SIZE];
-                packet.SyncHeight = (await _networkSynchronizer.GetLastSyncBlock().ConfigureAwait(false))?.Height ?? 0;
+                packet.Body.Height = lastPacketInfo.Height;
+                packet.Body.SyncHeight = (await _networkSynchronizer.GetLastSyncBlock().ConfigureAwait(false))?.Height ?? 0;
 
-                ISerializer serializer = _serializersFactory.Create(packet);
-                serializer.SerializeBody();
-                _gatewayContext.SigningService.Sign(packet);
+                packet.Signature = (SingleSourceSignature)_gatewayContext.SigningService.Sign(packet.Body);
 
-                var evidenceWrapper = new TaskCompletionWrapper<PacketBase>(packet);
+                var evidenceWrapper = new TaskCompletionWrapper<IPacketBase>(packet);
                 evidenceWrapper.TaskCompletion.Task
                     .ContinueWith((t, o) => 
                     {
-                        var w = o as DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>;
+                        var w = o as DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase>;
                         if(t.IsCompletedSuccessfully)
                         {
                             w.TaskCompletion.SetResult(t.Result);

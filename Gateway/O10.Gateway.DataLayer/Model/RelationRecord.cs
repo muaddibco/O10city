@@ -9,12 +9,15 @@ namespace O10.Gateway.DataLayer.Model
 		[Key]
 		public long RelationRecordId { get; set; }
 
+		[Required]
 		[Column(TypeName = "varbinary(64)")]
 		public string Issuer { get; set; }
 
+		[Required]
 		[Column(TypeName = "varbinary(64)")]
 		public string RegistrationCommitment { get; set; }
 
+		[Required]
 		[Column(TypeName = "varbinary(64)")]
 		public string GroupCommitment { get; set; }
 

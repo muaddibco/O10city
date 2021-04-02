@@ -14,7 +14,7 @@ namespace O10.Transactions.Core.Interfaces
 
         Task<AggregatedRegistrationsTransactionDTO> GetLastRegistryCombinedBlock();
 
-        Task<IEnumerable<IPacketBase>> GetPacketInfos(IEnumerable<long> witnessIds);
+        Task<IEnumerable<IPacketBase>> GetPackets(IEnumerable<long> witnessIds);
 
         Task<StatePacketInfo> GetLastPacketInfo(IKey accountPublicKey);
         Task<StatePacketInfo> GetLastPacketInfo(string accountPublicKey);

@@ -33,8 +33,8 @@ namespace O10.Node.Core.Synchronization
             {
                 if (_synchronizationContext.LastBlockDescriptor != null && _synchronizationContext.LastBlockDescriptor.BlockHeight + 1 <= transaction.Height || _synchronizationContext.LastBlockDescriptor == null)
                 {
-                    if (_synchronizationContext.LastBlockDescriptor != null && transaction.HashPrev.Equals32(_synchronizationContext.LastBlockDescriptor.Hash) ||
-                        _synchronizationContext.LastBlockDescriptor == null && transaction.HashPrev.Equals32(new byte[Globals.DEFAULT_HASH_SIZE]))
+                    if (_synchronizationContext.LastBlockDescriptor != null && transaction.HashPrev.Equals(_synchronizationContext.LastBlockDescriptor.Hash) ||
+                        _synchronizationContext.LastBlockDescriptor == null && transaction.HashPrev.Equals(new byte[Globals.DEFAULT_HASH_SIZE]))
                     {
                         return true;
                     }

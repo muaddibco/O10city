@@ -1,8 +1,11 @@
-﻿namespace O10.Gateway.DataLayer.Services.Inputs
+﻿using O10.Core.Identity;
+
+namespace O10.Gateway.DataLayer.Services.Inputs
 {
     public class StateIncomingStoreInput : IncomingStoreInput
     {
-        public ulong BlockHeight { get; set; }
-        public byte[] Source { get; set; }
+        public long BlockHeight { get; set; }
+        public IKey? Source { get; set; }
+        public IKey? OriginatingCommitment { get; set; }
     }
 }

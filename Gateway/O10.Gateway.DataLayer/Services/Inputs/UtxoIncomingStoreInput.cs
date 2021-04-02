@@ -3,7 +3,6 @@
     public class UtxoIncomingStoreInput : IncomingStoreInput
     {
         public byte[] KeyImage { get; set; }
-        public byte[] TransactionKey { get; set; }
 
 		public byte[] DestinationKey2 { get; set; }
 	}

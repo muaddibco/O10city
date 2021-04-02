@@ -177,25 +177,28 @@ namespace O10.Client.Common.Communication
 			return true;
         }
 
-		public async Task<IEnumerable<IPacketBase>> GetPacketInfos(IEnumerable<long> witnessIds)
+		public async Task<IEnumerable<IPacketBase>> GetPackets(IEnumerable<long> witnessIds)
 		{
 			_logger.Debug($"Getting packet infos for witnesses with Ids {string.Join(',', witnessIds)}");
 
-			List<PacketInfo> res = null;
+			List<IPacketBase> res = null;
 			try
 			{
-				Url url = _gatewayUri.AppendPathSegments("api", "synchronization", "GetPacketInfos");
-
+				Url url = _gatewayUri.AppendPathSegments("api", "synchronization", "packets");
+                foreach (var wid in witnessIds)
+                {
+					url.QueryParams.Add("wid", wid);
+                }
 				await (await _restClientService.Request(url)
-					.PostJsonAsync(witnessIds).ContinueWith(async t =>
+					.GetAsync().ContinueWith(async t =>
 					{
 						if (t.IsCompletedSuccessfully)
 						{
-							res = await t.ReceiveJson<List<PacketInfo>>().ConfigureAwait(false);
+							res = await t.ReceiveJson<List<IPacketBase>>().ConfigureAwait(false);
 						}
 						else
 						{
-							_logger.Error($"Failed request {t.Result.RequestMessage.RequestUri} with content {await t.Result.RequestMessage.Content.ReadAsStringAsync()}", t.Exception);
+							_logger.Error($"Failed request {t.Result.RequestMessage.RequestUri} with content {await t.Result.RequestMessage.Content.ReadAsStringAsync().ConfigureAwait(false)}", t.Exception);
 						}
 					}, TaskScheduler.Current).ConfigureAwait(false)).ConfigureAwait(false);
 
@@ -213,7 +216,7 @@ namespace O10.Client.Common.Communication
 				_logger.Error($"Failure during obtaining packet infos for witness ids {string.Join(',', witnessIds)}", ex);
 			}
 
-			return res;
+            return res;
 		}
 
 		public async Task<bool> IsRootAttributeValid(Memory<byte> issuer, Memory<byte> commitment)

@@ -9,6 +9,6 @@ namespace O10.Gateway.Common.Services
     [ServiceContract]
     public interface ITransactionsHandler : IDynamicPipe
     {
-        TaskCompletionSource<NotificationBase> SendPacket(PacketBase packetBase);
+        TaskCompletionSource<NotificationBase> SendPacket(IPacketBase packetBase);
     }
 }

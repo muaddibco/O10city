@@ -14,48 +14,45 @@ using O10.Gateway.Common.Services.Results;
 using O10.Transactions.Core.Accessors;
 using O10.Transactions.Core.Ledgers.Stealth;
 using O10.Transactions.Core.Enums;
-using O10.Transactions.Core.Serializers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using O10.Transactions.Core.Ledgers;
+using O10.Transactions.Core.Exceptions;
 
 namespace O10.Gateway.Common.Services
 {
     [RegisterDefaultImplementation(typeof(ITransactionsHandler), Lifetime = LifetimeManagement.Singleton)]
     public class TransactionsHandler : ITransactionsHandler
     {
-        private readonly IPropagatorBlock<PacketBase, PacketBase> _pipeInPacket;
-        private readonly IPropagatorBlock<PacketBase, DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>> _pipeEvidence;
-        private readonly IPropagatorBlock<TaskCompletionWrapper<PacketBase>, TaskCompletionWrapper<PacketBase>> _pipeOutPacket;
+        private readonly IPropagatorBlock<IPacketBase, IPacketBase> _pipeInPacket;
+        private readonly IPropagatorBlock<IPacketBase, DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase>> _pipeEvidence;
+        private readonly IPropagatorBlock<TaskCompletionWrapper<IPacketBase>, TaskCompletionWrapper<IPacketBase>> _pipeOutPacket;
         private readonly IHashCalculation _hashCalculation;
         private readonly ILogger _logger;
         private readonly ISynchronizerConfiguration _synchronizerConfiguration;
-        private readonly ISerializersFactory _serializersFactory;
-        private readonly Dictionary<PacketBase, TaskCompletionSource<NotificationBase>> _completions = new Dictionary<PacketBase, TaskCompletionSource<NotificationBase>>();
+        private readonly Dictionary<IPacketBase, TaskCompletionSource<NotificationBase>> _completions = new Dictionary<IPacketBase, TaskCompletionSource<NotificationBase>>();
         //private readonly Dictionary<PacketBase, Task> _waitingTasks = new Dictionary<PacketBase, Task>();
         //private readonly Dictionary<PacketBase, DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>> _dependings = new Dictionary<PacketBase, DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>>();
 
         public TransactionsHandler(IHashCalculationsRepository hashCalculationsRepository,
                                    IConfigurationService configurationService,
-                                   ISerializersFactory serializersFactory,
                                    ILoggerService loggerService)
         {
             _logger = loggerService.GetLogger(nameof(TransactionsHandler));
             _synchronizerConfiguration = configurationService.Get<ISynchronizerConfiguration>();
 
             _hashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
-            _pipeInPacket = new TransformBlock<PacketBase, PacketBase>(p => p);
-            _pipeEvidence = new TransformBlock<PacketBase, DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>>(p => ProduceEvidenceAndSend(p));
-            _pipeOutPacket = new TransformBlock<TaskCompletionWrapper<PacketBase>, TaskCompletionWrapper<PacketBase>>(p => p);
+            _pipeInPacket = new TransformBlock<IPacketBase, IPacketBase>(p => p);
+            _pipeEvidence = new TransformBlock<IPacketBase, DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase>>(p => ProduceEvidenceAndSend(p));
+            _pipeOutPacket = new TransformBlock<TaskCompletionWrapper<IPacketBase>, TaskCompletionWrapper<IPacketBase>>(p => p);
             
             _pipeInPacket.LinkTo(_pipeEvidence, ValidatePacket);
-            _serializersFactory = serializersFactory;
         }
 
-        public TaskCompletionSource<NotificationBase> SendPacket(PacketBase packetBase)
+        public TaskCompletionSource<NotificationBase> SendPacket(IPacketBase packetBase)
         {
             TaskCompletionSource<NotificationBase> taskCompletion = new TaskCompletionSource<NotificationBase>(packetBase);
             _completions.Add(packetBase, taskCompletion);
@@ -67,11 +64,11 @@ namespace O10.Gateway.Common.Services
 
         public ISourceBlock<T> GetSourcePipe<T>(string name = null)
         {
-            if(typeof(T) == typeof(DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>))
+            if(typeof(T) == typeof(DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase>))
             {
                 return (ISourceBlock<T>)_pipeEvidence;
             }
-            else if(typeof(T) == typeof(TaskCompletionWrapper<PacketBase>))
+            else if(typeof(T) == typeof(TaskCompletionWrapper<IPacketBase>))
             {
                 return (ISourceBlock<T>)_pipeOutPacket;
             }
@@ -81,7 +78,7 @@ namespace O10.Gateway.Common.Services
 
         public ITargetBlock<T> GetTargetPipe<T>(string name = null)
         {
-            if (typeof(T) == typeof(PacketBase))
+            if (typeof(T) == typeof(IPacketBase))
             {
                 return (ITargetBlock<T>)_pipeEvidence;
             }
@@ -89,14 +86,24 @@ namespace O10.Gateway.Common.Services
             throw new InvalidTargetPipeRequestException(typeof(T));
         }
 
-        private bool ValidatePacket(PacketBase packet)
+        private bool ValidatePacket(IPacketBase packet)
         {
             bool res = true;
             string existingHash = null;
 
-            if (packet is StealthPacket stealth)
+            if(packet == null)
             {
-                var keyImage = stealth.KeyImage.ToString();
+                return false;
+            }
+            else if(packet.Body == null)
+            {
+                res = false;
+                _completions[packet].SetException(new NoTransactionException(packet));
+                _completions.Remove(packet);
+            }
+            else if (packet is StealthPacket stealth)
+            {
+                var keyImage = stealth.Body.KeyImage.ToString();
 
                 _logger.LogIfDebug(() => $"Sending to Node {_synchronizerConfiguration.NodeApiUri} request for finding hash by a key image {keyImage}");
                 var packetHashResponse = AsyncUtil.RunSync(async () => await _synchronizerConfiguration.NodeApiUri.AppendPathSegments("HashByKeyImage", keyImage).GetJsonAsync<PacketHashResponse>().ConfigureAwait(false));
@@ -111,7 +118,7 @@ namespace O10.Gateway.Common.Services
                     _completions.Remove(packet);
                 }
             }
-            else if(packet.LedgerType != (ushort)LedgerType.O10State)
+            else if(packet.LedgerType != LedgerType.O10State)
             {
                 _logger.Error($"Packets of the type {packet.GetType().Name} are not supported");
                 res = false;
@@ -122,25 +129,19 @@ namespace O10.Gateway.Common.Services
             return res;
         }
 
-        private DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase> ProduceEvidenceAndSend(PacketBase packet)
+        private DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase> ProduceEvidenceAndSend(IPacketBase packet)
         {
-            TaskCompletionWrapper<PacketBase> wrapper = new TaskCompletionWrapper<PacketBase>(packet);
-
-            if(packet.RawData.Length == 0)
-            {
-                using var serializer = _serializersFactory.Create(packet);
-                serializer.SerializeFully();
-            }
+            TaskCompletionWrapper<IPacketBase> wrapper = new TaskCompletionWrapper<IPacketBase>(packet);
 
             EvidenceDescriptor evidenceDescriptor = new EvidenceDescriptor
             {
-                ActionType = packet.PacketType,
-                LedgerType = (LedgerType)packet.LedgerType,
-                Parameters = new Dictionary<string, string> { { "BodyHash", _hashCalculation.CalculateHash(packet.RawData).ToHexString() } }
+                ActionType = packet.Body.TransactionType,
+                LedgerType = packet.LedgerType,
+                Parameters = new Dictionary<string, string> { { "BodyHash", _hashCalculation.CalculateHash(packet.Body.ToString()).ToHexString() } }
             };
 
-            DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase> depending 
-                = new DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>(evidenceDescriptor, wrapper);
+            DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase> depending 
+                = new DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase>(evidenceDescriptor, wrapper);
 
             StartWaitingForDependingCompletion(depending);
             //_dependings.Add(packet, depending);
@@ -151,9 +152,9 @@ namespace O10.Gateway.Common.Services
             return depending;
         }
 
-        private async Task StartWaitingForDependingCompletion(DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase> depending)
+        private async Task StartWaitingForDependingCompletion(DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase> depending)
         {
-            PacketBase packet = depending.DependingTaskCompletion.State;
+            var packet = depending.DependingTaskCompletion.State;
 
             try
             {

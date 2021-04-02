@@ -10,8 +10,6 @@ namespace O10.Gateway.DataLayer.Model
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public long PacketHashId { get; set; }
 
-        public long SyncBlockHeight { get; set; }
-
         public long CombinedRegistryBlockHeight { get; set; }
 
         [Column(TypeName = "varbinary(64)")]

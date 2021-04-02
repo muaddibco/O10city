@@ -244,10 +244,10 @@ namespace O10.Gateway.WebApp.Common.Controllers
             return Ok(response);
         }
 
-        [HttpPost("GetPacketInfos")]
-        public async Task<IActionResult> GetPacketInfos([FromBody] List<long> witnessIds)
+        [HttpGet("Packets")]
+        public async Task<IActionResult> GetPackets([FromQuery(Name = "wid")] List<long> witnessIds)
         {
-            return Ok(await _networkSynchronizer.GetPacketInfos(witnessIds));
+            return Ok(await _networkSynchronizer.GetPackets(witnessIds));
         }
 
         [HttpGet("IsRootAttributeValid/{issuer}/{commitment}")]

@@ -54,10 +54,8 @@ namespace O10.Core.Identity
                 return true;
             }
 
-            Key32 pk1 = x as Key32;
-            Key32 pk2 = y as Key32;
 
-            if (pk1 == null || pk2 == null)
+            if (!(x is Key32 pk1) || !(y is Key32 pk2))
             {
                 return false;
             }

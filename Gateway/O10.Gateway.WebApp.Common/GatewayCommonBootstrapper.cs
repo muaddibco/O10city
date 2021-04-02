@@ -42,10 +42,10 @@ namespace O10.Server.Gateway
             ITransactionsHandler transactionsHandler = serviceProvider.GetService<ITransactionsHandler>();
             IEvidencesHandler evidencesHandler = serviceProvider.GetService<IEvidencesHandler>();
             
-            transactionsHandler.GetSourcePipe<DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>>().LinkTo(evidencesHandler.GetTargetPipe<DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>>());
+            transactionsHandler.GetSourcePipe<DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase>>().LinkTo(evidencesHandler.GetTargetPipe<DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase>>());
 
-            transactionsHandler.GetSourcePipe<TaskCompletionWrapper<PacketBase>>().LinkTo(new ActionBlock<TaskCompletionWrapper<PacketBase>>(w => networkSynchronizer.PipeIn.SendAsync(w)));
-            evidencesHandler.GetSourcePipe<TaskCompletionWrapper<PacketBase>>().LinkTo(new ActionBlock<TaskCompletionWrapper<PacketBase>>(w => networkSynchronizer.PipeIn.SendAsync(w)));
+            transactionsHandler.GetSourcePipe<TaskCompletionWrapper<IPacketBase>>().LinkTo(new ActionBlock<TaskCompletionWrapper<IPacketBase>>(w => networkSynchronizer.PipeIn.SendAsync(w)));
+            evidencesHandler.GetSourcePipe<TaskCompletionWrapper<IPacketBase>>().LinkTo(new ActionBlock<TaskCompletionWrapper<IPacketBase>>(w => networkSynchronizer.PipeIn.SendAsync(w)));
 
             networkSynchronizer.PipeOut = new TransformBlock<WitnessPackage, WitnessPackage>(w => w);
             networkSynchronizer.PipeOut.LinkTo(notificationsHubService.PipeIn);

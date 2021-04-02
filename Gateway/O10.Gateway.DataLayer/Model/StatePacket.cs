@@ -18,9 +18,7 @@ namespace O10.Gateway.DataLayer.Model
 
         public Address Source { get; set; }
 
-        public Address Target { get; set; }
-
-        public byte[] GroupId { get; set; }
+        public Address? Target { get; set; }
 
         public byte[] Content { get; set; }
 
@@ -28,9 +26,9 @@ namespace O10.Gateway.DataLayer.Model
 
         public bool IsTransition { get; set; }
 
-        public TransactionKey TransactionKey { get; set; }
+        public TransactionKey? TransactionKey { get; set; }
 
-        public StealthOutput Output { get; set; }
+        public StealthOutput? Output { get; set; }
 
         #endregion Transition Account based to UTXO based transaction
 

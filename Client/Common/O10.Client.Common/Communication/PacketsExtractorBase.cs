@@ -92,7 +92,7 @@ namespace O10.Client.Common.Communication
                     if (witnessesToMe.Count > 0)
                     {
                         _logger.LogIfDebug(() => $"[{_accountId}]: Obtaining packets for witnesses [{string.Join(',', witnessesToMe.Select(w => w.WitnessId).ToArray())}]");
-                        IEnumerable<IPacketBase> packetInfos = await _syncStateProvider.GetPacketInfos(witnessesToMe.Select(w => w.WitnessId)).ConfigureAwait(false);
+                        IEnumerable<IPacketBase> packetInfos = await _syncStateProvider.GetPackets(witnessesToMe.Select(w => w.WitnessId)).ConfigureAwait(false);
 
                         if (packetInfos?.Any() != true)
                         {

@@ -10,6 +10,6 @@ namespace O10.Gateway.DataLayer.Model
 		[DatabaseGenerated(DatabaseGeneratedOption.None)]
         public long RegistryCombinedBlockId { get; set; }
 
-        public byte[] Content { get; set; }
+        public string Content { get; set; }
     }
 }

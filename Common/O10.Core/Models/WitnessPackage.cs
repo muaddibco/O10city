@@ -1,10 +1,12 @@
-﻿namespace O10.Core.Models
+﻿using System.Collections;
+using System.Collections.Generic;
+
+namespace O10.Core.Models
 {
 	public class WitnessPackage
 	{
-		public ulong CombinedBlockHeight { get; set; }
+		public long CombinedBlockHeight { get; set; }
 
-		public PacketWitness[] StateWitnesses { get; set; }
-		public PacketWitness[] StealthWitnesses { get; set; }
+		public IEnumerable<PacketWitness>? Witnesses { get; set; }
 	}
 }

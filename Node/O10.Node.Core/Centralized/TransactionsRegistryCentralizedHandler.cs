@@ -23,6 +23,7 @@ using O10.Transactions.Core.Ledgers;
 using O10.Transactions.Core.Ledgers.Synchronization.Transactions;
 using O10.Crypto.Models;
 using O10.Transactions.Core.Ledgers.Registry.Transactions;
+using O10.Core.Identity;
 
 namespace O10.Node.Core.Centralized
 {
@@ -39,6 +40,7 @@ namespace O10.Node.Core.Centralized
         private readonly IRealTimeRegistryService _realTimeRegistryService;
         private readonly INodeContext _nodeContext;
         private readonly ISynchronizationContext _synchronizationContext;
+        private readonly IIdentityKeyProvider _identityKeyProvider;
         private readonly IChainDataService _synchronizationChainDataService;
         private readonly IChainDataService _registryChainDataService;
         private readonly IHashCalculation _defaultTransactionHashCalculation;
@@ -50,6 +52,7 @@ namespace O10.Node.Core.Centralized
 
         public TransactionsRegistryCentralizedHandler(IRealTimeRegistryService realTimeRegistryService,
                                                       IStatesRepository statesRepository,
+                                                      IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
                                                       IChainDataServicesManager chainDataServicesManager,
                                                       IHashCalculationsRepository hashCalculationsRepository,
                                                       ILoggerService loggerService)
@@ -57,6 +60,7 @@ namespace O10.Node.Core.Centralized
             _realTimeRegistryService = realTimeRegistryService;
             _synchronizationContext = statesRepository.GetInstance<ISynchronizationContext>();
             _nodeContext = statesRepository.GetInstance<INodeContext>();
+            _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
             _synchronizationChainDataService = chainDataServicesManager.GetChainDataService(LedgerType.Synchronization);
             _registryChainDataService = chainDataServicesManager.GetChainDataService(LedgerType.Registry);
             _defaultTransactionHashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
@@ -105,8 +109,17 @@ namespace O10.Node.Core.Centralized
 
 						if (lastCombinedBlockHeight % 100 == 0)
 						{
-                            SynchronizationPacket synchronizationConfirmedBlock = CreateSynchronizationConfirmedBlock(_synchronizationContext.LastBlockDescriptor?.BlockHeight ?? 0, _synchronizationContext.LastBlockDescriptor?.Hash ?? new byte[Globals.DEFAULT_HASH_SIZE]);
-							_synchronizationContext.UpdateLastSyncBlockDescriptor(new SynchronizationDescriptor(synchronizationConfirmedBlock.Body.Height, _defaultTransactionHashCalculation.CalculateHash(synchronizationConfirmedBlock.ToByteArray()), synchronizationConfirmedBlock.With<SynchronizationConfirmedTransaction>().ReportedTime, DateTime.UtcNow, synchronizationConfirmedBlock.With<SynchronizationConfirmedTransaction>().Round));
+                            SynchronizationPacket synchronizationConfirmedBlock 
+                                = CreateSynchronizationConfirmedBlock(
+                                    _synchronizationContext.LastBlockDescriptor?.BlockHeight ?? 0, 
+                                    _synchronizationContext.LastBlockDescriptor?.Hash);
+							_synchronizationContext.UpdateLastSyncBlockDescriptor(
+                                new SynchronizationDescriptor(
+                                    synchronizationConfirmedBlock.Body.Height, 
+                                    _identityKeyProvider.GetKey(_defaultTransactionHashCalculation.CalculateHash(synchronizationConfirmedBlock.ToByteArray())), 
+                                    synchronizationConfirmedBlock.With<SynchronizationConfirmedTransaction>().ReportedTime, 
+                                    DateTime.UtcNow, 
+                                    synchronizationConfirmedBlock.With<SynchronizationConfirmedTransaction>().Round));
 							_synchronizationChainDataService.Add(synchronizationConfirmedBlock);
 						}
 
@@ -137,7 +150,7 @@ namespace O10.Node.Core.Centralized
             }
         }
 
-        private SynchronizationPacket CreateSynchronizationConfirmedBlock(long prevSyncBlockHeight, byte[] prevSyncBlockHash)
+        private SynchronizationPacket CreateSynchronizationConfirmedBlock(long prevSyncBlockHeight, IKey prevSyncBlockHash)
         {
             SynchronizationPacket synchronizationConfirmed = new SynchronizationPacket
             {
@@ -206,7 +219,7 @@ namespace O10.Node.Core.Centralized
         {
             lock (_synchronizationContext)
             {
-                byte[] prevHash = _lastCombinedBlock != null ? _defaultTransactionHashCalculation.CalculateHash(_lastCombinedBlock.ToByteArray()) : new byte[Globals.DEFAULT_HASH_SIZE];
+                var prevHash = _identityKeyProvider.GetKey(_lastCombinedBlock != null ? _defaultTransactionHashCalculation.CalculateHash(_lastCombinedBlock.ToByteArray()) : new byte[Globals.DEFAULT_HASH_SIZE]);
 
                 //TODO: For initial POC there will be only one participant at Synchronization Layer, thus combination of FullBlocks won't be implemented fully
                 SynchronizationPacket synchronizationRegistryCombinedBlock = new SynchronizationPacket

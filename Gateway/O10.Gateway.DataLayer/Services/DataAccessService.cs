@@ -14,6 +14,7 @@ using O10.Core.ExtensionMethods;
 using O10.Core.HashCalculations;
 using O10.Core.Logging;
 using O10.Transactions.Core.Enums;
+using O10.Core.Identity;
 
 namespace O10.Gateway.DataLayer.Services
 {
@@ -25,19 +26,21 @@ namespace O10.Gateway.DataLayer.Services
         private readonly object _sync = new object();
         private readonly object _syncSaving = new object();
         private DataContext _dataContext;
+        private readonly IIdentityKeyProvider _identityKeyProvider;
         private readonly IHashCalculation _hashCalculation;
         private readonly List<long> _utxoOutputsIndiciesMap;
 		private readonly IEnumerable<IDataContext> _dataContexts;
 		private readonly IGatewayDataContextConfiguration _configuration;
         private ILogger _logger;
         private bool _isSaving;
-		private Dictionary<string, List<Memory<byte>>> _rootAttributes = new Dictionary<string, List<Memory<byte>>>();
+		private Dictionary<string, List<IKey>> _rootAttributes = new Dictionary<string, List<IKey>>();
 		private Dictionary<WitnessPacket, TaskCompletionSource<WitnessPacket>> _witnessPacketStoreCompletions = new Dictionary<WitnessPacket, TaskCompletionSource<WitnessPacket>>();
 
-        public DataAccessService(IEnumerable<IDataContext> dataContexts, IConfigurationService configurationService, IHashCalculationsRepository hashCalculationsRepository, ILoggerService loggerService)
+        public DataAccessService(IEnumerable<IDataContext> dataContexts, IConfigurationService configurationService, IHashCalculationsRepository hashCalculationsRepository, IIdentityKeyProvidersRegistry identityKeyProvidersRegistry, ILoggerService loggerService)
         {
 			_isInitialzed = false;
 			_utxoOutputsIndiciesMap = new List<long>();
+            _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
 			_hashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
 			_dataContexts = dataContexts;
 			_configuration = configurationService.Get<IGatewayDataContextConfiguration>();
@@ -147,10 +150,10 @@ namespace O10.Gateway.DataLayer.Services
             {
                 if (!_rootAttributes.ContainsKey(rootAttribute.Issuer.Key))
                 {
-                    _rootAttributes.Add(rootAttribute.Issuer.Key, new List<Memory<byte>>());
+                    _rootAttributes.Add(rootAttribute.Issuer.Key, new List<IKey>());
                 }
 
-                _rootAttributes[rootAttribute.Issuer.Key].Add(rootAttribute.RootCommitment.HexStringToByteArray());
+                _rootAttributes[rootAttribute.Issuer.Key].Add(_identityKeyProvider.GetKey(rootAttribute.RootCommitment.HexStringToByteArray()));
             }
         }
 
@@ -174,7 +177,7 @@ namespace O10.Gateway.DataLayer.Services
 			}
 		}
 
-		public bool GetLastRegistryCombinedBlock(out ulong height, out byte[] content)
+		public bool GetLastRegistryCombinedBlock(out long height, out string content)
         {
             if (Monitor.TryEnter(_sync, _lockTimeout))
             {
@@ -184,7 +187,7 @@ namespace O10.Gateway.DataLayer.Services
 
                     if (combinedBlock != null)
                     {
-                        height = (ulong)combinedBlock.RegistryCombinedBlockId;
+                        height = combinedBlock.RegistryCombinedBlockId;
                         content = combinedBlock.Content;
                         return true;
                     }
@@ -235,21 +238,29 @@ namespace O10.Gateway.DataLayer.Services
             return false;
         }
 
-        public void StoreIncomingTransactionalBlock(StateIncomingStoreInput storeInput, byte[] groupId)
+        public void StoreIncomingTransactionalBlock(StateIncomingStoreInput storeInput)
         {
+            if (storeInput is null)
+            {
+                throw new ArgumentNullException(nameof(storeInput));
+            }
+
             StatePacket transactionalIncomingBlock = new StatePacket
             {
                 WitnessId = storeInput.WitnessId,
-                Height = (long)storeInput.BlockHeight,
+                Height = storeInput.BlockHeight,
                 BlockType = storeInput.BlockType,
-                GroupId = groupId,
                 Content = storeInput.Content,
-                Source = GetOrAddAddress(storeInput.Source.ToHexString()),
-                Target = GetOrAddAddress(storeInput.Destination.ToHexString()),
-                ThisBlockHash = GetOrAddPacketHash(_hashCalculation.CalculateHash(storeInput.Content), (long)storeInput.SyncBlockHeight, (long)storeInput.CombinedRegistryBlockHeight),
+                Source = GetOrAddAddress(storeInput.Source) ?? throw new ArgumentException($"{nameof(storeInput.Source)} is missing"),
+                Target = GetOrAddAddress(storeInput.Destination),
+                TransactionKey = GetOrAddUtxoTransactionKey(storeInput.TransactionKey),
+                Output = GetOrAddUtxoOutput(storeInput.Commitment, storeInput.Destination, storeInput.OriginatingCommitment),
+                ThisBlockHash = GetOrAddPacketHash(
+                                    _identityKeyProvider.GetKey(_hashCalculation.CalculateHash(storeInput.Content)),
+                                    storeInput.CombinedRegistryBlockHeight),
                 IsVerified = true,
                 IsValid = true,
-                IsTransition = false
+                IsTransition = storeInput.TransactionKey != null
             };
 
             if (Monitor.TryEnter(_sync, _lockTimeout))
@@ -269,52 +280,24 @@ namespace O10.Gateway.DataLayer.Services
             }
         }
 
-        public void StoreIncomingTransitionTransactionalBlock(StateTransitionIncomingStoreInput storeInput, byte[] groupId, Span<byte> originatingCommitment)
-        {
-            StatePacket transactionalIncomingBlock = new StatePacket
-            {
-                WitnessId = storeInput.WitnessId,
-                Height = (long)storeInput.BlockHeight,
-                BlockType = storeInput.BlockType,
-                GroupId = groupId,
-                Content = storeInput.Content,
-                Source = GetOrAddAddress(storeInput.Source.ToHexString()),
-                TransactionKey = GetOrAddUtxoTransactionKey(storeInput.TransactionKey),
-                Output = GetOrAddUtxoOutput(storeInput.Commitment, storeInput.Destination, originatingCommitment),
-                ThisBlockHash = GetOrAddPacketHash(_hashCalculation.CalculateHash(storeInput.Content), (long)storeInput.SyncBlockHeight, (long)storeInput.CombinedRegistryBlockHeight),
-                IsVerified = true,
-                IsValid = true,
-                IsTransition = true
-            };
-
-            if (Monitor.TryEnter(_sync, _lockTimeout))
-            {
-                try
-                {
-                    _dataContext.TransactionalPackets.Add(transactionalIncomingBlock);
-                }
-                finally
-                {
-                    Monitor.Exit(_sync);
-                }
-            }
-            else
-            {
-                _logger.Warning("Failed to acquire lock at StoreIncomingTransitionTransactionalBlock");
-            }
-        }
-
         public void StoreIncomingUtxoTransactionBlock(UtxoIncomingStoreInput storeInput)
         {
+            if (storeInput is null)
+            {
+                throw new ArgumentNullException(nameof(storeInput));
+            }
+
             StealthPacket utxoIncomingBlock = new StealthPacket
             {
                 WitnessId = storeInput.WitnessId,
                 BlockType = storeInput.BlockType,
-                TransactionKey = GetOrAddUtxoTransactionKey(storeInput.TransactionKey),
+                TransactionKey = GetOrAddUtxoTransactionKey(storeInput.TransactionKey) ?? throw new ArgumentException($"{nameof(storeInput.TransactionKey)} is missing"),
                 KeyImage = GetOrAddUtxoKeyImage(storeInput.KeyImage),
-                Output = GetOrAddUtxoOutput(storeInput.Commitment, storeInput.Destination),
+                Output = GetOrAddUtxoOutput(storeInput.Commitment, storeInput.Destination) ?? throw new ArgumentException($"{nameof(storeInput.Commitment)} and {nameof(storeInput.Destination)} are missing"),
                 Content = storeInput.Content,
-                ThisBlockHash = GetOrAddPacketHash(_hashCalculation.CalculateHash(storeInput.Content), (long)storeInput.SyncBlockHeight, (long)storeInput.CombinedRegistryBlockHeight)
+                ThisBlockHash = GetOrAddPacketHash(
+                    _identityKeyProvider.GetKey(_hashCalculation.CalculateHash(storeInput.Content)),
+                    storeInput.CombinedRegistryBlockHeight)
             };
 
             if (Monitor.TryEnter(_sync, _lockTimeout))
@@ -334,21 +317,22 @@ namespace O10.Gateway.DataLayer.Services
             }
         }
 
-        public void StoreRegistryCombinedBlock(ulong height, byte[] content)
+        public void StoreRegistryCombinedBlock(long height, string content)
         {
             if (Monitor.TryEnter(_sync, _lockTimeout))
             {
                 try
                 {
-                    if(_dataContext.RegistryCombinedBlocks.Local.Any(r => r.RegistryCombinedBlockId == (long)height) ||
-                        _dataContext.RegistryCombinedBlocks.Any(r => r.RegistryCombinedBlockId == (long)height))
+                    if(_dataContext.RegistryCombinedBlocks.Local.Any(r => r.RegistryCombinedBlockId == height) ||
+                        _dataContext.RegistryCombinedBlocks.Any(r => r.RegistryCombinedBlockId == height))
                     {
                         _logger.Warning($"RegistryCombinedBlock with height {height} already exist");
 
                         return;
                     }
 
-                    _dataContext.RegistryCombinedBlocks.Add(new RegistryCombinedBlock { RegistryCombinedBlockId = (long)height, Content = content });
+                    _dataContext.RegistryCombinedBlocks.Add(
+                        new RegistryCombinedBlock { RegistryCombinedBlockId = height, Content = content });
                 }
                 finally
                 {
@@ -380,22 +364,27 @@ namespace O10.Gateway.DataLayer.Services
             }
         }
 
-        public TaskCompletionSource<WitnessPacket> StoreWitnessPacket(ulong syncBlockHeight, long round, ulong combinedBlockHeight, LedgerType referencedLedgerType, ushort referencedPacketType, byte[] referencedBodyHash, byte[] referencedDestinationKey, byte[] referencedDestinationKey2, byte[] referencedTransactionKey, byte[] referencedKeyImage)
+        public TaskCompletionSource<WitnessPacket> StoreWitnessPacket(long syncBlockHeight, long round, long combinedBlockHeight, LedgerType referencedLedgerType, ushort referencedPacketType, IKey referencedBodyHash, IKey referencedDestinationKey, IKey referencedDestinationKey2, IKey referencedTransactionKey, IKey referencedKeyImage)
         {
+            if (referencedBodyHash is null)
+            {
+                throw new ArgumentNullException(nameof(referencedBodyHash));
+            }
+
             try
             {
                 WitnessPacket witnessPacket = new WitnessPacket
                 {
-                    SyncBlockHeight = (long)syncBlockHeight,
+                    SyncBlockHeight = syncBlockHeight,
                     Round = round,
-                    CombinedBlockHeight = (long)combinedBlockHeight,
+                    CombinedBlockHeight = combinedBlockHeight,
                     ReferencedLedgerType = referencedLedgerType,
                     ReferencedPacketType = referencedPacketType,
-                    ReferencedBodyHash = GetOrAddPacketHash(referencedBodyHash, (long)syncBlockHeight, (long)combinedBlockHeight),
-                    ReferencedDestinationKey = referencedDestinationKey.ToHexString(),
-                    ReferencedDestinationKey2 = referencedDestinationKey2.ToHexString(),
-                    ReferencedTransactionKey = referencedTransactionKey.ToHexString(),
-                    ReferencedKeyImage = referencedKeyImage.ToHexString()
+                    ReferencedBodyHash = GetOrAddPacketHash(referencedBodyHash, combinedBlockHeight),
+                    ReferencedDestinationKey = referencedDestinationKey?.ToString(),
+                    ReferencedDestinationKey2 = referencedDestinationKey2?.ToString(),
+                    ReferencedTransactionKey = referencedTransactionKey?.ToString(),
+                    ReferencedKeyImage = referencedKeyImage?.ToString()
 				};
 
                 TaskCompletionSource<WitnessPacket> taskCompletionSource = new TaskCompletionSource<WitnessPacket>();
@@ -469,15 +458,20 @@ namespace O10.Gateway.DataLayer.Services
 			return null;
 		}
 
-		public void UpdateLastSyncBlock(ulong height, byte[] hash)
+		public void UpdateLastSyncBlock(long height, IKey hash)
         {
-			if (Monitor.TryEnter(_sync, _lockTimeout))
+            if (hash is null)
+            {
+                throw new ArgumentNullException(nameof(hash));
+            }
+
+            if (Monitor.TryEnter(_sync, _lockTimeout))
 			{
 				try
 				{
-					if (!_dataContext.SyncBlocks.Local.Any(s => s.SyncBlockId == (long)height) && !_dataContext.SyncBlocks.Any(s => s.SyncBlockId == (long)height))
+					if (!_dataContext.SyncBlocks.Local.Any(s => s.SyncBlockId == height) && !_dataContext.SyncBlocks.Any(s => s.SyncBlockId == height))
 					{
-						_dataContext.SyncBlocks.Add(new SyncBlock { SyncBlockId = (long)height, Hash = hash.ToHexString() });
+						_dataContext.SyncBlocks.Add(new SyncBlock { SyncBlockId = height, Hash = hash.ToString() });
 					}
 
                     List<SyncBlock> supersedeSyncBlocks = _dataContext.SyncBlocks.Where(s => s.SyncBlockId > (long)height).ToList();
@@ -558,7 +552,7 @@ namespace O10.Gateway.DataLayer.Services
 
 					pickedIndicies.Add(index);
 					found = true;
-					commitments[i] = _rootAttributes[issuerStr][index].ToArray();
+					commitments[i] = _rootAttributes[issuerStr][index].ToByteArray();
 				} while (!found);
 			}
 
@@ -707,13 +701,25 @@ namespace O10.Gateway.DataLayer.Services
             }
         }
 
-        public void StoreRootAttributeIssuance(Memory<byte> issuer, Memory<byte> issuanceCommitment, Memory<byte> rootCommitment, long combinedBlockHeight)
+        public void StoreRootAttributeIssuance(IKey issuer, IKey issuanceCommitment, IKey rootCommitment, long combinedBlockHeight)
         {
-            string addr = issuer.ToHexString();
+            if (issuanceCommitment is null)
+            {
+                throw new ArgumentNullException(nameof(issuanceCommitment));
+            }
 
-            _logger.LogIfDebug(() => $"{nameof(SetRootAttributesOverriden)} for issuer={addr.ToVarBinary()}, issuanceCommitment={issuanceCommitment.ToHexString().ToVarBinary()}, rootCommitment={rootCommitment.ToHexString().ToVarBinary()}, and combinedBlockHeight={combinedBlockHeight}");
+            if (rootCommitment is null)
+            {
+                throw new ArgumentNullException(nameof(rootCommitment));
+            }
 
-            Address address = GetOrAddAddress(addr);
+            string? addr = issuer?.ToString();
+            string issuanceCommitmentStr = issuanceCommitment.ToString();
+            string rootCommitmentStr = rootCommitment.ToString();
+
+            _logger.LogIfDebug(() => $"{nameof(StoreRootAttributeIssuance)} for issuer={addr?.ToVarBinary()}, issuanceCommitment={issuanceCommitmentStr.ToVarBinary()}, rootCommitment={rootCommitmentStr.ToVarBinary()}, and combinedBlockHeight={combinedBlockHeight}");
+
+            Address address = GetOrAddAddress(issuer) ?? throw new ArgumentNullException(nameof(issuer));
 
             if (Monitor.TryEnter(_sync, _lockTimeout))
             {
@@ -721,8 +727,8 @@ namespace O10.Gateway.DataLayer.Services
                 {
                     RootAttribute rootAttributeIssuance = new RootAttribute
                     {
-                        IssuanceCommitment = issuanceCommitment.ToHexString(),
-                        RootCommitment = rootCommitment.ToHexString(),
+                        IssuanceCommitment = issuanceCommitmentStr,
+                        RootCommitment = rootCommitmentStr,
                         IssuanceCombinedBlock = combinedBlockHeight,
                         Issuer = address
                     };
@@ -731,7 +737,7 @@ namespace O10.Gateway.DataLayer.Services
 
                     if (!_rootAttributes.ContainsKey(addr))
                     {
-                        _rootAttributes.Add(addr, new List<Memory<byte>>());
+                        _rootAttributes.Add(addr, new List<IKey>());
                     }
 
                     _rootAttributes[addr].Add(rootCommitment);
@@ -747,10 +753,20 @@ namespace O10.Gateway.DataLayer.Services
             }
         }
 
-        public void SetRootAttributesOverriden(Memory<byte> issuer, Memory<byte> issuanceCommitment, long combinedBlockHeight)
+        public void SetRootAttributesOverriden(IKey issuer, IKey issuanceCommitment, long combinedBlockHeight)
         {
-			string issuanceCommitmentString = issuanceCommitment.ToHexString();
-			string addr = issuer.ToHexString();
+            if (issuer is null)
+            {
+                throw new ArgumentNullException(nameof(issuer));
+            }
+
+            if (issuanceCommitment is null)
+            {
+                throw new ArgumentNullException(nameof(issuanceCommitment));
+            }
+
+            string issuanceCommitmentString = issuanceCommitment.ToString();
+			string addr = issuer.ToString();
             
             _logger.LogIfDebug(() => $"{nameof(SetRootAttributesOverriden)} for issuer={addr.ToVarBinary()}, issuanceCommitment={issuanceCommitmentString.ToVarBinary()}, and combinedBlockHeight={combinedBlockHeight}");
 
@@ -764,7 +780,7 @@ namespace O10.Gateway.DataLayer.Services
 
                     if (overriden.Any() && _rootAttributes.ContainsKey(addr))
                     {
-                        _rootAttributes[addr].RemoveAll(c => overriden.Any(o => c.Equals32(o)));
+                        _rootAttributes[addr].RemoveAll(c => overriden.Any(o => c.Equals(o)));
 
 						overriden.ForEach(overridenEntry => 
 						{
@@ -789,16 +805,31 @@ namespace O10.Gateway.DataLayer.Services
             }
         }
 
-        public void StoreAssociatedAttributeIssuance(Memory<byte> issuer, Memory<byte> issuanceCommitment, Memory<byte> rootIssuanceCommitment)
+        public void StoreAssociatedAttributeIssuance(IKey issuer, IKey issuanceCommitment, IKey rootIssuanceCommitment)
         {
-			string issuanceCommitmentString = issuanceCommitment.ToHexString();
-			string rootIssuanceCommitmentString = rootIssuanceCommitment.ToHexString();
-			string addr = issuer.ToHexString();
+            if (issuer is null)
+            {
+                throw new ArgumentNullException(nameof(issuer));
+            }
 
-            _logger.LogIfDebug(() => $"{nameof(StoreAssociatedAttributeIssuance)} for issuer={addr.ToVarBinary()}, issuanceCommitment={issuanceCommitmentString.ToVarBinary()} and rootIssuanceCommitment={rootIssuanceCommitmentString.ToVarBinary()}");
+            if (issuanceCommitment is null)
+            {
+                throw new ArgumentNullException(nameof(issuanceCommitment));
+            }
+
+            if (rootIssuanceCommitment is null)
+            {
+                throw new ArgumentNullException(nameof(rootIssuanceCommitment));
+            }
+
+            string issuanceCommitmentString = issuanceCommitment.ToString();
+			string rootIssuanceCommitmentString = rootIssuanceCommitment.ToString();
+			string? addr = issuer?.ToString();
+
+            _logger.LogIfDebug(() => $"{nameof(StoreAssociatedAttributeIssuance)} for issuer={addr?.ToVarBinary()}, issuanceCommitment={issuanceCommitmentString.ToVarBinary()} and rootIssuanceCommitment={rootIssuanceCommitmentString.ToVarBinary()}");
             _logger.LogIfDebug(() => $"{nameof(StoreAssociatedAttributeIssuance)} for issuer={addr}, issuanceCommitment={issuanceCommitmentString} and rootIssuanceCommitment={rootIssuanceCommitmentString}");
 
-            Address address = GetOrAddAddress(addr);
+            Address address = GetOrAddAddress(issuer) ?? throw new ArgumentNullException(nameof(issuer));
 
             if (Monitor.TryEnter(_sync, _lockTimeout))
             {
@@ -850,7 +881,7 @@ namespace O10.Gateway.DataLayer.Services
             else
             {
                 string addr = issuer.ToHexString();
-                return _rootAttributes.ContainsKey(addr) ? _rootAttributes[addr].Any(r => r.Equals32(rootCommitment)) : false;
+                return _rootAttributes.ContainsKey(addr) && _rootAttributes[addr].Any(r => r.Equals(rootCommitment));
             }
 
             return false;
@@ -974,13 +1005,13 @@ namespace O10.Gateway.DataLayer.Services
             return null;
         }
 
-        public StealthPacket GetStealthPacket(long syncBlockHeight, long combinedRegistryBlockHeight, string hashString)
+        public StealthPacket GetStealthPacket(long combinedRegistryBlockHeight, string hashString)
         {
             if (Monitor.TryEnter(_sync, _lockTimeout))
             {
                 try
                 {
-                    var packetHash = _dataContext.PacketHashes.Local.FirstOrDefault(h => h.SyncBlockHeight == syncBlockHeight && h.CombinedRegistryBlockHeight == combinedRegistryBlockHeight && h.Hash == hashString);
+                    var packetHash = _dataContext.PacketHashes.Local.FirstOrDefault(h => h.CombinedRegistryBlockHeight == combinedRegistryBlockHeight && h.Hash == hashString);
 
                     if(packetHash != null)
                     {
@@ -1007,18 +1038,30 @@ namespace O10.Gateway.DataLayer.Services
             return null;
         }
 
-        public void CancelEmployeeRecord(Memory<byte> issuer, Memory<byte> registrationCommitment)
+        public void CancelEmployeeRecord(IKey issuerKey, IKey registrationCommitment)
         {
+            if (issuerKey is null)
+            {
+                throw new ArgumentNullException(nameof(issuerKey));
+            }
+
+            if (registrationCommitment is null)
+            {
+                throw new ArgumentNullException(nameof(registrationCommitment));
+            }
+
+            var issuer = issuerKey.ToString();
+            string registrationCommitmentStr = registrationCommitment.ToString();
+
             if (Monitor.TryEnter(_sync, _lockTimeout))
             {
                 try
                 {
-                    string registrationCommitmentStr = registrationCommitment.ToHexString();
-                    RelationRecord employeeRecord = _dataContext.EmployeeRecords.Local.FirstOrDefault(e => e.RegistrationCommitment.Equals(registrationCommitmentStr));
+                    RelationRecord employeeRecord = _dataContext.EmployeeRecords.Local.FirstOrDefault(e => e.Issuer == issuer && e.RegistrationCommitment == registrationCommitmentStr);
 
                     if(employeeRecord == null)
                     {
-                        employeeRecord = _dataContext.EmployeeRecords.FirstOrDefault(e => e.RegistrationCommitment.Equals(registrationCommitmentStr));
+                        employeeRecord = _dataContext.EmployeeRecords.FirstOrDefault(e => e.Issuer == issuer && e.RegistrationCommitment == registrationCommitmentStr);
                     }
 
                     if(employeeRecord != null)
@@ -1033,21 +1076,36 @@ namespace O10.Gateway.DataLayer.Services
             }
             else
             {
-                _logger.Warning("Failed to acquire lock at AddEmployeeRecord");
+                _logger.Warning("Failed to acquire lock at CancelEmployeeRecord");
             }
         }
 
-        public void AddEmployeeRecord(Memory<byte> issuer, Memory<byte> registrationCommitment, Memory<byte> groupCommitment)
+        public void AddEmployeeRecord(IKey issuer, IKey registrationCommitment, IKey groupCommitment)
 		{
-			if (Monitor.TryEnter(_sync, _lockTimeout))
+            if (issuer is null)
+            {
+                throw new ArgumentNullException(nameof(issuer));
+            }
+
+            if (registrationCommitment is null)
+            {
+                throw new ArgumentNullException(nameof(registrationCommitment));
+            }
+
+            if (groupCommitment is null)
+            {
+                throw new ArgumentNullException(nameof(groupCommitment));
+            }
+
+            if (Monitor.TryEnter(_sync, _lockTimeout))
 			{
 				try
 				{
 					RelationRecord employeeRecord = new RelationRecord
 					{
-						Issuer = issuer.ToHexString(),
-						RegistrationCommitment = registrationCommitment.ToHexString(),
-						GroupCommitment = groupCommitment.ToHexString()
+						Issuer = issuer.ToString(),
+						RegistrationCommitment = registrationCommitment.ToString(),
+						GroupCommitment = groupCommitment.ToString()
 					};
 
 					_dataContext.EmployeeRecords.Add(employeeRecord);
@@ -1137,8 +1195,14 @@ namespace O10.Gateway.DataLayer.Services
 
         #region Private Functions
 
-        private Address GetOrAddAddress(string addr)
+        private Address? GetOrAddAddress(IKey? addrKey)
         {
+            if(addrKey == null)
+            {
+                return null;
+            }
+
+            var addr = addrKey.ToString();
             if (Monitor.TryEnter(_sync, _lockTimeout))
             {
                 try
@@ -1172,20 +1236,19 @@ namespace O10.Gateway.DataLayer.Services
             return null;
         }
 
-        private PacketHash GetOrAddPacketHash(Span<byte> blockHash, long syncBlockHeight, long combinedRegistryBlockHeight)
+        private PacketHash GetOrAddPacketHash(IKey blockHash, long combinedRegistryBlockHeight)
         {
             if (Monitor.TryEnter(_sync, _lockTimeout))
             {
                 try
                 {
-                    string blockHashString = blockHash.ToArray().ToHexString();
-                    PacketHash block = _dataContext.PacketHashes.FirstOrDefault(b => b.SyncBlockHeight == syncBlockHeight && b.CombinedRegistryBlockHeight == b.CombinedRegistryBlockHeight && b.Hash == blockHashString);
+                    string blockHashString = blockHash.ToString();
+                    PacketHash block = _dataContext.PacketHashes.FirstOrDefault(b => b.CombinedRegistryBlockHeight == b.CombinedRegistryBlockHeight && b.Hash == blockHashString);
 
                     if (block == null)
                     {
                         block = new PacketHash
                         {
-                            SyncBlockHeight = syncBlockHeight,
                             CombinedRegistryBlockHeight = combinedRegistryBlockHeight,
                             Hash = blockHashString
                         };
@@ -1243,13 +1306,18 @@ namespace O10.Gateway.DataLayer.Services
             return null;
         }
 
-        private TransactionKey GetOrAddUtxoTransactionKey(Span<byte> transactionKey)
+        private TransactionKey? GetOrAddUtxoTransactionKey(IKey? transactionKey)
         {
+            if(transactionKey == null)
+            {
+                return null;
+            }
+
             if (Monitor.TryEnter(_sync, _lockTimeout))
             {
                 try
                 {
-                    string transactionKeyString = transactionKey.ToArray().ToHexString();
+                    string transactionKeyString = transactionKey.ToString();
                     TransactionKey utxoTransactionKey = _dataContext.UtxoTransactionKeys.FirstOrDefault(b => b.Key == transactionKeyString);
 
                     if (utxoTransactionKey == null)
@@ -1277,50 +1345,15 @@ namespace O10.Gateway.DataLayer.Services
             return null;
         }
 
-        private StealthOutput GetOrAddUtxoOutput(Span<byte> commitment, Span<byte> destinationKey)
+        private StealthOutput? GetOrAddUtxoOutput(IKey? commitment, IKey? destinationKey, IKey? originatingCommitment = null)
         {
-            string commitmentString = commitment.ToArray().ToHexString();
-            string destinationKeyString = destinationKey.ToArray().ToHexString();
-
-            if (Monitor.TryEnter(_sync, _lockTimeout))
+            if(commitment == null && destinationKey == null)
             {
-                _logger.Debug("Entering GetOrAddUtxoOutput");
-
-                try
-                {
-                    StealthOutput utxoOutput = _dataContext.UtxoOutputs.FirstOrDefault(b => !b.IsOverriden && b.Commitment == commitmentString && b.DestinationKey == destinationKeyString);
-
-                    if (utxoOutput == null)
-                    {
-                        utxoOutput = new StealthOutput
-                        {
-                            Commitment = commitmentString,
-                            DestinationKey = destinationKeyString
-                        };
-
-                        _dataContext.UtxoOutputs.Add(utxoOutput);
-                    }
-
-                    return utxoOutput;
-                }
-                finally
-                {
-                    _logger.Debug("Exiting GetOrAddUtxoOutput");
-                    Monitor.Exit(_sync);
-                }
-            }
-            else
-            {
-                _logger.Warning("Failed to acquire lock at GetOrAddUtxoOutput");
+                return null;
             }
 
-            return null;
-        }
-
-        private StealthOutput GetOrAddUtxoOutput(Span<byte> commitment, Span<byte> destinationKey, Span<byte> originatingCommitment)
-        {
-            string commitmentString = commitment.ToArray().ToHexString();
-            string destinationKeyString = destinationKey.ToArray().ToHexString();
+            string commitmentString = commitment?.ToString()??throw new ArgumentNullException(nameof(commitment));
+            string destinationKeyString = destinationKey?.ToString() ?? throw new ArgumentNullException(nameof(destinationKey));
 
             if (Monitor.TryEnter(_sync, _lockTimeout))
             {
@@ -1336,7 +1369,7 @@ namespace O10.Gateway.DataLayer.Services
                         {
                             Commitment = commitmentString,
                             DestinationKey = destinationKeyString,
-                            OriginatingCommitment = originatingCommitment.ToArray()
+                            OriginatingCommitment = originatingCommitment?.ToString()
                         };
 
                         _dataContext.UtxoOutputs.Add(utxoOutput);

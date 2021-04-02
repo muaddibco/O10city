@@ -61,6 +61,15 @@ namespace O10.Transactions.Core.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Accessor for the Ledger of type &apos;{0}&apos; not supported.
+        /// </summary>
+        internal static string ERR_ACCESSOR_NOT_SUPPORTED {
+            get {
+                return ResourceManager.GetString("ERR_ACCESSOR_NOT_SUPPORTED", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Validation of the provided accessor failed with the message &apos;{0}&apos;..
         /// </summary>
         internal static string ERR_ACCESSOR_VALIDATION_FAILED {
@@ -120,6 +129,15 @@ namespace O10.Transactions.Core.Properties {
         internal static string ERR_IDENTITY_NOT_FOUND {
             get {
                 return ResourceManager.GetString("ERR_IDENTITY_NOT_FOUND", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The packet &apos;{0}&apos; misses the transaction body.
+        /// </summary>
+        internal static string ERR_NO_TRANSACTION {
+            get {
+                return ResourceManager.GetString("ERR_NO_TRANSACTION", resourceCulture);
             }
         }
         

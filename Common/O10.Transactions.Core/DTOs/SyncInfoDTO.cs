@@ -1,14 +1,16 @@
-﻿namespace O10.Transactions.Core.DTOs
+﻿using O10.Core.Identity;
+
+namespace O10.Transactions.Core.DTOs
 {
     public class SyncInfoDTO
     {
-        public SyncInfoDTO(long height, byte[] hash)
+        public SyncInfoDTO(long height, IKey hash)
         {
             Height = height;
             Hash = hash;
         }
 
         public long Height { get; }
-        public byte[] Hash { get; set; }
+        public IKey Hash { get; set; }
     }
 }
