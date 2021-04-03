@@ -1,6 +1,7 @@
 ﻿using O10.Core.Configuration;
 using O10.Core.Identity;
 using O10.Core.Logging;
+using O10.Core.Models;
 using O10.Gateway.DataLayer.Model;
 using O10.Gateway.DataLayer.Services;
 using O10.Gateway.DataLayer.Services.Inputs;
@@ -30,12 +31,53 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
 
         public override IPacketBase GetByWitness(WitnessPacket witnessPacket)
         {
-            throw new NotImplementedException();
+            if (witnessPacket is null)
+            {
+                throw new ArgumentNullException(nameof(witnessPacket));
+            }
+
+            StatePacket transactionalIncomingBlock = _dataAccessService.GetTransactionalIncomingBlock(witnessPacket.WitnessPacketId);
+            return SerializableEntity<IPacketBase>.Create(transactionalIncomingBlock.Content);
         }
 
         protected override void StorePacket(WitnessPacket wp, IPacketBase packet)
         {
-            throw new NotImplementedException();
+            if (wp is null)
+            {
+                throw new ArgumentNullException(nameof(wp));
+            }
+
+            if (packet is null)
+            {
+                throw new ArgumentNullException(nameof(packet));
+            }
+
+            var registryCombinedBlockHeight = wp.CombinedBlockHeight;
+
+            switch (packet.Body.TransactionType)
+            {
+                case TransactionTypes.Transaction_IssueBlindedAsset:
+                    StoreIssueBlindedAsset(wp.WitnessPacketId, registryCombinedBlockHeight, packet);
+                    break;
+                case TransactionTypes.Transaction_IssueAssociatedBlindedAsset:
+                    StoreIssueAssociatedBlindedAsset(wp.WitnessPacketId, registryCombinedBlockHeight, packet);
+                    break;
+                case TransactionTypes.Transaction_TransferAssetToStealth:
+                    StoreTransferAsset(wp.WitnessPacketId, registryCombinedBlockHeight, packet);
+                    break;
+                case TransactionTypes.Transaction_RelationRecord:
+                    StoreRelationRecordPacket(wp.WitnessPacketId, registryCombinedBlockHeight, packet);
+                    break;
+                case TransactionTypes.Transaction_CancelEmployment:
+                    StoreCancelEmployeeRecordPacket(wp.WitnessPacketId, registryCombinedBlockHeight, packet);
+                    break;
+                case TransactionTypes.Transaction_DocumentRecord:
+                    StoreDocumentRecord(wp.WitnessPacketId, registryCombinedBlockHeight, packet);
+                    break;
+                case TransactionTypes.Transaction_DocumentSignRecord:
+                    StoreDocumentSignRecord(wp.WitnessPacketId, registryCombinedBlockHeight, packet);
+                    break;
+            }
         }
 
         private void StoreDocumentSignRecord(long witnessId, long registryCombinedBlockHeight, IPacketBase packet)
@@ -50,7 +92,7 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
                 BlockType = transaction.TransactionType,
                 Commitment = transaction.SignerCommitment,
                 Source = transaction.Source,
-                Content = packet.ToByteArray()
+                Content = packet.ToString()
             };
 
             _dataAccessService.StoreIncomingTransactionalBlock(storeInput);
@@ -67,7 +109,7 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
                 BlockType = transaction.TransactionType,
                 Commitment = transaction.DocumentHash,
                 Source = transaction.Source,
-                Content = packet.ToByteArray()
+                Content = packet.ToString()
             };
 
             _dataAccessService.StoreIncomingTransactionalBlock(storeInput);
@@ -84,7 +126,7 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
                 BlockType = transaction.TransactionType,
                 Commitment = transaction.RegistrationCommitment,
                 Source = transaction.Source,
-                Content = packet.ToByteArray()
+                Content = packet.ToString()
             };
 
             _dataAccessService.StoreIncomingTransactionalBlock(storeInput);
@@ -102,7 +144,7 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
                 BlockType = transaction.TransactionType,
                 Commitment = transaction.RegistrationCommitment,
                 Source = transaction.Source,
-                Content = packet.ToByteArray()
+                Content = packet.ToString()
             };
 
             _dataAccessService.StoreIncomingTransactionalBlock(storeInput);
@@ -120,7 +162,7 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
                 BlockType = transaction.TransactionType,
                 Commitment = transaction.AssetCommitment,
                 Source = transaction.Source,
-                Content = packet.ToByteArray()
+                Content = packet.ToString()
             };
 
             _dataAccessService.StoreIncomingTransactionalBlock(storeInput);
@@ -139,7 +181,7 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
                 BlockType = transaction.TransactionType,
                 Commitment = transaction.AssetCommitment,
                 Source = transaction.Source,
-                Content = packet.ToByteArray()
+                Content = packet.ToString()
             };
 
             _dataAccessService.StoreIncomingTransactionalBlock(storeInput);
@@ -160,7 +202,7 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
                 TransactionKey = transaction.TransactionPublicKey,
                 Source = transaction.Source,
                 OriginatingCommitment = originatingCommitment,
-                Content = packet.ToByteArray()
+                Content = packet.ToString()
             };
 
             _dataAccessService.StoreIncomingTransactionalBlock(storeInput);

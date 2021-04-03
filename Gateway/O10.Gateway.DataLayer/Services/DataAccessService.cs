@@ -1172,24 +1172,38 @@ namespace O10.Gateway.DataLayer.Services
 			return null;
 		}
 
-        public void AddCompromisedKeyImage(string keyImage)
+        public void AddCompromisedKeyImage(IKey keyImage)
         {
+            if (keyImage is null)
+            {
+                throw new ArgumentNullException(nameof(keyImage));
+            }
+
+            var keyImageStr = keyImage.ToString();
+
             lock(_sync)
             {
-                if(!_dataContext.CompromisedKeyImages.Any(i => i.KeyImage == keyImage))
+                if(!_dataContext.CompromisedKeyImages.Any(i => i.KeyImage == keyImageStr))
                 {
-                    _dataContext.CompromisedKeyImages.Add(new CompromisedKeyImage { KeyImage = keyImage });
+                    _dataContext.CompromisedKeyImages.Add(new CompromisedKeyImage { KeyImage = keyImageStr });
 
                     _dataContext.SaveChanges();
                 }
             }
         }
 
-        public bool GetIsKeyImageCompomised(string keyImage)
+        public bool GetIsKeyImageCompomised(IKey keyImage)
         {
-            lock(_sync)
+            if (keyImage is null)
             {
-                return _dataContext.CompromisedKeyImages.Any(c => c.KeyImage == keyImage);
+                throw new ArgumentNullException(nameof(keyImage));
+            }
+
+            var keyImageStr = keyImage.ToString();
+
+            lock (_sync)
+            {
+                return _dataContext.CompromisedKeyImages.Any(c => c.KeyImage == keyImageStr);
             }
         }
 

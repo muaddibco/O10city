@@ -14,7 +14,7 @@ namespace O10.Gateway.DataLayer.Model
 
         public ushort BlockType { get; set; }
 
-        public byte[] Content { get; set; }
+        public string Content { get; set; }
 
         public TransactionKey TransactionKey { get; set; }
 

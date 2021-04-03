@@ -62,7 +62,7 @@ namespace O10.Gateway.DataLayer.Services
 
 		StatePacket GetTransactionBySourceAndHeight(string source, ulong blockHeight);
 
-        void AddCompromisedKeyImage(string keyImage);
-        bool GetIsKeyImageCompomised(string keyImage);
+        void AddCompromisedKeyImage(IKey keyImage);
+        bool GetIsKeyImageCompomised(IKey keyImage);
     }
 }

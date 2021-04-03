@@ -30,7 +30,7 @@ namespace O10.Gateway.Common.Services
 
 		//TransactionalBlockEssense GetLastBlock(byte[] key);
 
-		IEnumerable<WitnessPackage> GetWitnessRange(ulong combinedBlockHeightStart, ulong combinedBlockHeightEnd = 0);
+		IEnumerable<WitnessPackage> GetWitnessRange(long combinedBlockHeightStart, long combinedBlockHeightEnd = 0);
 
 		Task ProcessRtPackage(RtPackage rtPackage);
 

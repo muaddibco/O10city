@@ -9,7 +9,7 @@ namespace O10.Gateway.DataLayer.Services.Inputs
         public ushort BlockType { get; set; }
         public IKey? Commitment { get; set; }
         public IKey? Destination { get; set; }
-        public byte[] Content { get; set; }
+        public string Content { get; set; }
         public IKey? TransactionKey { get; set; }
     }
 }

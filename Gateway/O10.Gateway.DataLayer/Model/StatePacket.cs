@@ -20,7 +20,7 @@ namespace O10.Gateway.DataLayer.Model
 
         public Address? Target { get; set; }
 
-        public byte[] Content { get; set; }
+        public string Content { get; set; }
 
         #region Transition Account based to UTXO based transaction
 

@@ -1,9 +1,11 @@
-﻿namespace O10.Gateway.DataLayer.Services.Inputs
+﻿using O10.Core.Identity;
+
+namespace O10.Gateway.DataLayer.Services.Inputs
 {
     public class UtxoIncomingStoreInput : IncomingStoreInput
     {
-        public byte[] KeyImage { get; set; }
+        public IKey? KeyImage { get; set; }
 
-		public byte[] DestinationKey2 { get; set; }
+		public IKey? DestinationKey2 { get; set; }
 	}
 }

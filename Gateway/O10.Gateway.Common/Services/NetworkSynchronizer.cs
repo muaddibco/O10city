@@ -9,7 +9,6 @@ using O10.Transactions.Core.Enums;
 using O10.Gateway.Common.Configuration;
 using O10.Gateway.DataLayer.Model;
 using O10.Gateway.DataLayer.Services;
-using O10.Gateway.DataLayer.Services.Inputs;
 using O10.Core;
 using O10.Core.Architecture;
 using O10.Core.Communication;
@@ -36,7 +35,9 @@ using O10.Gateway.Common.Services.LedgerSynchronizers;
 
 namespace O10.Gateway.Common.Services
 {
-	[RegisterDefaultImplementation(typeof(INetworkSynchronizer), Lifetime = LifetimeManagement.Singleton)]
+	// TODO: currently NetworkSynchronizer supports only 1 Node and is not built for working against different Nodes.
+	// Need to adjust the logic in the way so packets are robustly obtained from different nodes.
+    [RegisterDefaultImplementation(typeof(INetworkSynchronizer), Lifetime = LifetimeManagement.Singleton)]
 	public class NetworkSynchronizer : INetworkSynchronizer
 	{
 		private readonly ConcurrentDictionary<int, TaskCompletionSource<bool>> _connectityCheckerAwaiters;
@@ -189,7 +190,6 @@ namespace O10.Gateway.Common.Services
         public void Start()
 		{
 		}
-
 
 		public async Task<SyncInfoDTO> GetLastSyncBlock()
 		{
@@ -482,7 +482,8 @@ namespace O10.Gateway.Common.Services
                                 item.With<RegisterTransaction>().Parameters.OptionalKey("ReferencedTransactionKey", _identityKeyProvider),
                                 item.With<RegisterTransaction>().Parameters.OptionalKey("ReferencedKeyImage", _identityKeyProvider));
 
-                        TaskCompletionSource<WitnessPacket> transactionStoreCompletionSource = ObtainAndStoreTransaction(witnessStoreCompletionSource);
+                        TaskCompletionSource<WitnessPacket> transactionStoreCompletionSource 
+							= ObtainAndStoreTransaction(witnessStoreCompletionSource);
 
                         transactionStoreCompletionSources.Add(transactionStoreCompletionSource.Task);
                     }
@@ -519,7 +520,11 @@ namespace O10.Gateway.Common.Services
 
                 try
                 {
-					await _ledgerSynchronizersRepository.GetInstance(witnessPacket.ReferencedLedgerType).SyncByWitness(witnessPacket).ConfigureAwait(false);
+					await _ledgerSynchronizersRepository
+						.GetInstance(witnessPacket.ReferencedLedgerType)
+						.SyncByWitness(witnessPacket)
+						.ConfigureAwait(false);
+					
 					completionSource.SetResult(witnessPacket);
 				}
 				catch(AggregateException ex)
@@ -572,11 +577,16 @@ namespace O10.Gateway.Common.Services
 
 		public async Task<IEnumerable<IPacketBase>> GetPackets(IEnumerable<long> witnessIds)
 		{
-			_logger.Debug($"Getting packets for witnesses [{string.Join(',',witnessIds)}]");
+            if (witnessIds is null)
+            {
+                throw new ArgumentNullException(nameof(witnessIds));
+            }
+
+            _logger.Debug($"Getting packets for witnesses [{string.Join(',',witnessIds)}]");
 
 			try
 			{
-				List<PacketInfo> packetInfos = new List<PacketInfo>();
+				List<IPacketBase> packets = new List<IPacketBase>();
 
 				foreach (long witnessId in witnessIds)
 				{
@@ -586,39 +596,11 @@ namespace O10.Gateway.Common.Services
 
 					_logger.LogIfDebug(() => $"{nameof(WitnessPacket)}: {JsonConvert.SerializeObject(witness, new ByteArrayJsonConverter())}");
 
-					if (witness.ReferencedKeyImage != null)
-					{
-                        DataLayer.Model.StealthPacket utxoIncomingBlock = _dataAccessService.GetUtxoIncomingBlock(witnessId);
-
-						if(utxoIncomingBlock == null)
-						{
-							utxoIncomingBlock = await RetryObtainUtxoPacket(witness).ConfigureAwait(false);
-						}
-
-						if (utxoIncomingBlock != null)
-						{
-							_logger.LogIfDebug(() => $"{nameof(StealthPacket)}: {JsonConvert.SerializeObject(utxoIncomingBlock, new ByteArrayJsonConverter())}");
-							packetInfos.Add(new PacketInfo { LedgerType = LedgerType.Stealth, BlockType = utxoIncomingBlock.BlockType, Content = utxoIncomingBlock.Content });
-						}
-					}
-					else
-					{
-						StatePacket transactionalIncomingBlock = _dataAccessService.GetTransactionalIncomingBlock(witnessId);
-
-						if(transactionalIncomingBlock == null)
-						{
-							transactionalIncomingBlock = await RetryObtainTransactionalPacket(witness).ConfigureAwait(false);
-						}
-
-						if(transactionalIncomingBlock != null)
-						{
-							_logger.LogIfDebug(() => $"{nameof(StatePacket)}: {JsonConvert.SerializeObject(transactionalIncomingBlock, new ByteArrayJsonConverter())}");
-							packetInfos.Add(new PacketInfo { LedgerType = LedgerType.O10State, BlockType = transactionalIncomingBlock.BlockType, Content = transactionalIncomingBlock.Content });
-						}
-					}
+					var packet = _ledgerSynchronizersRepository.GetInstance(witness.ReferencedLedgerType).GetByWitness(witness);
+					packets.Add(packet);
 				}
 
-				return await Task.FromResult(packetInfos).ConfigureAwait(false);
+				return await Task.FromResult(packets).ConfigureAwait(false);
 			}
 			catch (Exception ex)
 			{
@@ -641,157 +623,6 @@ namespace O10.Gateway.Common.Services
         {
 			StatePacketInfo statePacketInfo = await _synchronizerConfiguration.NodeApiUri.AppendPathSegment("GetLastStatePacketInfo").SetQueryParam("publicKey", accountPublicKey).GetJsonAsync<StatePacketInfo>().ConfigureAwait(false);
 			return statePacketInfo;
-		}
-
-		private async Task<DataLayer.Model.StealthPacket> RetryObtainUtxoPacket(WitnessPacket witness)
-		{
-			_logger.Warning($"{nameof(StealthPacket)} for WitnessId {witness.WitnessPacketId} is missing. Retry to obtain");
-
-			Url url = _synchronizerConfiguration.NodeApiUri.AppendPathSegment("StealthTransaction").SetQueryParam("combinedBlockHeight", witness.CombinedBlockHeight).SetQueryParam("hash", witness.ReferencedBodyHash.Hash);
-			_logger.Info($"Querying UTXO packet with URL {url}");
-            TransactionInfo transactionInfo = await url.GetJsonAsync<TransactionInfo>().ConfigureAwait(false);
-			StorePacket(witness, transactionInfo.Content);
-            DataLayer.Model.StealthPacket utxoIncomingBlock = _dataAccessService.GetUtxoIncomingBlock(witness.WitnessPacketId);
-			if (utxoIncomingBlock == null)
-			{
-				_logger.Error($"Failed retry to obtain {nameof(StealthPacket)} for WitnessId {witness.WitnessPacketId}");
-			}
-
-			return utxoIncomingBlock;
-		}
-
-		private async Task<StatePacket> RetryObtainTransactionalPacket(WitnessPacket witness)
-		{
-			_logger.Warning($"{nameof(StatePacket)} for WitnessId {witness.WitnessPacketId} is missing. Retry to obtain");
-
-			Url url = _synchronizerConfiguration.NodeApiUri.AppendPathSegment("O10StateTransaction").SetQueryParam("combinedBlockHeight", witness.CombinedBlockHeight).SetQueryParam("hash", witness.ReferencedBodyHash.Hash);
-			_logger.Info($"Querying Transactional packet with URL {url}");
-            TransactionInfo transactionInfo = await url.GetJsonAsync<TransactionInfo>().ConfigureAwait(false);
-			StorePacket(witness, transactionInfo.Content);
-			StatePacket transactionalIncomingBlock = _dataAccessService.GetTransactionalIncomingBlock(witness.WitnessPacketId);
-			if (transactionalIncomingBlock == null)
-			{
-				_logger.Error($"Failed retry to obtain {nameof(StatePacket)} for WitnessId {witness.WitnessPacketId}");
-			}
-
-			return transactionalIncomingBlock;
-		}
-
-		private void StorePacket(WitnessPacket wp, byte[] content)
-		{
-			StoreParsedPacket(wp, content);
-		}
-
-		private void StoreParsedPacket(WitnessPacket wp, byte[] content)
-		{
-			ulong registryCombinedBlockHeight = (ulong)wp.CombinedBlockHeight;
-			LedgerType ledgerType = wp.ReferencedLedgerType;
-			ushort blockType = wp.ReferencedPacketType;
-			
-			_logger.LogIfDebug(() => $"{nameof(StoreParsedPacket)} PacketType = {ledgerType}, BlockType = {blockType}, HashId={wp.ReferencedBodyHash.PacketHashId}, Hash={wp.ReferencedBodyHash.Hash}");
-
-			PacketBase packet = GetParsedPacket(content, ledgerType, blockType);
-
-			if (packet == null)
-			{
-				_logger.Error($"Failed to parse packet with PacketType = {ledgerType}, BlockType = {blockType}, HashId={wp.ReferencedBodyHash.PacketHashId}");
-				return;
-			}
-
-			try
-			{
-				_logger.LogIfDebug(() => $"Storing packet {packet.GetType()} started");
-
-				if (packet.LedgerType == (ushort)LedgerType.O10State)
-				{
-					switch (packet.PacketType)
-					{
-						case TransactionTypes.Transaction_IssueBlindedAsset:
-							StoreIssueBlindedAsset(wp.WitnessPacketId, registryCombinedBlockHeight, (IssueBlindedAsset)packet);
-							break;
-						case TransactionTypes.Transaction_IssueAssociatedBlindedAsset:
-							StoreIssueAssociatedBlindedAsset(wp.WitnessPacketId, registryCombinedBlockHeight, (IssueAssociatedBlindedAsset)packet);
-							break;
-						case TransactionTypes.Transaction_TransferAssetToStealth:
-							StoreTransferAsset(wp.WitnessPacketId, registryCombinedBlockHeight, (TransferAssetToStealth)packet);
-							break;
-						case TransactionTypes.Transaction_RelationRecord:
-							StoreEmployeeRecordPacket(wp.WitnessPacketId, registryCombinedBlockHeight, (EmployeeRecord)packet);
-							break;
-						case TransactionTypes.Transaction_CancelEmployment:
-							StoreCancelEmployeeRecordPacket(wp.WitnessPacketId, registryCombinedBlockHeight, (CancelEmployeeRecord)packet);
-							break;
-						case TransactionTypes.Transaction_DocumentRecord:
-							StoreDocumentRecord(wp.WitnessPacketId, registryCombinedBlockHeight, (DocumentRecord)packet);
-							break;
-						case TransactionTypes.Transaction_DocumentSignRecord:
-							StoreDocumentSignRecord(wp.WitnessPacketId, registryCombinedBlockHeight, (DocumentSignRecord)packet);
-							break;
-					}
-				}
-				else if (packet.LedgerType == (ushort)LedgerType.Stealth)
-				{
-					switch (packet.PacketType)
-					{
-						case TransactionTypes.Stealth_TransitionCompromisedProofs:
-							_dataAccessService.AddCompromisedKeyImage(((TransitionCompromisedProofs)packet).CompromisedKeyImage.ToHexString());
-							break;
-						case TransactionTypes.Stealth_RevokeIdentity:
-							ProcessRevokeIdentity((RevokeIdentity)packet, registryCombinedBlockHeight);
-							break;
-					}
-					StoreUtxoPacket(wp.WitnessPacketId, registryCombinedBlockHeight, (StealthTransactionBase)packet);
-				}
-			}
-			catch (Exception ex)
-			{
-				_logger.Error($"Failure during storing packet {packet.GetType()}", ex);
-			}
-			finally
-			{
-				_logger.LogIfDebug(() => $"Storing packet {packet.GetType()} finished");
-			}
-		}
-
-		private PacketBase GetParsedPacket(byte[] content, LedgerType ledgerType, ushort packetType)
-		{
-			PacketBase packet = null;
-			try
-			{
-				IBlockParsersRepository blockParsersRepository = _blockParsersRepositoriesRepository.GetBlockParsersRepository(ledgerType);
-				IBlockParser blockParser = blockParsersRepository?.GetInstance(packetType);
-				packet = blockParser.Parse(content);
-			}
-			catch (Exception ex)
-			{
-				_logger.Error($"Failed to parse packet of PacketType {ledgerType} and BlockType {packetType}", ex);
-			}
-
-			return packet;
-		}
-
-		private void StoreUtxoPacket(long witnessId, ulong registryCombinedBlockHeight, StealthTransactionBase packet)
-		{
-			UtxoIncomingStoreInput storeInput = new UtxoIncomingStoreInput
-			{
-				SyncBlockHeight = packet.SyncHeight,
-				CombinedRegistryBlockHeight = registryCombinedBlockHeight,
-                WitnessId = witnessId,
-				BlockType = packet.TransactionType,
-				Commitment = packet.AssetCommitment,
-				Destination = packet.DestinationKey,
-				DestinationKey2 = packet.DestinationKey2,
-				KeyImage = packet.KeyImage.Value.ToArray(),
-				TransactionKey = packet.TransactionPublicKey,
-				Content = packet.RawData.ToArray()
-			};
-
-			_dataAccessService.StoreIncomingUtxoTransactionBlock(storeInput);
-		}
-
-		private void ProcessRevokeIdentity(RevokeIdentity packet, ulong registryCombinedBlockHeight)
-		{
-			_dataAccessService.SetRootAttributesOverriden(packet.DestinationKey2, packet.EligibilityProof.AssetCommitments[0], (long)registryCombinedBlockHeight);
 		}
 
 		#endregion
