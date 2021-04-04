@@ -63,7 +63,7 @@ namespace O10.Node.Core.Tests
             serializersFactory.Create(null).ReturnsForAnyArgs(c =>
             {
                 RegistryShortBlockSerializer registryShortBlockSerializer = new RegistryShortBlockSerializer(null);
-                registryShortBlockSerializer.Initialize(c.Arg<OrderedTransactionBase>());
+                registryShortBlockSerializer.Initialize(c.Arg<OrderedPacketBase>());
                 return registryShortBlockSerializer;
             });
 
@@ -188,8 +188,8 @@ namespace O10.Node.Core.Tests
             Ed25519.KeyPairFromSeed(out publicKey, out expandedPrivateKey, privateKey);
             signingService.WhenForAnyArgs(s => s.Sign(null, null)).Do(c => 
             {
-                ((OrderedTransactionBase)c.ArgAt<IPacket>(0)).Source = new Key32() { Value = publicKey };
-                ((OrderedTransactionBase)c.ArgAt<IPacket>(0)).Signature = Ed25519.Sign(c.Arg<byte[]>(), expandedPrivateKey);
+                ((OrderedPacketBase)c.ArgAt<IPacket>(0)).Source = new Key32() { Value = publicKey };
+                ((OrderedPacketBase)c.ArgAt<IPacket>(0)).Signature = Ed25519.Sign(c.Arg<byte[]>(), expandedPrivateKey);
             });
             signingService.PublicKeys.Returns(new IKey[] { new Key32() { Value = publicKey } });
             return signingService;

@@ -125,8 +125,8 @@ namespace O10.Node.DataLayer.Specific.Registry
                         
                         return new RegistryFullBlockDb 
                         { 
-                            SyncBlockHeight = b.State.Entity.AsPacket<RegistryPacket>().With<FullRegistryTransaction>().SyncHeight, 
-                            Round = b.State.Entity.AsPacket<RegistryPacket>().With<FullRegistryTransaction>().Height, 
+                            SyncBlockHeight = b.State.Entity.AsPacket<RegistryPacket>().SyncHeight, 
+                            Round = b.State.Entity.AsPacket<RegistryPacket>().Height, 
                             TransactionsCount = b.State.Entity.AsPacket<RegistryPacket>().With<FullRegistryTransaction>().Witnesses.Length, 
                             Content = b.State.Entity.ToString(), 
                             Hash = b.State.Key.ToString(), 

@@ -7,6 +7,7 @@ using O10.Core;
 using O10.Network.Handlers;
 using O10.Transactions.Core.Ledgers;
 using O10.Transactions.Core.Ledgers.Synchronization.Transactions;
+using O10.Transactions.Core.Ledgers.Synchronization;
 
 namespace O10.Node.Core.Synchronization
 {
@@ -31,10 +32,10 @@ namespace O10.Node.Core.Synchronization
 
             if (packet.Body is SynchronizationConfirmedTransaction transaction)
             {
-                if (_synchronizationContext.LastBlockDescriptor != null && _synchronizationContext.LastBlockDescriptor.BlockHeight + 1 <= transaction.Height || _synchronizationContext.LastBlockDescriptor == null)
+                if (_synchronizationContext.LastBlockDescriptor != null && _synchronizationContext.LastBlockDescriptor.BlockHeight + 1 <= packet.AsPacket<SynchronizationPacket>().Height || _synchronizationContext.LastBlockDescriptor == null)
                 {
-                    if (_synchronizationContext.LastBlockDescriptor != null && transaction.HashPrev.Equals(_synchronizationContext.LastBlockDescriptor.Hash) ||
-                        _synchronizationContext.LastBlockDescriptor == null && transaction.HashPrev.Equals(new byte[Globals.DEFAULT_HASH_SIZE]))
+                    if (_synchronizationContext.LastBlockDescriptor != null && packet.AsPacket<SynchronizationPacket>().HashPrev.Equals(_synchronizationContext.LastBlockDescriptor.Hash) ||
+                        _synchronizationContext.LastBlockDescriptor == null && packet.AsPacket<SynchronizationPacket>().HashPrev.Equals(new byte[Globals.DEFAULT_HASH_SIZE]))
                     {
                         return true;
                     }

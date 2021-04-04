@@ -2,8 +2,7 @@
 
 namespace O10.Transactions.Core.Ledgers.Registry.Transactions
 {
-    public abstract class RegistryTransactionBase : OrderedTransactionBase
+    public abstract class RegistryTransactionBase : SingleSourceTransactionBase
     {
-        public long SyncHeight { get; set; }
     }
 }

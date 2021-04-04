@@ -22,6 +22,7 @@ using O10.Transactions.Core.Ledgers.Synchronization.Transactions;
 using AggregatedRegistrationsTransactionDb = O10.Node.DataLayer.Specific.Synchronization.Model.AggregatedRegistrationsTransaction;
 using SynchronizationPacketDb = O10.Node.DataLayer.Specific.Synchronization.Model.SynchronizationPacket;
 using O10.Transactions.Core.Ledgers.Synchronization;
+using O10.Transactions.Core.Ledgers.Registry;
 
 namespace O10.Node.DataLayer.Specific.Synchronization
 {
@@ -148,13 +149,13 @@ namespace O10.Node.DataLayer.Specific.Synchronization
 					{
 						if (item.State.Body is SynchronizationConfirmedTransaction synchronizationConfirmed)
 						{
-                            Logger.LogIfDebug(() => $"Adding to buffer synchronization block {synchronizationConfirmed.Height}");
+                            Logger.LogIfDebug(() => $"Adding to buffer synchronization block {item.State.AsPacket<SynchronizationPacket>().Height}");
                             _bufferSyncConfirmedPackets.Post(item);
 						}
 
 						if (item.State.Body is AggregatedRegistrationsTransaction aggregatedRegistrations)
 						{
-                            Logger.LogIfDebug(() => $"Adding to buffer combined block {aggregatedRegistrations.Height}");
+                            Logger.LogIfDebug(() => $"Adding to buffer combined block {item.State.AsPacket<SynchronizationPacket>().Height}");
                             _bufferCombinedPackets.Post(item);
 						}
 					}
@@ -173,15 +174,14 @@ namespace O10.Node.DataLayer.Specific.Synchronization
 				{
 					if (source.TryReceiveAll(out IList<TaskCompletionWrapper<IPacketBase>> packets))
 					{
-						Logger.Debug($"Getting from buffer and storing bulk of {nameof(SynchronizationConfirmedTransaction)} with heights {string.Join(',', packets.Select(b => ((SynchronizationPacket)b.State).With<SynchronizationConfirmedTransaction>().Height))}");
-						Service.AddSynchronizationBlocks(packets.Cast<SynchronizationPacket>().Select(b => new SynchronizationPacketDb { SynchronizationPacketId = b.With<SynchronizationConfirmedTransaction>().Height, ReceiveTime = DateTime.Now, MedianTime = b.With<SynchronizationConfirmedTransaction>().ReportedTime, Content = b.ToString() }).ToArray());
+						Logger.Debug($"Getting from buffer and storing bulk of {nameof(SynchronizationConfirmedTransaction)} with heights {string.Join(',', packets.Select(b => ((SynchronizationPacket)b.State).Height))}");
+						Service.AddSynchronizationBlocks(packets.Cast<SynchronizationPacket>().Select(b => new SynchronizationPacketDb { SynchronizationPacketId = b.Height, ReceiveTime = DateTime.Now, MedianTime = b.ReportedTime, Content = b.ToString() }).ToArray());
 					}
 					else
 					{
 						var wrapper = source.Receive(cancellationToken);
-						var transaction = ((SynchronizationPacket)wrapper.State).With<SynchronizationConfirmedTransaction>();
-						Logger.Debug($"Getting from buffer and storing {nameof(SynchronizationConfirmedTransaction)} with height {transaction.Height}");
-						Service.AddSynchronizationBlock(transaction.Height, DateTime.Now, transaction.ReportedTime, wrapper.State.ToString());
+						Logger.Debug($"Getting from buffer and storing {nameof(SynchronizationConfirmedTransaction)} with height {wrapper.State.AsPacket<SynchronizationPacket>().Height}");
+						Service.AddSynchronizationBlock(wrapper.State.AsPacket<SynchronizationPacket>().Height, DateTime.Now, wrapper.State.AsPacket<SynchronizationPacket>().ReportedTime, wrapper.State.ToString());
 					}
 				}
 				catch (Exception ex)
@@ -199,15 +199,15 @@ namespace O10.Node.DataLayer.Specific.Synchronization
 				{
 					if (source.TryReceiveAll(out IList<TaskCompletionWrapper<IPacketBase>> wrappers))
 					{
-						Logger.Debug($"Getting from buffer and storing bulk of {nameof(AggregatedRegistrationsTransaction)} with heights {string.Join(',', wrappers.Cast<SynchronizationPacket>().Select(b => b.Body.Height))}");
-                        Service.AddSynchronizationRegistryCombinedBlocks(wrappers.Cast<SynchronizationPacket>().Select(b => new AggregatedRegistrationsTransactionDb { AggregatedRegistrationsTransactionId = b.With<AggregatedRegistrationsTransaction>().Height, SyncBlockHeight = b.With<AggregatedRegistrationsTransaction>().SyncHeight, Content = b.ToString(), FullBlockHashes = string.Join(",", b.With<AggregatedRegistrationsTransaction>().BlockHashes.Select(h => h.ToHexString())) }).ToArray());
+						Logger.Debug($"Getting from buffer and storing bulk of {nameof(AggregatedRegistrationsTransaction)} with heights {string.Join(',', wrappers.Cast<SynchronizationPacket>().Select(b => b.Height))}");
+                        Service.AddSynchronizationRegistryCombinedBlocks(wrappers.Cast<SynchronizationPacket>().Select(b => new AggregatedRegistrationsTransactionDb { AggregatedRegistrationsTransactionId = b.Height, SyncBlockHeight = b.With<AggregatedRegistrationsTransaction>().SyncHeight, Content = b.ToString(), FullBlockHashes = string.Join(",", b.With<AggregatedRegistrationsTransaction>().BlockHashes.Select(h => h.ToHexString())) }).ToArray());
 					}
 					else
 					{
 						var wrapper = source.Receive(cancellationToken);
 						var transaction = ((SynchronizationPacket)wrapper.State).With<AggregatedRegistrationsTransaction>();
-						Logger.Debug($"Getting from buffer and storing {nameof(AggregatedRegistrationsTransaction)} with height {transaction.Height}");
-						Service.AddSynchronizationRegistryCombinedBlock(transaction.Height, transaction.SyncHeight, wrapper.State.ToString(), transaction.BlockHashes.Select(h => h.ToHexString()).ToArray());
+						Logger.Debug($"Getting from buffer and storing {nameof(AggregatedRegistrationsTransaction)} with height {wrapper.State.AsPacket<SynchronizationPacket>().Height}");
+						Service.AddSynchronizationRegistryCombinedBlock(wrapper.State.AsPacket<SynchronizationPacket>().Height, transaction.SyncHeight, wrapper.State.ToString(), transaction.BlockHashes.Select(h => h.ToHexString()).ToArray());
 					}
 				}
 				catch (Exception ex)

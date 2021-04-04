@@ -48,7 +48,7 @@ namespace O10.Node.Core.Centralized
 
         private bool _isInitialized;
         private BufferBlock<IPacketBase> _packetsBuffer;
-        private AggregatedRegistrationsTransaction _lastCombinedBlock;
+        private SynchronizationPacket _lastCombinedBlock;
 
         public TransactionsRegistryCentralizedHandler(IRealTimeRegistryService realTimeRegistryService,
                                                       IStatesRepository statesRepository,
@@ -82,7 +82,7 @@ namespace O10.Node.Core.Centralized
                 }
 
                 _packetsBuffer = new BufferBlock<IPacketBase>(new DataflowBlockOptions() { CancellationToken = ct });
-                _lastCombinedBlock = _synchronizationChainDataService.Single<SynchronizationPacket>(new SingleByBlockTypeKey(TransactionTypes.Synchronization_RegistryCombinationBlock))?.With<AggregatedRegistrationsTransaction>();
+                _lastCombinedBlock = _synchronizationChainDataService.Single<SynchronizationPacket>(new SingleByBlockTypeKey(TransactionTypes.Synchronization_RegistryCombinationBlock));
 
                 _logger.LogIfDebug(() => $"{nameof(Initialize)}, {nameof(_lastCombinedBlock)}: {JsonConvert.SerializeObject(_lastCombinedBlock, new ByteArrayJsonConverter())}");
 
@@ -115,9 +115,9 @@ namespace O10.Node.Core.Centralized
                                     _synchronizationContext.LastBlockDescriptor?.Hash);
 							_synchronizationContext.UpdateLastSyncBlockDescriptor(
                                 new SynchronizationDescriptor(
-                                    synchronizationConfirmedBlock.Body.Height, 
+                                    synchronizationConfirmedBlock.Height, 
                                     _identityKeyProvider.GetKey(_defaultTransactionHashCalculation.CalculateHash(synchronizationConfirmedBlock.ToByteArray())), 
-                                    synchronizationConfirmedBlock.With<SynchronizationConfirmedTransaction>().ReportedTime, 
+                                    synchronizationConfirmedBlock.ReportedTime, 
                                     DateTime.UtcNow, 
                                     synchronizationConfirmedBlock.With<SynchronizationConfirmedTransaction>().Round));
 							_synchronizationChainDataService.Add(synchronizationConfirmedBlock);
@@ -135,7 +135,7 @@ namespace O10.Node.Core.Centralized
 
                         var aggregatedRegistrationsPacket = CreateCombinedBlock(fullRegistrationsPacket);
 
-						_lastCombinedBlock = aggregatedRegistrationsPacket.With<AggregatedRegistrationsTransaction>();
+						_lastCombinedBlock = aggregatedRegistrationsPacket;
 
 						_synchronizationChainDataService.Add(aggregatedRegistrationsPacket);
 						_registryChainDataService.Add(fullRegistrationsPacket);
@@ -154,11 +154,11 @@ namespace O10.Node.Core.Centralized
         {
             SynchronizationPacket synchronizationConfirmed = new SynchronizationPacket
             {
+                Height = prevSyncBlockHeight + 1,
+                HashPrev = prevSyncBlockHash,
+                ReportedTime = DateTime.UtcNow,
                 Body = new SynchronizationConfirmedTransaction
                 {
-                    Height = prevSyncBlockHeight + 1,
-                    HashPrev = prevSyncBlockHash,
-                    ReportedTime = DateTime.UtcNow,
                     Round = 1,
                     PublicKeys = Array.Empty<byte[]>(),// retransmittedSyncBlocks.Select(b => b.ConfirmationPublicKey).ToArray(),
                     Signatures = Array.Empty<byte[]>() //retransmittedSyncBlocks.Select(b => b.ConfirmationSignature).ToArray()
@@ -174,10 +174,10 @@ namespace O10.Node.Core.Centralized
         {
             RegistryPacket transactionsFullBlock = new RegistryPacket
             {
+                SyncHeight = syncBlockHeight,
+                Height = registryFullBlockHeight,
                 Body = new FullRegistryTransaction
                 {
-                    SyncHeight = syncBlockHeight,
-                    Height = registryFullBlockHeight,
                     Witnesses = witnesses
                 }
             };
@@ -224,12 +224,12 @@ namespace O10.Node.Core.Centralized
                 //TODO: For initial POC there will be only one participant at Synchronization Layer, thus combination of FullBlocks won't be implemented fully
                 SynchronizationPacket synchronizationRegistryCombinedBlock = new SynchronizationPacket
                 {
+                    Height = ++_synchronizationContext.LastRegistrationCombinedBlockHeight,
+                    HashPrev = prevHash,
+                    ReportedTime = DateTime.Now,
                     Body = new AggregatedRegistrationsTransaction
                     {
                         SyncHeight = _synchronizationContext.LastBlockDescriptor?.BlockHeight ?? 0,
-                        Height = ++_synchronizationContext.LastRegistrationCombinedBlockHeight,
-                        HashPrev = prevHash,
-                        ReportedTime = DateTime.Now,
                         BlockHashes = registryFullBlocks.Select(b => _defaultTransactionHashCalculation.CalculateHash(b?.ToByteArray() ?? new byte[Globals.DEFAULT_HASH_SIZE])).ToArray()
                     }
                 };

@@ -7,7 +7,7 @@ namespace O10.Transactions.Core.Ledgers
     /// <summary>
     /// All packetss in all types of ledgers must inherit from this base class
     /// </summary>
-    public abstract class PacketBase<TTransaction, TSignature> : SerializableEntity<PacketBase<TTransaction, TSignature>>, IPacketBase where TTransaction : TransactionBase where TSignature : SignatureBase //SerializableEntity<PacketBase<TTransaction, TSignature>>, ILedgerPacket where TTransaction : TransactionBase where TSignature : SignatureBase
+    public abstract class PacketBase<TTransaction, TSignature> : SerializableEntity<PacketBase<TTransaction, TSignature>>, IPacketBase where TTransaction : TransactionBase where TSignature : SignatureBase
     {
         public TTransaction? Body { get; set; }
 

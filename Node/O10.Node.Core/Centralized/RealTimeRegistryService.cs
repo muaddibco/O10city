@@ -74,9 +74,9 @@ namespace O10.Node.Core.Centralized
 
 			_registrationPackets.Add(new Tuple<SynchronizationPacket, RegistryPacket>(aggregatedRegistrationsPacket, registrationsPacket));
 
-			if (_lowestCombinedBlockHeight > aggregatedRegistrationsPacket.With<AggregatedRegistrationsTransaction>().Height)
+			if (_lowestCombinedBlockHeight > aggregatedRegistrationsPacket.Height)
 			{
-				_lowestCombinedBlockHeight = aggregatedRegistrationsPacket.With<AggregatedRegistrationsTransaction>().Height;
+				_lowestCombinedBlockHeight = aggregatedRegistrationsPacket.Height;
 			}
         }
 
@@ -90,7 +90,7 @@ namespace O10.Node.Core.Centralized
                         _chainDataServices.First(s => s.LedgerType == t.Result.Value.LedgerType)
                             .AddDataKey(
                                 t.Result.Key, 
-                                new CombinedHashKey(syncPacket.With<AggregatedRegistrationsTransaction>().Height, t.Result.Key.HashKey));
+                                new CombinedHashKey(syncPacket.Height, t.Result.Key.HashKey));
                 }
                 else
                 {

@@ -7,6 +7,7 @@ using O10.Core.Synchronization;
 using O10.Core;
 using O10.Transactions.Core.Ledgers;
 using O10.Transactions.Core.Ledgers.Registry.Transactions;
+using O10.Transactions.Core.Ledgers.Registry;
 
 namespace O10.Network.Handlers
 {
@@ -33,7 +34,7 @@ namespace O10.Network.Handlers
 
             if (packet.Body is RegistryTransactionBase transaction)
             {
-                long syncBlockHeight = transaction.SyncHeight;
+                long syncBlockHeight = packet.AsPacket<RegistryPacket>().SyncHeight;
 
                 bool isInSyncRange = _synchronizationContext.LastBlockDescriptor == null 
                     || (_synchronizationContext.LastBlockDescriptor.BlockHeight.Equals(syncBlockHeight) 

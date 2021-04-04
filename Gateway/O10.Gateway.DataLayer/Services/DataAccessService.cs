@@ -1286,13 +1286,13 @@ namespace O10.Gateway.DataLayer.Services
             return null;
         }
 
-        private KeyImage GetOrAddUtxoKeyImage(Span<byte> keyImage)
+        private KeyImage GetOrAddUtxoKeyImage(IKey keyImage)
         {
             if (Monitor.TryEnter(_sync, _lockTimeout))
             {
                 try
                 {
-                    string keyImageString = keyImage.ToArray().ToHexString();
+                    string keyImageString = keyImage.ToString();
                     KeyImage utxoKeyImage = _dataContext.UtxoKeyImages.FirstOrDefault(b => b.Value == keyImageString);
 
                     if (utxoKeyImage == null)

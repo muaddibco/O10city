@@ -46,7 +46,6 @@ namespace O10.Gateway.Common.Services
         private readonly ISynchronizerConfiguration _synchronizerConfiguration;
         private readonly IHashCalculation _defaultHashCalculation;
 		private readonly IIdentityKeyProvidersRegistry _identityKeyProvidersRegistry;
-        private readonly IAccessorProvider _accessorProvider;
         private readonly IAppConfig _appConfig;
         private readonly IIdentityKeyProvider _identityKeyProvider;
 		private readonly ILogger _logger;
@@ -62,7 +61,6 @@ namespace O10.Gateway.Common.Services
 								   ILedgerSynchronizersRepository ledgerSynchronizersRepository,
 								   IConfigurationService configurationService,
 								   IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
-								   IAccessorProvider accessorProvider,
 								   IAppConfig appConfig,
 								   ILoggerService loggerService)
 		{
@@ -71,7 +69,6 @@ namespace O10.Gateway.Common.Services
             _synchronizerConfiguration = configurationService.Get<ISynchronizerConfiguration>();
 			_defaultHashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
 			_identityKeyProvidersRegistry = identityKeyProvidersRegistry;
-            _accessorProvider = accessorProvider;
             _appConfig = appConfig;
             _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
 			_logger = loggerService.GetLogger(nameof(NetworkSynchronizer));
@@ -495,19 +492,6 @@ namespace O10.Gateway.Common.Services
                 throw;
             }        
         }
-
-		private TaskCompletionSource<WitnessPacket> ObtainAndStoreUniversalTransaction(TaskCompletionSource<WitnessPacket> witnessStoreCompletionSource)
-        {
-			TaskCompletionSource<WitnessPacket> transactionStoreCompletionSource = new TaskCompletionSource<WitnessPacket>();
-			witnessStoreCompletionSource.Task.ContinueWith(async (t, o) =>
-            {
-				WitnessPacket witnessPacket = t.Result;
-				TaskCompletionSource<WitnessPacket> completionSource = (TaskCompletionSource<WitnessPacket>)o;
-				var packet = _accessorProvider.GetInstance(witnessPacket.ReferencedLedgerType);
-			}, transactionStoreCompletionSource, TaskScheduler.Current);
-
-			return transactionStoreCompletionSource;
-		}
 
 		private TaskCompletionSource<WitnessPacket> ObtainAndStoreTransaction(TaskCompletionSource<WitnessPacket> witnessStoreCompletionSource)
 		{

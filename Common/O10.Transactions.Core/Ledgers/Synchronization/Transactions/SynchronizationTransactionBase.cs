@@ -1,12 +1,8 @@
-﻿using O10.Core.Identity;
-using System;
+﻿using O10.Crypto.Models;
 
 namespace O10.Transactions.Core.Ledgers.Synchronization.Transactions
 {
-    public abstract class SynchronizationTransactionBase : OrderedTransactionBase
+    public abstract class SynchronizationTransactionBase : SingleSourceTransactionBase
     {
-        public IKey? HashPrev { get; set; }
-
-        public DateTime ReportedTime { get; set; }
     }
 }

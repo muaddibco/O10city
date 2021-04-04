@@ -30,7 +30,7 @@ namespace O10.Gateway.DataLayer
 			modelBuilder.Entity<AssociatedAttributeIssuance>().HasIndex(s => s.IssuanceCommitment);
 			modelBuilder.Entity<AssociatedAttributeIssuance>().HasIndex(s => s.RootIssuanceCommitment);
 
-			modelBuilder.Entity<PacketHash>().HasIndex(s => new { s.SyncBlockHeight, s.CombinedRegistryBlockHeight, s.Hash });
+			modelBuilder.Entity<PacketHash>().HasIndex(s => new { s.CombinedRegistryBlockHeight, s.Hash });
 
 			modelBuilder.Entity<RelationRecord>().HasIndex(s => s.Issuer);
 			modelBuilder.Entity<RelationRecord>().HasIndex(s => s.RegistrationCommitment);
