@@ -9,10 +9,11 @@ namespace O10.Gateway.DataLayer
 		public DbSet<SyncBlock> SyncBlocks { get; set; }
         public DbSet<RegistryCombinedBlock> RegistryCombinedBlocks { get; set; }
         public DbSet<RegistryFullBlockData> RegistryFullBlocks { get; set; }
-        public DbSet<PacketHash> PacketHashes { get; set; }
+        public DbSet<TransactionHash> PacketHashes { get; set; }
         public DbSet<Address> Identities { get; set; }
-        public DbSet<StatePacket> TransactionalPackets { get; set; }
-        public DbSet<StealthPacket> StealthPackets { get; set; }
+        public DbSet<StateTransaction> StateTransactions { get; set; }
+        //public DbSet<StatePacket> TransactionalPackets { get; set; }
+        public DbSet<StealthTransaction> StealthTransactions { get; set; }
         public DbSet<KeyImage> UtxoKeyImages { get; set; }
         public DbSet<StealthOutput> UtxoOutputs { get; set; }
         public DbSet<TransactionKey> UtxoTransactionKeys { get; set; }
@@ -30,7 +31,7 @@ namespace O10.Gateway.DataLayer
 			modelBuilder.Entity<AssociatedAttributeIssuance>().HasIndex(s => s.IssuanceCommitment);
 			modelBuilder.Entity<AssociatedAttributeIssuance>().HasIndex(s => s.RootIssuanceCommitment);
 
-			modelBuilder.Entity<PacketHash>().HasIndex(s => new { s.CombinedRegistryBlockHeight, s.Hash });
+			modelBuilder.Entity<TransactionHash>().HasIndex(s => new { s.AggregatedTransactionsHeight, s.Hash });
 
 			modelBuilder.Entity<RelationRecord>().HasIndex(s => s.Issuer);
 			modelBuilder.Entity<RelationRecord>().HasIndex(s => s.RegistrationCommitment);
@@ -55,9 +56,10 @@ namespace O10.Gateway.DataLayer
 			modelBuilder.Entity<WitnessPacket>().HasIndex(s => s.ReferencedKeyImage);
 
 			modelBuilder.Entity<RegistryFullBlockData>().HasIndex(s => s.CombinedBlockHeight);
-            modelBuilder.Entity<StatePacket>().HasIndex(s => s.WitnessId);
-            modelBuilder.Entity<StatePacket>().HasIndex(s => s.Height);
-			modelBuilder.Entity<StealthPacket>().HasIndex(s => s.WitnessId);
+            modelBuilder.Entity<StateTransaction>().HasIndex(s => s.WitnessId);
+            //modelBuilder.Entity<StatePacket>().HasIndex(s => s.WitnessId);
+            //modelBuilder.Entity<StatePacket>().HasIndex(s => s.Height);
+			modelBuilder.Entity<StealthTransaction>().HasIndex(s => s.WitnessId);
             modelBuilder.Entity<RootAttribute>().HasIndex(s => s.IsOverriden);
             modelBuilder.Entity<Address>().HasIndex(s => s.Key);
             modelBuilder.Entity<CompromisedKeyImage>().HasIndex(s => s.KeyImage).IsUnique();

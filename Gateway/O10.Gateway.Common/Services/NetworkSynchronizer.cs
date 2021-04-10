@@ -32,6 +32,9 @@ using O10.Transactions.Core.Ledgers;
 using O10.Transactions.Core.Ledgers.Synchronization.Transactions;
 using O10.Transactions.Core.Ledgers.Registry.Transactions;
 using O10.Gateway.Common.Services.LedgerSynchronizers;
+using O10.Transactions.Core.Ledgers.Synchronization;
+using O10.Transactions.Core.Ledgers.Registry;
+using O10.Crypto.Models;
 
 namespace O10.Gateway.Common.Services
 {
@@ -215,22 +218,19 @@ namespace O10.Gateway.Common.Services
 				}
 			}
 
-			var aggregatedRegistrations = rtPackage.AggregatedRegistrations.With<AggregatedRegistrationsTransaction>();
-			var registryFullBlock = rtPackage.FullRegistrations.With<FullRegistryTransaction>();
-
 			try
 			{
 				List<Task<WitnessPacket>> transactionStoreCompletionSources = new List<Task<WitnessPacket>>();
 
-				ProcessRegistryFullBlock(aggregatedRegistrations, registryFullBlock, transactionStoreCompletionSources);
+				ProduceWitnessesAndStoreTransactions(rtPackage.AggregatedRegistrations, rtPackage.FullRegistrations, transactionStoreCompletionSources);
 
-				SetWitnessTasks(aggregatedRegistrations, transactionStoreCompletionSources);
+				ProduceAndSendWitnessPackage(rtPackage.AggregatedRegistrations, transactionStoreCompletionSources);
 
-				StoreRegistryCombinedBlock(aggregatedRegistrations);
+				StoreRegistryCombinedBlock(rtPackage.AggregatedRegistrations);
 			}
 			catch (Exception ex)
 			{
-				_logger.Error($"Failure during obtaining transactions at Registry Combined Block with height {aggregatedRegistrations.Height}", ex);
+				_logger.Error($"Failure during obtaining transactions at Registry Combined Block with height {rtPackage.AggregatedRegistrations.Height}", ex);
 			}
 		}
 
@@ -393,21 +393,21 @@ namespace O10.Gateway.Common.Services
 			}
 		}
 
-        private void StoreRegistryCombinedBlock(AggregatedRegistrationsTransaction combinedBlock)
+        private void StoreRegistryCombinedBlock(SynchronizationPacket aggregatedTransactionsPacket)
         {
-            _dataAccessService.StoreRegistryCombinedBlock(combinedBlock.Height, combinedBlock.ToString());
+            _dataAccessService.StoreRegistryCombinedBlock(aggregatedTransactionsPacket.Height, aggregatedTransactionsPacket.ToString());
 
-            if ((_lastCombinedBlockDescriptor?.Height ?? 0) < combinedBlock.Height)
+            if ((_lastCombinedBlockDescriptor?.Height ?? 0) < aggregatedTransactionsPacket.Height)
             {
 				if(_lastCombinedBlockDescriptor == null)
                 {
 					_lastCombinedBlockDescriptor = new AggregatedRegistrationsTransactionDTO();
 				}
-                _lastCombinedBlockDescriptor.Height = combinedBlock.Height;
+                _lastCombinedBlockDescriptor.Height = aggregatedTransactionsPacket.Height;
             }
         }
 
-        private void SetWitnessTasks(AggregatedRegistrationsTransaction combinedBlock, List<Task<WitnessPacket>> transactionStoreCompletionSources)
+        private void ProduceAndSendWitnessPackage(SynchronizationPacket aggregatedTransactionsPacket, List<Task<WitnessPacket>> transactionStoreCompletionSources)
         {
             if ((transactionStoreCompletionSources?.Count ?? 0) > 0)
             {
@@ -429,7 +429,7 @@ namespace O10.Gateway.Common.Services
 					{
                         _logger.Error($"Packets were not stored successfully", t.Exception);
 					}
-				}, combinedBlock.Height, TaskScheduler.Current);
+				}, aggregatedTransactionsPacket.Height, TaskScheduler.Current);
             }
         }
 
@@ -449,11 +449,12 @@ namespace O10.Gateway.Common.Services
                     )
         };
 
-        private void ProcessRegistryFullBlock(AggregatedRegistrationsTransaction combinedBlock,
-                                              FullRegistryTransaction registryFullBlock,
+        private void ProduceWitnessesAndStoreTransactions(SynchronizationPacket aggregatedTransactionsPacket,
+                                              RegistryPacket fullRegistryTransactionsPacket,
                                               List<Task<WitnessPacket>> transactionStoreCompletionSources)
         {
-            _logger.Info($"[Node -> GW]: Obtained {registryFullBlock.Witnesses.Length} witnesses...");
+			var fullRegistryTransaction = fullRegistryTransactionsPacket.With<FullRegistryTransaction>();
+            _logger.Info($"[Node -> GW]: Obtained {fullRegistryTransaction.Witnesses.Length} witnesses...");
 
 			if (transactionStoreCompletionSources == null)
 			{
@@ -462,15 +463,15 @@ namespace O10.Gateway.Common.Services
 
 			try
 			{
-                if (registryFullBlock.Witnesses != null)
+                if (fullRegistryTransaction.Witnesses != null)
                 {
-                    foreach (var item in registryFullBlock.Witnesses)
+                    foreach (var item in fullRegistryTransaction.Witnesses)
                     {
                         TaskCompletionSource<WitnessPacket> witnessStoreCompletionSource 
 							= _dataAccessService.StoreWitnessPacket(
-                                registryFullBlock.SyncHeight,
-                                registryFullBlock.Height,
-                                combinedBlock.Height,
+                                fullRegistryTransactionsPacket.SyncHeight,
+                                fullRegistryTransactionsPacket.Height,
+                                aggregatedTransactionsPacket.Height,
                                 item.With<RegisterTransaction>().ReferencedLedgerType,
                                 item.With<RegisterTransaction>().ReferencedAction,
                                 item.With<RegisterTransaction>().Parameters.OptionalKey("BodyHash", _identityKeyProvider),
@@ -488,7 +489,7 @@ namespace O10.Gateway.Common.Services
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failure at {nameof(ProcessRegistryFullBlock)}", ex);
+                _logger.Error($"Failure at {nameof(ProduceWitnessesAndStoreTransactions)}", ex);
                 throw;
             }        
         }
@@ -559,36 +560,36 @@ namespace O10.Gateway.Common.Services
 			}
 		}
 
-		public async Task<IEnumerable<IPacketBase>> GetPackets(IEnumerable<long> witnessIds)
+		public async Task<IEnumerable<TransactionBase>> GetTransactions(IEnumerable<long> witnessIds)
 		{
             if (witnessIds is null)
             {
                 throw new ArgumentNullException(nameof(witnessIds));
             }
 
-            _logger.Debug($"Getting packets for witnesses [{string.Join(',',witnessIds)}]");
+            _logger.Debug($"Getting transactions for witnesses [{string.Join(',',witnessIds)}]");
 
 			try
 			{
-				List<IPacketBase> packets = new List<IPacketBase>();
+				List<TransactionBase> transactions = new List<TransactionBase>();
 
 				foreach (long witnessId in witnessIds)
 				{
-					_logger.Info($"Getting packet for witness with id {witnessId}");
+					_logger.Info($"Getting transaction for witness with id {witnessId}");
 					
 					WitnessPacket witness = _dataAccessService.GetWitnessPacket(witnessId);
 
 					_logger.LogIfDebug(() => $"{nameof(WitnessPacket)}: {JsonConvert.SerializeObject(witness, new ByteArrayJsonConverter())}");
 
 					var packet = _ledgerSynchronizersRepository.GetInstance(witness.ReferencedLedgerType).GetByWitness(witness);
-					packets.Add(packet);
+					transactions.Add(packet);
 				}
 
-				return await Task.FromResult(packets).ConfigureAwait(false);
+				return await Task.FromResult(transactions).ConfigureAwait(false);
 			}
 			catch (Exception ex)
 			{
-				_logger.Error($"Failure at {nameof(GetPackets)}([{string.Join(',', witnessIds)}])", ex);
+				_logger.Error($"Failure at {nameof(GetTransactions)}([{string.Join(',', witnessIds)}])", ex);
 				throw;
 			}
 		}

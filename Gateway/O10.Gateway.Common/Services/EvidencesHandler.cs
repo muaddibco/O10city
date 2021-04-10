@@ -76,8 +76,8 @@ namespace O10.Gateway.Common.Services
                 var packet = _translator.Translate(evidence);
 
                 var lastPacketInfo = await _gatewayContext.GetLastPacketInfo().ConfigureAwait(false);
-                packet.Body.Height = lastPacketInfo.Height;
-                packet.Body.SyncHeight = (await _networkSynchronizer.GetLastSyncBlock().ConfigureAwait(false))?.Height ?? 0;
+                packet.Height = lastPacketInfo.Height;
+                packet.SyncHeight = (await _networkSynchronizer.GetLastSyncBlock().ConfigureAwait(false))?.Height ?? 0;
 
                 packet.Signature = (SingleSourceSignature)_gatewayContext.SigningService.Sign(packet.Body);
 

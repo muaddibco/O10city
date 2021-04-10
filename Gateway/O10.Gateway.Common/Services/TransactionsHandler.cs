@@ -21,6 +21,7 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using O10.Transactions.Core.Ledgers;
 using O10.Transactions.Core.Exceptions;
+using FizzWare.NBuilder;
 
 namespace O10.Gateway.Common.Services
 {
@@ -133,12 +134,12 @@ namespace O10.Gateway.Common.Services
         {
             TaskCompletionWrapper<IPacketBase> wrapper = new TaskCompletionWrapper<IPacketBase>(packet);
 
-            EvidenceDescriptor evidenceDescriptor = new EvidenceDescriptor
-            {
-                ActionType = packet.Body.TransactionType,
-                LedgerType = packet.LedgerType,
-                Parameters = new Dictionary<string, string> { { "BodyHash", _hashCalculation.CalculateHash(packet.Body.ToString()).ToHexString() } }
-            };
+            EvidenceDescriptor evidenceDescriptor = Builder<EvidenceDescriptor>
+                .CreateNew()
+                    .With(s => s.ActionType = packet.Body.TransactionType)
+                    .With(s => s.LedgerType = packet.LedgerType)
+                    .Do(s => s.Parameters.Add(EvidenceDescriptor.TRANSACTION_HASH, _hashCalculation.CalculateHash(packet.Body.ToString()).ToHexString()))
+                .Build();
 
             DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase> depending 
                 = new DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase>(evidenceDescriptor, wrapper);

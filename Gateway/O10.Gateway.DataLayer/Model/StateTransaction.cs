@@ -3,39 +3,33 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Gateway.DataLayer.Model
 {
-    [Table("StatePackets")]
-    public class StatePacket
+    [Table("StateTransactions")]
+    public class StateTransaction
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public long StatePacketId { get; set; }
+        public long StateTransactionId { get; set; }
 
         public long WitnessId { get; set; }
 
-        public long Height { get; set; }
+        public ushort TransactionType { get; set; }
 
-        public ushort BlockType { get; set; }
-
+        [Required]
         public Address Source { get; set; }
 
         public Address? Target { get; set; }
 
+        [Required]
         public string Content { get; set; }
 
-        #region Transition Account based to UTXO based transaction
+        public TransactionHash? Hash { get; set; }
 
-        public bool IsTransition { get; set; }
+        #region Transition from State to Stealth based accounts
 
         public TransactionKey? TransactionKey { get; set; }
 
         public StealthOutput? Output { get; set; }
 
-        #endregion Transition Account based to UTXO based transaction
-
-        public bool IsVerified { get; set; }
-
-        public bool IsValid { get; set; }
-
-        public TransactionHash ThisBlockHash { get; set; }
+        #endregion Transition from State to Stealth based accounts
     }
 }

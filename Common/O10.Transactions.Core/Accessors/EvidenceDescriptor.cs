@@ -5,6 +5,8 @@ namespace O10.Transactions.Core.Accessors
 {
     public class EvidenceDescriptor
     {
+        public const string TRANSACTION_HASH = "TransactionHash";
+
         public EvidenceDescriptor()
         {
             Parameters = new Dictionary<string, string>();

@@ -3,16 +3,16 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Gateway.DataLayer.Model
 {
-    [Table("StealthPackets")]
-    public class StealthPacket
+    [Table("StealthTransactions")]
+    public class StealthTransaction
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public long StealthPacketId { get; set; }
+        public long StealthTransactionId { get; set; }
 
         public long WitnessId { get; set; }
 
-        public ushort BlockType { get; set; }
+        public ushort TransactionType { get; set; }
 
         public string Content { get; set; }
 
@@ -22,6 +22,6 @@ namespace O10.Gateway.DataLayer.Model
 
         public StealthOutput Output { get; set; }
 
-        public PacketHash ThisBlockHash { get; set; }
+        public TransactionHash Hash { get; set; }
     }
 }

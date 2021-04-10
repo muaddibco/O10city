@@ -2,12 +2,11 @@
 using O10.Core.Identity;
 using O10.Core.Logging;
 using O10.Core.Models;
+using O10.Crypto.Models;
 using O10.Gateway.DataLayer.Model;
 using O10.Gateway.DataLayer.Services;
 using O10.Gateway.DataLayer.Services.Inputs;
 using O10.Transactions.Core.Enums;
-using O10.Transactions.Core.Ledgers;
-using O10.Transactions.Core.Ledgers.O10State;
 using O10.Transactions.Core.Ledgers.O10State.Transactions;
 using System;
 
@@ -29,185 +28,141 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
 
         public override LedgerType LedgerType => LedgerType.O10State;
 
-        public override IPacketBase GetByWitness(WitnessPacket witnessPacket)
+        public override TransactionBase GetByWitness(WitnessPacket witnessPacket)
         {
             if (witnessPacket is null)
             {
                 throw new ArgumentNullException(nameof(witnessPacket));
             }
 
-            StatePacket transactionalIncomingBlock = _dataAccessService.GetTransactionalIncomingBlock(witnessPacket.WitnessPacketId);
-            return SerializableEntity<IPacketBase>.Create(transactionalIncomingBlock.Content);
+            StatePacket transactionalIncomingBlock = _dataAccessService.GetStateTransaction(witnessPacket.WitnessPacketId);
+            return SerializableEntity<TransactionBase>.Create(transactionalIncomingBlock.Content);
         }
 
-        protected override void StorePacket(WitnessPacket wp, IPacketBase packet)
+        protected override void StorePacket(WitnessPacket wp, TransactionBase transaction)
         {
             if (wp is null)
             {
                 throw new ArgumentNullException(nameof(wp));
             }
 
-            if (packet is null)
+            if (transaction is null)
             {
-                throw new ArgumentNullException(nameof(packet));
+                throw new ArgumentNullException(nameof(transaction));
             }
 
-            var registryCombinedBlockHeight = wp.CombinedBlockHeight;
-
-            switch (packet.Body.TransactionType)
+            StateIncomingStoreInput storeInput = transaction switch
             {
-                case TransactionTypes.Transaction_IssueBlindedAsset:
-                    StoreIssueBlindedAsset(wp.WitnessPacketId, registryCombinedBlockHeight, packet);
-                    break;
-                case TransactionTypes.Transaction_IssueAssociatedBlindedAsset:
-                    StoreIssueAssociatedBlindedAsset(wp.WitnessPacketId, registryCombinedBlockHeight, packet);
-                    break;
-                case TransactionTypes.Transaction_TransferAssetToStealth:
-                    StoreTransferAsset(wp.WitnessPacketId, registryCombinedBlockHeight, packet);
-                    break;
-                case TransactionTypes.Transaction_RelationRecord:
-                    StoreRelationRecordPacket(wp.WitnessPacketId, registryCombinedBlockHeight, packet);
-                    break;
-                case TransactionTypes.Transaction_CancelEmployment:
-                    StoreCancelEmployeeRecordPacket(wp.WitnessPacketId, registryCombinedBlockHeight, packet);
-                    break;
-                case TransactionTypes.Transaction_DocumentRecord:
-                    StoreDocumentRecord(wp.WitnessPacketId, registryCombinedBlockHeight, packet);
-                    break;
-                case TransactionTypes.Transaction_DocumentSignRecord:
-                    StoreDocumentSignRecord(wp.WitnessPacketId, registryCombinedBlockHeight, packet);
-                    break;
-            }
+                IssueBlindedAssetTransaction issueBlindedAssetTransaction => StoreIssueBlindedAsset(wp.WitnessPacketId, wp.CombinedBlockHeight, issueBlindedAssetTransaction),
+                IssueAssociatedBlindedAssetTransaction issueAssociatedBlindedAssetTransaction => StoreIssueAssociatedBlindedAsset(wp.WitnessPacketId, wp.CombinedBlockHeight, issueAssociatedBlindedAssetTransaction),
+                TransferAssetToStealthTransaction transferAssetToStealthTransaction => StoreTransferAsset(wp.WitnessPacketId, wp.CombinedBlockHeight, transferAssetToStealthTransaction),
+                RelationTransaction relationTransaction => StoreRelationRecordPacket(wp.WitnessPacketId, wp.CombinedBlockHeight, relationTransaction),
+                CancelRelationTransaction cancelRelationTransaction => StoreCancelRelationRecordPacket(wp.WitnessPacketId, wp.CombinedBlockHeight, cancelRelationTransaction),
+                DocumentRecordTransaction documentRecordTransaction => StoreDocumentRecord(wp.WitnessPacketId, wp.CombinedBlockHeight, documentRecordTransaction),
+                DocumentSignTransaction documentSignTransaction => StoreDocumentSignRecord(wp.WitnessPacketId, wp.CombinedBlockHeight, documentSignTransaction),
+                _ => throw new ArgumentOutOfRangeException(nameof(transaction)),
+            };
+
+            _dataAccessService.StoreStateTransaction(storeInput);
         }
 
-        private void StoreDocumentSignRecord(long witnessId, long registryCombinedBlockHeight, IPacketBase packet)
-        {
-            var transaction = packet.AsPacket<O10StatePacket>().With<DocumentSignTransaction>();
-
-            StateIncomingStoreInput storeInput = new StateIncomingStoreInput
+        private static StateIncomingStoreInput StoreDocumentSignRecord(long witnessId, long registryCombinedBlockHeight, DocumentSignTransaction transaction)
+            => new StateIncomingStoreInput
             {
                 CombinedRegistryBlockHeight = registryCombinedBlockHeight,
                 WitnessId = witnessId,
-                BlockHeight = transaction.Height,
-                BlockType = transaction.TransactionType,
+                TransactionType = transaction.TransactionType,
                 Commitment = transaction.SignerCommitment,
                 Source = transaction.Source,
-                Content = packet.ToString()
+                Content = transaction.ToString()
             };
 
-            _dataAccessService.StoreIncomingTransactionalBlock(storeInput);
-        }
-
-        private void StoreDocumentRecord(long witnessId, long registryCombinedBlockHeight, IPacketBase packet)
-        {
-            var transaction = packet.AsPacket<O10StatePacket>().With<DocumentRecordTransaction>();
-            StateIncomingStoreInput storeInput = new StateIncomingStoreInput
+        private static StateIncomingStoreInput StoreDocumentRecord(long witnessId, long registryCombinedBlockHeight, DocumentRecordTransaction transaction)
+            => new StateIncomingStoreInput
             {
                 CombinedRegistryBlockHeight = registryCombinedBlockHeight,
                 WitnessId = witnessId,
-                BlockHeight = transaction.Height,
-                BlockType = transaction.TransactionType,
+                TransactionType = transaction.TransactionType,
                 Commitment = transaction.DocumentHash,
                 Source = transaction.Source,
-                Content = packet.ToString()
+                Content = transaction.ToString()
             };
 
-            _dataAccessService.StoreIncomingTransactionalBlock(storeInput);
-        }
-
-        private void StoreCancelEmployeeRecordPacket(long witnessId, long registryCombinedBlockHeight, IPacketBase packet)
+        private StateIncomingStoreInput StoreCancelRelationRecordPacket(long witnessId, long registryCombinedBlockHeight, CancelRelationTransaction transaction)
         {
-            var transaction = packet.AsPacket<O10StatePacket>().With<CancelEmploymentTransaction>();
-            StateIncomingStoreInput storeInput = new StateIncomingStoreInput
+            _dataAccessService.CancelRelationRecord(transaction.Source, transaction.RegistrationCommitment);
+
+            return new StateIncomingStoreInput
             {
                 CombinedRegistryBlockHeight = registryCombinedBlockHeight,
                 WitnessId = witnessId,
-                BlockHeight = transaction.Height,
-                BlockType = transaction.TransactionType,
+                TransactionType = transaction.TransactionType,
                 Commitment = transaction.RegistrationCommitment,
                 Source = transaction.Source,
-                Content = packet.ToString()
+                Content = transaction.ToString()
             };
-
-            _dataAccessService.StoreIncomingTransactionalBlock(storeInput);
-            _dataAccessService.CancelEmployeeRecord(transaction.Source, transaction.RegistrationCommitment);
         }
 
-        private void StoreRelationRecordPacket(long witnessId, long registryCombinedBlockHeight, IPacketBase packet)
+        private StateIncomingStoreInput StoreRelationRecordPacket(long witnessId, long registryCombinedBlockHeight, RelationTransaction transaction)
         {
-            var transaction = packet.AsPacket<O10StatePacket>().With<RelationTransaction>();
-            StateIncomingStoreInput storeInput = new StateIncomingStoreInput
+            _dataAccessService.AddRelationRecord(transaction.Source, transaction.RegistrationCommitment, transaction.GroupCommitment);
+
+            return new StateIncomingStoreInput
             {
                 CombinedRegistryBlockHeight = registryCombinedBlockHeight,
                 WitnessId = witnessId,
-                BlockHeight = transaction.Height,
-                BlockType = transaction.TransactionType,
+                TransactionType = transaction.TransactionType,
                 Commitment = transaction.RegistrationCommitment,
                 Source = transaction.Source,
-                Content = packet.ToString()
+                Content = transaction.ToString()
             };
-
-            _dataAccessService.StoreIncomingTransactionalBlock(storeInput);
-            _dataAccessService.AddEmployeeRecord(transaction.Source, transaction.RegistrationCommitment, transaction.GroupCommitment);
         }
 
-        private void StoreIssueAssociatedBlindedAsset(long witnessId, long registryCombinedBlockHeight, IPacketBase packet)
+        private StateIncomingStoreInput StoreIssueAssociatedBlindedAsset(long witnessId, long registryCombinedBlockHeight, IssueAssociatedBlindedAssetTransaction transaction)
         {
-            var transaction = packet.AsPacket<O10StatePacket>().With<IssueAssociatedBlindedAssetTransaction>();
-            StateIncomingStoreInput storeInput = new StateIncomingStoreInput
-            {
-                CombinedRegistryBlockHeight = registryCombinedBlockHeight,
-                WitnessId = witnessId,
-                BlockHeight = transaction.Height,
-                BlockType = transaction.TransactionType,
-                Commitment = transaction.AssetCommitment,
-                Source = transaction.Source,
-                Content = packet.ToString()
-            };
-
-            _dataAccessService.StoreIncomingTransactionalBlock(storeInput);
-
             _dataAccessService.StoreAssociatedAttributeIssuance(transaction.Source, transaction.AssetCommitment, transaction.RootAssetCommitment);
-        }
-
-        private void StoreIssueBlindedAsset(long witnessId, long registryCombinedBlockHeight, IPacketBase packet)
-        {
-            var transaction = packet.AsPacket<O10StatePacket>().With<IssueBlindedAssetTransaction>();
-            StateIncomingStoreInput storeInput = new StateIncomingStoreInput
+         
+            return new StateIncomingStoreInput
             {
                 CombinedRegistryBlockHeight = registryCombinedBlockHeight,
                 WitnessId = witnessId,
-                BlockHeight = transaction.Height,
-                BlockType = transaction.TransactionType,
+                TransactionType = transaction.TransactionType,
                 Commitment = transaction.AssetCommitment,
                 Source = transaction.Source,
-                Content = packet.ToString()
+                Content = transaction.ToString()
             };
-
-            _dataAccessService.StoreIncomingTransactionalBlock(storeInput);
         }
 
-        private void StoreTransferAsset(long witnessId, long registryCombinedBlockHeight, IPacketBase packet)
-        {
-            var transaction = packet.AsPacket<O10StatePacket>().With<TransferAssetToStealthTransaction>();
-            var originatingCommitment = _identityKeyProvider.GetKey(transaction.SurjectionProof.AssetCommitments[0]);
-            var storeInput = new StateIncomingStoreInput
+        private static StateIncomingStoreInput StoreIssueBlindedAsset(long witnessId, long registryCombinedBlockHeight, IssueBlindedAssetTransaction transaction)
+            => new StateIncomingStoreInput
             {
                 CombinedRegistryBlockHeight = registryCombinedBlockHeight,
                 WitnessId = witnessId,
-                BlockHeight = transaction.Height,
-                BlockType = transaction.TransactionType,
+                TransactionType = transaction.TransactionType,
+                Commitment = transaction.AssetCommitment,
+                Source = transaction.Source,
+                Content = transaction.ToString()
+            };
+
+        private StateIncomingStoreInput StoreTransferAsset(long witnessId, long registryCombinedBlockHeight, TransferAssetToStealthTransaction transaction)
+        {
+            var originatingCommitment = _identityKeyProvider.GetKey(transaction.SurjectionProof.AssetCommitments[0]);
+            
+            _dataAccessService.SetRootAttributesOverriden(transaction.Source, originatingCommitment, registryCombinedBlockHeight);
+            _dataAccessService.StoreRootAttributeIssuance(transaction.Source, originatingCommitment, transaction.TransferredAsset.AssetCommitment, registryCombinedBlockHeight);
+
+            return new StateIncomingStoreInput
+            {
+                CombinedRegistryBlockHeight = registryCombinedBlockHeight,
+                WitnessId = witnessId,
+                TransactionType = transaction.TransactionType,
                 Commitment = transaction.TransferredAsset.AssetCommitment,
                 Destination = transaction.DestinationKey,
                 TransactionKey = transaction.TransactionPublicKey,
                 Source = transaction.Source,
                 OriginatingCommitment = originatingCommitment,
-                Content = packet.ToString()
+                Content = transaction.ToString()
             };
-
-            _dataAccessService.StoreIncomingTransactionalBlock(storeInput);
-            _dataAccessService.SetRootAttributesOverriden(transaction.Source, originatingCommitment, registryCombinedBlockHeight);
-            _dataAccessService.StoreRootAttributeIssuance(transaction.Source, originatingCommitment, transaction.TransferredAsset.AssetCommitment, registryCombinedBlockHeight);
         }
     }
 }

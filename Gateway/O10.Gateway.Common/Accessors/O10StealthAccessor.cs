@@ -67,10 +67,10 @@ namespace O10.Gateway.Common.Accessors
                 throw new AccessorValidationFailedException($"{Hash} is corrupted");
             }
 
-            var stealthPacket = _dataAccessService.GetStealthPacket(combinedRegistryBlockHeight, accessDescriptor.Parameters[Hash]);
+            var stealthPacket = _dataAccessService.GetStealthTransaction(combinedRegistryBlockHeight, accessDescriptor.Parameters[Hash]);
             if(stealthPacket != null)
             {
-                var parser = _blockParsersRepository.GetInstance(stealthPacket.BlockType);
+                var parser = _blockParsersRepository.GetInstance(stealthPacket.TransactionType);
 
                 var packet = parser.Parse(stealthPacket.Content);
                 return packet;

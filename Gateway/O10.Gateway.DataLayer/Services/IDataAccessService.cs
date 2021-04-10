@@ -34,12 +34,14 @@ namespace O10.Gateway.DataLayer.Services
 		/// <returns></returns>
 		bool GetRegistryFullBlocks(ulong heightStart, out ulong[] heights, out byte[][][] contents);
 
-        void StoreIncomingTransactionalBlock(StateIncomingStoreInput storeInput);
+        //void StoreIncomingTransactionalBlock(StateIncomingStoreInput storeInput);
+        void StoreStateTransaction(StateIncomingStoreInput storeInput);
         void StoreIncomingUtxoTransactionBlock(UtxoIncomingStoreInput storeInput);
 
-        StatePacket GetTransactionalIncomingBlock(long witnessid);
-        StealthPacket GetUtxoIncomingBlock(long witnessid);
-        StealthPacket GetStealthPacket(long combinedRegistryBlockHeight, string hashString);
+        StateTransaction? GetStateTransaction(long witnessId);
+        StateTransaction? GetStateTransaction(string source, string hashString);
+        StealthTransaction? GetStealthTransaction(long witnessId);
+        StealthTransaction? GetStealthTransaction(long combinedRegistryBlockHeight, string hashString);
 
         int GetTotalUtxoOutputsAmount();
 		
@@ -55,12 +57,10 @@ namespace O10.Gateway.DataLayer.Services
 
         void SetRootAttributesOverriden(IKey issuer, IKey issuanceCommitment, long combinedBlockHeight);
 
-		void AddEmployeeRecord(IKey issuer, IKey registrationCommitment, IKey groupCommitment);
-		void CancelEmployeeRecord(IKey issuer, IKey registrationCommitment);
+		void AddRelationRecord(IKey issuer, IKey registrationCommitment, IKey groupCommitment);
+		void CancelRelationRecord(IKey issuer, IKey registrationCommitment);
 
-		byte[] GetEmployeeRecordGroup(string issuer, string registrationCommitment);
-
-		StatePacket GetTransactionBySourceAndHeight(string source, ulong blockHeight);
+		byte[] GetRelationRecordGroup(string issuer, string registrationCommitment);
 
         void AddCompromisedKeyImage(IKey keyImage);
         bool GetIsKeyImageCompomised(IKey keyImage);

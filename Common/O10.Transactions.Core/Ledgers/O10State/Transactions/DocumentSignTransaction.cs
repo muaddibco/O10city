@@ -17,9 +17,9 @@ namespace O10.Transactions.Core.Ledgers.O10State.Transactions
 		/// The height of the aggregated registry at the time of signing. This is required in order to make sure 
 		/// that signer had required permissions and valid identity at the time of signing
 		/// </summary>
-		public ulong RecordHeight { get; set; }
+		public ulong RecordHeight { get; set; } // seems it is not required for locating the precise point of when exactly document was signed because the location of the signature on the timeline can be located using the hash of the transaction
 
-		public IKey? KeyImage { get; set; }
+		public IKey? KeyImage { get; set; } // KeyImage for checking for compromization (?)
 
 		/// <summary>
 		/// Commitment created from the Root Attribute

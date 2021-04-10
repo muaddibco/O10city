@@ -29,7 +29,7 @@
         public const ushort Transaction_RelationRecord = 13;
         public const ushort Transaction_DocumentRecord = 14;
         public const ushort Transaction_DocumentSignRecord = 15;
-        public const ushort Transaction_CancelEmployment = 16;
+        public const ushort Transaction_CancelRelation = 16;
 
         public const ushort Stealth_IdentityProofs = 1;
         public const ushort Stealth_RevokeIdentity = 2;

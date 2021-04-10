@@ -24,6 +24,7 @@ using O10.Core.Notifications;
 using O10.Transactions.Core.DTOs;
 using O10.Transactions.Core.Ledgers;
 using O10.Transactions.Core.Ledgers.Stealth;
+using O10.Crypto.Models;
 
 namespace O10.Client.Common.Communication
 {
@@ -177,11 +178,11 @@ namespace O10.Client.Common.Communication
 			return true;
         }
 
-		public async Task<IEnumerable<IPacketBase>> GetPackets(IEnumerable<long> witnessIds)
+		public async Task<IEnumerable<TransactionBase>> GetTransactions(IEnumerable<long> witnessIds)
 		{
 			_logger.Debug($"Getting packet infos for witnesses with Ids {string.Join(',', witnessIds)}");
 
-			List<IPacketBase> res = null;
+			List<TransactionBase> res = null;
 			try
 			{
 				Url url = _gatewayUri.AppendPathSegments("api", "synchronization", "packets");
@@ -194,7 +195,7 @@ namespace O10.Client.Common.Communication
 					{
 						if (t.IsCompletedSuccessfully)
 						{
-							res = await t.ReceiveJson<List<IPacketBase>>().ConfigureAwait(false);
+							res = await t.ReceiveJson<List<TransactionBase>>().ConfigureAwait(false);
 						}
 						else
 						{

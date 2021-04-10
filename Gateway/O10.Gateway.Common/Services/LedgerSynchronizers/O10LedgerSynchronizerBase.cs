@@ -4,6 +4,7 @@ using Newtonsoft.Json;
 using O10.Core.Configuration;
 using O10.Core.Logging;
 using O10.Core.Serialization;
+using O10.Crypto.Models;
 using O10.Gateway.Common.Configuration;
 using O10.Gateway.Common.Exceptions;
 using O10.Gateway.DataLayer.Model;
@@ -27,7 +28,7 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
 
         public abstract LedgerType LedgerType { get; }
 
-        public abstract IPacketBase GetByWitness(WitnessPacket witnessPacket);
+        public abstract TransactionBase GetByWitness(WitnessPacket witnessPacket);
 
         public virtual async Task SyncByWitness(WitnessPacket witnessPacket)
         {
@@ -37,16 +38,16 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
             }
 
             Url url = _synchronizerConfiguration.NodeApiUri.AppendPathSegments("Ledger", witnessPacket.ReferencedLedgerType, "Transaction").SetQueryParam("combinedBlockHeight", witnessPacket.CombinedBlockHeight).SetQueryParam("hash", witnessPacket.ReferencedBodyHash.Hash);
-            _logger.Info($"Querying packet by the URI {url}");
+            _logger.Info($"Querying transaction by the URI {url}");
 
             try
             {
-                var packet = await url.GetJsonAsync<IPacketBase>().ConfigureAwait(false);
-                _logger.LogIfDebug(() => $"Packet obtained from URI {url}: {JsonConvert.SerializeObject(packet, new ByteArrayJsonConverter())}");
+                var transaction = await url.GetJsonAsync<TransactionBase>().ConfigureAwait(false);
+                _logger.LogIfDebug(() => $"Transaction obtained from URI {url}: {JsonConvert.SerializeObject(transaction, new ByteArrayJsonConverter())}");
 
-                if (packet != null)
+                if (transaction != null)
                 {
-                    StorePacket(witnessPacket, packet);
+                    StorePacket(witnessPacket, transaction);
                 }
                 else
                 {
@@ -55,11 +56,11 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failure during obtaining and storing Transactional packet from URL {url}", ex);
+                _logger.Error($"Failure during obtaining and storing State Transaction from URL {url}", ex);
                 throw;
             }
         }
 
-        protected abstract void StorePacket(WitnessPacket wp, IPacketBase packet);
+        protected abstract void StorePacket(WitnessPacket wp, TransactionBase transaction);
     }
 }

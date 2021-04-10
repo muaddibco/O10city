@@ -238,36 +238,74 @@ namespace O10.Gateway.DataLayer.Services
             return false;
         }
 
-        public void StoreIncomingTransactionalBlock(StateIncomingStoreInput storeInput)
+        //public void StoreIncomingTransactionalBlock(StateIncomingStoreInput storeInput)
+        //{
+        //    if (storeInput is null)
+        //    {
+        //        throw new ArgumentNullException(nameof(storeInput));
+        //    }
+
+        //    StatePacket transactionalIncomingBlock = new StatePacket
+        //    {
+        //        WitnessId = storeInput.WitnessId,
+        //        Height = storeInput.BlockHeight,
+        //        BlockType = storeInput.TransactionType,
+        //        Content = storeInput.Content,
+        //        Source = GetOrAddAddress(storeInput.Source) ?? throw new ArgumentException($"{nameof(storeInput.Source)} is missing"),
+        //        Target = GetOrAddAddress(storeInput.Destination),
+        //        TransactionKey = GetOrAddUtxoTransactionKey(storeInput.TransactionKey),
+        //        Output = GetOrAddUtxoOutput(storeInput.Commitment, storeInput.Destination, storeInput.OriginatingCommitment),
+        //        ThisBlockHash = GetOrAddPacketHash(
+        //                            _identityKeyProvider.GetKey(_hashCalculation.CalculateHash(storeInput.Content)),
+        //                            storeInput.CombinedRegistryBlockHeight),
+        //        IsVerified = true,
+        //        IsValid = true,
+        //        IsTransition = storeInput.TransactionKey != null
+        //    };
+
+        //    if (Monitor.TryEnter(_sync, _lockTimeout))
+        //    {
+        //        try
+        //        {
+        //            _dataContext.TransactionalPackets.Add(transactionalIncomingBlock);
+        //        }
+        //        finally
+        //        {
+        //            Monitor.Exit(_sync);
+        //        }
+        //    }
+        //    else
+        //    {
+        //        _logger.Warning("Failed to acquire lock at StoreIncomingTransactionalBlock");
+        //    }
+        //}
+
+        public void StoreStateTransaction(StateIncomingStoreInput storeInput)
         {
             if (storeInput is null)
             {
                 throw new ArgumentNullException(nameof(storeInput));
             }
 
-            StatePacket transactionalIncomingBlock = new StatePacket
+            StateTransaction stateTransaction = new StateTransaction
             {
                 WitnessId = storeInput.WitnessId,
-                Height = storeInput.BlockHeight,
-                BlockType = storeInput.BlockType,
+                TransactionType = storeInput.TransactionType,
                 Content = storeInput.Content,
                 Source = GetOrAddAddress(storeInput.Source) ?? throw new ArgumentException($"{nameof(storeInput.Source)} is missing"),
                 Target = GetOrAddAddress(storeInput.Destination),
                 TransactionKey = GetOrAddUtxoTransactionKey(storeInput.TransactionKey),
                 Output = GetOrAddUtxoOutput(storeInput.Commitment, storeInput.Destination, storeInput.OriginatingCommitment),
-                ThisBlockHash = GetOrAddPacketHash(
+                Hash = GetOrAddPacketHash(
                                     _identityKeyProvider.GetKey(_hashCalculation.CalculateHash(storeInput.Content)),
                                     storeInput.CombinedRegistryBlockHeight),
-                IsVerified = true,
-                IsValid = true,
-                IsTransition = storeInput.TransactionKey != null
             };
 
             if (Monitor.TryEnter(_sync, _lockTimeout))
             {
                 try
                 {
-                    _dataContext.TransactionalPackets.Add(transactionalIncomingBlock);
+                    _dataContext.StateTransactions.Add(stateTransaction);
                 }
                 finally
                 {
@@ -276,7 +314,7 @@ namespace O10.Gateway.DataLayer.Services
             }
             else
             {
-                _logger.Warning("Failed to acquire lock at StoreIncomingTransactionalBlock");
+                _logger.Warning($"Failed to acquire lock at {nameof(StoreStateTransaction)}");
             }
         }
 
@@ -287,15 +325,15 @@ namespace O10.Gateway.DataLayer.Services
                 throw new ArgumentNullException(nameof(storeInput));
             }
 
-            StealthPacket utxoIncomingBlock = new StealthPacket
+            StealthTransaction utxoIncomingBlock = new StealthTransaction
             {
                 WitnessId = storeInput.WitnessId,
-                BlockType = storeInput.BlockType,
+                TransactionType = storeInput.TransactionType,
                 TransactionKey = GetOrAddUtxoTransactionKey(storeInput.TransactionKey) ?? throw new ArgumentException($"{nameof(storeInput.TransactionKey)} is missing"),
                 KeyImage = GetOrAddUtxoKeyImage(storeInput.KeyImage),
                 Output = GetOrAddUtxoOutput(storeInput.Commitment, storeInput.Destination) ?? throw new ArgumentException($"{nameof(storeInput.Commitment)} and {nameof(storeInput.Destination)} are missing"),
                 Content = storeInput.Content,
-                ThisBlockHash = GetOrAddPacketHash(
+                Hash = GetOrAddPacketHash(
                     _identityKeyProvider.GetKey(_hashCalculation.CalculateHash(storeInput.Content)),
                     storeInput.CombinedRegistryBlockHeight)
             };
@@ -304,7 +342,7 @@ namespace O10.Gateway.DataLayer.Services
             {
                 try
                 {
-                    _dataContext.StealthPackets.Add(utxoIncomingBlock);
+                    _dataContext.StealthTransactions.Add(utxoIncomingBlock);
                 }
                 finally
                 {
@@ -497,19 +535,19 @@ namespace O10.Gateway.DataLayer.Services
             {
                 try
                 {
-                    List<StatePacket> excessedTransactionalPackets = _dataContext.TransactionalPackets.Where(r => r.ThisBlockHash.CombinedRegistryBlockHeight > combinedBlockHeight).ToList();
-                    _dataContext.TransactionalPackets.RemoveRange(excessedTransactionalPackets);
+                    var excessedTransactionalPackets = _dataContext.StateTransactions.Where(r => r.Hash.AggregatedTransactionsHeight > combinedBlockHeight).ToList();
+                    _dataContext.StateTransactions.RemoveRange(excessedTransactionalPackets);
 
-                    List<StealthPacket> excessedStealthPackets = _dataContext.StealthPackets.Where(r => r.ThisBlockHash.CombinedRegistryBlockHeight > combinedBlockHeight).ToList();
-                    _dataContext.StealthPackets.RemoveRange(excessedStealthPackets);
+                    var excessedStealthPackets = _dataContext.StealthTransactions.Where(r => r.Hash.AggregatedTransactionsHeight > combinedBlockHeight).ToList();
+                    _dataContext.StealthTransactions.RemoveRange(excessedStealthPackets);
 
-                    List<PacketHash> excessedHashes = _dataContext.PacketHashes.Where(r => r.CombinedRegistryBlockHeight > combinedBlockHeight).ToList();
+                    var excessedHashes = _dataContext.PacketHashes.Where(r => r.AggregatedTransactionsHeight > combinedBlockHeight).ToList();
                     _dataContext.PacketHashes.RemoveRange(excessedHashes);
 
-                    List<WitnessPacket> excessedWitnessPackets = _dataContext.WitnessPackets.Local.Where(r => r.CombinedBlockHeight > combinedBlockHeight).ToList();
+                    var excessedWitnessPackets = _dataContext.WitnessPackets.Local.Where(r => r.CombinedBlockHeight > combinedBlockHeight).ToList();
                     _dataContext.WitnessPackets.RemoveRange(excessedWitnessPackets);
 
-                    List<RegistryCombinedBlock> excessedCombinedBlocks = _dataContext.RegistryCombinedBlocks.Where(r => r.RegistryCombinedBlockId > combinedBlockHeight).ToList();
+                    var excessedCombinedBlocks = _dataContext.RegistryCombinedBlocks.Where(r => r.RegistryCombinedBlockId > combinedBlockHeight).ToList();
                     _dataContext.RegistryCombinedBlocks.RemoveRange(excessedCombinedBlocks);
                 }
                 finally
@@ -949,17 +987,17 @@ namespace O10.Gateway.DataLayer.Services
             return false;
         }
 
-        public StatePacket GetTransactionalIncomingBlock(long witnessid)
+        public StateTransaction? GetStateTransaction(long witnessid)
         {
             if (Monitor.TryEnter(_sync, _lockTimeout))
             {
                 try
                 {
-					StatePacket transactionalIncomingBlock = _dataContext.TransactionalPackets.Local.FirstOrDefault(t => t.WitnessId == witnessid);
+					var transactionalIncomingBlock = _dataContext.StateTransactions.Local.FirstOrDefault(t => t.WitnessId == witnessid);
 
 					if(transactionalIncomingBlock == null)
 					{
-						transactionalIncomingBlock = _dataContext.TransactionalPackets.FirstOrDefault(t => t.WitnessId == witnessid);
+						transactionalIncomingBlock = _dataContext.StateTransactions.FirstOrDefault(t => t.WitnessId == witnessid);
 					}
 
 					return transactionalIncomingBlock;
@@ -977,17 +1015,17 @@ namespace O10.Gateway.DataLayer.Services
             return null;
         }
 
-        public StealthPacket GetUtxoIncomingBlock(long witnessid)
+        public StealthTransaction? GetStealthTransaction(long witnessid)
         {
             if (Monitor.TryEnter(_sync, _lockTimeout))
             {
                 try
                 {
-					StealthPacket utxoIncomingBlock = _dataContext.StealthPackets.Local.FirstOrDefault(t => t.WitnessId == witnessid);
+					StealthTransaction utxoIncomingBlock = _dataContext.StealthTransactions.Local.FirstOrDefault(t => t.WitnessId == witnessid);
 
 					if(utxoIncomingBlock == null)
 					{
-						utxoIncomingBlock = _dataContext.StealthPackets.FirstOrDefault(t => t.WitnessId == witnessid);
+						utxoIncomingBlock = _dataContext.StealthTransactions.FirstOrDefault(t => t.WitnessId == witnessid);
 					}
 
 					return utxoIncomingBlock;
@@ -1005,21 +1043,21 @@ namespace O10.Gateway.DataLayer.Services
             return null;
         }
 
-        public StealthPacket GetStealthPacket(long combinedRegistryBlockHeight, string hashString)
+        public StealthTransaction? GetStealthTransaction(long combinedRegistryBlockHeight, string hashString)
         {
             if (Monitor.TryEnter(_sync, _lockTimeout))
             {
                 try
                 {
-                    var packetHash = _dataContext.PacketHashes.Local.FirstOrDefault(h => h.CombinedRegistryBlockHeight == combinedRegistryBlockHeight && h.Hash == hashString);
+                    var packetHash = _dataContext.PacketHashes.Local.FirstOrDefault(h => h.AggregatedTransactionsHeight == combinedRegistryBlockHeight && h.Hash == hashString);
 
                     if(packetHash != null)
                     {
-                        StealthPacket stealthPacket = _dataContext.StealthPackets.Local.FirstOrDefault(t => t.ThisBlockHash?.PacketHashId == packetHash.PacketHashId);
+                        StealthTransaction stealthPacket = _dataContext.StealthTransactions.Local.FirstOrDefault(t => t.Hash?.TransactionHashId == packetHash.TransactionHashId);
 
                         if (stealthPacket == null)
                         {
-                            stealthPacket = _dataContext.StealthPackets.Include(p => p.ThisBlockHash).FirstOrDefault(t => t.ThisBlockHash != null && t.ThisBlockHash.PacketHashId == packetHash.PacketHashId);
+                            stealthPacket = _dataContext.StealthTransactions.Include(p => p.Hash).FirstOrDefault(t => t.Hash != null && t.Hash.TransactionHashId == packetHash.TransactionHashId);
                         }
 
                         return stealthPacket;
@@ -1032,13 +1070,13 @@ namespace O10.Gateway.DataLayer.Services
             }
             else
             {
-                _logger.Warning($"Failed to acquire lock at {nameof(GetStealthPacket)}");
+                _logger.Warning($"Failed to acquire lock at {nameof(GetStealthTransaction)}");
             }
 
             return null;
         }
 
-        public void CancelEmployeeRecord(IKey issuerKey, IKey registrationCommitment)
+        public void CancelRelationRecord(IKey issuerKey, IKey registrationCommitment)
         {
             if (issuerKey is null)
             {
@@ -1080,7 +1118,7 @@ namespace O10.Gateway.DataLayer.Services
             }
         }
 
-        public void AddEmployeeRecord(IKey issuer, IKey registrationCommitment, IKey groupCommitment)
+        public void AddRelationRecord(IKey issuer, IKey registrationCommitment, IKey groupCommitment)
 		{
             if (issuer is null)
             {
@@ -1121,7 +1159,7 @@ namespace O10.Gateway.DataLayer.Services
 			}
 		}
 
-		public byte[] GetEmployeeRecordGroup(string issuer, string registrationCommitment)
+		public byte[] GetRelationRecordGroup(string issuer, string registrationCommitment)
 		{
 			if (Monitor.TryEnter(_sync, _lockTimeout))
 			{
@@ -1149,13 +1187,13 @@ namespace O10.Gateway.DataLayer.Services
 			return null;
 		}
 
-		public StatePacket GetTransactionBySourceAndHeight(string source, ulong blockHeight)
-		{
+		public StateTransaction? GetStateTransaction(string source, string hashString)
+        {
 			if (Monitor.TryEnter(_sync, _lockTimeout))
 			{
 				try
 				{
-					StatePacket transaction = _dataContext.TransactionalPackets.Include(t => t.Source).Include(t => t.ThisBlockHash).FirstOrDefault(t => source.Equals(t.Source.Key) && t.Height == (long)blockHeight);
+					var transaction = _dataContext.StateTransactions.Include(t => t.Source).Include(t => t.Hash).FirstOrDefault(t => source == t.Source.Key && t.Hash.Hash == hashString);
 
 					return transaction;
 				}
@@ -1250,20 +1288,20 @@ namespace O10.Gateway.DataLayer.Services
             return null;
         }
 
-        private PacketHash GetOrAddPacketHash(IKey blockHash, long combinedRegistryBlockHeight)
+        private TransactionHash GetOrAddPacketHash(IKey blockHash, long combinedRegistryBlockHeight)
         {
             if (Monitor.TryEnter(_sync, _lockTimeout))
             {
                 try
                 {
                     string blockHashString = blockHash.ToString();
-                    PacketHash block = _dataContext.PacketHashes.FirstOrDefault(b => b.CombinedRegistryBlockHeight == b.CombinedRegistryBlockHeight && b.Hash == blockHashString);
+                    TransactionHash block = _dataContext.PacketHashes.FirstOrDefault(b => b.AggregatedTransactionsHeight == b.AggregatedTransactionsHeight && b.Hash == blockHashString);
 
                     if (block == null)
                     {
-                        block = new PacketHash
+                        block = new TransactionHash
                         {
-                            CombinedRegistryBlockHeight = combinedRegistryBlockHeight,
+                            AggregatedTransactionsHeight = combinedRegistryBlockHeight,
                             Hash = blockHashString
                         };
 

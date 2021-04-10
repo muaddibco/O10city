@@ -21,7 +21,7 @@ namespace O10.Gateway.DataLayer.Model
 
         public ushort ReferencedPacketType { get; set; }
 
-        public PacketHash ReferencedBodyHash { get; set; }
+        public TransactionHash ReferencedBodyHash { get; set; }
 
 		[Column(TypeName = "varbinary(64)")]
 		public string ReferencedDestinationKey { get; set; }

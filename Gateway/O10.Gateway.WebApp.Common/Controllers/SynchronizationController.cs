@@ -150,7 +150,7 @@ namespace O10.Gateway.WebApp.Common.Controllers
         {
             var transactionalIncomingBlock = _dataAccessService.GetTransactionBySourceAndHeight(accountPublicKey, height);
 
-            return Ok(transactionalIncomingBlock?.ThisBlockHash?.CombinedRegistryBlockHeight ?? 0);
+            return Ok(transactionalIncomingBlock?.ThisBlockHash?.AggregatedTransactionsHeight ?? 0);
         }
 
         [HttpGet("GetIssuanceCommitments/{issuer}/{amount}")]
@@ -247,7 +247,7 @@ namespace O10.Gateway.WebApp.Common.Controllers
         [HttpGet("Packets")]
         public async Task<IActionResult> GetPackets([FromQuery(Name = "wid")] List<long> witnessIds)
         {
-            return Ok(await _networkSynchronizer.GetPackets(witnessIds));
+            return Ok(await _networkSynchronizer.GetTransactions(witnessIds));
         }
 
         [HttpGet("IsRootAttributeValid/{issuer}/{commitment}")]
@@ -313,7 +313,7 @@ namespace O10.Gateway.WebApp.Common.Controllers
         [HttpGet("GetEmployeeRecordGroup/{issuer}/{registrationCommitment}")]
         public IActionResult GetEmployeeRecordGroup(string issuer, string registrationCommitment)
         {
-            return Ok(_dataAccessService.GetEmployeeRecordGroup(issuer, registrationCommitment).ToHexString());
+            return Ok(_dataAccessService.GetRelationRecordGroup(issuer, registrationCommitment).ToHexString());
         }
 
         [HttpGet("GetTransactionBySourceAndHeight")]

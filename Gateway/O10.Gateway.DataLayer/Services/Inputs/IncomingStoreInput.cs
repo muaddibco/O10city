@@ -6,7 +6,7 @@ namespace O10.Gateway.DataLayer.Services.Inputs
     {
         public long CombinedRegistryBlockHeight { get; set; }
         public long WitnessId { get; set; }
-        public ushort BlockType { get; set; }
+        public ushort TransactionType { get; set; }
         public IKey? Commitment { get; set; }
         public IKey? Destination { get; set; }
         public string Content { get; set; }

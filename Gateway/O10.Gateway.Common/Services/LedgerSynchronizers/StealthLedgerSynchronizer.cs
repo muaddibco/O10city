@@ -3,6 +3,7 @@ using O10.Core.Configuration;
 using O10.Core.Identity;
 using O10.Core.Logging;
 using O10.Core.Models;
+using O10.Crypto.Models;
 using O10.Gateway.DataLayer.Model;
 using O10.Gateway.DataLayer.Services;
 using O10.Gateway.DataLayer.Services.Inputs;
@@ -32,59 +33,55 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
 
 		public override LedgerType LedgerType => LedgerType.Stealth;
 
-        public override IPacketBase GetByWitness(WitnessPacket witnessPacket)
+        public override TransactionBase GetByWitness(WitnessPacket witnessPacket)
         {
             if (witnessPacket is null)
             {
                 throw new ArgumentNullException(nameof(witnessPacket));
             }
 
-            DataLayer.Model.StealthPacket utxoIncomingBlock = _dataAccessService.GetUtxoIncomingBlock(witnessPacket.WitnessPacketId);
-			return SerializableEntity<IPacketBase>.Create(utxoIncomingBlock.Content);
+            DataLayer.Model.StealthTransaction utxoIncomingBlock = _dataAccessService.GetStealthTransaction(witnessPacket.WitnessPacketId);
+			return SerializableEntity<IPacketBase>.Create(utxoIncomingBlock.Content).Body;
 		}
 
-		protected override void StorePacket(WitnessPacket wp, IPacketBase packet)
+		protected override void StorePacket(WitnessPacket wp, TransactionBase transaction)
         {
             if (wp is null)
             {
                 throw new ArgumentNullException(nameof(wp));
             }
 
-            if (packet is null)
+            if (transaction is null)
             {
-                throw new ArgumentNullException(nameof(packet));
+                throw new ArgumentNullException(nameof(transaction));
             }
 
             var registryCombinedBlockHeight = wp.CombinedBlockHeight;
 
-			switch (packet.Body.TransactionType)
+			switch (transaction)
 			{
-                case TransactionTypes.Stealth_TransitionCompromisedProofs:
-                    ProcessCompromizedProofs(packet);
+                case CompromizationProofsTransaction compromizationProofsTransaction:
+                    ProcessCompromizedProofs(compromizationProofsTransaction);
                     break;
-                case TransactionTypes.Stealth_RevokeIdentity:
-					ProcessRevokeIdentity(packet, registryCombinedBlockHeight);
+                case RevokeIdentityTransaction revokeIdentityTransaction:
+					ProcessRevokeIdentity(revokeIdentityTransaction, registryCombinedBlockHeight);
 					break;
 			}
-			StoreUtxoPacket(wp.WitnessPacketId, registryCombinedBlockHeight, packet);
+			StoreUtxoPacket(wp.WitnessPacketId, registryCombinedBlockHeight, transaction);
 		}
 
-        private void ProcessCompromizedProofs(IPacketBase packet)
+        private void ProcessCompromizedProofs(CompromizationProofsTransaction transaction)
         {
-			var transaction = packet.AsPacket<StealthPacket>().With<CompromizationProofsTransaction>();
-			
 			_dataAccessService.AddCompromisedKeyImage(transaction.KeyImage);
         }
 
-        private void StoreUtxoPacket(long witnessId, long registryCombinedBlockHeight, IPacketBase packet)
+        private void StoreUtxoPacket(long witnessId, long registryCombinedBlockHeight, O10StealthTransactionBase transaction)
 		{
-            var transaction = packet.AsPacket<StealthPacket>().With<O10StealthTransactionBase>();
-
 			UtxoIncomingStoreInput storeInput = new UtxoIncomingStoreInput
 			{
 				CombinedRegistryBlockHeight = registryCombinedBlockHeight,
 				WitnessId = witnessId,
-				BlockType = transaction.TransactionType,
+				TransactionType = transaction.TransactionType,
 				Commitment = transaction.AssetCommitment,
 				Destination = transaction.DestinationKey,
 				DestinationKey2 = transaction.DestinationKey2,
@@ -96,10 +93,8 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
 			_dataAccessService.StoreIncomingUtxoTransactionBlock(storeInput);
 		}
 
-		private void ProcessRevokeIdentity(IPacketBase packet, long registryCombinedBlockHeight)
+		private void ProcessRevokeIdentity(RevokeIdentityTransaction transaction, long registryCombinedBlockHeight)
 		{
-			var transaction = packet.AsPacket<StealthPacket>().With<RevokeIdentityTransaction>();
-
 			_dataAccessService.SetRootAttributesOverriden(
 				transaction.DestinationKey2,
 				_identityKeyProvider.GetKey(transaction.OwnershipProof.AssetCommitments[0]),
