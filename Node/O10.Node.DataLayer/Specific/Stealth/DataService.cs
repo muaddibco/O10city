@@ -73,36 +73,62 @@ namespace O10.Node.DataLayer.Specific.Stealth
             throw new Exception($"Attempt to store an improper packet type {packet.GetType().FullName}");
         }
 
-        public override IEnumerable<IPacketBase> Get(IDataKey key)
-        {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
+        public override IEnumerable<IPacketBase> Get(IDataKey key) 
+            => key == null
+                ? throw new ArgumentNullException(nameof(key))
+                : key switch 
+                { 
+                    CombinedHashKey combinedHashKey => Get(combinedHashKey),
+                    HashKey hashKey => Get(hashKey),
+                    _ => throw new DataKeyNotSupportedException(key) 
+                };
 
-            if (key is CombinedHashKey combinedHashKey)
+        private IEnumerable<IPacketBase> Get(CombinedHashKey combinedHashKey)
+        {
+            var stealth = Service.GetTransaction(combinedHashKey.CombinedBlockHeight, combinedHashKey.Hash);
+
+            if (stealth == null)
             {
-                StealthTransaction stealth = Service.GetStealthBySyncAndHash(combinedHashKey.CombinedBlockHeight, combinedHashKey.Hash);
+                Task.Delay(200).Wait();
+                stealth = Service.GetTransaction(combinedHashKey.CombinedBlockHeight, combinedHashKey.Hash);
 
                 if (stealth == null)
                 {
                     Task.Delay(200).Wait();
-                    stealth = Service.GetStealthBySyncAndHash(combinedHashKey.CombinedBlockHeight, combinedHashKey.Hash);
-
-                    if (stealth == null)
-                    {
-                        Task.Delay(200).Wait();
-                        stealth = Service.GetStealthBySyncAndHash(combinedHashKey.CombinedBlockHeight, combinedHashKey.Hash);
-                    }
-                }
-
-                if (stealth != null)
-                {
-                    return new List<IPacketBase> { TranslatorsRepository.GetInstance<Model.StealthTransaction, IPacketBase>().Translate(stealth) };
+                    stealth = Service.GetTransaction(combinedHashKey.CombinedBlockHeight, combinedHashKey.Hash);
                 }
             }
 
-            throw new DataKeyNotSupportedException(key);
+            if (stealth != null)
+            {
+                return new List<IPacketBase> { TranslatorsRepository.GetInstance<Model.StealthTransaction, IPacketBase>().Translate(stealth) };
+            }
+
+            return new List<IPacketBase>();
+        }
+
+        private IEnumerable<IPacketBase> Get(HashKey hashKey)
+        {
+            var stealth = Service.GetTransaction(hashKey.Hash);
+
+            if (stealth == null)
+            {
+                Task.Delay(200).Wait();
+                stealth = Service.GetTransaction(hashKey.Hash);
+
+                if (stealth == null)
+                {
+                    Task.Delay(200).Wait();
+                    stealth = Service.GetTransaction(hashKey.Hash);
+                }
+            }
+
+            if (stealth != null)
+            {
+                return new List<IPacketBase> { TranslatorsRepository.GetInstance<Model.StealthTransaction, IPacketBase>().Translate(stealth) };
+            }
+
+            return new List<IPacketBase>();
         }
 
         public override void Initialize(CancellationToken cancellationToken)

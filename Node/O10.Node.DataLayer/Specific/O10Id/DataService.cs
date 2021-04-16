@@ -74,15 +74,18 @@ namespace O10.Node.DataLayer.Specific.O10Id
             throw new Exception($"Attempt to store an improper packet type {packet.GetType().FullName}");
         }
 
-        public override IEnumerable<IPacketBase> Get(IDataKey key)
-            => key switch
-            {
-                UniqueKey uniqueKey => GetByUniqueKey(uniqueKey),
-                CombinedHashKey combinedHashKey => GetByCombinedHashKey(combinedHashKey),
-                _ => throw new DataKeyNotSupportedException(key),
-            };
+        public override IEnumerable<IPacketBase> Get(IDataKey key) 
+            => key is null
+                ? throw new ArgumentNullException(nameof(key))
+                : key switch
+                {
+                    UniqueKey uniqueKey => Get(uniqueKey),
+                    CombinedHashKey combinedHashKey => Get(combinedHashKey),
+                    HashKey hashKey => Get(hashKey),
+                    _ => throw new DataKeyNotSupportedException(key),
+                };
 
-        private IEnumerable<IPacketBase> GetByUniqueKey(UniqueKey uniqueKey)
+        private IEnumerable<IPacketBase> Get(UniqueKey uniqueKey)
         {
             O10Transaction transactionalBlock = Service.GetLastTransactionalBlock(uniqueKey.IdentityKey);
 
@@ -98,20 +101,45 @@ namespace O10.Node.DataLayer.Specific.O10Id
             return new List<IPacketBase>();
         }
 
-        private IEnumerable<IPacketBase> GetByCombinedHashKey(CombinedHashKey combinedHashKey)
+        private IEnumerable<IPacketBase> Get(CombinedHashKey combinedHashKey)
         {
-            O10Transaction transactionalBlock = Service.GetTransactionalBySyncAndHash(combinedHashKey.CombinedBlockHeight, combinedHashKey.Hash);
+            O10Transaction transactionalBlock = Service.GetTransaction(combinedHashKey.Hash, combinedHashKey.CombinedBlockHeight);
 
             //TODO: this is very ugly implementation!!!
             if (transactionalBlock == null)
             {
                 Task.Delay(200).Wait();
-                transactionalBlock = Service.GetTransactionalBySyncAndHash(combinedHashKey.CombinedBlockHeight, combinedHashKey.Hash);
+                transactionalBlock = Service.GetTransaction(combinedHashKey.Hash, combinedHashKey.CombinedBlockHeight);
 
                 if (transactionalBlock == null)
                 {
                     Task.Delay(200).Wait();
-                    transactionalBlock = Service.GetTransactionalBySyncAndHash(combinedHashKey.CombinedBlockHeight, combinedHashKey.Hash);
+                    transactionalBlock = Service.GetTransaction(combinedHashKey.Hash, combinedHashKey.CombinedBlockHeight);
+                }
+            }
+
+            if (transactionalBlock != null)
+            {
+                return new List<IPacketBase> { TranslatorsRepository.GetInstance<O10Transaction, IPacketBase>().Translate(transactionalBlock) };
+            }
+
+            return new List<IPacketBase>();
+        }
+
+        private IEnumerable<IPacketBase> Get(HashKey combinedHashKey)
+        {
+            O10Transaction transactionalBlock = Service.GetTransaction(combinedHashKey.Hash);
+
+            //TODO: this is very ugly implementation!!!
+            if (transactionalBlock == null)
+            {
+                Task.Delay(200).Wait();
+                transactionalBlock = Service.GetTransaction(combinedHashKey.Hash);
+
+                if (transactionalBlock == null)
+                {
+                    Task.Delay(200).Wait();
+                    transactionalBlock = Service.GetTransaction(combinedHashKey.Hash);
                 }
             }
 

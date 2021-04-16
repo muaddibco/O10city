@@ -145,7 +145,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
             }
         }
 
-        public StealthTransaction GetStealthBySyncAndHash(long aggregatedRegistryHeight, IKey hash)
+        public StealthTransaction GetTransaction(long aggregatedRegistryHeight, IKey hash)
         {
             if (hash is null)
             {
@@ -169,7 +169,36 @@ namespace O10.Node.DataLayer.Specific.Stealth
             }
             catch (Exception ex)
             {
-                Logger.Error($"Failure during obtaining Confidential Packet with hash {hashString} and Sync Block Height {aggregatedRegistryHeight} or {aggregatedRegistryHeight - 1}", ex);
+                Logger.Error($"Failure during obtaining Stealth Packet with hash {hashString} and Aggregated Registry Height {aggregatedRegistryHeight} or {aggregatedRegistryHeight - 1}", ex);
+                return null;
+            }
+        }
+
+        public StealthTransaction GetTransaction(IKey hash)
+        {
+            if (hash is null)
+            {
+                throw new ArgumentNullException(nameof(hash));
+            }
+
+            string hashString = hash.ToString();
+            try
+            {
+                lock (Sync)
+                {
+                    StealthTransactionHashKey hashKey = GetLocalAwareHashKey(hashString);
+                    if (hashKey == null)
+                    {
+                        Logger.Error($"Failed to find Hash Key {hashString}");
+                        return null;
+                    }
+
+                    return GetLocalAwareConfidentialPacket(hashKey.StealthTransactionHashKeyId);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Failure during obtaining Stealth Packet with hash {hashString}", ex);
                 return null;
             }
         }
@@ -198,6 +227,13 @@ namespace O10.Node.DataLayer.Specific.Stealth
                         (h.RegistryHeight == aggregatedRegistryHeight || h.RegistryHeight == (aggregatedRegistryHeight - 1))
                         && h.Hash == hashString);
             }
+            return hashKey;
+        }
+
+        private StealthTransactionHashKey GetLocalAwareHashKey(string hashString)
+        {
+            StealthTransactionHashKey hashKey = DataContext.BlockHashKeys.Local.FirstOrDefault(h => h.Hash == hashString);
+
             return hashKey;
         }
 

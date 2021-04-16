@@ -251,7 +251,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
             }
         }
 
-        public O10Transaction GetTransactionalBySyncAndHash(long registryHeight, IKey hash)
+        public O10Transaction GetTransaction(IKey hash, long registryHeight)
         {
             if (hash is null)
             {
@@ -265,6 +265,28 @@ namespace O10.Node.DataLayer.Specific.O10Id
                 if (hashKey == null)
                 {
                     Logger.Error($"Failed to find Hash Key {hashString} with Registry Height {registryHeight}");
+                    return null;
+                }
+
+                O10Transaction transactionalBlock = GetLocalAwareTransactionalPacketByHashKey(hashKey.O10TransactionHashKeyId);
+                return transactionalBlock;
+            }
+        }
+
+        public O10Transaction GetTransaction(IKey hash)
+        {
+            if (hash is null)
+            {
+                throw new ArgumentNullException(nameof(hash));
+            }
+
+            string hashString = hash.ToString();
+            lock (Sync)
+            {
+                O10TransactionHashKey hashKey = GetLocalAwareHashKey(hashString);
+                if (hashKey == null)
+                {
+                    Logger.Error($"Failed to find Hash Key {hashString}");
                     return null;
                 }
 
@@ -351,6 +373,30 @@ namespace O10.Node.DataLayer.Specific.O10Id
                 hashKey 
                     = DataContext.BlockHashKeys
                         .FirstOrDefault(h => h.RegistryHeight == registryHeight && h.Hash == hashString);
+            }
+            else
+            {
+                Logger.LogIfDebug(() => "GetLocalAwareHashKey: found in local");
+            }
+
+            Logger.LogIfDebug(() => $"{nameof(hashKey)}={JsonConvert.SerializeObject(hashKey)}");
+            return hashKey;
+        }
+
+        private O10TransactionHashKey GetLocalAwareHashKey(string hashString)
+        {
+            Logger.LogIfDebug(() => $"GetLocalAwareHashKey({hashString})");
+
+            O10TransactionHashKey hashKey
+                = DataContext.BlockHashKeys.Local
+                    .FirstOrDefault(h => h.Hash == hashString);
+
+            if (hashKey == null)
+            {
+                Logger.LogIfDebug(() => "GetLocalAwareHashKey: not found in local");
+                hashKey
+                    = DataContext.BlockHashKeys
+                        .FirstOrDefault(h => h.Hash == hashString);
             }
             else
             {

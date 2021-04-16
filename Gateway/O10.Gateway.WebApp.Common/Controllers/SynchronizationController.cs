@@ -175,12 +175,12 @@ namespace O10.Gateway.WebApp.Common.Controllers
         /// <param name="packet"></param>
         /// <returns></returns>
         [HttpPost("SendPacket")]
-        public async Task<IActionResult> SendPacket([FromBody] PacketBase packet)
+        public async Task<IActionResult> SendPacket([FromBody] IPacketBase packet)
         {
             SendDataResponse response = new SendDataResponse();
 
             var completion = _transactionsHandler.SendPacket(packet);
-            await completion.Task.ConfigureAwait(false);
+            
             var res = await completion.Task.ConfigureAwait(false);
 
             response.Status = res is SucceededNotification;

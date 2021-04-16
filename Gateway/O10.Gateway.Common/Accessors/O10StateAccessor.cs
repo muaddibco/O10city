@@ -47,8 +47,12 @@ namespace O10.Gateway.Common.Accessors
 
             Url url = _synchronizerConfiguration.NodeApiUri
                 .AppendPathSegments("Ledger", LedgerType, "Transaction")
-                .SetQueryParam("combinedBlockHeight", evidence[AggregatedTransactionsHeight])
                 .SetQueryParam("hash", evidence[EvidenceDescriptor.TRANSACTION_HASH]);
+
+            if(evidence.Parameters.ContainsKey(AggregatedTransactionsHeight))
+            {
+                url = url.SetQueryParam("combinedBlockHeight", evidence[AggregatedTransactionsHeight]);
+            }
             
             var transaction = await url.GetJsonAsync<TransactionBase>().ConfigureAwait(false);
 

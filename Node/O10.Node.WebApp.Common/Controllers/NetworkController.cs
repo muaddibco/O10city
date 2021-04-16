@@ -122,9 +122,9 @@ namespace O10.Node.WebApp.Common.Controllers
 					return BadRequest($"Ledger Type {ledgerType} is not supported");
                 }
 
-				var blockBase = dataService.Get(new CombinedHashKey(long.Parse(combinedBlockHeight), hashKey)).Single();
+				var blockBase = dataService.Get(string.IsNullOrEmpty(combinedBlockHeight) ? (IDataKey)(new HashKey(hashKey)) : new CombinedHashKey(long.Parse(combinedBlockHeight), hashKey)).Single();
 
-				if (blockBase == null)
+				if (blockBase == null && !string.IsNullOrEmpty(combinedBlockHeight))
 				{
 					blockBase = dataService.Get(new CombinedHashKey(long.Parse(combinedBlockHeight) - 1, hashKey)).Single();
 				}
