@@ -35,11 +35,14 @@ namespace O10.Gateway.Common.Services
         private readonly ILogger _logger;
         private readonly ISynchronizerConfiguration _synchronizerConfiguration;
         private readonly Dictionary<IPacketBase, TaskCompletionSource<NotificationBase>> _completions = new Dictionary<IPacketBase, TaskCompletionSource<NotificationBase>>();
+        private readonly IAccessorProvider _accessorProvider;
+
         //private readonly Dictionary<PacketBase, Task> _waitingTasks = new Dictionary<PacketBase, Task>();
         //private readonly Dictionary<PacketBase, DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>> _dependings = new Dictionary<PacketBase, DependingTaskCompletionWrapper<EvidenceDescriptor, PacketBase>>();
 
         public TransactionsHandler(IHashCalculationsRepository hashCalculationsRepository,
                                    IConfigurationService configurationService,
+                                   IAccessorProvider accessorProvider,
                                    ILoggerService loggerService)
         {
             _logger = loggerService.GetLogger(nameof(TransactionsHandler));
@@ -51,6 +54,7 @@ namespace O10.Gateway.Common.Services
             _pipeOutPacket = new TransformBlock<TaskCompletionWrapper<IPacketBase>, TaskCompletionWrapper<IPacketBase>>(p => p);
             
             _pipeInPacket.LinkTo(_pipeEvidence, ValidatePacket);
+            _accessorProvider = accessorProvider;
         }
 
         public TaskCompletionSource<NotificationBase> SendPacket(IPacketBase packetBase)
@@ -134,12 +138,8 @@ namespace O10.Gateway.Common.Services
         {
             TaskCompletionWrapper<IPacketBase> wrapper = new TaskCompletionWrapper<IPacketBase>(packet);
 
-            EvidenceDescriptor evidenceDescriptor = Builder<EvidenceDescriptor>
-                .CreateNew()
-                    .With(s => s.ActionType = packet.Body.TransactionType)
-                    .With(s => s.LedgerType = packet.LedgerType)
-                    .Do(s => s.Parameters.Add(EvidenceDescriptor.TRANSACTION_HASH, _hashCalculation.CalculateHash(packet.Body.ToString()).ToHexString()))
-                .Build();
+            
+            EvidenceDescriptor evidenceDescriptor = _accessorProvider.GetInstance(packet.LedgerType).GetEvidence(packet.Body);
 
             DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase> depending 
                 = new DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase>(evidenceDescriptor, wrapper);

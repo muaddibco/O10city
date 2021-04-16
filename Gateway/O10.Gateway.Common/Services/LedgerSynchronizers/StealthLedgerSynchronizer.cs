@@ -1,31 +1,31 @@
-﻿using Newtonsoft.Json;
-using O10.Core.Configuration;
+﻿using O10.Core.Configuration;
 using O10.Core.Identity;
 using O10.Core.Logging;
 using O10.Core.Models;
+using O10.Core.Translators;
 using O10.Crypto.Models;
 using O10.Gateway.DataLayer.Model;
 using O10.Gateway.DataLayer.Services;
 using O10.Gateway.DataLayer.Services.Inputs;
+using O10.Transactions.Core.Accessors;
 using O10.Transactions.Core.Enums;
-using O10.Transactions.Core.Ledgers;
-using O10.Transactions.Core.Ledgers.Stealth;
 using O10.Transactions.Core.Ledgers.Stealth.Transactions;
 using System;
-using StealthPacket = O10.Transactions.Core.Ledgers.Stealth.StealthPacket;
 
 namespace O10.Gateway.Common.Services.LedgerSynchronizers
 {
-	public class StealthLedgerSynchronizer : O10LedgerSynchronizerBase
+    public class StealthLedgerSynchronizer : O10LedgerSynchronizerBase
     {
         private readonly IDataAccessService _dataAccessService;
 		private readonly IIdentityKeyProvider _identityKeyProvider;
 
 		public StealthLedgerSynchronizer(IDataAccessService dataAccessService,
                                          IConfigurationService configurationService,
+                                         IAccessorProvider accessorProvider,
+                                         ITranslatorsRepository translatorsRepository,
                                          IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
 										 ILoggerService loggerService) 
-			: base(configurationService, loggerService)
+			: base(accessorProvider, translatorsRepository, configurationService, loggerService)
         {
             _dataAccessService = dataAccessService;
             _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
@@ -40,11 +40,11 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
                 throw new ArgumentNullException(nameof(witnessPacket));
             }
 
-            DataLayer.Model.StealthTransaction utxoIncomingBlock = _dataAccessService.GetStealthTransaction(witnessPacket.WitnessPacketId);
-			return SerializableEntity<IPacketBase>.Create(utxoIncomingBlock.Content).Body;
+            var transaction = _dataAccessService.GetStealthTransaction(witnessPacket.WitnessPacketId);
+			return SerializableEntity<TransactionBase>.Create(transaction.Content);
 		}
 
-		protected override void StorePacket(WitnessPacket wp, TransactionBase transaction)
+		protected override void StoreTransaction(WitnessPacket wp, TransactionBase transaction)
         {
             if (wp is null)
             {
@@ -67,7 +67,7 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
 					ProcessRevokeIdentity(revokeIdentityTransaction, registryCombinedBlockHeight);
 					break;
 			}
-			StoreUtxoPacket(wp.WitnessPacketId, registryCombinedBlockHeight, transaction);
+			StoreUtxoPacket(wp.WitnessPacketId, registryCombinedBlockHeight, transaction as O10StealthTransactionBase);
 		}
 
         private void ProcessCompromizedProofs(CompromizationProofsTransaction transaction)
@@ -77,7 +77,12 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
 
         private void StoreUtxoPacket(long witnessId, long registryCombinedBlockHeight, O10StealthTransactionBase transaction)
 		{
-			UtxoIncomingStoreInput storeInput = new UtxoIncomingStoreInput
+            if (transaction is null)
+            {
+                throw new ArgumentNullException(nameof(transaction));
+            }
+
+            UtxoIncomingStoreInput storeInput = new UtxoIncomingStoreInput
 			{
 				CombinedRegistryBlockHeight = registryCombinedBlockHeight,
 				WitnessId = witnessId,

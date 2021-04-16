@@ -465,23 +465,22 @@ namespace O10.Gateway.Common.Services
 			{
                 if (fullRegistryTransaction.Witnesses != null)
                 {
-                    foreach (var item in fullRegistryTransaction.Witnesses)
+                    foreach (var witness in fullRegistryTransaction.Witnesses)
                     {
                         TaskCompletionSource<WitnessPacket> witnessStoreCompletionSource 
 							= _dataAccessService.StoreWitnessPacket(
                                 fullRegistryTransactionsPacket.SyncHeight,
                                 fullRegistryTransactionsPacket.Height,
                                 aggregatedTransactionsPacket.Height,
-                                item.With<RegisterTransaction>().ReferencedLedgerType,
-                                item.With<RegisterTransaction>().ReferencedAction,
-                                item.With<RegisterTransaction>().Parameters.OptionalKey("BodyHash", _identityKeyProvider),
-                                item.With<RegisterTransaction>().Parameters.OptionalKey("ReferencedTarget", _identityKeyProvider),
-                                item.With<RegisterTransaction>().Parameters.OptionalKey("ReferencedTarget2", _identityKeyProvider),
-                                item.With<RegisterTransaction>().Parameters.OptionalKey("ReferencedTransactionKey", _identityKeyProvider),
-                                item.With<RegisterTransaction>().Parameters.OptionalKey("ReferencedKeyImage", _identityKeyProvider));
+                                witness.With<RegisterTransaction>().ReferencedLedgerType,
+                                witness.With<RegisterTransaction>().ReferencedAction,
+                                witness.With<RegisterTransaction>().Parameters.OptionalKey(EvidenceDescriptor.TRANSACTION_HASH, _identityKeyProvider),
+                                witness.With<RegisterTransaction>().Parameters.OptionalKey("ReferencedTarget", _identityKeyProvider),
+                                witness.With<RegisterTransaction>().Parameters.OptionalKey("ReferencedTarget2", _identityKeyProvider),
+                                witness.With<RegisterTransaction>().Parameters.OptionalKey("ReferencedTransactionKey", _identityKeyProvider),
+                                witness.With<RegisterTransaction>().Parameters.OptionalKey("ReferencedKeyImage", _identityKeyProvider));
 
-                        TaskCompletionSource<WitnessPacket> transactionStoreCompletionSource 
-							= ObtainAndStoreTransaction(witnessStoreCompletionSource);
+                        var transactionStoreCompletionSource = ObtainAndStoreTransaction(witness.With<RegisterTransaction>(), witnessStoreCompletionSource);
 
                         transactionStoreCompletionSources.Add(transactionStoreCompletionSource.Task);
                     }
@@ -494,33 +493,33 @@ namespace O10.Gateway.Common.Services
             }        
         }
 
-		private TaskCompletionSource<WitnessPacket> ObtainAndStoreTransaction(TaskCompletionSource<WitnessPacket> witnessStoreCompletionSource)
+		private TaskCompletionSource<WitnessPacket> ObtainAndStoreTransaction(RegisterTransaction registerTransaction, TaskCompletionSource<WitnessPacket> witnessStoreCompletionSource)
 		{
 			TaskCompletionSource<WitnessPacket> transactionStoreCompletionSource = new TaskCompletionSource<WitnessPacket>();
 
 			witnessStoreCompletionSource.Task.ContinueWith(async (t, o) =>
 			{
 				WitnessPacket witnessPacket = t.Result;
-				TaskCompletionSource<WitnessPacket> completionSource = (TaskCompletionSource<WitnessPacket>)o;
+				(var r, var c) = ((RegisterTransaction, TaskCompletionSource<WitnessPacket>))o;
 
                 try
                 {
 					await _ledgerSynchronizersRepository
 						.GetInstance(witnessPacket.ReferencedLedgerType)
-						.SyncByWitness(witnessPacket)
+						.SyncByWitness(witnessPacket, r)
 						.ConfigureAwait(false);
 					
-					completionSource.SetResult(witnessPacket);
+					c.SetResult(witnessPacket);
 				}
 				catch(AggregateException ex)
                 {
-					completionSource.SetException(ex.InnerException);
+					c.SetException(ex.InnerException);
 				}
 				catch (Exception ex)
                 {
-					completionSource.SetException(ex);
+					c.SetException(ex);
 				}
-			}, transactionStoreCompletionSource, TaskScheduler.Current);
+			}, (registerTransaction, transactionStoreCompletionSource), TaskScheduler.Current);
 
 			return transactionStoreCompletionSource;
 		}

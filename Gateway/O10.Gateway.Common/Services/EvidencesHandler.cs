@@ -31,8 +31,11 @@ namespace O10.Gateway.Common.Services
                                 INetworkSynchronizer networkSynchronizer,
                                 IStatesRepository statesRepository)
         {
-            _inputPipe = new TransformBlock<DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase>, DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase>>(d => d);
-            _produceRegistrationPacket = new TransformBlock<DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase>, TaskCompletionWrapper<IPacketBase>>(e => CreateRegisterPacket(e));
+            _inputPipe 
+                = new TransformBlock<DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase>, DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase>>(d => d);
+            
+            _produceRegistrationPacket 
+                = new TransformBlock<DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase>, TaskCompletionWrapper<IPacketBase>>(e => CreateRegisterPacket(e));
 
             _translator = translatorsRepository.GetInstance<EvidenceDescriptor, RegistryPacket>();
             _inputPipe.LinkTo(_produceRegistrationPacket, ValidateEvidence);

@@ -59,7 +59,6 @@ namespace O10.Transactions.Core.Accessors
             }
         }
 
-        public abstract Task<Memory<byte>> GetPacket(EvidenceDescriptor evidence);
-        public abstract Task<bool> VerifyPacket(EvidenceDescriptor evidence, Memory<byte> packet);
+        public abstract EvidenceDescriptor GetEvidence(TransactionBase transaction);
     }
 }

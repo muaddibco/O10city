@@ -2,10 +2,12 @@
 using O10.Core.Identity;
 using O10.Core.Logging;
 using O10.Core.Models;
+using O10.Core.Translators;
 using O10.Crypto.Models;
 using O10.Gateway.DataLayer.Model;
 using O10.Gateway.DataLayer.Services;
 using O10.Gateway.DataLayer.Services.Inputs;
+using O10.Transactions.Core.Accessors;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Ledgers.O10State.Transactions;
 using System;
@@ -19,8 +21,11 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
 
         public O10StateLedgerSynchronizer(IDataAccessService dataAccessService,
                                           IConfigurationService configurationService,
+                                          IAccessorProvider accessorProvider,
+                                          ITranslatorsRepository translatorsRepository,
                                           IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
-                                          ILoggerService loggerService) : base(configurationService, loggerService)
+                                          ILoggerService loggerService) 
+            : base(accessorProvider, translatorsRepository, configurationService, loggerService)
         {
             _dataAccessService = dataAccessService;
             _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
@@ -35,11 +40,11 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
                 throw new ArgumentNullException(nameof(witnessPacket));
             }
 
-            StatePacket transactionalIncomingBlock = _dataAccessService.GetStateTransaction(witnessPacket.WitnessPacketId);
-            return SerializableEntity<TransactionBase>.Create(transactionalIncomingBlock.Content);
+            var transaction = _dataAccessService.GetStateTransaction(witnessPacket.WitnessPacketId);
+            return SerializableEntity<TransactionBase>.Create(transaction.Content);
         }
 
-        protected override void StorePacket(WitnessPacket wp, TransactionBase transaction)
+        protected override void StoreTransaction(WitnessPacket wp, TransactionBase transaction)
         {
             if (wp is null)
             {

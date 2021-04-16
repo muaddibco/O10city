@@ -1,7 +1,6 @@
 ﻿using O10.Core.Architecture;
 using O10.Crypto.Models;
 using O10.Transactions.Core.Enums;
-using System;
 using System.Threading.Tasks;
 
 namespace O10.Transactions.Core.Accessors
@@ -14,8 +13,7 @@ namespace O10.Transactions.Core.Accessors
     {
         LedgerType LedgerType { get; }
 
+        EvidenceDescriptor GetEvidence(TransactionBase transaction);
         Task<T> GetTransaction<T>(EvidenceDescriptor evidence) where T : TransactionBase;
-        Task<Memory<byte>> GetPacket(EvidenceDescriptor evidence);
-        Task<bool> VerifyPacket(EvidenceDescriptor evidence, Memory<byte> packet);
     }
 }

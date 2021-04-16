@@ -5,18 +5,17 @@ using O10.Core.Architecture;
 using O10.Core.Configuration;
 using O10.Core.Logging;
 using O10.Gateway.Common.Configuration;
-using O10.Gateway.DataLayer.Model;
 using O10.Gateway.DataLayer.Services;
 using O10.Transactions.Core.Accessors;
 using O10.Transactions.Core.Enums;
-using O10.Transactions.Core.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Threading.Tasks;
-using O10.Transactions.Core.DTOs;
 using O10.Crypto.Models;
+using FizzWare.NBuilder;
+using O10.Core.HashCalculations;
+using O10.Core.ExtensionMethods;
 
 namespace O10.Gateway.Common.Accessors
 {
@@ -26,12 +25,12 @@ namespace O10.Gateway.Common.Accessors
     [RegisterExtension(typeof(IAccessor), Lifetime = LifetimeManagement.Singleton)]
     public class O10StealthAccessor : AccessorBase
     {
-        public const string SyncBlockHeight = "SyncBlockHeight";
-        public const string CombinedRegistryBlockHeight = "CombinedRegistryBlockHeight";
-        public const string Hash = "Hash";
+        public const string AggregatedTransactionsHeight = "AggregatedTransactionsHeight";
+
+        private readonly IHashCalculation _hashCalculation;
 
         public static readonly ReadOnlyCollection<string> AccessingKeys 
-            = new ReadOnlyCollection<string>(new[] { "SyncBlockHeight", "CombinedRegistryBlockHeight", "Hash" });
+            = new ReadOnlyCollection<string>(new[] { AggregatedTransactionsHeight, EvidenceDescriptor.TRANSACTION_HASH });
 
         private readonly IDataAccessService _dataAccessService;
         private readonly ISynchronizerConfiguration _synchronizerConfiguration;
@@ -39,80 +38,42 @@ namespace O10.Gateway.Common.Accessors
 
         public O10StealthAccessor(IDataAccessService dataAccessService,
                                   IConfigurationService configurationService,
+                                  IHashCalculationsRepository hashCalculationsRepository,
                                   ILoggerService loggerService)
         {
             _dataAccessService = dataAccessService;
             _synchronizerConfiguration = configurationService.Get<ISynchronizerConfiguration>();
             _logger = loggerService.GetLogger(nameof(O10StealthAccessor));
+            _hashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
         }
 
         public override LedgerType LedgerType => LedgerType.Stealth;
 
         protected override IEnumerable<string> GetAccessingKeys() => AccessingKeys;
 
-        protected override async Task<TransactionBase> GetTransactionInner(EvidenceDescriptor accessDescriptor)
+        protected override async Task<TransactionBase> GetTransactionInner(EvidenceDescriptor evidence)
         {
-            if(!long.TryParse(accessDescriptor.Parameters[SyncBlockHeight], out long syncBlockHeight))
+            if (evidence is null)
             {
-                throw new AccessorValidationFailedException($"{SyncBlockHeight} is corrupted");
+                throw new ArgumentNullException(nameof(evidence));
             }
 
-            if (!long.TryParse(accessDescriptor.Parameters[CombinedRegistryBlockHeight], out long combinedRegistryBlockHeight))
-            {
-                throw new AccessorValidationFailedException($"{CombinedRegistryBlockHeight} is corrupted");
-            }
+            Url url = _synchronizerConfiguration.NodeApiUri
+                .AppendPathSegments("Ledger", LedgerType, "Transaction")
+                .SetQueryParam("combinedBlockHeight", evidence[AggregatedTransactionsHeight])
+                .SetQueryParam("hash", evidence[EvidenceDescriptor.TRANSACTION_HASH]);
 
-            if (accessDescriptor.Parameters[Hash]?.Length != Globals.DEFAULT_HASH_SIZE * 2)
-            {
-                throw new AccessorValidationFailedException($"{Hash} is corrupted");
-            }
+            var transaction = await url.GetJsonAsync<TransactionBase>().ConfigureAwait(false);
 
-            var stealthPacket = _dataAccessService.GetStealthTransaction(combinedRegistryBlockHeight, accessDescriptor.Parameters[Hash]);
-            if(stealthPacket != null)
-            {
-                var parser = _blockParsersRepository.GetInstance(stealthPacket.TransactionType);
-
-                var packet = parser.Parse(stealthPacket.Content);
-                return packet;
-            }
-            else
-            {
-                Url url = _synchronizerConfiguration.NodeApiUri
-                    .AppendPathSegment("StealthTransaction")
-                    .SetQueryParam("combinedBlockHeight", combinedRegistryBlockHeight)
-                    .SetQueryParam("hash", accessDescriptor.Parameters[Hash]);
-
-                _logger.Info($"Querying Stealth packet with URL {url}");
-                var transactionInfo = await url.GetJsonAsync<TransactionInfo>().ConfigureAwait(false);
-                
-
-                if (transactionInfo.Content?.Any() ?? false)
-                {
-                    _logger.Info($"Stealth packet with Packet Type {transactionInfo.LedgerType} and BlockType {transactionInfo.PacketType} at SyncBlockHeight {transactionInfo.SyncBlockHeight} obtained");
-                    StorePacket(tuple.Item1, t1.Result.Content);
-                }
-                else
-                {
-                    _logger.Error($"Empty Stealth packet with Packet Type {transactionInfo.LedgerType} and BlockType {transactionInfo.PacketType} at SyncBlockHeight {transactionInfo.SyncBlockHeight}  obtained");
-                }
-
-                Tuple<WitnessPacket, TaskCompletionSource<WitnessPacket>> tuple = (Tuple<WitnessPacket, TaskCompletionSource<WitnessPacket>>)o2;
-                    if (t1.IsCompletedSuccessfully)
-                    {
-
-                    }
-                    else
-                    {
-                        tuple.Item2.SetException(t1.Exception);
-
-                        _logger.Error($"Failure during obtaining and storing Stealth packet", t1.Exception);
-                        foreach (var ex in t1.Exception.InnerExceptions)
-                        {
-                            _logger.Error(ex.Message);
-                        }
-                    }
-                
-            }
+            return transaction;
         }
+
+        public override EvidenceDescriptor GetEvidence(TransactionBase transaction)
+            => Builder<EvidenceDescriptor>
+                .CreateNew()
+                    .With(s => s.ActionType = transaction.TransactionType)
+                    .With(s => s.LedgerType = LedgerType)
+                    .Do(s => s.Parameters.Add(EvidenceDescriptor.TRANSACTION_HASH, _hashCalculation.CalculateHash(transaction.ToString()).ToHexString()))
+                .Build();
     }
 }
