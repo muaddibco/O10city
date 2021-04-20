@@ -57,9 +57,10 @@ namespace O10.Client.Common.Communication
             return issuanceCommitments;
         }
 
-		public async Task<ulong> GetCombinedBlockByAccountHeight(byte[] accountPublicKey, ulong height)
+		// TODO: This function will be obsolete - must be replaced by another one where the height of aggregated registration will be obtained using the hash of the account transaction
+		public async Task<ulong> GetCombinedBlockByTransactionHash(byte[] accountPublicKey, byte[] transactionHash)
 		{
-			Url url = _gatewayUri.AppendPathSegments("api", "synchronization", "GetCombinedBlockByAccountHeight", accountPublicKey.ToHexString(), height);
+			Url url = _gatewayUri.AppendPathSegments("api", "synchronization", "GetCombinedBlockByTransactionHash", accountPublicKey.ToHexString(), transactionHash.ToHexString());
 			try
 			{
 				ulong combinedBlockHeight = await _restClientService.Request(url).GetJsonAsync<ulong>().ConfigureAwait(false);
@@ -67,7 +68,7 @@ namespace O10.Client.Common.Communication
 			}
 			catch (Exception ex)
 			{
-				_logger.Error($"Failed request {url.ToString()}", ex);
+				_logger.Error($"Failed request {url}", ex);
 				throw;
 			}
 		}
@@ -357,13 +358,13 @@ namespace O10.Client.Common.Communication
 			return res;
 		}
 
-		public async Task<PacketInfo> GetTransactionBySourceAndHeight(string source, ulong height)
+		public async Task<TransactionBase> GetTransaction(string source, byte[] transactionHash)
 		{
-            Url url = _gatewayUri.AppendPathSegments("api", "synchronization", "GetTransactionBySourceAndHeight");
+            Url url = _gatewayUri.AppendPathSegments("api", "synchronization", "Transaction");
             url.QueryParams.Add("source", source);
-            url.QueryParams.Add("height", height);
+            url.QueryParams.Add("transactionHash", transactionHash.ToHexString());
 
-            PacketInfo res = await _restClientService.Request(url).GetJsonAsync<PacketInfo>().ConfigureAwait(false);
+            var res = await _restClientService.Request(url).GetJsonAsync<TransactionBase>().ConfigureAwait(false);
 
 			return res;
 		}

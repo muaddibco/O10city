@@ -32,12 +32,20 @@ namespace O10.Client.Common.Services
 			_logger = loggerService.GetLogger(nameof(DocumentSignatureVerifier));
 		}
 
-		public async Task<DocumentSignatureVerification> Verify(byte[] documentCreator, byte[] documentHash, ulong documentRecordHeight, ulong signatureRecordBlockHeight)
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="documentCreator"></param>
+		/// <param name="documentHash"></param>
+		/// <param name="documentRecordHeight"></param>
+		/// <param name="signatureTransactionHash">hash of the transaction with signature that the document owner stored into a ledger</param>
+		/// <returns></returns>
+		public async Task<DocumentSignatureVerification> Verify(byte[] documentCreator, byte[] documentHash, byte[] documentRecordTransactionHash, byte[] signatureTransactionHash)
 		{
 			DocumentSignatureVerification res = new DocumentSignatureVerification();
 
-			var packetInfoDocumentSignRecord = await _gatewayService.GetTransactionBySourceAndHeight(documentCreator.ToHexString(), signatureRecordBlockHeight).ConfigureAwait(false);
-			var packetInfoDocumentRecord = await _gatewayService.GetTransactionBySourceAndHeight(documentCreator.ToHexString(), documentRecordHeight).ConfigureAwait(false);
+			var packetInfoDocumentSignRecord = await _gatewayService.GetTransaction(documentCreator.ToHexString(), signatureTransactionHash).ConfigureAwait(false);
+			var packetInfoDocumentRecord = await _gatewayService.GetTransaction(documentCreator.ToHexString(), documentRecordTransactionHash).ConfigureAwait(false);
 
 			IBlockParsersRepository blockParsersRepository = _blockParsersRepositoriesRepository.GetBlockParsersRepository(packetInfoDocumentSignRecord.LedgerType);
 			IBlockParser blockParser = blockParsersRepository.GetInstance(packetInfoDocumentSignRecord.BlockType);
@@ -52,7 +60,7 @@ namespace O10.Client.Common.Services
 
 			if(res.SignatureTransactionFound && res.DocumentRecordTransactionFound)
 			{
-				ulong combinedBlockHeight = await _gatewayService.GetCombinedBlockByAccountHeight(documentCreator, signatureRecordBlockHeight).ConfigureAwait(false);
+				ulong combinedBlockHeight = await _gatewayService.GetCombinedBlockByTransactionHash(documentCreator, signatureTransactionHash).ConfigureAwait(false);
                 res.IsNotCompromised = !(await _gatewayService.IsKeyImageCompromised(documentSignRecord.KeyImage).ConfigureAwait(false));
 				res.DocumentHashMatch = documentSignRecord.DocumentHash.Equals32(documentHash);
 				res.SignerSignatureMatch = ConfidentialAssetsHelper.VerifySurjectionProof(documentSignRecord.SignerGroupRelationProof, documentSignRecord.SignerCommitment, documentHash, BitConverter.GetBytes(documentRecordHeight));

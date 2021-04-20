@@ -60,16 +60,11 @@ namespace O10.Gateway.WebApp.Common.Services
 
             PipeIn = new ActionBlock<WitnessPackage>(p =>
             {
-                _logger.Info($"[G2C]: Sending {p.StateWitnesses?.Length ?? 0} StateWitnesses and {p.StealthWitnesses?.Length ?? 0} UtxoWitnesses");
+                _logger.Info($"[G2C]: Sending {p.Witnesses?.Count()?? 0} Witnesses");
 
-                foreach (var item in p.StateWitnesses)
+                foreach (var item in p.Witnesses)
                 {
                     _logger.LogIfDebug(() => $"[G2C]: PacketsUpdate TransactionalWitness {JsonConvert.SerializeObject(item, new ByteArrayJsonConverter())}");
-                }
-
-                foreach (var item in p.StealthWitnesses)
-                {
-                    _logger.LogIfDebug(() => $"[G2C]: PacketsUpdate UtxoWitness {JsonConvert.SerializeObject(item, new ByteArrayJsonConverter())}");
                 }
 
                 _trackingService.TrackEvent($"{nameof(NotificationsHubService)}_PacketsUpdate", new Dictionary<string, string> { { nameof(p.CombinedBlockHeight), p.CombinedBlockHeight.ToString(CultureInfo.InvariantCulture) } });

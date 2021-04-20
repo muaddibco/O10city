@@ -20,12 +20,11 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
 		private readonly IIdentityKeyProvider _identityKeyProvider;
 
 		public StealthLedgerSynchronizer(IDataAccessService dataAccessService,
-                                         IConfigurationService configurationService,
                                          IAccessorProvider accessorProvider,
                                          ITranslatorsRepository translatorsRepository,
                                          IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
 										 ILoggerService loggerService) 
-			: base(accessorProvider, translatorsRepository, configurationService, loggerService)
+			: base(accessorProvider, translatorsRepository, loggerService)
         {
             _dataAccessService = dataAccessService;
             _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();

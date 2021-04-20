@@ -67,6 +67,7 @@ namespace O10.Gateway.Common.Accessors
                 url = url.SetQueryParam("combinedBlockHeight", evidence[AggregatedTransactionsHeight]);
             }
 
+            _logger.Info($"Querying transaction by the URI {url}");
             var transaction = await url.GetJsonAsync<TransactionBase>().ConfigureAwait(false);
 
             return transaction;

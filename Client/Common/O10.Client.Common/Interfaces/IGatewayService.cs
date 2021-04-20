@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using O10.Core.Notifications;
 using O10.Transactions.Core.DTOs;
 using O10.Transactions.Core.Ledgers;
+using O10.Crypto.Models;
 
 namespace O10.Client.Common.Interfaces
 {
@@ -25,7 +26,14 @@ namespace O10.Client.Common.Interfaces
 
         bool Initialize(string gatewayUri, CancellationToken cancellationToken);
 
-        Task<ulong> GetCombinedBlockByAccountHeight(byte[] accountPublicKey, ulong height);
+        /// <summary>
+        /// Returns the height of the Aggregated Transactions Registry Packet that was at the time when the account's packet with specified height was registered
+        /// This function will be obsolete - must be replaced by another one where the height of aggregated registration will be obtained using the hash of the account transaction
+        /// </summary>
+        /// <param name="accountPublicKey"></param>
+        /// <param name="height"></param>
+        /// <returns></returns>
+        Task<ulong> GetCombinedBlockByTransactionHash(byte[] accountPublicKey, byte[] transactionHash);
 
         Task<OutputModel[]> GetOutputs(int amount);
         Task<byte[][]> GetIssuanceCommitments(Memory<byte> issuer, int amount);
@@ -41,7 +49,7 @@ namespace O10.Client.Common.Interfaces
 
         string GetNotificationsHubUri();
 
-		Task<PacketInfo> GetTransactionBySourceAndHeight(string source, ulong height);
+		Task<TransactionBase> GetTransaction(string source, byte[] transactionHash);
 
         Task<string> PushRelationProofSession(RelationProofsData relationProofSession);
 

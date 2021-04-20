@@ -1,14 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Linq;
-using O10.Transactions.Core.Serializers.RawPackets;
 using O10.Gateway.DataLayer.Services;
-using O10.Core.Communication;
 using O10.Core.ExtensionMethods;
 using O10.Gateway.Common.Services;
 using O10.Gateway.WebApp.Common.Models;
-using O10.Gateway.DataLayer.Model;
-using O10.Transactions.Core.Enums;
 using O10.Gateway.WebApp.Common.Services;
 using O10.Core.Configuration;
 using Flurl;
@@ -18,15 +14,13 @@ using O10.Gateway.Common.Configuration;
 using System.Reflection;
 using O10.Core.Logging;
 using System;
-using Newtonsoft.Json;
 using O10.Gateway.WebApp.Common.Exceptions;
 using O10.Core.Models;
-using O10.Transactions.Core.Ledgers.Stealth;
 using O10.Gateway.Common.Services.Results;
-using O10.Core.Serialization;
 using O10.Core.Notifications;
 using O10.Transactions.Core.DTOs;
 using O10.Transactions.Core.Ledgers;
+using O10.Core.Identity;
 
 namespace O10.Gateway.WebApp.Common.Controllers
 {
@@ -37,15 +31,15 @@ namespace O10.Gateway.WebApp.Common.Controllers
         private readonly INetworkSynchronizer _networkSynchronizer;
         private readonly IDataAccessService _dataAccessService;
         private readonly ITransactionsHandler _transactionsHandler;
-        private readonly IRawPacketProvidersFactory _rawPacketProvidersFactory;
         private readonly IRelationProofSessionsStorage _relationProofSessionsStorage;
         private readonly ISynchronizerConfiguration _synchronizerConfiguration;
         private readonly ILogger _logger;
+        private readonly IIdentityKeyProvider _identityKeyProvider;
 
         public SynchronizationController(INetworkSynchronizer networkSynchronizer,
                                          IDataAccessService dataAccessService,
+                                         IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
                                          ITransactionsHandler transactionsHandler,
-                                         IRawPacketProvidersFactory rawPacketProvidersFactory,
                                          IRelationProofSessionsStorage relationProofSessionsStorage,
                                          IConfigurationService configurationService,
                                          ILoggerService loggerService)
@@ -53,10 +47,10 @@ namespace O10.Gateway.WebApp.Common.Controllers
             _networkSynchronizer = networkSynchronizer;
             _dataAccessService = dataAccessService;
             _transactionsHandler = transactionsHandler;
-            _rawPacketProvidersFactory = rawPacketProvidersFactory;
             _relationProofSessionsStorage = relationProofSessionsStorage;
             _synchronizerConfiguration = configurationService.Get<ISynchronizerConfiguration>();
             _logger = loggerService.GetLogger(nameof(SynchronizationController));
+            _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
         }
 
         [HttpGet("EnvironmentVariables")]
@@ -133,7 +127,7 @@ namespace O10.Gateway.WebApp.Common.Controllers
         }
 
         [HttpGet("GetWitnessesRange/{combinedBlockHeightStart}/{combinedBlockHeightEnd}")]
-        public IActionResult GetWitnessesRange(ulong combinedBlockHeightStart, ulong combinedBlockHeightEnd = 0)
+        public IActionResult GetWitnessesRange(long combinedBlockHeightStart, long combinedBlockHeightEnd = 0)
         {
             return Ok(_networkSynchronizer.GetWitnessRange(combinedBlockHeightStart, combinedBlockHeightEnd));
         }
@@ -145,12 +139,12 @@ namespace O10.Gateway.WebApp.Common.Controllers
             return Ok(statePacketInfo);
         }
 
-        [HttpGet("GetCombinedBlockByAccountHeight/{accountPublicKey}/{height}")]
-        public IActionResult GetCombinedBlockByAccountHeight(string accountPublicKey, ulong height)
+        [HttpGet("GetCombinedBlockByTransactionHash/{accountPublicKey}/{transactionHash}")]
+        public IActionResult GetCombinedBlockByAccountHeight(string accountPublicKey, string transactionHash)
         {
-            var transactionalIncomingBlock = _dataAccessService.GetTransactionBySourceAndHeight(accountPublicKey, height);
+            var transactionalIncomingBlock = _dataAccessService.GetStateTransaction(accountPublicKey, transactionHash);
 
-            return Ok(transactionalIncomingBlock?.ThisBlockHash?.AggregatedTransactionsHeight ?? 0);
+            return Ok(transactionalIncomingBlock?.Hash?.AggregatedTransactionsHeight ?? 0);
         }
 
         [HttpGet("GetIssuanceCommitments/{issuer}/{amount}")]
@@ -187,58 +181,6 @@ namespace O10.Gateway.WebApp.Common.Controllers
             if (res is KeyImageViolatedNotification result)
             {
                 response.ExistingHash = result.ExistingHash;
-            }
-
-            return Ok(response);
-        }
-
-        [Obsolete("Use SendPacket instead")]
-        [HttpPost("SendData")]
-        [HttpPost("SendData/{keyImage}")]
-        public async Task<IActionResult> SendData(string keyImage, [FromBody] PacketDto packet)
-        {
-            //HttpContext.Request.Headers.
-            bool canContinue = false;
-            SendDataResponse response = new SendDataResponse();
-
-            if (!string.IsNullOrEmpty(keyImage))
-            {
-                _logger.LogIfDebug(() => $"Sending to Node {_synchronizerConfiguration.NodeApiUri} request for finding hash by a key image {keyImage}");
-                var packetHashResponse = await _synchronizerConfiguration.NodeApiUri.AppendPathSegments("HashByKeyImage", keyImage).GetJsonAsync<PacketHashResponse>().ConfigureAwait(false);
-
-                if (!string.IsNullOrEmpty(packetHashResponse.Hash))
-                {
-                    _logger.Error($"It was found that key image {keyImage} already was witnessed for the packet with hash {packetHashResponse.Hash}");
-                    response.Status = false;
-                    response.ExistingHash = packetHashResponse.Hash;
-                    canContinue = false;
-                }
-                else
-                {
-                    canContinue = true;
-                }
-            }
-            else
-            {
-                canContinue = true;
-            }
-
-            if(canContinue)
-            {
-                _logger.LogIfDebug(() => $"Sending to Node {_synchronizerConfiguration.NodeApiUri} packet {JsonConvert.SerializeObject(packet, new ByteArrayJsonConverter())}");
-
-                try
-                {
-                    IPacketProvider packetProviderTransaction = _rawPacketProvidersFactory.Create(packet.ContentTransaction);
-                    IPacketProvider packetProviderWitness = _rawPacketProvidersFactory.Create(packet.ContentWitness);
-
-                    response.Status = await _networkSynchronizer.SendData(packet.TransactionType, packetProviderTransaction, packetProviderWitness).ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error($"Failure at {nameof(SendData)}", ex);
-                    throw;
-                }
             }
 
             return Ok(response);
@@ -316,19 +258,12 @@ namespace O10.Gateway.WebApp.Common.Controllers
             return Ok(_dataAccessService.GetRelationRecordGroup(issuer, registrationCommitment).ToHexString());
         }
 
-        [HttpGet("GetTransactionBySourceAndHeight")]
-        public IActionResult GetTransactionBySourceAndHeight([FromQuery] string source, [FromQuery] ulong height)
+        [HttpGet("Transaction")]
+        public IActionResult GetTransactionBySourceAndHeight([FromQuery] string source, [FromQuery] string transactionHash)
         {
-            StatePacket transaction = _dataAccessService.GetTransactionBySourceAndHeight(source, height);
+            var transaction = _dataAccessService.GetStateTransaction(source, transactionHash);
 
-            PacketInfo packetInfo = new PacketInfo
-            {
-                LedgerType = LedgerType.O10State,
-                BlockType = transaction.BlockType,
-                Content = transaction.Content
-            };
-
-            return Ok(packetInfo);
+            return Ok(transaction);
         }
 
         [HttpPost("PushRelationProofSession")]
@@ -361,7 +296,7 @@ namespace O10.Gateway.WebApp.Common.Controllers
         [HttpGet("IsKeyImageCompomised")]
         public ActionResult<bool> GetIsKeyImageCompomised(string keyImage)
         {
-            return Ok(_dataAccessService.GetIsKeyImageCompomised(keyImage));
+            return Ok(_dataAccessService.GetIsKeyImageCompomised(_identityKeyProvider.GetKey(keyImage.HexStringToByteArray())));
         }
     }
 }

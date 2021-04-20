@@ -5,6 +5,7 @@ using O10.Core;
 using O10.Core.Configuration;
 using O10.Core.ExtensionMethods;
 using O10.Core.HashCalculations;
+using O10.Core.Logging;
 using O10.Crypto.Models;
 using O10.Gateway.Common.Configuration;
 using O10.Transactions.Core.Accessors;
@@ -20,15 +21,17 @@ namespace O10.Gateway.Common.Accessors
     {
         private readonly ISynchronizerConfiguration _synchronizerConfiguration;
         private readonly IHashCalculation _hashCalculation;
+        private readonly ILogger _logger;
         
         public const string AggregatedTransactionsHeight = "AggregatedTransactionsHeight";
         public static readonly ReadOnlyCollection<string> AccessingKeys 
             = new ReadOnlyCollection<string>(new[] { AggregatedTransactionsHeight, EvidenceDescriptor.TRANSACTION_HASH });
 
-        public O10StateAccessor(IHashCalculationsRepository hashCalculationsRepository, IConfigurationService configurationService)
+        public O10StateAccessor(IHashCalculationsRepository hashCalculationsRepository, IConfigurationService configurationService, ILoggerService loggerService)
         {
             _synchronizerConfiguration = configurationService.Get<ISynchronizerConfiguration>();
             _hashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
+            _logger = loggerService.GetLogger(nameof(O10StateAccessor));
         }
 
         public override LedgerType LedgerType => LedgerType.O10State;
@@ -53,7 +56,8 @@ namespace O10.Gateway.Common.Accessors
             {
                 url = url.SetQueryParam("combinedBlockHeight", evidence[AggregatedTransactionsHeight]);
             }
-            
+
+            _logger.Info($"Querying transaction by the URI {url}");
             var transaction = await url.GetJsonAsync<TransactionBase>().ConfigureAwait(false);
 
             return transaction;
