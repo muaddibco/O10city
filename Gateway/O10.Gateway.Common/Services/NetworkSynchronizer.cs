@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using O10.Transactions.Core.Ledgers.Stealth;
 using O10.Transactions.Core.Enums;
 using O10.Gateway.Common.Configuration;
 using O10.Gateway.DataLayer.Model;
@@ -38,8 +37,8 @@ using O10.Crypto.Models;
 
 namespace O10.Gateway.Common.Services
 {
-	// TODO: currently NetworkSynchronizer supports only 1 Node and is not built for working against different Nodes.
-	// Need to adjust the logic in the way so packets are robustly obtained from different nodes.
+    // TODO: currently NetworkSynchronizer supports only 1 Node and is not built for working against different Nodes.
+    // Need to adjust the logic in the way so packets are robustly obtained from different nodes.
     [RegisterDefaultImplementation(typeof(INetworkSynchronizer), Lifetime = LifetimeManagement.Singleton)]
 	public class NetworkSynchronizer : INetworkSynchronizer
 	{
@@ -433,13 +432,13 @@ namespace O10.Gateway.Common.Services
             }
         }
 
-        private static PacketWitness GetPacketWitness(WitnessPacket w) => new PacketWitness
+        private PacketWitness GetPacketWitness(WitnessPacket w) => new PacketWitness
         {
             WitnessId = w.WitnessPacketId,
-            DestinationKey = w.ReferencedDestinationKey?.HexStringToByteArray(),
-            TransactionKey = w.ReferencedTransactionKey?.HexStringToByteArray(),
-            DestinationKey2 = w.ReferencedDestinationKey2?.HexStringToByteArray(),
-            KeyImage = w.ReferencedKeyImage?.HexStringToByteArray(),
+            DestinationKey = _identityKeyProvider.GetKey(w.ReferencedDestinationKey?.HexStringToByteArray()),
+            TransactionKey = _identityKeyProvider.GetKey(w.ReferencedTransactionKey?.HexStringToByteArray()),
+            DestinationKey2 = _identityKeyProvider.GetKey(w.ReferencedDestinationKey2?.HexStringToByteArray()),
+            KeyImage = _identityKeyProvider.GetKey(w.ReferencedKeyImage?.HexStringToByteArray()),
             IsIdentityIssuing =
                     w.ReferencedLedgerType != LedgerType.Stealth &&
                     (

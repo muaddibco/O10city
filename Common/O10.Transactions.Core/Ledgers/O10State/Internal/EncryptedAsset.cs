@@ -7,7 +7,7 @@ namespace O10.Transactions.Core.Ledgers.O10State.Internal
 {
     public class EncryptedAsset
     {
-        [JsonConverter(typeof(ByteArrayJsonConverter))]
+        [JsonConverter(typeof(KeyJsonConverter))]
         /// <summary>
         /// C = x * G + I, where I is elliptic curve point representing assert id
         /// </summary>

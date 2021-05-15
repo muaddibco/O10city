@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Client.DataLayer.Model
 {
-    [Table("user_root_attributes")]
+    [Table("UserRootAttributes")]
 	public class UserRootAttribute
 	{
 		[Key]

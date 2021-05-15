@@ -17,13 +17,12 @@ using O10.Client.DataLayer.Model.ServiceProviders;
 using O10.Client.DataLayer.Model.Users;
 using O10.Core;
 using O10.Core.Architecture;
-
 using O10.Core.Configuration;
 using O10.Core.ExtensionMethods;
 using O10.Core.Logging;
 using O10.Crypto.ConfidentialAssets;
 using O10.Client.DataLayer.ElectionCommittee;
-using System.Linq.Expressions;
+using O10.Core.Identity;
 
 namespace O10.Client.DataLayer.Services
 {
@@ -248,13 +247,18 @@ namespace O10.Client.DataLayer.Services
             }
         }
 
-        public UserRootAttribute GetRootAttributeByOriginalCommitment(long accountId, byte[] originalCommitment)
+        public UserRootAttribute GetRootAttributeByOriginalCommitment(long accountId, IKey originalCommitment)
         {
+            if (originalCommitment is null)
+            {
+                throw new ArgumentNullException(nameof(originalCommitment));
+            }
+
             lock (_sync)
             {
                 return _dataContext.UserRootAttributes.Where(r => r.AccountId == accountId && !r.IsOverriden)
                                           .ToList()
-                                          .FirstOrDefault(r => originalCommitment.Equals32(r.OriginalCommitment));
+                                          .FirstOrDefault(r => originalCommitment.Equals(r.OriginalCommitment));
             }
         }
 
@@ -373,7 +377,7 @@ namespace O10.Client.DataLayer.Services
             }
         }
 
-        public bool UpdateUserAttribute(long accountId, string oldKeyImage, string keyImage, byte[] lastBlindingFactor, byte[] lastCommitment, byte[] lastTransactionKey, byte[] lastDestinationKey)
+        public bool UpdateUserAttribute(long accountId, string oldKeyImage, string keyImage, byte[] lastBlindingFactor, IKey lastCommitment, IKey lastTransactionKey, IKey lastDestinationKey)
         {
             lock (_sync)
             {
@@ -383,10 +387,10 @@ namespace O10.Client.DataLayer.Services
                 if (attr != null)
                 {
                     attr.LastBlindingFactor = lastBlindingFactor;
-                    attr.LastCommitment = lastCommitment;
-                    attr.LastTransactionKey = lastTransactionKey;
+                    attr.LastCommitment = lastCommitment.ToByteArray();
+                    attr.LastTransactionKey = lastTransactionKey.ToByteArray();
                     attr.NextKeyImage = keyImage;
-                    attr.LastDestinationKey = lastDestinationKey;
+                    attr.LastDestinationKey = lastDestinationKey.ToByteArray();
                     attr.LastUpdateTime = DateTime.Now;
 
                     _dataContext.SaveChanges();
@@ -859,7 +863,7 @@ namespace O10.Client.DataLayer.Services
             }
         }
 
-        public bool GetLastUpdatedCombinedBlockHeight(long accountId, out ulong lastUpdatedCombinedBlockHeight)
+        public bool GetLastUpdatedCombinedBlockHeight(long accountId, out long lastUpdatedCombinedBlockHeight)
         {
             lock (_sync)
             {
@@ -875,7 +879,7 @@ namespace O10.Client.DataLayer.Services
             }
         }
 
-        public void StoreLastUpdatedCombinedBlockHeight(long accountId, ulong lastUpdatedCombinedBlockHeight)
+        public void StoreLastUpdatedCombinedBlockHeight(long accountId, long lastUpdatedCombinedBlockHeight)
         {
             lock (_sync)
             {
@@ -1056,7 +1060,7 @@ namespace O10.Client.DataLayer.Services
             return false;
         }
 
-        public long AddAccount(byte accountType, string accountInfo, byte[] secretSpendKeyEnc, byte[] secretViewKeyEnc, byte[] publicSpendKey, byte[] publicViewKey, ulong lastAggregatedRegistrations, bool isPrivate = false)
+        public long AddAccount(byte accountType, string accountInfo, byte[] secretSpendKeyEnc, byte[] secretViewKeyEnc, byte[] publicSpendKey, byte[] publicViewKey, long lastAggregatedRegistrations, bool isPrivate = false)
         {
             lock (_sync)
             {
@@ -1104,7 +1108,7 @@ namespace O10.Client.DataLayer.Services
             }
         }
 
-        public void ResetAccount(long accountId, byte[] secretSpendKeyEnc, byte[] secretViewKeyEnc, byte[] publicSpendKey, byte[] publicViewKey, ulong lastAggregatedRegistrations)
+        public void ResetAccount(long accountId, byte[] secretSpendKeyEnc, byte[] secretViewKeyEnc, byte[] publicSpendKey, byte[] publicViewKey, long lastAggregatedRegistrations)
         {
             lock (_sync)
             {
@@ -2342,7 +2346,7 @@ namespace O10.Client.DataLayer.Services
             }
         }
 
-        public void OverrideUserAccount(long accountId, byte[] secretSpendKeyEnc, byte[] secretViewKeyEnc, byte[] publicSpendKey, byte[] publicViewKey, ulong lastAggregatedRegistrations)
+        public void OverrideUserAccount(long accountId, byte[] secretSpendKeyEnc, byte[] secretViewKeyEnc, byte[] publicSpendKey, byte[] publicViewKey, long lastAggregatedRegistrations)
         {
             lock (_sync)
             {

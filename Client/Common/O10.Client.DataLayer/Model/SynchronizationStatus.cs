@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Client.DataLayer.Model
 {
-    [Table("synchronization_statuses")]
+    [Table("SynchronizationStatuses")]
     public class SynchronizationStatus
     {
         [Key]
@@ -12,6 +12,6 @@ namespace O10.Client.DataLayer.Model
 
         public Account Account { get; set; }
 
-        public ulong LastUpdatedCombinedBlockHeight { get; set; }
+        public long LastUpdatedCombinedBlockHeight { get; set; }
     }
 }

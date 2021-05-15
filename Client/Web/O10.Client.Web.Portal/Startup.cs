@@ -30,6 +30,8 @@ using Newtonsoft.Json.Serialization;
 using O10.Core.Serialization;
 using System.Runtime.Serialization.Formatters;
 using Newtonsoft.Json.Converters;
+using Cyberboss.AspNetCore.AsyncInitializer;
+using System;
 
 namespace O10.Client.Web.Portal
 {
@@ -129,8 +131,10 @@ namespace O10.Client.Web.Portal
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            app?.ApplicationServices
-                .UseBootstrapper<WebApiBootstrapper>(_cancellationTokenSource.Token, _logger);
+            app?.UseAsyncInitialization(async ct =>
+            {
+                await app.ApplicationServices.UseBootstrapper<WebApiBootstrapper>(ct, _logger).ConfigureAwait(false);
+            });
 
             if (env.IsDevelopment())
             {

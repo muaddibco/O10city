@@ -4,15 +4,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using O10.Transactions.Core.Parsers;
 using O10.Client.Common.Interfaces;
 using O10.Client.DataLayer.Services;
 using O10.Core.Logging;
 using O10.Core.Models;
 using O10.Core.Serialization;
-using O10.Transactions.Core.DTOs;
-using O10.Transactions.Core.Ledgers;
-using O10.Transactions.Core.Ledgers.Stealth;
+using O10.Crypto.Models;
 
 namespace O10.Client.Common.Communication
 {
@@ -21,22 +18,19 @@ namespace O10.Client.Common.Communication
         protected readonly ILogger _logger;
         private readonly IGatewayService _syncStateProvider;
         private readonly IDataAccessService _dataAccessService;
-        private readonly IPropagatorBlock<TaskCompletionWrapper<PacketBase>, TaskCompletionWrapper<PacketBase>> _propagator;
+        private readonly IPropagatorBlock<TaskCompletionWrapper<TransactionBase>, TaskCompletionWrapper<TransactionBase>> _propagator;
         private readonly IPropagatorBlock<WitnessPackage, WitnessPackage> _propagatorProcessed;
-        private readonly IBlockParsersRepositoriesRepository _blockParsersRepositoriesRepository;
         private readonly ITargetBlock<WitnessPackageWrapper> _pipeIn;
         protected readonly IClientCryptoService _clientCryptoService;
-        protected long _accountId;
 
         public PacketsExtractorBase(
-            IBlockParsersRepositoriesRepository blockParsersRepositoriesRepository,
             IGatewayService syncStateProvider,
             IClientCryptoService clientCryptoService,
             IDataAccessService dataAccessService,
             ILoggerService loggerService)
         {
             _logger = loggerService.GetLogger(GetType().Name);
-            _propagator = new TransformBlock<TaskCompletionWrapper<PacketBase>, TaskCompletionWrapper<PacketBase>>(p => p);
+            _propagator = new TransformBlock<TaskCompletionWrapper<TransactionBase>, TaskCompletionWrapper<TransactionBase>>(p => p);
             _propagatorProcessed = new TransformBlock<WitnessPackage, WitnessPackage>(p => p);
             _clientCryptoService = clientCryptoService;
             _syncStateProvider = syncStateProvider;
@@ -46,41 +40,23 @@ namespace O10.Client.Common.Communication
             {
                 WitnessPackage witnessPackage = wrapper.WitnessPackage;
 
-                _logger.LogIfDebug(() => $"[{_accountId}]: {GetType().Name} of witnessPackage at CombinedBlockHeight {witnessPackage.CombinedBlockHeight}");
+                _logger.LogIfDebug(() => $"[{AccountId}]: {GetType().Name} of witnessPackage at CombinedBlockHeight {witnessPackage.CombinedBlockHeight}");
 
                 try
                 {
                     List<Task> allPacketsProcessedTasks = new List<Task>();
                     List<PacketWitness> witnessesToMe = new List<PacketWitness>();
 
-                    foreach (var item in witnessPackage.StateWitnesses)
+                    foreach (var item in witnessPackage.Witnesses)
                     {
-                        if (_dataAccessService.WitnessAsProcessed(_accountId, item.WitnessId))
+                        if (_dataAccessService.WitnessAsProcessed(AccountId, item.WitnessId))
                         {
-                            _logger.Warning($"[{_accountId}]: witness {item.WitnessId} already processed");
+                            _logger.Warning($"[{AccountId}]: witness {item.WitnessId} already processed");
                             continue;
                         }
                         else
                         {
-                            _logger.Debug($"[{_accountId}]: Processing witness {item.WitnessId}");
-                        }
-
-                        if (CheckPacketWitness(item))
-                        {
-                            witnessesToMe.Add(item);
-                        }
-                    }
-
-                    foreach (var item in witnessPackage.StealthWitnesses)
-                    {
-                        if (_dataAccessService.WitnessAsProcessed(_accountId, item.WitnessId))
-                        {
-                            _logger.Warning($"[{_accountId}]: witness {item.WitnessId} already processed");
-                            continue;
-                        }
-                        else
-                        {
-                            _logger.Debug($"[{_accountId}]: Processing witness {item.WitnessId}");
+                            _logger.Debug($"[{AccountId}]: Processing witness {item.WitnessId}");
                         }
 
                         if (CheckPacketWitness(item))
@@ -91,36 +67,36 @@ namespace O10.Client.Common.Communication
 
                     if (witnessesToMe.Count > 0)
                     {
-                        _logger.LogIfDebug(() => $"[{_accountId}]: Obtaining packets for witnesses [{string.Join(',', witnessesToMe.Select(w => w.WitnessId).ToArray())}]");
-                        IEnumerable<IPacketBase> packetInfos = await _syncStateProvider.GetTransactions(witnessesToMe.Select(w => w.WitnessId)).ConfigureAwait(false);
+                        _logger.LogIfDebug(() => $"[{AccountId}]: Obtaining packets for witnesses [{string.Join(',', witnessesToMe.Select(w => w.WitnessId).ToArray())}]");
+                        var transactions = await _syncStateProvider.GetTransactions(witnessesToMe.Select(w => w.WitnessId)).ConfigureAwait(false);
 
-                        if (packetInfos?.Any() != true)
+                        if (transactions?.Any() != true)
                         {
-                            _logger.Error($"[{_accountId}]: no packet infos obtained from the Gateway");
+                            _logger.Error($"[{AccountId}]: no packet infos obtained from the Gateway");
                             wrapper.CompletionSource.SetResult(true);
                             return;
                         }
 
-                        foreach (var packet in packetInfos)
+                        foreach (var transaction in transactions)
                         {
-                            _logger.LogIfDebug(() => $"[{_accountId}]: processing packet {packet.GetType().Name}");
+                            _logger.LogIfDebug(() => $"[{AccountId}]: processing transaction {transaction.GetType().Name}");
 
-                            if (packet != null)
+                            if (transaction != null)
                             {
-                                if (packet is StealthPacket stealthTransaction)
+                                if (transaction is StealthTransactionBase stealthTransaction)
                                 {
-                                    _logger.LogIfDebug(() => $"[{_accountId}]: Obtained packet {stealthTransaction.GetType().Name} with {nameof(stealthTransaction.Body.KeyImage)}={stealthTransaction.Body.KeyImage}");
+                                    _logger.LogIfDebug(() => $"[{AccountId}]: Obtained transaction {stealthTransaction.GetType().Name} with {nameof(stealthTransaction.KeyImage)}={stealthTransaction.KeyImage}");
                                 }
                                 else
                                 {
-                                    _logger.LogIfDebug(() => $"[{_accountId}]: Obtained packet {JsonConvert.SerializeObject(packet, new ByteArrayJsonConverter())}");
+                                    _logger.LogIfDebug(() => $"[{AccountId}]: Obtained transaction {JsonConvert.SerializeObject(transaction, new ByteArrayJsonConverter())}");
                                 }
 
-                                var packetWrapper = new TaskCompletionWrapper<IPacketBase>(packet);
+                                var packetWrapper = new TaskCompletionWrapper<TransactionBase>(transaction);
                                 allPacketsProcessedTasks.Add(packetWrapper.TaskCompletion.Task);
 
                                 await _propagator.SendAsync(packetWrapper).ConfigureAwait(false);
-                                _logger.Debug($"[{_accountId}]: Passing packet {packetBase.GetType().Name} to WalletSynchronizer");
+                                _logger.Debug($"[{AccountId}]: Passing transaction {transaction.GetType().Name} to WalletSynchronizer");
                             }
                         }
 
@@ -136,25 +112,25 @@ namespace O10.Client.Common.Communication
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error($"[{_accountId}]: Failure during packet extraction", ex);
+                    _logger.Error($"[{AccountId}]: Failure during packet extraction", ex);
                     wrapper.CompletionSource.SetResult(false);
                 }
             });
-            _blockParsersRepositoriesRepository = blockParsersRepositoriesRepository;
         }
 
         public virtual void Initialize(long accountId)
         {
-            _accountId = accountId;
+            AccountId = accountId;
         }
 
         public abstract string Name { get; }
+        protected long AccountId { get; set; }
 
         protected abstract bool CheckPacketWitness(PacketWitness packetWitness);
 
         public virtual ISourceBlock<T> GetSourcePipe<T>(string name = null)
         {
-            if (typeof(T) == typeof(TaskCompletionWrapper<PacketBase>))
+            if (typeof(T) == typeof(TaskCompletionWrapper<TransactionBase>))
             {
                 return (ISourceBlock<T>)_propagator;
             }

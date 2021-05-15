@@ -35,6 +35,9 @@ namespace O10.Transactions.Core.Ledgers.Stealth.Transactions
 
 		public BiometricProof? BiometricProof { get; set; }
 		
+		/// <summary>
+		/// Hash of the data with required proofs that was transferred off-chain
+		/// </summary>
 		public Memory<byte> ProofsHash { get; set; }
 	}
 }

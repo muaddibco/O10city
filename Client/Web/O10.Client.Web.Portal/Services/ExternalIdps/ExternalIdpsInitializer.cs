@@ -15,6 +15,7 @@ using O10.Core.Architecture;
 using O10.Core.Configuration;
 using O10.Core.Logging;
 using System;
+using System.Threading.Tasks;
 
 namespace O10.Client.Web.Portal.Services.ExternalIdps
 {
@@ -211,7 +212,7 @@ namespace O10.Client.Web.Portal.Services.ExternalIdps
         private readonly IAccountsService _accountsService;
         private readonly IExecutionContextManager _executionContextManager;
 
-        protected override void InitializeInner(CancellationToken cancellationToken)
+        protected override async Task InitializeInner(CancellationToken cancellationToken)
         {
             _logger.Info($"Started {nameof(InitializeInner)}");
 

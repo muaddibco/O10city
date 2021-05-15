@@ -21,6 +21,8 @@ using System.Threading;
 using O10.Client.Common.Communication.Notifications;
 using O10.Core.Notifications;
 using O10.Transactions.Core.Ledgers;
+using O10.Crypto.Models;
+using O10.Transactions.Core.Ledgers.O10State.Transactions;
 
 namespace O10.Client.Mobile.Base.Services
 {
@@ -61,34 +63,34 @@ namespace O10.Client.Mobile.Base.Services
             _trackingService = trackingService;
             _logger = loggerService.GetLogger(nameof(UserIdentitiesUpdater));
 
-            PipeIn = new ActionBlock<PacketBase>(async p =>
+            PipeIn = new ActionBlock<TransactionBase>(async p =>
             {
                 try
                 {
-                    if (p is TransferAssetToStealth packet)
+                    if (p is TransferAssetToStealthTransaction transaction)
                     {
-                        UserRootAttribute userRootAttribute = _dataAccessService.GetRootAttributeByOriginalCommitment(_accountId, packet.TransferredAsset.AssetCommitment);
+                        UserRootAttribute userRootAttribute = _dataAccessService.GetRootAttributeByOriginalCommitment(_accountId, transaction.TransferredAsset.AssetCommitment);
                         if (userRootAttribute != null)
                         {
-                            _clientCryptoService.DecodeEcdhTuple(packet.TransferredAsset.EcdhTuple, packet.TransactionPublicKey, out byte[] blindingFactor, out byte[] assetId);
+                            _clientCryptoService.DecodeEcdhTuple(transaction.TransferredAsset.EcdhTuple, transaction.TransactionPublicKey, out byte[] blindingFactor, out byte[] assetId);
 
-                            string issuer = packet.Source.ToString();
+                            string issuer = transaction.Source.ToString();
 
                             await RecoverAssociatedAttributes(issuer, assetId).ConfigureAwait(false);
 
-                            await SendNotification(packet, userRootAttribute, blindingFactor, assetId).ConfigureAwait(false);
+                            await SendNotification(transaction, userRootAttribute, blindingFactor, assetId).ConfigureAwait(false);
 
                             await RecoverGroupRelations(issuer, assetId).ConfigureAwait(false);
 
                             await RecoverRegistrationCommitments(issuer, assetId).ConfigureAwait(false);
                         }
                     }
-                    else if (p is GroupsRelationsProofs relationsProofs && _clientCryptoService.CheckTarget(relationsProofs.DestinationKey2, relationsProofs.TransactionPublicKey))
+                    /*else if (p is GroupsRelationsProofs relationsProofs && _clientCryptoService.CheckTarget(relationsProofs.DestinationKey2, relationsProofs.TransactionPublicKey))
                     {
                         //RelationProofsValidationResults validationResults = _relationsProofsValidationService.VerifyRelationProofs(relationsProofs, _clientCryptoService);
 
                         //_idenitiesHubContext.Clients.Group(_accountId.ToString(CultureInfo.InvariantCulture)).SendAsync("PushRelationValidation", validationResults);
-                    }
+                    }*/
                 }
                 catch
                 {
@@ -122,20 +124,20 @@ namespace O10.Client.Mobile.Base.Services
             }
         }
 
-        private async Task SendNotification(TransferAssetToStealth packet, UserRootAttribute userRootAttribute, byte[] blindingFactor, byte[] assetId)
+        private async Task SendNotification(TransferAssetToStealthTransaction transaction, UserRootAttribute userRootAttribute, byte[] blindingFactor, byte[] assetId)
         {
             UserAttributeModel userAttributeModel = new UserAttributeModel
             {
                 UserAttributeId = userRootAttribute.UserAttributeId,
                 SchemeName = userRootAttribute.SchemeName,
-                Source = packet.Source.Value.ToArray().ToHexString(),
+                Source = transaction.Source.Value.ToArray().ToHexString(),
                 AssetId = assetId.ToHexString(),
                 OriginalBlindingFactor = blindingFactor.ToHexString(),
-                OriginalCommitment = packet.TransferredAsset.AssetCommitment.ToHexString(),
+                OriginalCommitment = transaction.TransferredAsset.AssetCommitment.ToString(),
                 LastBlindingFactor = blindingFactor.ToHexString(),
-                LastCommitment = packet.TransferredAsset.AssetCommitment.ToHexString(),
-                LastTransactionKey = packet.TransactionPublicKey.ToHexString(),
-                LastDestinationKey = packet.DestinationKey.ToHexString(),
+                LastCommitment = transaction.TransferredAsset.AssetCommitment.ToString(),
+                LastTransactionKey = transaction.TransactionPublicKey.ToString(),
+                LastDestinationKey = transaction.DestinationKey.ToString(),
                 Content = userRootAttribute.Content,
                 Validated = true,
                 IsOverriden = false
@@ -204,7 +206,7 @@ namespace O10.Client.Mobile.Base.Services
             }
         }
 
-        public ITargetBlock<PacketBase> PipeIn { get; set; }
+        public ITargetBlock<TransactionBase> PipeIn { get; set; }
         public ITargetBlock<NotificationBase> PipeInNotifications { get; }
 
         public void Initialize(long accountId, CancellationToken cancellationToken)
@@ -247,9 +249,9 @@ namespace O10.Client.Mobile.Base.Services
                 {
                     AssetId = userAttributeStateUpdate.AssetId.ToHexString(),
                     LastBlindingFactor = userAttributeStateUpdate.BlindingFactor.ToHexString(),
-                    LastCommitment = userAttributeStateUpdate.AssetCommitment.ToHexString(),
-                    LastTransactionKey = userAttributeStateUpdate.TransactionKey.ToHexString(),
-                    LastDestinationKey = userAttributeStateUpdate.DestinationKey.ToHexString()
+                    LastCommitment = userAttributeStateUpdate.AssetCommitment.ToString(),
+                    LastTransactionKey = userAttributeStateUpdate.TransactionKey.ToString(),
+                    LastDestinationKey = userAttributeStateUpdate.DestinationKey.ToString()
                 };
 
                 _stateNotificationService.NotificationsPipe.SendAsync(new RootAttributeUpdateStateNotification(lastUpdateModel));

@@ -74,7 +74,7 @@ namespace O10.Node.WebApp.Common
 
 		public override ExtensionOrderPriorities Priority => ExtensionOrderPriorities.Highest8;
 
-		protected override void InitializeInner(CancellationToken cancellationToken)
+		protected override async Task InitializeInner(CancellationToken cancellationToken)
 		{
             try
             {

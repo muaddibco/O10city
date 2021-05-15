@@ -2,6 +2,7 @@
 using O10.Core.Architecture;
 
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace O10.Client.Common.Integration
 {
@@ -17,7 +18,7 @@ namespace O10.Client.Common.Integration
 
         public override ExtensionOrderPriorities Priority => ExtensionOrderPriorities.Normal;
 
-        protected override void InitializeInner(CancellationToken cancellationToken)
+        protected override async Task InitializeInner(CancellationToken cancellationToken)
         {
             foreach (var idP in _integrationIdPRepository.GetIntegrationIdPs())
             {

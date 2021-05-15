@@ -7,6 +7,7 @@ using O10.Client.DataLayer.Services;
 using O10.Core.Logging;
 using O10.Core.Models;
 using O10.Core.Notifications;
+using O10.Crypto.Models;
 using O10.Transactions.Core.Ledgers;
 using O10.Transactions.Core.Ledgers.Stealth;
 
@@ -16,12 +17,12 @@ namespace O10.Client.Common.Communication
     {
         private bool _disposedValue; // To detect redundant calls
 
-        private readonly IPropagatorBlock<IPacketBase, IPacketBase> _pipeOutPackets;
+        private readonly IPropagatorBlock<TransactionBase, TransactionBase> _pipeOutTransactions;
         private readonly IPropagatorBlock<NotificationBase, NotificationBase> _pipeOutNotifications;
 
         protected long _accountId;
         protected readonly IDataAccessService _dataAccessService;
-        private readonly ITargetBlock<TaskCompletionWrapper<IPacketBase>> _pipeInPackets;
+        private readonly ITargetBlock<TaskCompletionWrapper<TransactionBase>> _pipeInTransactions;
         private readonly ITargetBlock<WitnessPackage> _pipeInPackage;
         protected readonly IClientCryptoService _clientCryptoService;
         protected ILogger _logger;
@@ -32,13 +33,13 @@ namespace O10.Client.Common.Communication
             _clientCryptoService = clientCryptoService;
             _logger = loggerService.GetLogger(GetType().Name);
 
-            _pipeInPackets = new ActionBlock<TaskCompletionWrapper<IPacketBase>>(async p =>
+            _pipeInTransactions = new ActionBlock<TaskCompletionWrapper<TransactionBase>>(async p =>
             {
                 try
                 {
-                    if (p.State is StealthPacket packet)
+                    if (p.State is StealthTransactionBase packet)
                     {
-                        _logger.LogIfDebug(() => $"[{_accountId}]: Processing {packet.GetType().Name} with {nameof(packet.Body.KeyImage)}={packet.Body.KeyImage}");
+                        _logger.LogIfDebug(() => $"[{_accountId}]: Processing {packet.GetType().Name} with {nameof(packet.KeyImage)}={packet.KeyImage}");
                     }
                     else
                     {
@@ -75,7 +76,7 @@ namespace O10.Client.Common.Communication
                 } while (tryAgain && attempts-- > 0);
             });
 
-            _pipeOutPackets = new TransformBlock<PacketBase, PacketBase>(w => w);
+            _pipeOutTransactions = new TransformBlock<TransactionBase, TransactionBase>(w => w);
             _pipeOutNotifications = new TransformBlock<NotificationBase, NotificationBase>(p => p);
         }
 
@@ -88,9 +89,9 @@ namespace O10.Client.Common.Communication
 
         public ISourceBlock<T> GetSourcePipe<T>(string name = null)
         {
-            if (typeof(T) == typeof(PacketBase))
+            if (typeof(T) == typeof(TransactionBase))
             {
-                return (ISourceBlock<T>)_pipeOutPackets;
+                return (ISourceBlock<T>)_pipeOutTransactions;
             }
             else if (typeof(T) == typeof(NotificationBase))
             {
@@ -102,9 +103,9 @@ namespace O10.Client.Common.Communication
 
         public ITargetBlock<T> GetTargetPipe<T>(string name = null)
         {
-            if (typeof(T) == typeof(TaskCompletionWrapper<PacketBase>))
+            if (typeof(T) == typeof(TaskCompletionWrapper<TransactionBase>))
             {
-                return (ITargetBlock<T>)_pipeInPackets;
+                return (ITargetBlock<T>)_pipeInTransactions;
             }
             else if (typeof(T) == typeof(WitnessPackage))
             {
@@ -114,9 +115,9 @@ namespace O10.Client.Common.Communication
             throw new InvalidOperationException($"No target blocks are available for type {typeof(T).FullName}");
         }
 
-        protected virtual async Task StorePacket(IPacketBase packetBase)
+        protected virtual async Task StorePacket(TransactionBase transaction)
         {
-            await _pipeOutPackets.SendAsync(packetBase).ConfigureAwait(false);
+            await _pipeOutTransactions.SendAsync(transaction).ConfigureAwait(false);
         }
 
         protected void NotifyObservers(NotificationBase notification)
@@ -134,7 +135,7 @@ namespace O10.Client.Common.Communication
                 {
                     // TODO: dispose managed state (managed objects).
                     _pipeInPackage.Complete();
-                    _pipeInPackets.Complete();
+                    _pipeInTransactions.Complete();
                 }
 
                 // TODO: free unmanaged resources (unmanaged objects) and override a finalizer below.

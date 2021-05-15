@@ -1,6 +1,7 @@
 ﻿using O10.Core;
 using O10.Core.Architecture;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace O10.Client.Web.Portal.ElectionCommittee
 {
@@ -16,7 +17,7 @@ namespace O10.Client.Web.Portal.ElectionCommittee
 
         public override ExtensionOrderPriorities Priority => ExtensionOrderPriorities.Normal;
 
-        protected override void InitializeInner(CancellationToken cancellationToken)
+        protected override async Task InitializeInner(CancellationToken cancellationToken)
         {
             _electionCommitteeService.Initialize();
         }

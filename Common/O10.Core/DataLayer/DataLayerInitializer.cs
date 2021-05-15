@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using O10.Core.Architecture;
 
 using O10.Core.Logging;
@@ -26,7 +27,7 @@ namespace O10.Core.DataLayer
 
         public override ExtensionOrderPriorities Priority => ExtensionOrderPriorities.Highest7;
 
-        protected override void InitializeInner(CancellationToken cancellationToken)
+        protected override async Task InitializeInner(CancellationToken cancellationToken)
         {
             _logger.Info($"{nameof(DataLayerInitializer)} started");
 

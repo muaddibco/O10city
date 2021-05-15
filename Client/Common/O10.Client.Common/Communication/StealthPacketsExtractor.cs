@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using O10.Transactions.Core.Parsers;
 using O10.Client.Common.Interfaces;
 using O10.Client.DataLayer.Services;
 using O10.Core;
@@ -15,12 +14,11 @@ namespace O10.Client.Common.Communication
 	{
 
 		public StealthPacketsExtractor(
-            IBlockParsersRepositoriesRepository blockParsersRepositoriesRepository,
             IGatewayService syncStateProvider,
 			IStealthClientCryptoService clientCryptoService,
 			IDataAccessService dataAccessService,
             ILoggerService loggerService) 
-            : base(blockParsersRepositoriesRepository, syncStateProvider, clientCryptoService, dataAccessService, loggerService)
+            : base(syncStateProvider, clientCryptoService, dataAccessService, loggerService)
 		{
 		}
 
@@ -28,7 +26,7 @@ namespace O10.Client.Common.Communication
 
         protected override bool CheckPacketWitness(PacketWitness packetWitness)
 		{
-			_logger.LogIfDebug(() => $"[{_accountId}]: {nameof(CheckPacketWitness)} {JsonConvert.SerializeObject(packetWitness, new ByteArrayJsonConverter())}");
+			_logger.LogIfDebug(() => $"[{AccountId}]: {nameof(CheckPacketWitness)} {JsonConvert.SerializeObject(packetWitness, new ByteArrayJsonConverter())}");
 
 			if (packetWitness.IsIdentityIssuing)
 			{
@@ -45,12 +43,12 @@ namespace O10.Client.Common.Communication
 
 			if(isToMe1)
 			{
-				_logger.Debug($"[{_accountId}]: It was detected packet sent by myself");
+				_logger.Debug($"[{AccountId}]: It was detected packet sent by myself");
 			}
 
 			if (isToMe2)
 			{
-				_logger.Debug($"[{_accountId}]: It was detected packet sent to me by other");
+				_logger.Debug($"[{AccountId}]: It was detected packet sent to me by other");
 			}
 
 			return isToMe1 || isToMe2;

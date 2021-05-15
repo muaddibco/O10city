@@ -10,6 +10,7 @@ using O10.Client.DataLayer.Model.Scenarios;
 using O10.Client.DataLayer.Model.ServiceProviders;
 using O10.Client.DataLayer.Model.Users;
 using O10.Core.Architecture;
+using O10.Core.Identity;
 
 namespace O10.Client.DataLayer.Services
 {
@@ -52,11 +53,11 @@ namespace O10.Client.DataLayer.Services
         bool DeleteNonConfirmedUserRootAttribute(long accountId, string content);
 
 		UserRootAttribute GetUserRootAttribute(long rootAttributeId);
-        UserRootAttribute GetRootAttributeByOriginalCommitment(long accountId, byte[] originalCommitment);
+        UserRootAttribute GetRootAttributeByOriginalCommitment(long accountId, IKey originalCommitment);
 
         long AddUserRootAttribute(long accountId, UserRootAttribute attribute);
 
-		bool UpdateUserAttribute(long accountId, string oldKeyImage, string keyImage, byte[] lastBlindingFactor, byte[] lastCommitment, byte[] lastTransactionKey, byte[] lastDestinationKey);
+		bool UpdateUserAttribute(long accountId, string oldKeyImage, string keyImage, byte[] lastBlindingFactor, IKey lastCommitment, IKey lastTransactionKey, IKey lastDestinationKey);
 
 		bool UpdateUserAttributeContent(long userAttributeId, string content);
 
@@ -112,16 +113,16 @@ namespace O10.Client.DataLayer.Services
 
         void ClearAccountCompromised(long accountId);
 
-		long AddAccount(byte accountType, string accountInfo, byte[] secretSpendKeyEnc, byte[] secretViewKeyEnc, byte[] publicSpendKey, byte[] publicViewKey, ulong lastAggregatedRegistrations, bool isPrivate = false);
+		long AddAccount(byte accountType, string accountInfo, byte[] secretSpendKeyEnc, byte[] secretViewKeyEnc, byte[] publicSpendKey, byte[] publicViewKey, long lastAggregatedRegistrations, bool isPrivate = false);
 		void UpdateAccount(long accountId, string accountInfo, byte[] publicSpendKey, byte[] publicViewKey);
-		void ResetAccount(long accountId, byte[] secretSpendKeyEnc, byte[] secretViewKeyEnc, byte[] publicSpendKey, byte[] publicViewKey, ulong lastAggregatedRegistrations);
+		void ResetAccount(long accountId, byte[] secretSpendKeyEnc, byte[] secretViewKeyEnc, byte[] publicSpendKey, byte[] publicViewKey, long lastAggregatedRegistrations);
 		bool GetAccountId(byte[] publicKey, out long accountId);
 		bool GetAccountId(byte[] publicSpendKey, byte[] publicViewKey, out long accountId);
         void RemoveAccount(long accountId);
 
 		long DuplicateUserAccount(long accountId, string accountInfo);
 
-		void OverrideUserAccount(long accountId, byte[] secretSpendKeyEnc, byte[] secretViewKeyEnc, byte[] publicSpendKey, byte[] publicViewKey, ulong lastAggregatedRegistrations);
+		void OverrideUserAccount(long accountId, byte[] secretSpendKeyEnc, byte[] secretViewKeyEnc, byte[] publicSpendKey, byte[] publicViewKey, long lastAggregatedRegistrations);
 
 		byte[] GetAesInitializationVector();
 
@@ -206,8 +207,8 @@ namespace O10.Client.DataLayer.Services
 
 		#endregion Service Providers
 
-		bool GetLastUpdatedCombinedBlockHeight(long accountId, out ulong lastUpdatedCombinedBlockHeight);
-		void StoreLastUpdatedCombinedBlockHeight(long accountId, ulong lastUpdatedCombinedBlockHeight);
+		bool GetLastUpdatedCombinedBlockHeight(long accountId, out long lastUpdatedCombinedBlockHeight);
+		void StoreLastUpdatedCombinedBlockHeight(long accountId, long lastUpdatedCombinedBlockHeight);
 
 		long AddAutoLogin(long accountId, byte[] secretKey);
 

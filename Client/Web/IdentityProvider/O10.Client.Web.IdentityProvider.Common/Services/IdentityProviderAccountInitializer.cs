@@ -13,6 +13,7 @@ using O10.Client.DataLayer.AttributesScheme;
 using O10.Core.ExtensionMethods;
 using O10.Core.Logging;
 using System;
+using System.Threading.Tasks;
 
 namespace O10.Server.IdentityProvider.Common.Services
 {
@@ -40,7 +41,7 @@ namespace O10.Server.IdentityProvider.Common.Services
 
 		public override ExtensionOrderPriorities Priority => ExtensionOrderPriorities.Lowest;
 
-		protected override void InitializeInner(CancellationToken cancellationToken)
+		protected override async Task InitializeInner(CancellationToken cancellationToken)
 		{
 			_logger.Info($"Started {nameof(InitializeInner)}");
 

@@ -1,4 +1,5 @@
 ﻿using System.Threading;
+using System.Threading.Tasks;
 using O10.Core;
 using O10.Core.Architecture;
 using O10.Core.Logging;
@@ -19,7 +20,7 @@ namespace O10.Node.DataLayer.DataServices
 
 		public override ExtensionOrderPriorities Priority => ExtensionOrderPriorities.Normal;
 
-		protected override void InitializeInner(CancellationToken cancellationToken)
+		protected override async Task InitializeInner(CancellationToken cancellationToken)
 		{
 			foreach (var chainDataService in _chainDataServicesManager.GetAll())
 			{

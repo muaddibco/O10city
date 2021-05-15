@@ -51,7 +51,7 @@ namespace O10.Core.Logging
             _log = LogManager.GetLogger(_logRepositoryName, scopeName);
         }
 
-        public void Debug(string msg, params object[] messageArgs)
+        public virtual void Debug(string msg, params object[] messageArgs)
         {
 			if(_log.IsDebugEnabled)
 			{
@@ -61,7 +61,7 @@ namespace O10.Core.Logging
 			}
 		}
 
-		public void Debug(Func<string> getMsg)
+		public virtual void Debug(Func<string> getMsg)
 		{
 			if (_log.IsDebugEnabled && getMsg != null)
 			{
@@ -69,7 +69,7 @@ namespace O10.Core.Logging
 			}
 		}
 
-		public void Info(string msg, params object[] messageArgs)
+		public virtual void Info(string msg, params object[] messageArgs)
         {
 			if(_log.IsInfoEnabled)
 			{
@@ -78,7 +78,7 @@ namespace O10.Core.Logging
 			}
 		}
 
-        public void Warning(string msg, params object[] messageArgs)
+        public virtual void Warning(string msg, params object[] messageArgs)
         {
 			if(_log.IsWarnEnabled)
 			{
@@ -87,7 +87,7 @@ namespace O10.Core.Logging
 			}
 		}
 
-        public void Error(string msg, params object[] messageArgs)
+        public virtual void Error(string msg, params object[] messageArgs)
         {
 			if(_log.IsErrorEnabled)
 			{
@@ -97,7 +97,7 @@ namespace O10.Core.Logging
 			}
 		}
 
-        public void Error(string msg, Exception ex, params object[] messageArgs)
+        public virtual void Error(string msg, Exception ex, params object[] messageArgs)
         {
             if (ex == null)
             {
@@ -113,7 +113,7 @@ namespace O10.Core.Logging
 			}
 		}
 
-        public void LogIfDebug(Func<string> messageFactory, params object[] argsToJson)
+        public virtual void LogIfDebug(Func<string> messageFactory, params object[] argsToJson)
         {
             if (_log.IsDebugEnabled)
             {
@@ -137,7 +137,7 @@ namespace O10.Core.Logging
             }
         }
 
-        public void LogIfInfo(Func<string> messageFactory)
+        public virtual void LogIfInfo(Func<string> messageFactory)
         {
             if (_log.IsInfoEnabled)
             {

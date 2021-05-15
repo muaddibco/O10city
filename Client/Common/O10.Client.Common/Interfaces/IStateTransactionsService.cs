@@ -9,7 +9,7 @@ namespace O10.Client.Common.Interfaces
     [ServiceContract]
     public interface IStateTransactionsService : ITransactionsService
 	{
-        void Initialize(long accountId);
+        Task Initialize(long accountId);
 
         Task<EmployeeRecord> IssueEmployeeRecord(byte[] registrationCommitment, byte[] groupCommitment);
 

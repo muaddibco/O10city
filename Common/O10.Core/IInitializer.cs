@@ -1,4 +1,5 @@
 ﻿using System.Threading;
+using System.Threading.Tasks;
 using O10.Core.Architecture;
 
 
@@ -11,6 +12,6 @@ namespace O10.Core
 
         bool Initialized { get; }
 
-        void Initialize(CancellationToken cancellationToken);
+        Task Initialize(CancellationToken cancellationToken);
     }
 }

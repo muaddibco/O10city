@@ -10,7 +10,6 @@ using O10.Crypto.ConfidentialAssets;
 using Chaos.NaCl;
 using O10.Client.Common.Interfaces;
 using O10.Core.Architecture;
-
 using O10.Client.Common.Exceptions;
 using O10.Core;
 using O10.Core.HashCalculations;
@@ -48,9 +47,11 @@ namespace O10.Client.Common.Services
                 throw new AccountNotFoundException(accountId);
             }
 
-            return account.AccountType == AccountType.User
+            var res = account.AccountType == AccountType.User
                 ? AuthenticateStealthAccount(new AuthenticationInput { Password = password, Account = account })
                 : AuthenticateStateAccount(new AuthenticationInput { Password = password, Account = account });
+
+            return res;
         }
 
         private AccountDescriptor AuthenticateStateAccount(AuthenticationInput authenticationInput)

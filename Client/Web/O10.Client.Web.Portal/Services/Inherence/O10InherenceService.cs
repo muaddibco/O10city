@@ -26,6 +26,8 @@ using O10.Client.Common.Exceptions;
 using O10.Core.Serialization;
 using O10.Core.Notifications;
 using O10.Transactions.Core.Ledgers;
+using O10.Crypto.Models;
+using O10.Transactions.Core.Ledgers.Stealth.Transactions;
 
 namespace O10.Client.Web.Portal.Services.Inherence
 {
@@ -66,18 +68,19 @@ namespace O10.Client.Web.Portal.Services.Inherence
             _executionContextManager = executionContextManager;
             _universalProofsPool = universalProofsPool;
             _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
-            PipeIn = new ActionBlock<PacketBase>(
+            PipeIn = new ActionBlock<TransactionBase>(
                 async p =>
                 {
                     try
                     {
-                        if (p is IdentityProofs identityProofs)
+/*                        if (p is IdentityProofs identityProofs)
                         {
                             ProcessIdentityProofs(identityProofs);
                         }
-                        else if (p is UniversalTransport universalTransport)
+                        else */
+                        if (p is UniversalStealthTransaction universal)
                         {
-                            await ProcessUniversalTransport(universalTransport).ConfigureAwait(false);
+                            await ProcessUniversalTransport(universal).ConfigureAwait(false);
                         }
                     }
                     catch
@@ -98,7 +101,7 @@ namespace O10.Client.Web.Portal.Services.Inherence
         public string Description => "Face verification with Microsoft Cognitive Services";
         public string Target { get; private set; }
 
-        public ITargetBlock<PacketBase> PipeIn { get; set; }
+        public ITargetBlock<TransactionBase> PipeIn { get; set; }
 
         public ITargetBlock<NotificationBase> PipeInNotifications { get; }
 
@@ -161,11 +164,11 @@ namespace O10.Client.Web.Portal.Services.Inherence
             return AzureHelper.GetSecretValue(secretName, _azureConfiguration.AzureADCertThumbprint, _azureConfiguration.AzureADApplicationId, _azureConfiguration.KeyVaultName);
         }
 
-        private async Task ProcessUniversalTransport(UniversalTransport universalTransport)
+        private async Task ProcessUniversalTransport(UniversalStealthTransaction transaction)
         {
-            _logger.LogIfDebug(() => $"[{AccountId}]: {nameof(ProcessUniversalTransport)} with {nameof(universalTransport.KeyImage)}={universalTransport.KeyImage}");
+            _logger.LogIfDebug(() => $"[{AccountId}]: {nameof(ProcessUniversalTransport)} with {nameof(transaction.KeyImage)}={transaction.KeyImage}");
 
-            TaskCompletionSource<UniversalProofs> universalProofsTask = _universalProofsPool.Extract(universalTransport.KeyImage);
+            TaskCompletionSource<UniversalProofs> universalProofsTask = _universalProofsPool.Extract(transaction.KeyImage);
 
             try
             {
@@ -200,7 +203,7 @@ namespace O10.Client.Web.Portal.Services.Inherence
             }
             catch (TimeoutException)
             {
-                _logger.Error($"[{AccountId}]: Timeout during obtaining {nameof(UniversalProofs)} for key image {universalTransport.KeyImage}");
+                _logger.Error($"[{AccountId}]: Timeout during obtaining {nameof(UniversalProofs)} for key image {transaction.KeyImage}");
             }
             catch (Exception ex)
             {
@@ -216,7 +219,7 @@ namespace O10.Client.Web.Portal.Services.Inherence
                 throw;
             }
         }
-
+/*
         private async void ProcessIdentityProofs(IdentityProofs packet)
         {
             byte[] keyImage = packet.KeyImage.Value.ToArray();
@@ -247,7 +250,7 @@ namespace O10.Client.Web.Portal.Services.Inherence
 
             SetCompletion(new InherenceData { AssetRootCommitment = packet.AssetCommitment, RootRegistrationProof = packet.AuthenticationProof }, sessionKey);
         }
-
+*/
         private void SetCompletion(InherenceData packet, string sessionKey)
         {
             _logger.LogIfDebug(() => $"[{AccountId}]: {nameof(SetCompletion)}, {nameof(sessionKey)}={sessionKey}, {nameof(packet)}={{0}}", packet);

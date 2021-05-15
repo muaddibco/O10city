@@ -1,8 +1,6 @@
 ﻿using Chaos.NaCl;
 using O10.Client.Common.Interfaces;
-using O10.Core;
 using O10.Core.Architecture;
-
 using O10.Core.Cryptography;
 using O10.Core.ExtensionMethods;
 using O10.Core.HashCalculations;
@@ -28,9 +26,9 @@ namespace O10.Client.Common.Crypto
 			return ConfidentialAssetsHelper.DecodeCommitment(encodedCommitment, transactionKey, _secretKey);
 		}
 
-		public void DecodeEcdhTuple(EcdhTupleCA ecdhTupleCA, byte[] transactionKey, out byte[] blindingFactor, out byte[] assetId)
+		public void DecodeEcdhTuple(EcdhTupleCA ecdhTupleCA, IKey transactionKey, out byte[] blindingFactor, out byte[] assetId)
         {
-            ConfidentialAssetsHelper.DecodeEcdhTuple(ecdhTupleCA, transactionKey ?? PublicKeys[0].ArraySegment.Array, _secretKey, out blindingFactor, out assetId);
+            ConfidentialAssetsHelper.DecodeEcdhTuple(ecdhTupleCA, (transactionKey ?? PublicKeys[0]).ToByteArray(), _secretKey, out blindingFactor, out assetId);
         }
 
 		public void DecodeEcdhTuple(EcdhTupleIP ecdhTupleCA, byte[] transactionKey, out byte[] issuer, out byte[] payload)

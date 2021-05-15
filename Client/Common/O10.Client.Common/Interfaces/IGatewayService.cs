@@ -45,7 +45,7 @@ namespace O10.Client.Common.Interfaces
 
         Task<byte[]> GetEmployeeRecordGroup(byte[] issuer, byte[] registrationCommitment);
 
-        Task<IEnumerable<WitnessPackage>> GetWitnessesRange(ulong rangeStart, ulong rangeEnd);
+        Task<IEnumerable<WitnessPackage>> GetWitnessesRange(long rangeStart, long rangeEnd);
 
         string GetNotificationsHubUri();
 

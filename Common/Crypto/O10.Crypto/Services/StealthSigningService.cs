@@ -58,7 +58,7 @@ namespace O10.Crypto.Services
             return Sign(message, args);
         }
 
-        public byte[] Sign(Memory<byte> msg, object args = null)
+        public byte[] Sign(Memory<byte> msg, object? args = null)
         {
             if (!(args is StealthSignatureInput signatureInput))
             {
@@ -88,7 +88,7 @@ namespace O10.Crypto.Services
             return signature;
         }
 
-        public SignatureBase Sign(TransactionBase body, object args = null)
+        public SignatureBase Sign(TransactionBase body, object? args = null)
         {
             if (!(body is StealthTransactionBase stealthBody))
             {
@@ -132,12 +132,12 @@ namespace O10.Crypto.Services
             }
 
             byte[] msg = stealthBody.ToByteArray();
-            byte[] keyImage = stealthBody.KeyImage.Value.ToArray();
+            byte[] keyImage = stealthBody.KeyImage.ToByteArray();
 
             return ConfidentialAssetsHelper.VerifyRingSignature(msg, keyImage, stealthBody.Sources.Select(p => p.Value.ToArray()).ToArray(), stealthSignature.Signature.ToArray());
         }
 
-        public bool CheckTarget(params byte[][] targetValues)
+        public bool CheckTarget(params IKey[] targetValues)
         {
             if (targetValues == null)
             {
@@ -151,14 +151,14 @@ namespace O10.Crypto.Services
 
             try
             {
-                _logger.LogIfDebug(() => $"{nameof(ConfidentialAssetsHelper)}.{nameof(ConfidentialAssetsHelper.IsDestinationKeyMine)}({targetValues[0].ToHexString()}, {targetValues[1].ToHexString()}, {_secretViewKey.ToHexString()}, {PublicKeys[0].Value.ToArray().ToHexString()})");
-                bool res = ConfidentialAssetsHelper.IsDestinationKeyMine(targetValues[0], targetValues[1], _secretViewKey, PublicKeys[0].Value.ToArray());
+                _logger.LogIfDebug(() => $"{nameof(ConfidentialAssetsHelper)}.{nameof(ConfidentialAssetsHelper.IsDestinationKeyMine)}({targetValues[0]}, {targetValues[1]}, {_secretViewKey.ToHexString()}, {PublicKeys[0].Value.ToArray().ToHexString()})");
+                bool res = ConfidentialAssetsHelper.IsDestinationKeyMine(targetValues[0].ToByteArray(), targetValues[1].ToByteArray(), _secretViewKey, PublicKeys[0].Value.ToArray());
                 return res;
             }
             catch (Exception ex)
             {
                 _logger.Error($"Failure at {nameof(ConfidentialAssetsHelper)}.{nameof(ConfidentialAssetsHelper.IsDestinationKeyMine)}", ex);
-                _logger.Error($"args: {nameof(ConfidentialAssetsHelper)}.{nameof(ConfidentialAssetsHelper.IsDestinationKeyMine)}({targetValues[0].ToHexString()}, {targetValues[1].ToHexString()}, {_secretViewKey.ToHexString()}, {PublicKeys[0].Value.ToArray().ToHexString()})");
+                _logger.Error($"args: {nameof(ConfidentialAssetsHelper)}.{nameof(ConfidentialAssetsHelper.IsDestinationKeyMine)}({targetValues[0]}, {targetValues[1]}, {_secretViewKey.ToHexString()}, {PublicKeys[0].Value.ToArray().ToHexString()})");
                 throw;
             }
         }

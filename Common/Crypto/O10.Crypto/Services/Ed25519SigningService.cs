@@ -108,7 +108,7 @@ namespace O10.Crypto.Services
             return Ed25519.Verify(signature.Signature.ToArray(), message, singleSourceTransaction.Source.ToByteArray());
         }
 
-        public bool CheckTarget(params byte[][] targetValues)
+        public bool CheckTarget(params IKey[] targetValues)
         {
             if (targetValues == null)
             {
@@ -120,7 +120,7 @@ namespace O10.Crypto.Services
                 throw new ArgumentOutOfRangeException(nameof(targetValues));
             }
 
-            return targetValues[0].Equals32(PublicKeys[0].Value.ToArray());
+            return targetValues[0].Equals(PublicKeys[0].Value);
         }
     }
 

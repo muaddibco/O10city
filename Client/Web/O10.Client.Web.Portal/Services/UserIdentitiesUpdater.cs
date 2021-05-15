@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using System.Collections.Generic;
 using System.Linq;
-using O10.Transactions.Core.Ledgers.O10State;
 using O10.Client.Common.Interfaces;
 using O10.Core.ExtensionMethods;
 using O10.Client.Web.Common.Hubs;
@@ -19,7 +18,8 @@ using Newtonsoft.Json;
 using O10.Core.Serialization;
 using O10.Client.Common.Communication.Notifications;
 using O10.Core.Notifications;
-using O10.Transactions.Core.Ledgers;
+using O10.Crypto.Models;
+using O10.Transactions.Core.Ledgers.O10State.Transactions;
 
 namespace O10.Client.Web.Portal.Services
 {
@@ -49,18 +49,18 @@ namespace O10.Client.Web.Portal.Services
             _schemeResolverService = schemeResolverService;
 
             _logger = loggerService.GetLogger(nameof(UserIdentitiesUpdater));
-            PipeIn = new ActionBlock<PacketBase>(async p =>
+            PipeIn = new ActionBlock<TransactionBase>(async p =>
             {
                 try
                 {
-                    if (p is TransferAssetToStealth packet)
+                    if (p is TransferAssetToStealthTransaction transaction)
                     {
-                        _logger.LogIfDebug(() => $"[{_accountId}]: Processing {nameof(TransferAssetToStealth)}");
-                        UserRootAttribute userRootAttribute = _dataAccessService.GetRootAttributeByOriginalCommitment(_accountId, packet.TransferredAsset.AssetCommitment);
+                        _logger.LogIfDebug(() => $"[{_accountId}]: Processing {nameof(TransferAssetToStealthTransaction)}");
+                        UserRootAttribute userRootAttribute = _dataAccessService.GetRootAttributeByOriginalCommitment(_accountId, transaction.TransferredAsset.AssetCommitment);
                         if (userRootAttribute != null)
                         {
-                            _clientCryptoService.DecodeEcdhTuple(packet.TransferredAsset.EcdhTuple, packet.TransactionPublicKey, out byte[] blindingFactor, out byte[] assetId);
-                            await _assetsService.GetAttributeSchemeName(assetId, packet.Source.ToString()).ContinueWith(t =>
+                            _clientCryptoService.DecodeEcdhTuple(transaction.TransferredAsset.EcdhTuple, transaction.TransactionPublicKey.ToByteArray(), out byte[] blindingFactor, out byte[] assetId);
+                            await _assetsService.GetAttributeSchemeName(assetId, transaction.Source.ToString()).ContinueWith(t =>
                             {
                                 if (t.IsCompleted && !t.IsFaulted)
                                 {
@@ -69,7 +69,7 @@ namespace O10.Client.Web.Portal.Services
                                     new UserAttributeDto
                                     {
                                         SchemeName = t.Result,
-                                        Source = packet.Source.ToString(),
+                                        Source = transaction.Source.ToString(),
                                         Content = userRootAttribute.Content,
                                         Validated = true,
                                         IsOverriden = false
@@ -77,13 +77,13 @@ namespace O10.Client.Web.Portal.Services
                                 }
                             }, TaskScheduler.Current).ConfigureAwait(false);
 
-                            await ObtainRelations(packet, assetId).ConfigureAwait(false);
+                            await RecoverRelations(transaction, assetId).ConfigureAwait(false);
 
-                            await ObtainRegistrations(packet, assetId).ConfigureAwait(false);
+                            await RecoverRegistrations(transaction, assetId).ConfigureAwait(false);
                         }
                         else
                         {
-                            _logger.Error($"[{_accountId}]: No Root Attribute found by commitment {packet.TransferredAsset.AssetCommitment.ToHexString()}");
+                            _logger.Error($"[{_accountId}]: No Root Attribute found by commitment {transaction.TransferredAsset.AssetCommitment}");
                         }
                     }
                 }
@@ -113,10 +113,10 @@ namespace O10.Client.Web.Portal.Services
             });
         }
 
-        private async Task ObtainRegistrations(TransferAssetToStealth packet, byte[] assetId)
+        private async Task RecoverRegistrations(TransferAssetToStealthTransaction transaction, byte[] assetId)
         {
-            _logger.Debug($"[{_accountId}]: {nameof(ObtainRegistrations)}");
-            IEnumerable<RegistrationKeyDescriptionStore> userRegistrations = await _schemeResolverService.GetRegistrationCommitments(packet.Source.ToString(), assetId.ToHexString()).ConfigureAwait(false);
+            _logger.Debug($"[{_accountId}]: {nameof(RecoverRegistrations)}");
+            IEnumerable<RegistrationKeyDescriptionStore> userRegistrations = await _schemeResolverService.GetRegistrationCommitments(transaction.Source.ToString(), assetId.ToHexString()).ConfigureAwait(false);
             foreach (var userRegistration in userRegistrations)
             {
                 string groupOwnerName = await _schemeResolverService.ResolveIssuer(userRegistration.Key).ConfigureAwait(false);
@@ -137,10 +137,10 @@ namespace O10.Client.Web.Portal.Services
             }
         }
 
-        private async Task ObtainRelations(TransferAssetToStealth packet, byte[] assetId)
+        private async Task RecoverRelations(TransferAssetToStealthTransaction transaction, byte[] assetId)
         {
-            _logger.Debug($"[{_accountId}]: {nameof(ObtainRelations)}");
-            IEnumerable<RegistrationKeyDescriptionStore> groupRelations = await _schemeResolverService.GetGroupRelations(packet.Source.ToString(), assetId.ToHexString()).ConfigureAwait(false);
+            _logger.Debug($"[{_accountId}]: {nameof(RecoverRelations)}");
+            IEnumerable<RegistrationKeyDescriptionStore> groupRelations = await _schemeResolverService.GetGroupRelations(transaction.Source.ToString(), assetId.ToHexString()).ConfigureAwait(false);
             foreach (var groupRelation in groupRelations)
             {
                 string groupOwnerName = await _schemeResolverService.ResolveIssuer(groupRelation.Key).ConfigureAwait(false);
@@ -163,7 +163,7 @@ namespace O10.Client.Web.Portal.Services
             }
         }
 
-        public ITargetBlock<PacketBase> PipeIn { get; set; }
+        public ITargetBlock<TransactionBase> PipeIn { get; set; }
         public ITargetBlock<NotificationBase> PipeInNotifications { get; }
 
         private void ProcessEligibilityCommitmentsDisabled(NotificationBase value)

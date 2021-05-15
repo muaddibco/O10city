@@ -1,8 +1,8 @@
 ﻿using System;
 using O10.Client.Common.Interfaces;
 using O10.Core.Architecture;
-
 using O10.Core.Cryptography;
+using O10.Core.ExtensionMethods;
 using O10.Core.Identity;
 using O10.Core.Logging;
 using O10.Crypto.ConfidentialAssets;
@@ -34,10 +34,10 @@ namespace O10.Client.Common.Crypto
 			base.Initialize(secretKeys[0], secretKeys[1]);
 		}
 
-		public void DecodeEcdhTuple(EcdhTupleCA ecdhTupleCA, byte[] transactionPublicKey, out byte[] blindingFactor, out byte[] assetId)
+		public void DecodeEcdhTuple(EcdhTupleCA ecdhTupleCA, IKey transactionPublicKey, out byte[] blindingFactor, out byte[] assetId)
 		{
 			//byte[] otsk = ConfidentialAssetsHelper.GetOTSK(transactionPublicKey, _secretViewKey, _secretSpendKey);
-			ConfidentialAssetsHelper.DecodeEcdhTuple(ecdhTupleCA, transactionPublicKey, _secretViewKey, out blindingFactor, out assetId);
+			ConfidentialAssetsHelper.DecodeEcdhTuple(ecdhTupleCA, transactionPublicKey.ToByteArray(), _secretViewKey, out blindingFactor, out assetId);
 		}
 
 		public void DecodeEcdhTuple(EcdhTupleIP ecdhTuple, byte[] transactionKey, out byte[] issuer, out byte[] payload)
@@ -57,9 +57,9 @@ namespace O10.Client.Common.Crypto
 			payload = ecdhTuple.Payload;
 		}
 
-        public byte[] GetKeyImage(byte[] transactionPublicKey)
+        public byte[] GetKeyImage(IKey transactionPublicKey)
 		{
-			byte[] otsk = ConfidentialAssetsHelper.GetOTSK(transactionPublicKey, _secretViewKey, _secretSpendKey);
+			byte[] otsk = ConfidentialAssetsHelper.GetOTSK(transactionPublicKey.ToByteArray(), _secretViewKey, _secretSpendKey);
 			byte[] keyImage = ConfidentialAssetsHelper.GenerateKeyImage(otsk);
 
 			return keyImage;

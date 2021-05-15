@@ -1,4 +1,5 @@
 ﻿using System.Threading;
+using System.Threading.Tasks;
 using O10.Core;
 using O10.Core.Architecture;
 
@@ -19,7 +20,7 @@ namespace O10.Client.Web.Portal.Services
 
         public override ExtensionOrderPriorities Priority => ExtensionOrderPriorities.Lowest1;
 
-        protected override void InitializeInner(CancellationToken cancellationToken)
+        protected override async Task InitializeInner(CancellationToken cancellationToken)
         {
             _consentManagementService.Initialize(_executionContextManager, cancellationToken);
         }

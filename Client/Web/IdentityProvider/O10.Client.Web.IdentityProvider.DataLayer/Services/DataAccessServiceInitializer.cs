@@ -1,4 +1,5 @@
 ﻿using System.Threading;
+using System.Threading.Tasks;
 using O10.Core;
 using O10.Core.Architecture;
 
@@ -17,7 +18,7 @@ namespace O10.IdentityProvider.DataLayer.Services
 
 		public override ExtensionOrderPriorities Priority => ExtensionOrderPriorities.AboveNormal;
 
-		protected override void InitializeInner(CancellationToken cancellationToken)
+		protected override async Task InitializeInner(CancellationToken cancellationToken)
 		{
 			_dataAccessService.Initialize();
 		}

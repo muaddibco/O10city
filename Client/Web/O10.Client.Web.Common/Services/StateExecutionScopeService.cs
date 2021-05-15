@@ -6,6 +6,7 @@ using O10.Core.Architecture;
 using O10.Core.Communication;
 using O10.Core.Configuration;
 using O10.Core.Models;
+using O10.Crypto.Models;
 using O10.Transactions.Core.Ledgers;
 using System;
 using System.Collections.Generic;
@@ -89,8 +90,8 @@ namespace O10.Client.Web.Common.Services
             walletSynchronizer.Initialize(scopeInitializationParams.AccountId);
 
             packetsProvider.PipeOut.LinkTo(statePacketsExtractor.GetTargetPipe<WitnessPackageWrapper>());
-            statePacketsExtractor.GetSourcePipe<TaskCompletionWrapper<PacketBase>>()
-                                 .LinkTo(walletSynchronizer.GetTargetPipe<TaskCompletionWrapper<PacketBase>>());
+            statePacketsExtractor.GetSourcePipe<TaskCompletionWrapper<TransactionBase>>()
+                                 .LinkTo(walletSynchronizer.GetTargetPipe<TaskCompletionWrapper<TransactionBase>>());
             statePacketsExtractor.GetSourcePipe<WitnessPackage>()
                                  .LinkTo(walletSynchronizer.GetTargetPipe<WitnessPackage>());
 
@@ -99,8 +100,8 @@ namespace O10.Client.Web.Common.Services
                 externalUpdater.Initialize(scopeInitializationParams.AccountId);
             }
 
-            walletSynchronizer.GetSourcePipe<PacketBase>().LinkTo(
-                new ActionBlock<PacketBase>(async p =>
+            walletSynchronizer.GetSourcePipe<TransactionBase>().LinkTo(
+                new ActionBlock<TransactionBase>(async p =>
                 {
                     var tasks = new List<Task>
                     {

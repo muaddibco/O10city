@@ -1,4 +1,5 @@
 ﻿using System.Threading;
+using System.Threading.Tasks;
 using O10.Core;
 using O10.Core.Architecture;
 using O10.Core.Communication;
@@ -27,7 +28,7 @@ namespace O10.Node.Core.Common
 
         public override ExtensionOrderPriorities Priority => ExtensionOrderPriorities.AboveNormal;
 
-        protected override void InitializeInner(CancellationToken cancellationToken)
+        protected override async Task InitializeInner(CancellationToken cancellationToken)
         {
             foreach (var node in _nodesDataService.Get(null))
             {

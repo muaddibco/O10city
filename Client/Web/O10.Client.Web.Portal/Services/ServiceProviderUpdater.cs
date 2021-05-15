@@ -34,6 +34,7 @@ using O10.Client.Common.Entities;
 using O10.Core.Serialization;
 using O10.Core.Notifications;
 using O10.Transactions.Core.Ledgers;
+using O10.Crypto.Models;
 
 namespace O10.Client.Web.Portal.Services
 {
@@ -88,7 +89,7 @@ namespace O10.Client.Web.Portal.Services
             _electionCommitteeService = electionCommitteeService;
             _logger = loggerService.GetLogger(nameof(ServiceProviderUpdater));
 
-            PipeIn = new ActionBlock<PacketBase>(async p =>
+            PipeIn = new ActionBlock<TransactionBase>(async p =>
             {
                 if (p == null)
                 {
@@ -289,7 +290,7 @@ namespace O10.Client.Web.Portal.Services
             }
         }
 
-        public ITargetBlock<PacketBase> PipeIn { get; set; }
+        public ITargetBlock<TransactionBase> PipeIn { get; set; }
         public ITargetBlock<NotificationBase> PipeInNotifications { get; }
 
         private void ProcessDocumentSignRecord(DocumentSignRecord packet)

@@ -9,6 +9,7 @@ using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using O10.Core.Logging;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace O10.Core.Architecture
 {
@@ -35,7 +36,7 @@ namespace O10.Core.Architecture
             }
         }
 
-		public virtual void RunInitializers(IServiceProvider serviceProvider, CancellationToken cancellationToken, ILogger log)
+		public virtual async Task RunInitializers(IServiceProvider serviceProvider, CancellationToken cancellationToken, ILogger log)
         {
             log?.Info("Running initializers started");
 

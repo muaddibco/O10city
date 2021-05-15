@@ -310,7 +310,7 @@ namespace O10.Client.Common.Communication
 			return res;
 		}
 
-		public async Task<IEnumerable<WitnessPackage>> GetWitnessesRange(ulong rangeStart, ulong rangeEnd)
+		public async Task<IEnumerable<WitnessPackage>> GetWitnessesRange(long rangeStart, long rangeEnd)
 		{
 			Url url = _gatewayUri.AppendPathSegments("api", "synchronization", "GetWitnessesRange", rangeStart, rangeEnd);
 

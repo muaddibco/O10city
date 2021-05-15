@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using O10.Core.Architecture;
 
 using O10.Core.Configuration;
@@ -21,7 +22,7 @@ namespace O10.Core.Tracking
 
         public override ExtensionOrderPriorities Priority => ExtensionOrderPriorities.Highest;
 
-        protected override void InitializeInner(CancellationToken cancellationToken)
+        protected override async Task InitializeInner(CancellationToken cancellationToken)
         {
             foreach (ITrackingReporter reporter in _trackingReporters)
             {

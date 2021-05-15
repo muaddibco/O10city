@@ -10,6 +10,7 @@ using O10.Core.Identity;
 using O10.Core.States;
 using O10.Gateway.Common.Configuration;
 using O10.Crypto.Services;
+using System.Threading.Tasks;
 
 namespace O10.Gateway.Common.Services
 {
@@ -60,7 +61,7 @@ namespace O10.Gateway.Common.Services
 
 		public override ExtensionOrderPriorities Priority => ExtensionOrderPriorities.Highest8;
 
-		protected override void InitializeInner(CancellationToken cancellationToken)
+		protected override async Task InitializeInner(CancellationToken cancellationToken)
 		{
             if (string.IsNullOrEmpty(_secretConfiguration.SecretName))
             {

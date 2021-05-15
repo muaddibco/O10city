@@ -19,17 +19,10 @@ namespace O10.Client.Web.Portal.Telegram
 
         public override ExtensionOrderPriorities Priority => ExtensionOrderPriorities.Normal;
 
-        protected override void InitializeInner(CancellationToken cancellationToken)
+        protected override async Task InitializeInner(CancellationToken cancellationToken)
         {
-            _o10BotService
-                .Initialize(cancellationToken)
-                .ContinueWith(t =>
-                {
-                    if (t.IsCompletedSuccessfully)
-                    {
-                        _o10BotService.Start();
-                    }
-                }, TaskScheduler.Default);
+            await _o10BotService.Initialize(cancellationToken).ConfigureAwait(false);
+            _o10BotService.Start();
         }
     }
 }

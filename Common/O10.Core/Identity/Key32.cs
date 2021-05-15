@@ -6,48 +6,21 @@ namespace O10.Core.Identity
     /// <summary>
     /// Class represents Key with length of 32 bytes
     /// </summary>
-    public class Key32 : IKey
+    public class Key32 : KeyBase
     {
-        private Memory<byte> _value;
-
         public Key32()
+            : base()
         {
-
         }
 
         public Key32(Memory<byte> value)
+            : base(value)
         {
-            if (value.Length != Length)
-            {
-                throw new ArgumentOutOfRangeException(nameof(value), $"Length must be of {Length} bytes");
-            }
-
-            Value = value;
         }
 
-        /// <summary>
-        /// Byte array of length of 32 bytes
-        /// </summary>
-        public Memory<byte> Value
-        {
-            get => _value;
-            set
-            {
-                if (value.Length != Length)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(value), $"Length must be of {Length} bytes");
-                }
+        public override int Length => 32;
 
-                _value = value;
-                ArraySegment = _value.ToArraySegment();
-            }
-        }
-
-        public int Length => 32;
-
-        public ArraySegment<byte> ArraySegment { get; private set; }
-
-        public bool Equals(IKey x, IKey y)
+        public override bool Equals(IKey x, IKey y)
         {
             if (x == null && y == null)
             {
@@ -63,27 +36,27 @@ namespace O10.Core.Identity
             return pk1.Value.Equals32(pk2.Value);
         }
 
-        public int GetHashCode(IKey obj)
+        public override int GetHashCode(IKey obj)
         {
+            if (obj is null)
+            {
+                throw new ArgumentNullException(nameof(obj));
+            }
+
             return ((Key32)obj).Value.GetHashCode32();
         }
 
-        public override int GetHashCode() => Value.GetHashCode32();
-
-        public override string ToString() => Value.ToHexString();
-
         public override bool Equals(object obj)
         {
-
-            if (!(obj is Key32 pk))
+            if(obj is byte[] arr && arr.Length == 32)
             {
-                return false;
+                return Value.Equals32(arr);
             }
 
-            return Value.Equals32(pk.Value);
+            return obj is Key32 pk && Value.Equals32(pk.Value);
         }
 
-        public bool Equals(IKey other)
+        public override bool Equals(IKey other)
         {
             if (other == null)
             {

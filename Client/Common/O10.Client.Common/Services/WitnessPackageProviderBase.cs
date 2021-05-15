@@ -22,7 +22,7 @@ namespace O10.Client.Common.Services
 
 		protected CancellationToken _cancellationToken;
 		protected long _accountId;
-		protected ulong _lastObtainedCombinedBlockHeight;
+		protected long _lastObtainedCombinedBlockHeight;
 
 		public WitnessPackageProviderBase(IGatewayService gatewayService, IDataAccessService dataAccessService, ILoggerService loggerService)
 		{
@@ -87,7 +87,7 @@ namespace O10.Client.Common.Services
 			return true;
 		}
 
-		protected async Task ObtainWitnessesRange(ulong start, ulong end)
+		protected async Task ObtainWitnessesRange(long start, long end)
 		{
 			_logger.Debug($"[{_accountId}]: {nameof(ObtainWitnessesRange)}({start}, {end})");
 
@@ -103,6 +103,7 @@ namespace O10.Client.Common.Services
 			}
 			catch (Exception ex)
             {
+				// TODO: blind exception catch seems improper here!
 				_logger.Error("Failure during obtaning witness range", ex);
             }
 

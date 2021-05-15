@@ -29,6 +29,7 @@ using Microsoft.Extensions.DependencyInjection;
 using O10.Core.Serialization;
 using O10.Core.Notifications;
 using O10.Transactions.Core.Ledgers;
+using O10.Crypto.Models;
 
 namespace O10.Client.Web.Portal.Services
 {
@@ -66,7 +67,7 @@ namespace O10.Client.Web.Portal.Services
             _azureConfiguration = configurationService.Get<IAzureConfiguration>();
             _hashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
 
-            PipeIn = new ActionBlock<PacketBase>(async p =>
+            PipeIn = new ActionBlock<TransactionBase>(async p =>
             {
                 try
                 {
@@ -86,9 +87,7 @@ namespace O10.Client.Web.Portal.Services
                         _logger.LogIfDebug(() => $"{nameof(relationProofsSession)}={JsonConvert.SerializeObject(relationProofsSession, new ByteArrayJsonConverter())}");
 
                         RelationProofsValidationResults validationResults
-                            = await _relationsProofsValidationService
-                            .VerifyRelationProofs(relationsProofs, _clientCryptoService, relationProofsSession)
-                            .ConfigureAwait(false);
+                            = await _relationsProofsValidationService.VerifyRelationProofs(relationsProofs, _clientCryptoService, relationProofsSession).ConfigureAwait(false);
 
                         await _hubContext.Clients.Group(sessionKey.ToHexString()).SendAsync("ValidationResults", validationResults).ConfigureAwait(false);
                     }
@@ -114,7 +113,7 @@ namespace O10.Client.Web.Portal.Services
         public string PublicSpendKey { get; private set; }
         public string PublicViewKey { get; private set; }
 
-        public ITargetBlock<PacketBase> PipeIn { get; set; }
+        public ITargetBlock<TransactionBase> PipeIn { get; set; }
 
         public ITargetBlock<NotificationBase> PipeInNotifications { get; }
 

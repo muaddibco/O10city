@@ -5,6 +5,7 @@ using O10.Core.Architecture;
 using O10.Core.Configuration;
 using O10.Client.Mobile.Base.Interfaces;
 using Xamarin.Forms;
+using System.Threading.Tasks;
 
 namespace O10.Client.Mobile.Base.Services
 {
@@ -20,7 +21,7 @@ namespace O10.Client.Mobile.Base.Services
 
         public override ExtensionOrderPriorities Priority => ExtensionOrderPriorities.Highest9;
 
-        protected override void InitializeInner(CancellationToken cancellationToken)
+        protected override async Task InitializeInner(CancellationToken cancellationToken)
         {
             string databaseName = _configuration.ConnectionString.Replace("Filename=", "");
             IConnectionStringProvider connectionStringProvider = DependencyService.Get<IConnectionStringProvider>();

@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using O10.Transactions.Core.Ledgers.O10State;
 using O10.Transactions.Core.Ledgers.O10State.Internal;
-using O10.Transactions.Core.Parsers;
-using O10.Transactions.Core.Serializers;
 using O10.Client.Common.Entities;
 using O10.Client.Common.Interfaces;
 using O10.Core.Architecture;
@@ -24,21 +22,17 @@ namespace O10.Client.Common.Communication
     {
         private readonly IDictionary<byte[], ulong> _heightsDictionary;
         private readonly IStateClientCryptoService _clientCryptoService;
-        private ulong _lastHeight;
+        private long _lastHeight;
 
         public StateTransactionsService(
             IHashCalculationsRepository hashCalculationsRepository,
             IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
-            ISerializersFactory serializersFactory,
-            IBlockParsersRepositoriesRepository blockParsersRepositoriesRepository,
             IStateClientCryptoService clientCryptoService,
             IGatewayService gatewayService,
             ILoggerService loggerService)
 			: base(
                   hashCalculationsRepository,
                   identityKeyProvidersRegistry,
-                  serializersFactory,
-                  blockParsersRepositoriesRepository,
                   clientCryptoService,
                   gatewayService,
                   loggerService)
@@ -49,10 +43,10 @@ namespace O10.Client.Common.Communication
 
         #region ============ PUBLIC FUNCTIONS =============  
 
-        public void Initialize(long accountId)
+        public async Task Initialize(long accountId)
         {
             _accountId = accountId;
-            ulong lastBlockHeight = AsyncUtil.RunSync(async () => await _gatewayService.GetLastPacketInfo(_clientCryptoService.GetPublicKey()).ConfigureAwait(false)).Height;
+            long lastBlockHeight = (await _gatewayService.GetLastPacketInfo(_clientCryptoService.GetPublicKey()).ConfigureAwait(false)).Height;
             _lastHeight = lastBlockHeight + 1;
         }
 

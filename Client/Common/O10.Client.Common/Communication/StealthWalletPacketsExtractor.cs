@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using System.Threading.Tasks.Dataflow;
-using O10.Transactions.Core.Parsers;
 using O10.Client.Common.Interfaces;
 using O10.Client.DataLayer.Services;
 using O10.Core.ExtensionMethods;
@@ -21,12 +20,11 @@ namespace O10.Client.Common.Communication
         private readonly ITargetBlock<byte[]> _pipeInKeyImages;
 
         public StealthWalletPacketsExtractor(
-            IBlockParsersRepositoriesRepository blockParsersRepositoriesRepository,
             IDataAccessService dataAccessService,
             IStealthClientCryptoService clientCryptoService,
             IGatewayService syncStateProvider,
             ILoggerService loggerService)
-            : base(blockParsersRepositoriesRepository, syncStateProvider, clientCryptoService, dataAccessService, loggerService)
+            : base(syncStateProvider, clientCryptoService, dataAccessService, loggerService)
         {
             _dataAccessService = dataAccessService;
             _propagatorBlockNotifications = new TransformBlock<NotificationBase, NotificationBase>(p => p);
@@ -61,15 +59,15 @@ namespace O10.Client.Common.Communication
 
         protected override bool CheckPacketWitness(PacketWitness packetWitness)
         {
-            foreach (var item in _dataAccessService.GetUserAttributes(_accountId).Where(u => !u.IsOverriden && !u.LastCommitment.Equals32(new byte[32])))
+            foreach (var item in _dataAccessService.GetUserAttributes(AccountId).Where(u => !u.IsOverriden && !u.LastCommitment.Equals32(new byte[32])))
             {
                 byte[] nextKeyImage = item.NextKeyImage.HexStringToByteArray();// ((IUtxoClientCryptoService)_clientCryptoService).GetKeyImage(item.LastTransactionKey);
 
-                _logger.LogIfDebug(() => $"[{_accountId}]: Checking KeyImage {nextKeyImage?.ToHexString() ?? "NULL"} compromised");
+                _logger.LogIfDebug(() => $"[{AccountId}]: Checking KeyImage {nextKeyImage?.ToHexString() ?? "NULL"} compromised");
 
                 if (!nextKeyImage.Equals32(_nextKeyImage) && (packetWitness.KeyImage?.Equals32(nextKeyImage) ?? false))
                 {
-                    _logger.LogIfDebug(() => $"[{_accountId}]: KeyImage {nextKeyImage?.ToHexString() ?? "NULL"} is compromised");
+                    _logger.LogIfDebug(() => $"[{AccountId}]: KeyImage {nextKeyImage?.ToHexString() ?? "NULL"} is compromised");
                     _propagatorBlockNotifications.SendAsync(new CompromisedKeyImage { KeyImage = packetWitness.KeyImage, TransactionKey = packetWitness.TransactionKey, DestinationKey = packetWitness.DestinationKey, Target = packetWitness.DestinationKey2 });
                     break;
                 }
