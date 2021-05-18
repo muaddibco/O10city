@@ -100,7 +100,7 @@ namespace O10.Gateway.Common.Services
             {
                 return false;
             }
-            else if(packet.Body == null)
+            else if(packet.Payload == null)
             {
                 res = false;
                 _completions[packet].SetException(new NoTransactionException(packet));
@@ -108,7 +108,7 @@ namespace O10.Gateway.Common.Services
             }
             else if (packet is StealthPacket stealth)
             {
-                var keyImage = stealth.Body.KeyImage.ToString();
+                var keyImage = stealth.Payload.Transaction.KeyImage.ToString();
 
                 _logger.LogIfDebug(() => $"Sending to Node {_synchronizerConfiguration.NodeApiUri} request for finding hash by a key image {keyImage}");
                 var packetHashResponse = AsyncUtil.RunSync(async () => await _synchronizerConfiguration.NodeApiUri.AppendPathSegments("HashByKeyImage", keyImage).GetJsonAsync<PacketHashResponse>().ConfigureAwait(false));
@@ -139,7 +139,7 @@ namespace O10.Gateway.Common.Services
             TaskCompletionWrapper<IPacketBase> wrapper = new TaskCompletionWrapper<IPacketBase>(packet);
 
             
-            EvidenceDescriptor evidenceDescriptor = _accessorProvider.GetInstance(packet.LedgerType).GetEvidence(packet.Body);
+            EvidenceDescriptor evidenceDescriptor = _accessorProvider.GetInstance(packet.LedgerType).GetEvidence(packet.Payload.Transaction);
 
             DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase> depending 
                 = new DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase>(evidenceDescriptor, wrapper);

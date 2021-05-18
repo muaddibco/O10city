@@ -7,13 +7,18 @@ namespace O10.Transactions.Core.Ledgers
     /// <summary>
     /// All packetss in all types of ledgers must inherit from this base class
     /// </summary>
-    public abstract class PacketBase<TTransaction, TSignature> : SerializableEntity<PacketBase<TTransaction, TSignature>>, IPacketBase where TTransaction : TransactionBase where TSignature : SignatureBase
+    public abstract class PacketBase<TPayload, TTransaction, TSignature> : SerializableEntity<PacketBase<TPayload, TTransaction, TSignature>>, IPacketBase where TPayload : PayloadBase<TTransaction>, new() where TTransaction : TransactionBase where TSignature : SignatureBase
     {
-        public TTransaction? Body { get; set; }
+        public PacketBase()
+        {
+            Payload = new TPayload();
+        }
+
+        public TPayload Payload { get; set; }
 
         public T? With<T>() where T : TTransaction
         {
-            return Body as T;
+            return Payload as T;
         }
 
         public T? AsPacket<T>() where T : class, IPacketBase
@@ -25,7 +30,7 @@ namespace O10.Transactions.Core.Ledgers
 
         public abstract LedgerType LedgerType { get; }
 
-        TransactionBase? IPacketBase.Body { get => Body; }
+        PayloadBase<TransactionBase>? IPacketBase.Payload { get => Payload as PayloadBase<TransactionBase>; }
 
         SignatureBase? IPacketBase.Signature { get => Signature; }
     }
@@ -34,7 +39,7 @@ namespace O10.Transactions.Core.Ledgers
     {
         LedgerType LedgerType { get; }
 
-        TransactionBase? Body { get; }
+        PayloadBase<TransactionBase>? Payload { get; }
 
         SignatureBase? Signature { get; }
 

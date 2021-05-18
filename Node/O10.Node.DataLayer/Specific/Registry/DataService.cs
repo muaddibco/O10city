@@ -50,7 +50,7 @@ namespace O10.Node.DataLayer.Specific.Registry
 
         public override TaskCompletionWrapper<IPacketBase> Add(IPacketBase item)
         {
-            if (item is RegistryPacket registryPacket && registryPacket.Body is FullRegistryTransaction)
+            if (item is RegistryPacket registryPacket && registryPacket.Payload.Transaction is FullRegistryTransaction)
             {
                 var completionWithKey = new TaskCompletionWrapper<IPacketBase>(item);
 
@@ -125,8 +125,8 @@ namespace O10.Node.DataLayer.Specific.Registry
                         
                         return new RegistryFullBlockDb 
                         { 
-                            SyncBlockHeight = b.State.Entity.AsPacket<RegistryPacket>().SyncHeight, 
-                            Round = b.State.Entity.AsPacket<RegistryPacket>().Height, 
+                            SyncBlockHeight = b.State.Entity.AsPacket<RegistryPacket>().Payload.SyncHeight, 
+                            Round = b.State.Entity.AsPacket<RegistryPacket>().Payload.Height, 
                             TransactionsCount = b.State.Entity.AsPacket<RegistryPacket>().With<FullRegistryTransaction>().Witnesses.Length, 
                             Content = b.State.Entity.ToString(), 
                             Hash = b.State.Key.ToString(), 

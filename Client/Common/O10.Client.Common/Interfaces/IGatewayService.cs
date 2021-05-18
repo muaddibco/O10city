@@ -11,6 +11,7 @@ using O10.Core.Notifications;
 using O10.Transactions.Core.DTOs;
 using O10.Transactions.Core.Ledgers;
 using O10.Crypto.Models;
+using O10.Core.Identity;
 
 namespace O10.Client.Common.Interfaces
 {
@@ -41,7 +42,7 @@ namespace O10.Client.Common.Interfaces
         Task<bool> IsRootAttributeValid(Memory<byte> issuer, Memory<byte> commitment);
         Task<bool> AreRootAttributesValid(Memory<byte> issuer, IEnumerable<Memory<byte>> commitments);
         Task<bool> AreAssociatedAttributesExist(Memory<byte> issuer, (Memory<byte> issuanceCommitment, Memory<byte> commitmenttoRoot)[] attrs);
-        Task<bool> WasRootAttributeValid(byte[] issuer, byte[] commitment, long combinedBlockHeight);
+        Task<bool> WasRootAttributeValid(IKey issuer, Memory<byte> commitment, long combinedBlockHeight);
 
         Task<byte[]> GetEmployeeRecordGroup(byte[] issuer, byte[] registrationCommitment);
 
@@ -57,7 +58,7 @@ namespace O10.Client.Common.Interfaces
 
 		Task<byte[]> GetHashByKeyImage(byte[] keyImage);
 
-        Task<bool> IsKeyImageCompromised(byte[] keyImage);
+        Task<bool> IsKeyImageCompromised(IKey keyImage);
         Task<IEnumerable<InfoMessage>> GetInfo();
     }
 }

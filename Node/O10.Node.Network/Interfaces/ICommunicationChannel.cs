@@ -4,7 +4,6 @@ using System.Net.Sockets;
 using System.Threading.Tasks;
 using O10.Core.Architecture;
 using O10.Network.Communication;
-using O10.Network.Handlers;
 
 namespace O10.Network.Interfaces
 {
@@ -17,7 +16,7 @@ namespace O10.Network.Interfaces
 
         void PushForParsing(byte[] buf, int offset, int count);
 
-        void Init(IBufferManager bufferManager, IPacketsHandler packetsHandler);
+        void Init(IBufferManager bufferManager);
 
         Task<OperationStatus<ICommunicationChannel>> StartConnectionAsync(Socket socket, EndPoint endPoint);
 

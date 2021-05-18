@@ -17,15 +17,13 @@ namespace O10.Gateway.Common.Mappers
                 throw new ArgumentNullException(nameof(descriptor));
             }
 
-            var packet = new RegistryPacket
-            {
-                Body = new RegisterTransaction
+            var packet = new RegistryPacket(
+                new RegisterTransaction
                 {
                     ReferencedLedgerType = descriptor.LedgerType,
                     ReferencedAction = descriptor.ActionType,
                     Parameters = descriptor.Parameters
-                }
-            };
+                });
 
             return packet;
         }

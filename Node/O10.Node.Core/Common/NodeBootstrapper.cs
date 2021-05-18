@@ -8,6 +8,7 @@ using System.Threading;
 using O10.Core.Architecture;
 using O10.Core.Logging;
 using O10.Node.Core.Exceptions;
+using System.Threading.Tasks;
 
 namespace O10.Node.Core.Common
 {
@@ -19,13 +20,13 @@ namespace O10.Node.Core.Common
         {
         }
 
-		public override void RunInitializers(IServiceProvider serviceProvider, CancellationToken cancellationToken, ILogger log)
+		public override async Task RunInitializers(IServiceProvider serviceProvider, CancellationToken cancellationToken, ILogger log)
 		{
 			log.Info("Starting NodeBootstrap Run");
 
 			try
 			{
-				base.RunInitializers(serviceProvider, cancellationToken, log);
+				await base.RunInitializers(serviceProvider, cancellationToken, log).ConfigureAwait(false);
 
 				StartNode(serviceProvider, cancellationToken, log);
 			}

@@ -25,7 +25,7 @@ namespace O10.Client.Web.Common.Services
         private readonly IWitnessPackagesProviderRepository _witnessPackagesProviderRepository;
         private readonly IWalletSynchronizersRepository _walletSynchronizersRepository;
         private readonly IPacketsExtractorsRepository _packetsExtractorsRepository;
-        private readonly IExternalUpdatersRepository _externalUpdatersRepository;
+        private readonly ILedgerWriterRepository _externalUpdatersRepository;
         private readonly IUpdaterRegistry _updaterRegistry;
         private readonly IGatewayService _gatewayService;
         private readonly IRestApiConfiguration _restApiConfiguration;
@@ -38,7 +38,7 @@ namespace O10.Client.Web.Common.Services
             IWitnessPackagesProviderRepository witnessPackagesProviderRepository,
             IWalletSynchronizersRepository walletSynchronizersRepository,
             IPacketsExtractorsRepository packetsExtractorsRepository,
-            IExternalUpdatersRepository externalUpdatersRepository,
+            ILedgerWriterRepository externalUpdatersRepository,
             IUpdaterRegistry updaterRegistry,
             IGatewayService gatewayService)
         {

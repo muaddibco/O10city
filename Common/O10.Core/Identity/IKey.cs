@@ -6,7 +6,7 @@ namespace O10.Core.Identity
     /// <summary>
     /// Generic key
     /// </summary>
-    public interface IKey : IEqualityComparer<IKey>, IEquatable<IKey>
+    public interface IKey : IEqualityComparer<IKey>, IEquatable<IKey>, IEquatable<byte[]>, IEquatable<Memory<byte>>
     {
         int Length { get; }
 

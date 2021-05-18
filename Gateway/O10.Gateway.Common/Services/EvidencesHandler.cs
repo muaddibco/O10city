@@ -79,10 +79,10 @@ namespace O10.Gateway.Common.Services
                 var registryPacket = _translator.Translate(evidence);
 
                 var lastPacketInfo = await _gatewayContext.GetLastPacketInfo().ConfigureAwait(false);
-                registryPacket.Height = lastPacketInfo.Height;
-                registryPacket.SyncHeight = (await _networkSynchronizer.GetLastSyncBlock().ConfigureAwait(false))?.Height ?? 0;
+                registryPacket.Payload.Height = lastPacketInfo.Height;
+                registryPacket.Payload.SyncHeight = (await _networkSynchronizer.GetLastSyncBlock().ConfigureAwait(false))?.Height ?? 0;
 
-                registryPacket.Signature = (SingleSourceSignature)_gatewayContext.SigningService.Sign(registryPacket.Body);
+                registryPacket.Signature = (SingleSourceSignature)_gatewayContext.SigningService.Sign(registryPacket.Payload);
 
                 var evidenceWrapper = new TaskCompletionWrapper<IPacketBase>(registryPacket);
                 evidenceWrapper.TaskCompletion.Task

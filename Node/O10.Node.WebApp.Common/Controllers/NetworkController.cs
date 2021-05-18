@@ -84,7 +84,7 @@ namespace O10.Node.WebApp.Common.Controllers
 		{
 			var packet = _synchronizationDataService.Single<SynchronizationPacket>(new SingleByBlockTypeKey(TransactionTypes.Synchronization_RegistryCombinationBlock));
 
-			return Ok(new AggregatedRegistrationsTransactionDTO { Height = packet.Height });
+			return Ok(new AggregatedRegistrationsTransactionDTO { Height = packet.Payload.Height });
 		}
 
 		[HttpGet("GetLastStatePacketInfo")]
@@ -102,7 +102,7 @@ namespace O10.Node.WebApp.Common.Controllers
 
 			return new StatePacketInfo
 			{
-				Height = transactionalBlockBase?.Height ?? 0,
+				Height = transactionalBlockBase?.Payload.Height ?? 0,
 				//TODO: !!! need to reconsider hash calculation here since it is potential point of DoS attack
 				Hash = (transactionalBlockBase != null ? _hashCalculation.CalculateHash(transactionalBlockBase.ToByteArray()) : new byte[Globals.DEFAULT_HASH_SIZE]).ToHexString(),
 			};

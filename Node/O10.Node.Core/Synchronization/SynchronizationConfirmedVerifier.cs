@@ -30,12 +30,12 @@ namespace O10.Node.Core.Synchronization
                 throw new System.ArgumentNullException(nameof(packet));
             }
 
-            if (packet.Body is SynchronizationConfirmedTransaction transaction)
+            if (packet.Payload.Transaction is SynchronizationConfirmedTransaction transaction)
             {
-                if (_synchronizationContext.LastBlockDescriptor != null && _synchronizationContext.LastBlockDescriptor.BlockHeight + 1 <= packet.AsPacket<SynchronizationPacket>().Height || _synchronizationContext.LastBlockDescriptor == null)
+                if (_synchronizationContext.LastBlockDescriptor != null && _synchronizationContext.LastBlockDescriptor.BlockHeight + 1 <= packet.AsPacket<SynchronizationPacket>().Payload.Height || _synchronizationContext.LastBlockDescriptor == null)
                 {
-                    if (_synchronizationContext.LastBlockDescriptor != null && packet.AsPacket<SynchronizationPacket>().HashPrev.Equals(_synchronizationContext.LastBlockDescriptor.Hash) ||
-                        _synchronizationContext.LastBlockDescriptor == null && packet.AsPacket<SynchronizationPacket>().HashPrev.Equals(new byte[Globals.DEFAULT_HASH_SIZE]))
+                    if (_synchronizationContext.LastBlockDescriptor != null && packet.AsPacket<SynchronizationPacket>().Payload.HashPrev.Equals(_synchronizationContext.LastBlockDescriptor.Hash) ||
+                        _synchronizationContext.LastBlockDescriptor == null && packet.AsPacket<SynchronizationPacket>().Payload.HashPrev.Equals(new byte[Globals.DEFAULT_HASH_SIZE]))
                     {
                         return true;
                     }

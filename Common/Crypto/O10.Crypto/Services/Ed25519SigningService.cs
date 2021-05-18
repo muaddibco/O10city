@@ -52,40 +52,63 @@ namespace O10.Crypto.Services
             PublicKeys[0] = IdentityKeyProvider.GetKey(publicKey);
         }
 
-        public SignatureBase Sign(TransactionBase msg, object args = null)
+        public SignatureBase Sign<T>(PayloadBase<T> payload, object? args = null) where T: TransactionBase
         {
-            if (!(msg is SingleSourceTransactionBase singleSourceTransaction))
+            if (payload is null)
             {
-                throw new ArgumentOutOfRangeException(nameof(msg), string.Format(Resources.ERR_WRONG_BODY_TYPE, nameof(Ed25519SigningService), typeof(SingleSourceTransactionBase).FullName));
+                throw new ArgumentNullException(nameof(payload));
+            }
+
+            if (!(payload.Transaction is SingleSourceTransactionBase singleSourceTransaction))
+            {
+                throw new ArgumentOutOfRangeException(nameof(payload), string.Format(Resources.ERR_WRONG_BODY_TYPE, nameof(Ed25519SigningService), typeof(SingleSourceTransactionBase).FullName));
             }
 
             singleSourceTransaction.Source = PublicKeys[0];
 
             return new SingleSourceSignature
             {
-                Signature = Sign(msg?.ToString() ?? throw new ArgumentNullException(nameof(msg))),
+                Signature = Sign(payload?.ToString() ?? throw new ArgumentNullException(nameof(payload)), args),
             };
         }
 
-        public byte[] Sign(Memory<byte> msg, object args = null)
+        public byte[] Sign(Memory<byte> msg, object? args = null)
         {
             var signature = new byte[Ed25519.SignatureSizeInBytes];
-            Ed25519.Sign(new ArraySegment<byte>(signature), msg.ToArraySegment(), new ArraySegment<byte>(_expandedPrivateKey));
+            Memory<byte> memory;
+            if(args != null)
+            {
+                var argsBytes = args.Serialize();
+                var bytes = new byte[msg.Length + argsBytes?.Length ?? 0];
+                if (bytes.Length > 0)
+                {
+                    Array.Copy(argsBytes, 0, bytes, msg.Length, argsBytes?.Length ?? 0);
+                }
+
+                memory = new Memory<byte>(bytes);
+                msg.CopyTo(memory);
+            }
+            else
+            {
+                memory = msg;
+            }
+
+            Ed25519.Sign(new ArraySegment<byte>(signature), memory.ToArraySegment(), new ArraySegment<byte>(_expandedPrivateKey));
             return signature;
         }
 
-        public byte[] Sign(string msg, object args = null)
+        public byte[] Sign(string msg, object? args = null)
         {
             byte[] message = Encoding.UTF8.GetBytes(msg);
             byte[] signature = Sign(message, args);
             return signature;
         }
 
-        public bool Verify(TransactionBase msg, SignatureBase signatureBase)
+        public bool Verify<T>(PayloadBase<T> payload, SignatureBase signatureBase) where T: TransactionBase
         {
-            if (msg is null)
+            if (payload is null)
             {
-                throw new ArgumentNullException(nameof(msg));
+                throw new ArgumentNullException(nameof(payload));
             }
 
             if (signatureBase is null)
@@ -93,9 +116,9 @@ namespace O10.Crypto.Services
                 throw new ArgumentNullException(nameof(signatureBase));
             }
 
-            if (!(msg is SingleSourceTransactionBase singleSourceTransaction))
+            if (!(payload.Transaction is SingleSourceTransactionBase singleSourceTransaction))
             {
-                throw new ArgumentOutOfRangeException(nameof(msg), string.Format(Resources.ERR_WRONG_BODY_TYPE, nameof(Ed25519SigningService), typeof(SingleSourceTransactionBase).FullName));
+                throw new ArgumentOutOfRangeException(nameof(payload), string.Format(Resources.ERR_WRONG_BODY_TYPE, nameof(Ed25519SigningService), typeof(SingleSourceTransactionBase).FullName));
             }
 
             if (!(signatureBase is SingleSourceSignature signature))
@@ -103,7 +126,7 @@ namespace O10.Crypto.Services
                 throw new ArgumentOutOfRangeException(nameof(signatureBase), string.Format(Resources.ERR_WRONG_SIGNATURE_TYPE, nameof(Ed25519SigningService), typeof(SingleSourceSignature).FullName));
             }
 
-            byte[] message = Encoding.UTF8.GetBytes(msg.ToString());
+            byte[] message = Encoding.UTF8.GetBytes(payload.ToString());
 
             return Ed25519.Verify(signature.Signature.ToArray(), message, singleSourceTransaction.Source.ToByteArray());
         }

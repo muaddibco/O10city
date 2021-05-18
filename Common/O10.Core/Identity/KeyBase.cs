@@ -46,6 +46,8 @@ namespace O10.Core.Identity
 
         public abstract bool Equals(IKey x, IKey y);
         public abstract bool Equals(IKey other);
+        public abstract bool Equals(byte[] other);
+        public abstract bool Equals(Memory<byte> other);
         public abstract int GetHashCode(IKey obj);
 
         public override int GetHashCode() => GetHashCode(this);

@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using O10.Core.Logging;
 using O10.Core.Architecture;
 using O10.Core.ExtensionMethods;
-using O10.Network.Handlers;
 using O10.Core.Tracking;
 using O10.Core;
 using O10.Core.Communication;
@@ -29,7 +28,6 @@ namespace O10.Network.Communication
 		private readonly AutoResetEvent _socketSendEvent;
 		private readonly EscapeHelper _escapeHelper;
 		private readonly ITrackingService _trackingService;
-		private IPacketsHandler _packetsHandler;
 		private CancellationTokenSource _cancellationTokenSource;
 		private CancellationToken _cancellationToken;
 
@@ -84,7 +82,7 @@ namespace O10.Network.Communication
 			}
 		}
 
-		public void Init(IBufferManager bufferManager, IPacketsHandler packetsHandler)
+		public void Init(IBufferManager bufferManager)
 		{
 			_cancellationTokenSource?.Cancel();
 
@@ -92,7 +90,6 @@ namespace O10.Network.Communication
 			_cancellationToken = _cancellationTokenSource.Token;
 
 			_bufferManager = bufferManager;
-			_packetsHandler = packetsHandler;
 
 			_bufferManager.SetBuffer(_socketReceiveAsyncEventArgs, _socketSendAsyncEventArgs);
 			_offsetReceive = _socketReceiveAsyncEventArgs.Offset;

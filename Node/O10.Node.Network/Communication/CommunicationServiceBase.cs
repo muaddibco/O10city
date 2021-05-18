@@ -71,7 +71,7 @@ namespace O10.Network.Communication
 			{
 				ICommunicationChannel communicationChannel = _serviceProvider.GetService<ICommunicationChannel>();
 				communicationChannel.SocketClosedEvent += ClientHandler_SocketClosedEvent;
-				communicationChannel.Init(bufferManager, _packetsHandler);
+				communicationChannel.Init(bufferManager);
 				_communicationChannelsPool.Push(communicationChannel);
 			}
 		}

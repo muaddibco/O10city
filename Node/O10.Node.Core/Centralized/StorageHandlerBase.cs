@@ -2,14 +2,14 @@
 using System.Threading;
 using System.Threading.Tasks.Dataflow;
 using O10.Transactions.Core.Enums;
-using O10.Transactions.Core.Interfaces;
 using O10.Node.DataLayer.DataServices;
 using O10.Core.Logging;
 using O10.Transactions.Core.Ledgers;
+using O10.Network.Interfaces;
 
 namespace O10.Node.Core.Centralized
 {
-    public abstract class StorageHandlerBase<T> : IPacketsHandler where T : IPacketBase
+    public abstract class StorageHandlerBase<T> : ILedgerPacketsHandler where T : IPacketBase
     {
         private readonly IChainDataService _chainDataService;
         private readonly IRealTimeRegistryService _realTimeRegistryService;
@@ -37,7 +37,7 @@ namespace O10.Node.Core.Centralized
             _storeBlock = new ActionBlock<T>(StoreBlock, new ExecutionDataflowBlockOptions { BoundedCapacity = int.MaxValue,  CancellationToken = _cancellationToken, MaxDegreeOfParallelism = 1 });
         }
 
-        public void ProcessBlock(IPacketBase packet)
+        public void ProcessPacket(IPacketBase packet)
         {
             _storeBlock.Post((T)packet);
         }

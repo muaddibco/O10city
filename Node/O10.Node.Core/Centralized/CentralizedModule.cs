@@ -1,10 +1,10 @@
-﻿using O10.Transactions.Core.Interfaces;
-using O10.Node.DataLayer.DataServices;
+﻿using O10.Node.DataLayer.DataServices;
 using O10.Core.Architecture;
 using O10.Core.HashCalculations;
 using O10.Core.Identity;
 using O10.Core.Logging;
 using O10.Core.Modularity;
+using O10.Network.Interfaces;
 
 namespace O10.Node.Core.Centralized
 {
@@ -48,7 +48,7 @@ namespace O10.Node.Core.Centralized
 
         protected override void InitializeInner()
         {
-            IPacketsHandler blocksHandler = _blocksHandlersRegistry.GetInstance(TransactionsRegistryCentralizedHandler.NAME);
+            ILedgerPacketsHandler blocksHandler = _blocksHandlersRegistry.GetInstance(TransactionsRegistryCentralizedHandler.NAME);
             _blocksHandlersRegistry.RegisterInstance(blocksHandler);
             blocksHandler.Initialize(_cancellationToken);
 

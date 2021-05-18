@@ -11,6 +11,7 @@ using O10.Gateway.WebApp.Common.Services;
 using Microsoft.Extensions.DependencyInjection;
 using O10.Transactions.Core.Accessors;
 using O10.Transactions.Core.Ledgers;
+using System.Threading.Tasks;
 
 namespace O10.Server.Gateway
 {
@@ -25,9 +26,9 @@ namespace O10.Server.Gateway
 			return base.EnumerateCatalogItems(rootFolder).Union(new string[] { "O10.Gateway.WebApp.Common.dll" });
 		}
 
-        public override void RunInitializers(IServiceProvider serviceProvider, CancellationToken cancellationToken, ILogger logger)
+        public override async Task RunInitializers(IServiceProvider serviceProvider, CancellationToken cancellationToken, ILogger logger)
         {
-            base.RunInitializers(serviceProvider, cancellationToken, logger);
+            await base.RunInitializers(serviceProvider, cancellationToken, logger).ConfigureAwait(false);
 
             SetPipes(serviceProvider, cancellationToken);
         }

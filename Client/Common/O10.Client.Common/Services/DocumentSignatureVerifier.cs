@@ -1,34 +1,28 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Threading.Tasks;
-using O10.Transactions.Core.Ledgers;
-using O10.Transactions.Core.Ledgers.O10State;
-using O10.Transactions.Core.Parsers;
 using O10.Client.Common.Interfaces;
 using O10.Client.Common.Interfaces.Outputs;
 using O10.Core.Architecture;
-
 using O10.Core.Cryptography;
 using O10.Core.ExtensionMethods;
 using O10.Core.Logging;
 using O10.Crypto.ConfidentialAssets;
 using O10.Core.Serialization;
+using O10.Transactions.Core.Ledgers.O10State.Transactions;
+using O10.Core.Identity;
 
 namespace O10.Client.Common.Services
 {
-	[RegisterDefaultImplementation(typeof(IDocumentSignatureVerifier), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterDefaultImplementation(typeof(IDocumentSignatureVerifier), Lifetime = LifetimeManagement.Singleton)]
 	public class DocumentSignatureVerifier : IDocumentSignatureVerifier
 	{
 		private readonly IGatewayService _gatewayService;
-		private readonly IBlockParsersRepositoriesRepository _blockParsersRepositoriesRepository;
 		private readonly ILogger _logger;
 
-		public DocumentSignatureVerifier(
-			IGatewayService gatewayService, IBlockParsersRepositoriesRepository blockParsersRepositoriesRepository,
-			ILoggerService loggerService)
+		public DocumentSignatureVerifier(IGatewayService gatewayService, ILoggerService loggerService)
 		{
 			_gatewayService = gatewayService;
-			_blockParsersRepositoriesRepository = blockParsersRepositoriesRepository;
 			_logger = loggerService.GetLogger(nameof(DocumentSignatureVerifier));
 		}
 
@@ -47,26 +41,22 @@ namespace O10.Client.Common.Services
 			var packetInfoDocumentSignRecord = await _gatewayService.GetTransaction(documentCreator.ToHexString(), signatureTransactionHash).ConfigureAwait(false);
 			var packetInfoDocumentRecord = await _gatewayService.GetTransaction(documentCreator.ToHexString(), documentRecordTransactionHash).ConfigureAwait(false);
 
-			IBlockParsersRepository blockParsersRepository = _blockParsersRepositoriesRepository.GetBlockParsersRepository(packetInfoDocumentSignRecord.LedgerType);
-			IBlockParser blockParser = blockParsersRepository.GetInstance(packetInfoDocumentSignRecord.BlockType);
 
-			DocumentSignRecord documentSignRecord = blockParser.Parse(packetInfoDocumentSignRecord.Content) as DocumentSignRecord;
+			DocumentSignTransaction documentSignRecord = packetInfoDocumentSignRecord as DocumentSignTransaction;
 
-			blockParsersRepository = _blockParsersRepositoriesRepository.GetBlockParsersRepository(packetInfoDocumentRecord.LedgerType);
-			blockParser = blockParsersRepository.GetInstance(packetInfoDocumentRecord.BlockType);
 
 			res.SignatureTransactionFound = documentSignRecord != null;
-			res.DocumentRecordTransactionFound = blockParser.Parse(packetInfoDocumentRecord.Content) is DocumentRecord;
+			res.DocumentRecordTransactionFound = packetInfoDocumentRecord is DocumentRecordTransaction;
 
 			if(res.SignatureTransactionFound && res.DocumentRecordTransactionFound)
 			{
 				ulong combinedBlockHeight = await _gatewayService.GetCombinedBlockByTransactionHash(documentCreator, signatureTransactionHash).ConfigureAwait(false);
                 res.IsNotCompromised = !(await _gatewayService.IsKeyImageCompromised(documentSignRecord.KeyImage).ConfigureAwait(false));
-				res.DocumentHashMatch = documentSignRecord.DocumentHash.Equals32(documentHash);
-				res.SignerSignatureMatch = ConfidentialAssetsHelper.VerifySurjectionProof(documentSignRecord.SignerGroupRelationProof, documentSignRecord.SignerCommitment, documentHash, BitConverter.GetBytes(documentRecordHeight));
-				res.EligibilityCorrect = await CheckEligibilityProofsWereValid(documentSignRecord.SignerCommitment, documentSignRecord.EligibilityProof, documentSignRecord.Issuer, combinedBlockHeight).ConfigureAwait(false);
-				res.AllowedGroupRelation = ConfidentialAssetsHelper.VerifySurjectionProof(documentSignRecord.SignerGroupProof, documentSignRecord.SignerGroupCommitment);
-				res.AllowedGroupMatching = ConfidentialAssetsHelper.VerifySurjectionProof(documentSignRecord.SignerAllowedGroupsProof, documentSignRecord.SignerGroupCommitment);
+				res.DocumentHashMatch = documentSignRecord.DocumentHash.Equals(documentHash);
+				res.SignerSignatureMatch = ConfidentialAssetsHelper.VerifySurjectionProof(documentSignRecord.SignerGroupRelationProof, documentSignRecord.SignerCommitment.Value.Span, documentHash, documentRecordTransactionHash);
+				res.EligibilityCorrect = await CheckEligibilityProofsWereValid(documentSignRecord.SignerCommitment.Value, documentSignRecord.EligibilityProof, documentSignRecord.Issuer, combinedBlockHeight).ConfigureAwait(false);
+				res.AllowedGroupRelation = ConfidentialAssetsHelper.VerifySurjectionProof(documentSignRecord.SignerGroupProof, documentSignRecord.SignerGroupCommitment.Value.Span);
+				res.AllowedGroupMatching = ConfidentialAssetsHelper.VerifySurjectionProof(documentSignRecord.SignerAllowedGroupsProof, documentSignRecord.SignerGroupCommitment.Value.Span);
 
 				//PacketInfoEx packetInfo = _gatewayService.GetTransactionBySourceAndHeight(documentSignRecord.GroupIssuer.ToHexString(), signatureRecordBlockHeight);
 
@@ -97,10 +87,10 @@ namespace O10.Client.Common.Services
 			return true;
 		}
 
-		private async Task<bool> CheckEligibilityProofsWereValid(byte[] assetCommitment, SurjectionProof eligibilityProofs, byte[] issuer, ulong combinedBlockHeight)
+		private async Task<bool> CheckEligibilityProofsWereValid(Memory<byte> assetCommitment, SurjectionProof eligibilityProofs, IKey issuer, ulong combinedBlockHeight)
 		{
-			_logger.LogIfDebug(() => $"{nameof(CheckEligibilityProofsWereValid)} with assetCommitment={assetCommitment.ToHexString()}, issuer={issuer.ToHexString()}, combinedBlockHeight={combinedBlockHeight}, eligibilityProofs={JsonConvert.SerializeObject(eligibilityProofs, new ByteArrayJsonConverter())}");
-			bool isCommitmentCorrect = ConfidentialAssetsHelper.VerifySurjectionProof(eligibilityProofs, assetCommitment);
+			_logger.LogIfDebug(() => $"{nameof(CheckEligibilityProofsWereValid)} with assetCommitment={assetCommitment.ToHexString()}, issuer={issuer}, combinedBlockHeight={combinedBlockHeight}, eligibilityProofs={JsonConvert.SerializeObject(eligibilityProofs, new ByteArrayJsonConverter())}");
+			bool isCommitmentCorrect = ConfidentialAssetsHelper.VerifySurjectionProof(eligibilityProofs, assetCommitment.Span);
 
 			if (!isCommitmentCorrect)
 			{

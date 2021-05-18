@@ -52,7 +52,7 @@ namespace O10.Crypto.Services
             PublicKeys[1] = _identityKeyProvider.GetKey(ConfidentialAssetsHelper.GetPublicKey(_secretViewKey));
         }
 
-        public byte[] Sign(string msg, object args = null)
+        public byte[] Sign(string msg, object? args = null)
         {
             byte[] message = Encoding.UTF8.GetBytes(msg);
             return Sign(message, args);
@@ -88,16 +88,21 @@ namespace O10.Crypto.Services
             return signature;
         }
 
-        public SignatureBase Sign(TransactionBase body, object? args = null)
+        public SignatureBase Sign<T>(PayloadBase<T> payload, object? args = null) where T: TransactionBase
         {
-            if (!(body is StealthTransactionBase stealthBody))
+            if (payload is null)
             {
-                throw new ArgumentOutOfRangeException(nameof(body));
+                throw new ArgumentNullException(nameof(payload));
+            }
+
+            if (!(payload.Transaction is StealthTransactionBase stealthBody))
+            {
+                throw new ArgumentOutOfRangeException(nameof(payload));
             }
 
             if (!(args is StealthSignatureInput signatureInput))
             {
-                throw new ArgumentException(nameof(args), $"{nameof(StealthSigningService)} expects argument args of type {nameof(StealthSignatureInput)}");
+                throw new ArgumentException($"{nameof(StealthSigningService)} expects argument args of type {nameof(StealthSignatureInput)}", nameof(args));
             }
 
             byte[][] publicKeys = signatureInput.PublicKeys;
@@ -109,7 +114,7 @@ namespace O10.Crypto.Services
 
             signatureInput.UpdatePacketAction?.Invoke(stealthBody);
 
-            RingSignature[] ringSignatures = ConfidentialAssetsHelper.GenerateRingSignature(body.ToByteArray(), keyImage, publicKeys, otsk, index);
+            RingSignature[] ringSignatures = ConfidentialAssetsHelper.GenerateRingSignature(payload.ToByteArray(), keyImage, publicKeys, otsk, index);
 
             stealthBody.Sources = signatureInput.PublicKeys.Select(p => _identityKeyProvider.GetKey(p)).ToArray();
 
@@ -119,16 +124,26 @@ namespace O10.Crypto.Services
             };
         }
 
-        public bool Verify(TransactionBase bodyBase, SignatureBase signatureBase)
+        public bool Verify<T>(PayloadBase<T> payload, SignatureBase signatureBase) where T: TransactionBase
         {
-            if (!(bodyBase is StealthTransactionBase stealthBody))
+            if (payload is null)
             {
-                throw new ArgumentOutOfRangeException(nameof(bodyBase), string.Format(Resources.ERR_WRONG_BODY_TYPE, nameof(StealthSigningService), typeof(StealthTransactionBase).FullName));
+                throw new ArgumentNullException(nameof(payload));
+            }
+
+            if (!(payload.Transaction is StealthTransactionBase stealthBody))
+            {
+                throw new ArgumentOutOfRangeException(nameof(payload), string.Format(Resources.ERR_WRONG_BODY_TYPE, nameof(StealthSigningService), typeof(StealthTransactionBase).FullName));
             }
 
             if (!(signatureBase is StealthSignature stealthSignature))
             {
-                throw new ArgumentOutOfRangeException(nameof(bodyBase), string.Format(Resources.ERR_WRONG_SIGNATURE_TYPE, nameof(StealthSigningService), typeof(StealthSignature).FullName));
+                throw new ArgumentOutOfRangeException(nameof(payload), string.Format(Resources.ERR_WRONG_SIGNATURE_TYPE, nameof(StealthSigningService), typeof(StealthSignature).FullName));
+            }
+
+            if(stealthBody.KeyImage == null)
+            {
+                throw new ArgumentException($"payload's {nameof(stealthBody.KeyImage)} is null");
             }
 
             byte[] msg = stealthBody.ToByteArray();

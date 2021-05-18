@@ -3,16 +3,17 @@ using O10.Transactions.Core.Enums;
 using O10.Core.Architecture;
 using O10.Transactions.Core.Ledgers;
 
-namespace O10.Transactions.Core.Interfaces
+namespace O10.Network.Interfaces
 {
     [ExtensionPoint]
-    public interface IPacketsHandler
+    public interface ILedgerPacketsHandler
     {
         string Name { get; }
 
         LedgerType LedgerType { get; }
 
         void Initialize(CancellationToken ct);
-        void ProcessBlock(IPacketBase blockBase);
+
+        void ProcessPacket(IPacketBase blockBase);
     }
 }

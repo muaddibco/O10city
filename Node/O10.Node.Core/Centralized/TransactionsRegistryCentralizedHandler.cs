@@ -6,7 +6,6 @@ using System.Threading.Tasks.Dataflow;
 using O10.Transactions.Core.Ledgers.Registry;
 using O10.Transactions.Core.Ledgers.Synchronization;
 using O10.Transactions.Core.Enums;
-using O10.Transactions.Core.Interfaces;
 using O10.Core.Architecture;
 using O10.Core.States;
 using O10.Core.Logging;
@@ -24,11 +23,12 @@ using O10.Transactions.Core.Ledgers.Synchronization.Transactions;
 using O10.Crypto.Models;
 using O10.Transactions.Core.Ledgers.Registry.Transactions;
 using O10.Core.Identity;
+using O10.Network.Interfaces;
 
 namespace O10.Node.Core.Centralized
 {
-    [RegisterExtension(typeof(IPacketsHandler), Lifetime = LifetimeManagement.Singleton)]
-    public class TransactionsRegistryCentralizedHandler : IPacketsHandler
+    [RegisterExtension(typeof(ILedgerPacketsHandler), Lifetime = LifetimeManagement.Singleton)]
+    public class TransactionsRegistryCentralizedHandler : ILedgerPacketsHandler
     {
         public const string NAME = "TransactionsRegistryCentralized";
 
@@ -92,7 +92,7 @@ namespace O10.Node.Core.Centralized
             }
         }
 
-        public void ProcessBlock(IPacketBase packet)
+        public void ProcessPacket(IPacketBase packet)
         {
             _packetsBuffer.SendAsync(packet);
         }
@@ -105,7 +105,7 @@ namespace O10.Node.Core.Centralized
 				{
 					if (source.TryReceiveAll(out IList<IPacketBase> packets))
 					{
-						long lastCombinedBlockHeight = _lastCombinedBlock?.Height ?? 0;
+						long lastCombinedBlockHeight = _lastCombinedBlock?.Payload.Height ?? 0;
 
 						if (lastCombinedBlockHeight % 100 == 0)
 						{
@@ -115,9 +115,9 @@ namespace O10.Node.Core.Centralized
                                     _synchronizationContext.LastBlockDescriptor?.Hash);
 							_synchronizationContext.UpdateLastSyncBlockDescriptor(
                                 new SynchronizationDescriptor(
-                                    synchronizationConfirmedBlock.Height, 
+                                    synchronizationConfirmedBlock.Payload.Height, 
                                     _identityKeyProvider.GetKey(_defaultTransactionHashCalculation.CalculateHash(synchronizationConfirmedBlock.ToByteArray())), 
-                                    synchronizationConfirmedBlock.ReportedTime, 
+                                    synchronizationConfirmedBlock.Payload.ReportedTime, 
                                     DateTime.UtcNow, 
                                     synchronizationConfirmedBlock.With<SynchronizationConfirmedTransaction>().Round));
 							_synchronizationChainDataService.Add(synchronizationConfirmedBlock);
@@ -131,7 +131,7 @@ namespace O10.Node.Core.Centralized
 						//RegistryShortBlock registryShortBlock = CreateRegistryShortBlock((FullRegistryTransaction)registryFullBlock.Body);
 						//SignRegistryBlocks(registryFullBlock, registryShortBlock);
 
-                        fullRegistrationsPacket.Signature = (SingleSourceSignature)_nodeContext.SigningService.Sign(fullRegistrationsPacket.Body);
+                        fullRegistrationsPacket.Signature = (SingleSourceSignature)_nodeContext.SigningService.Sign(fullRegistrationsPacket.Payload);
 
                         var aggregatedRegistrationsPacket = CreateCombinedBlock(fullRegistrationsPacket);
 
@@ -154,18 +154,21 @@ namespace O10.Node.Core.Centralized
         {
             SynchronizationPacket synchronizationConfirmed = new SynchronizationPacket
             {
-                Height = prevSyncBlockHeight + 1,
-                HashPrev = prevSyncBlockHash,
-                ReportedTime = DateTime.UtcNow,
-                Body = new SynchronizationConfirmedTransaction
+                Payload = new SynchronizationPayload
                 {
-                    Round = 1,
-                    PublicKeys = Array.Empty<byte[]>(),// retransmittedSyncBlocks.Select(b => b.ConfirmationPublicKey).ToArray(),
-                    Signatures = Array.Empty<byte[]>() //retransmittedSyncBlocks.Select(b => b.ConfirmationSignature).ToArray()
+                    Height = prevSyncBlockHeight + 1,
+                    HashPrev = prevSyncBlockHash,
+                    ReportedTime = DateTime.UtcNow,
+                    Transaction = new SynchronizationConfirmedTransaction
+                    {
+                        Round = 1,
+                        PublicKeys = Array.Empty<byte[]>(),// retransmittedSyncBlocks.Select(b => b.ConfirmationPublicKey).ToArray(),
+                        Signatures = Array.Empty<byte[]>() //retransmittedSyncBlocks.Select(b => b.ConfirmationSignature).ToArray()
+                    }
                 }
             };
 
-            synchronizationConfirmed.Signature = (SingleSourceSignature)_nodeContext.SigningService.Sign(synchronizationConfirmed.Body);
+            synchronizationConfirmed.Signature = (SingleSourceSignature)_nodeContext.SigningService.Sign(synchronizationConfirmed.Payload);
 
             return synchronizationConfirmed;
         }
@@ -174,11 +177,14 @@ namespace O10.Node.Core.Centralized
         {
             RegistryPacket transactionsFullBlock = new RegistryPacket
             {
-                SyncHeight = syncBlockHeight,
-                Height = registryFullBlockHeight,
-                Body = new FullRegistryTransaction
+                Payload = new RegistryPayload
                 {
-                    Witnesses = witnesses
+                    SyncHeight = syncBlockHeight,
+                    Height = registryFullBlockHeight,
+                    Transaction = new FullRegistryTransaction
+                    {
+                        Witnesses = witnesses
+                    }
                 }
             };
 
@@ -224,17 +230,20 @@ namespace O10.Node.Core.Centralized
                 //TODO: For initial POC there will be only one participant at Synchronization Layer, thus combination of FullBlocks won't be implemented fully
                 SynchronizationPacket synchronizationRegistryCombinedBlock = new SynchronizationPacket
                 {
-                    Height = ++_synchronizationContext.LastRegistrationCombinedBlockHeight,
-                    HashPrev = prevHash,
-                    ReportedTime = DateTime.Now,
-                    Body = new AggregatedRegistrationsTransaction
+                    Payload = new SynchronizationPayload
                     {
-                        SyncHeight = _synchronizationContext.LastBlockDescriptor?.BlockHeight ?? 0,
-                        BlockHashes = registryFullBlocks.Select(b => _defaultTransactionHashCalculation.CalculateHash(b?.ToByteArray() ?? new byte[Globals.DEFAULT_HASH_SIZE])).ToArray()
+                        Height = ++_synchronizationContext.LastRegistrationCombinedBlockHeight,
+                        HashPrev = prevHash,
+                        ReportedTime = DateTime.Now,
+                        Transaction = new AggregatedRegistrationsTransaction
+                        {
+                            SyncHeight = _synchronizationContext.LastBlockDescriptor?.BlockHeight ?? 0,
+                            BlockHashes = registryFullBlocks.Select(b => _defaultTransactionHashCalculation.CalculateHash(b?.ToByteArray() ?? new byte[Globals.DEFAULT_HASH_SIZE])).ToArray()
+                        }
                     }
                 };
 
-                synchronizationRegistryCombinedBlock.Signature = (SingleSourceSignature)_nodeContext.SigningService.Sign(synchronizationRegistryCombinedBlock.Body);
+                synchronizationRegistryCombinedBlock.Signature = (SingleSourceSignature)_nodeContext.SigningService.Sign(synchronizationRegistryCombinedBlock.Payload);
 
                 return synchronizationRegistryCombinedBlock;
             }

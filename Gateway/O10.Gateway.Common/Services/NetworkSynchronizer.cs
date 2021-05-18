@@ -229,7 +229,7 @@ namespace O10.Gateway.Common.Services
 			}
 			catch (Exception ex)
 			{
-				_logger.Error($"Failure during obtaining transactions at Registry Combined Block with height {rtPackage.AggregatedRegistrations.Height}", ex);
+				_logger.Error($"Failure during obtaining transactions at Registry Combined Block with height {rtPackage.AggregatedRegistrations.Payload.Height}", ex);
 			}
 		}
 
@@ -394,15 +394,15 @@ namespace O10.Gateway.Common.Services
 
         private void StoreRegistryCombinedBlock(SynchronizationPacket aggregatedTransactionsPacket)
         {
-            _dataAccessService.StoreRegistryCombinedBlock(aggregatedTransactionsPacket.Height, aggregatedTransactionsPacket.ToString());
+            _dataAccessService.StoreRegistryCombinedBlock(aggregatedTransactionsPacket.Payload.Height, aggregatedTransactionsPacket.ToString());
 
-            if ((_lastCombinedBlockDescriptor?.Height ?? 0) < aggregatedTransactionsPacket.Height)
+            if ((_lastCombinedBlockDescriptor?.Height ?? 0) < aggregatedTransactionsPacket.Payload.Height)
             {
 				if(_lastCombinedBlockDescriptor == null)
                 {
 					_lastCombinedBlockDescriptor = new AggregatedRegistrationsTransactionDTO();
 				}
-                _lastCombinedBlockDescriptor.Height = aggregatedTransactionsPacket.Height;
+                _lastCombinedBlockDescriptor.Height = aggregatedTransactionsPacket.Payload.Height;
             }
         }
 
@@ -428,7 +428,7 @@ namespace O10.Gateway.Common.Services
 					{
                         _logger.Error($"Packets were not stored successfully", t.Exception);
 					}
-				}, aggregatedTransactionsPacket.Height, TaskScheduler.Current);
+				}, aggregatedTransactionsPacket.Payload.Height, TaskScheduler.Current);
             }
         }
 
@@ -468,9 +468,9 @@ namespace O10.Gateway.Common.Services
                     {
                         TaskCompletionSource<WitnessPacket> witnessStoreCompletionSource 
 							= _dataAccessService.StoreWitnessPacket(
-                                fullRegistryTransactionsPacket.SyncHeight,
-                                fullRegistryTransactionsPacket.Height,
-                                aggregatedTransactionsPacket.Height,
+                                fullRegistryTransactionsPacket.Payload.SyncHeight,
+                                fullRegistryTransactionsPacket.Payload.Height,
+                                aggregatedTransactionsPacket.Payload.Height,
                                 witness.With<RegisterTransaction>().ReferencedLedgerType,
                                 witness.With<RegisterTransaction>().ReferencedAction,
                                 witness.With<RegisterTransaction>().Parameters.OptionalKey(EvidenceDescriptor.TRANSACTION_HASH, _identityKeyProvider),

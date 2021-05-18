@@ -56,14 +56,10 @@ namespace O10.Core.Identity
             return obj is Key32 pk && Value.Equals32(pk.Value);
         }
 
-        public override bool Equals(IKey other)
-        {
-            if (other == null)
-            {
-                return false;
-            }
+        public override bool Equals(IKey other) => other != null && other.Length == Length && Value.Equals32(other.Value);
 
-            return Value.Equals32(other.Value);
-        }
+        public override bool Equals(byte[] other) => other != null && other.Length == Length && Value.Equals32(other);
+
+        public override bool Equals(Memory<byte> other) => other.Length == Length && Value.Equals32(other);
     }
 }

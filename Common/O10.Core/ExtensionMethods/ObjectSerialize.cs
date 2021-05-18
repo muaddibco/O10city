@@ -7,7 +7,7 @@ namespace O10.Core.ExtensionMethods
 {
     public static class ObjectSerialize
     {
-        public static byte[] Serialize(this object obj)
+        public static byte[]? Serialize(this object obj)
         {
             if (obj == null)
             {

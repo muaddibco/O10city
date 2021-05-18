@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks.Dataflow;
-using O10.Transactions.Core.Enums;
-using O10.Transactions.Core.Interfaces;
 using O10.Core.Logging;
 using O10.Core.Tracking;
 using O10.Transactions.Core.Ledgers;
+using O10.Network.Interfaces;
 
 namespace O10.Network.Handlers
 {
@@ -36,7 +35,7 @@ namespace O10.Network.Handlers
 
         public void PostPacket(IPacketBase packet)
         {
-            _log.Debug(() => $"Posting to processing packet {packet.GetType().Name} [{packet.LedgerType}:{packet.Body?.TransactionType}]");
+            _log.Debug(() => $"Posting to processing packet {packet.GetType().Name} [{packet.LedgerType}:{packet.Payload?.Transaction.TransactionType}]");
 
             _processBlock.Post(packet);
         }
@@ -90,10 +89,10 @@ namespace O10.Network.Handlers
                 {
                     _log.Debug(() => $"Dispatching block {packet.GetType().Name}");
 
-                    foreach (Transactions.Core.Interfaces.IPacketsHandler blocksHandler in _blocksHandlersRegistry.GetBulkInstances((LedgerType)packet.LedgerType))
+                    foreach (ILedgerPacketsHandler handler in _blocksHandlersRegistry.GetBulkInstances(packet.LedgerType))
 					{
-                        _log.Debug(() => $"Dispatching block {packet.GetType().Name} to {blocksHandler.GetType().Name}");
-						blocksHandler.ProcessBlock(packet);
+                        _log.Debug(() => $"Dispatching block {packet.GetType().Name} to {handler.GetType().Name}");
+						handler.ProcessPacket(packet);
 					}
                 }
                 catch (Exception ex)

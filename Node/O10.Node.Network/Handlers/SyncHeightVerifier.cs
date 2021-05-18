@@ -32,9 +32,9 @@ namespace O10.Network.Handlers
                 throw new ArgumentNullException(nameof(packet));
             }
 
-            if (packet.Body is RegistryTransactionBase transaction)
+            if (packet.Payload.Transaction is RegistryTransactionBase transaction)
             {
-                long syncBlockHeight = packet.AsPacket<RegistryPacket>().SyncHeight;
+                long syncBlockHeight = packet.AsPacket<RegistryPacket>().Payload.SyncHeight;
 
                 bool isInSyncRange = _synchronizationContext.LastBlockDescriptor == null 
                     || (_synchronizationContext.LastBlockDescriptor.BlockHeight.Equals(syncBlockHeight) 

@@ -60,7 +60,7 @@ namespace O10.Node.Core.Centralized
 
 			foreach (var witness in registryTransaction.Witnesses)
 			{
-				if(witness.Body is RegisterTransaction transaction && _chainDataServices.Any(c => c.LedgerType == transaction.ReferencedLedgerType))
+				if(witness.Payload.Transaction is RegisterTransaction transaction && _chainDataServices.Any(c => c.LedgerType == transaction.ReferencedLedgerType))
                 {
                     var hashString = transaction.Parameters[RegisterTransaction.REFERENCED_BODY_HASH];
                     var hash = hashString.HexStringToByteArray();
@@ -74,9 +74,9 @@ namespace O10.Node.Core.Centralized
 
 			_registrationPackets.Add(new Tuple<SynchronizationPacket, RegistryPacket>(aggregatedRegistrationsPacket, registrationsPacket));
 
-			if (_lowestCombinedBlockHeight > aggregatedRegistrationsPacket.Height)
+			if (_lowestCombinedBlockHeight > aggregatedRegistrationsPacket.Payload.Height)
 			{
-				_lowestCombinedBlockHeight = aggregatedRegistrationsPacket.Height;
+				_lowestCombinedBlockHeight = aggregatedRegistrationsPacket.Payload.Height;
 			}
         }
 
@@ -90,7 +90,7 @@ namespace O10.Node.Core.Centralized
                         _chainDataServices.First(s => s.LedgerType == t.Result.Value.LedgerType)
                             .AddDataKey(
                                 t.Result.Key, 
-                                new CombinedHashKey(syncPacket.Height, t.Result.Key.HashKey));
+                                new CombinedHashKey(syncPacket.Payload.Height, t.Result.Key.HashKey));
                 }
                 else
                 {

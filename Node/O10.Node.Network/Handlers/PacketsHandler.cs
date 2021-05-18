@@ -2,12 +2,11 @@
 using System.Threading;
 using System.Threading.Tasks;
 using O10.Core.Architecture;
-using O10.Core.ExtensionMethods;
-using O10.Transactions.Core.Interfaces;
 using O10.Core.Logging;
 using System.Collections.Generic;
 using O10.Core.Tracking;
 using O10.Transactions.Core.Ledgers;
+using O10.Network.Interfaces;
 
 namespace O10.Network.Handlers
 {
@@ -15,7 +14,6 @@ namespace O10.Network.Handlers
     internal class PacketsHandler : IPacketsHandler
     {
         private readonly ILogger _log;
-        private readonly BlockingCollection<byte[]> _messagePackets;
         private readonly BlockingCollection<IPacketBase> _packets;
         private readonly PacketHandlingFlow[] _handlingFlows;
         private readonly int _maxDegreeOfParallelism;
@@ -31,7 +29,6 @@ namespace O10.Network.Handlers
                               ILoggerService loggerService)
         {
             _log = loggerService.GetLogger(GetType().Name);
-            _messagePackets = new BlockingCollection<byte[]>();
             _packets = new BlockingCollection<IPacketBase>();
 
             _maxDegreeOfParallelism = 4;

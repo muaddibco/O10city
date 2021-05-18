@@ -1,7 +1,7 @@
-﻿using O10.Transactions.Core.Interfaces;
-using O10.Core.Architecture;
+﻿using O10.Core.Architecture;
 using O10.Core.Logging;
 using O10.Core.Modularity;
+using O10.Network.Interfaces;
 
 namespace O10.Node.Core.Common
 {

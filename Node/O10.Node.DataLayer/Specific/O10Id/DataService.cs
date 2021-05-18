@@ -55,7 +55,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
                 var hash = _defaultHashCalculation.CalculateHash(packet.ToString());
                 var hashKey = IdentityKeyProvider.GetKey(hash);
                 var addCompletionWrapper = new TaskCompletionWrapper<IPacketBase>(packet);
-                var addCompletion = Service.AddTransaction(statePacket.Body.Source, statePacket.Body.TransactionType, statePacket.Height, packet.ToString(), hash);
+                var addCompletion = Service.AddTransaction(statePacket.Payload.Transaction.Source, statePacket.Payload.Transaction.TransactionType, statePacket.Payload.Height, packet.ToString(), hash);
                 addCompletion.Task.ContinueWith((t, o) => 
                 {
                     var w = ((Tuple<TaskCompletionWrapper<IPacketBase>, IKey>)o).Item1;

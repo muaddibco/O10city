@@ -12,12 +12,13 @@ namespace O10.Core.Cryptography
 
         IKey[] PublicKeys { get; }
 
-        bool Verify(TransactionBase transaction, SignatureBase signature);
+        bool Verify<T>(PayloadBase<T> payload, SignatureBase signature) where T: TransactionBase;
 
         void Initialize(params byte[][] secretKeys);
 
-        SignatureBase Sign(TransactionBase transaction, object args = null);
-        byte[] Sign(Memory<byte> msg, object args = null);
-        byte[] Sign(string msg, object args = null);
+        SignatureBase Sign<T>(PayloadBase<T> payload, object? args = null) where T: TransactionBase;
+
+        byte[] Sign(Memory<byte> msg, object? args = null);
+        byte[] Sign(string msg, object? args = null);
     }
 }

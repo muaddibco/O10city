@@ -143,10 +143,10 @@ namespace O10.Client.Common.Communication
 					{
 						if (!string.IsNullOrEmpty(response.ExistingHash))
 						{
-							_logger.Error($"Failed to send transaction {p.State.GetType().Name} because key image {((StealthPacket)p.State).Body.KeyImage} was already witnessed");
+							_logger.Error($"Failed to send transaction {p.State.GetType().Name} because key image {((StealthPacket)p.State).Payload.Transaction.KeyImage} was already witnessed");
 							KeyImageCorruptedNotification keyImageCorrupted = new KeyImageCorruptedNotification
 							{
-								KeyImage = ((StealthPacket)p.State).Body.KeyImage.ToByteArray(),
+								KeyImage = ((StealthPacket)p.State).Payload.Transaction.KeyImage.ToByteArray(),
 								ExistingHash = response.ExistingHash.HexStringToByteArray()
 							};
 							await _propagatorBlockNotifications.SendAsync(keyImageCorrupted).ConfigureAwait(false);
@@ -289,9 +289,14 @@ namespace O10.Client.Common.Communication
 			return res;
 		}
 
-		public async Task<bool> WasRootAttributeValid(byte[] issuer, byte[] commitment, long combinedBlockHeight)
+		public async Task<bool> WasRootAttributeValid(IKey issuer, Memory<byte> commitment, long combinedBlockHeight)
 		{
-			Url url = _gatewayUri.AppendPathSegments("api", "synchronization", "WasRootAttributeValid", issuer.ToHexString(), commitment.ToHexString(), combinedBlockHeight);
+            if (issuer is null)
+            {
+                throw new ArgumentNullException(nameof(issuer));
+            }
+
+            Url url = _gatewayUri.AppendPathSegments("api", "synchronization", "WasRootAttributeValid", issuer.ToString(), commitment.ToHexString(), combinedBlockHeight);
 			bool res = false;
 			await _restClientService.Request(url).GetJsonAsync<bool>()
 				.ContinueWith(t =>
@@ -393,9 +398,9 @@ namespace O10.Client.Common.Communication
 			return hashString?.HexStringToByteArray();
 		}
 
-        public async Task<bool> IsKeyImageCompromised(byte[] keyImage)
+        public async Task<bool> IsKeyImageCompromised(IKey keyImage)
         {
-			Url url = _gatewayUri.AppendPathSegments("api", "synchronization", "IsKeyImageCompomised").SetQueryParam("keyImage", keyImage.ToHexString());
+			Url url = _gatewayUri.AppendPathSegments("api", "synchronization", "IsKeyImageCompomised").SetQueryParam("keyImage", keyImage);
 
 			string res = await _restClientService.Request(url).GetStringAsync().ConfigureAwait(false);
 

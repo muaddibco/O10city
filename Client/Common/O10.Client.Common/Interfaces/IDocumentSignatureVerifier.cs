@@ -7,6 +7,6 @@ namespace O10.Client.Common.Interfaces
 	[ServiceContract]
 	public interface IDocumentSignatureVerifier
 	{
-		Task<DocumentSignatureVerification> Verify(byte[] documentCreator, byte[] documentHash, ulong documentRecordHeight, ulong signatureRecordBlockHeight);
+		Task<DocumentSignatureVerification> Verify(byte[] documentCreator, byte[] documentHash, byte[] documentRecordTransactionHash, byte[] signatureTransactionHash);
 	}
 }

@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using O10.Transactions.Core.Parsers;
-using O10.Transactions.Core.Serializers;
 using O10.Client.Common.Interfaces;
 using O10.Core;
 using O10.Core.Cryptography;
