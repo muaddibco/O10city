@@ -1,43 +1,73 @@
 ﻿using O10.Client.Common.Interfaces;
+using O10.Core.Architecture;
+using O10.Core.Cryptography;
+using O10.Core.Logging;
+using O10.Core.Models;
+using O10.Crypto.Models;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Ledgers;
+using O10.Transactions.Core.Ledgers.O10State;
+using O10.Transactions.Core.Ledgers.O10State.Transactions;
 using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
 namespace O10.Client.Common.Communication.LedgerWriters
 {
-    public class O10StateLedgerWriter : ILedgerWriter
+    [RegisterExtension(typeof(ILedgerWriter), Lifetime = LifetimeManagement.Scoped)]
+    public class O10StateLedgerWriter : LedgerWriterBase
     {
+        private readonly IPropagatorBlock<TaskCompletionWrapper<TransactionBase>, DependingTaskCompletionWrapper<IPacketBase, TransactionBase>> _pipeIn;
+        private readonly IStateClientCryptoService _clientCryptoService;
+        private readonly ISigningService _signingService;
         private readonly IGatewayService _gatewayService;
-        private readonly ITargetBlock<IPacketBase> _pipe;
-        private long _accountId;
+        private long _lastHeight;
 
-        public O10StateLedgerWriter(IGatewayService gatewayService)
+        public O10StateLedgerWriter(IStateClientCryptoService clientCryptoService,
+                                    ISigningService signingService,
+                                    IGatewayService gatewayService,
+                                    ILoggerService loggerService)
+            : base(loggerService)
         {
+            _clientCryptoService = clientCryptoService;
+            _signingService = signingService;
             _gatewayService = gatewayService;
-            _pipe = new ActionBlock<IPacketBase>(p => 
+
+            _pipeIn = new TransformBlock<TaskCompletionWrapper<TransactionBase>, DependingTaskCompletionWrapper<IPacketBase, TransactionBase>>(t => ProducePacket(t));
+            _pipeIn.LinkTo(_gatewayService.PipeInTransactions);
+        }
+
+        // TODO: make is configurable!
+        public override LedgerType LedgerType => LedgerType.O10State;
+
+        public override ITargetBlock<TaskCompletionWrapper<TransactionBase>> PipeIn => _pipeIn;
+
+        public override async Task Initialize(long accountId)
+        {
+            long lastBlockHeight = (await _gatewayService.GetLastPacketInfo(_clientCryptoService.GetPublicKey()).ConfigureAwait(false)).Height;
+            _lastHeight = lastBlockHeight + 1;
+
+            await base.Initialize(accountId).ConfigureAwait(false);
+        }
+
+        private DependingTaskCompletionWrapper<IPacketBase, TransactionBase> ProducePacket(TaskCompletionWrapper<TransactionBase> wrapper)
+        {
+            if (!(wrapper.State is O10StateTransactionBase o10StateTransaction))
             {
-                _gatewayService.PipeInTransactions.Post(p);
-            });
-        }
+                throw new ArgumentOutOfRangeException(nameof(wrapper));
+            }
 
-        public LedgerType LedgerType => LedgerType.O10State;
+            O10StatePayload payload = new O10StatePayload(o10StateTransaction, _lastHeight++);
 
-        public ISourceBlock<T> GetSourcePipe<T>(string name = null)
-        {
-            throw new NotImplementedException();
-        }
+            var signature = _signingService.Sign(payload) as SingleSourceSignature;
 
-        public ITargetBlock<T> GetTargetPipe<T>(string name = null)
-        {
-            throw new NotImplementedException();
-        }
+            var packet = new O10StatePacket()
+            {
+                Payload = payload,
+                Signature = signature
+            };
 
-        public void Initialize(long accountId)
-        {
-            _accountId = accountId;
+            return new DependingTaskCompletionWrapper<IPacketBase, TransactionBase>(packet, wrapper);
         }
     }
 }

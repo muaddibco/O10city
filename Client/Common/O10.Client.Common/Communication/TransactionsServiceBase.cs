@@ -15,6 +15,7 @@ using O10.Core.Serialization;
 using O10.Core.Notifications;
 using O10.Transactions.Core.DTOs;
 using O10.Transactions.Core.Ledgers;
+using O10.Crypto.Models;
 
 namespace O10.Client.Common.Communication
 {
@@ -24,7 +25,7 @@ namespace O10.Client.Common.Communication
 		protected readonly IHashCalculation _hashCalculation;
 		protected readonly IHashCalculation _proofOfWorkCalculation;
 		protected readonly IIdentityKeyProvider _identityKeyProvider;
-		private readonly IPropagatorBlock<TaskCompletionWrapper<PacketBase>, TaskCompletionWrapper<PacketBase>> _pipeOutTransactions;
+		private readonly IPropagatorBlock<TaskCompletionWrapper<TransactionBase>, TaskCompletionWrapper<TransactionBase>> _pipeOutTransactions;
 		protected ISigningService _signingService;
 		protected readonly List<IObserver<NotificationBase>> _observers;
 		protected readonly ILogger _logger;
@@ -41,19 +42,19 @@ namespace O10.Client.Common.Communication
 			_proofOfWorkCalculation = hashCalculationsRepository.Create(Globals.POW_TYPE);
 			_identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
 			_observers = new List<IObserver<NotificationBase>>();
-			_pipeOutTransactions = new TransformBlock<TaskCompletionWrapper<PacketBase>, TaskCompletionWrapper<PacketBase>>(w => w);
+			_pipeOutTransactions = new TransformBlock<TaskCompletionWrapper<TransactionBase>, TaskCompletionWrapper<TransactionBase>>(w => w);
 			_signingService = signingService;
 			_gatewayService = gatewayService;
 			_logger = loggerService.GetLogger(GetType().Name);
 		}
 
-		protected TaskCompletionSource<NotificationBase> PropagateTransaction(PacketBase packet)
+		protected TaskCompletionSource<NotificationBase> PropagateTransaction(TransactionBase transaction)
         {
-			var packetWrapper = new TaskCompletionWrapper<PacketBase>(packet);
+			var transactionWrapper = new TaskCompletionWrapper<TransactionBase>(transaction);
 
-			_pipeOutTransactions.SendAsync(packetWrapper);
+			_pipeOutTransactions.SendAsync(transactionWrapper);
 			
-			return packetWrapper.TaskCompletion;
+			return transactionWrapper.TaskCompletion;
 		}
 
 		protected virtual void FillAndSign(PacketBase packet, object signingArgs = null)

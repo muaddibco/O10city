@@ -9,6 +9,18 @@ namespace O10.Core.Models
         public DependingTaskCompletionWrapper(T state, TaskCompletionWrapper<TDepend> taskCompletionDependant) : base(state)
         {
             DependingTaskCompletion = taskCompletionDependant;
+
+            TaskCompletion.Task.ContinueWith(t => 
+            { 
+                if(t.Exception != null)
+                {
+                    DependingTaskCompletion.TaskCompletion.SetException(t.Exception.InnerException);
+                }
+                else
+                {
+                    DependingTaskCompletion.TaskCompletion.SetResult(t.Result);
+                }
+            }, TaskScheduler.Current);
         }
 
         public TaskCompletionWrapper<TDepend> DependingTaskCompletion { get; }

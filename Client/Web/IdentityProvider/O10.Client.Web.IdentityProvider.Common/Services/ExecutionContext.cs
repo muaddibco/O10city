@@ -5,10 +5,10 @@ using O10.Client.Web.Common.Services;
 using O10.Core.Architecture;
 using O10.Core.Logging;
 using Microsoft.Extensions.DependencyInjection;
-using O10.Core.Communication;
 using O10.Core.Models;
-using O10.Client.Common.Communication;
-using O10.Transactions.Core.Ledgers;
+using System.Threading.Tasks;
+using O10.Transactions.Core.Enums;
+using O10.Crypto.Models;
 
 namespace O10.Server.IdentityProvider.Common.Services
 {
@@ -17,17 +17,17 @@ namespace O10.Server.IdentityProvider.Common.Services
 	{
 		private Persistency _persistency;
 		private readonly IServiceProvider _serviceProvider;
-		private readonly IGatewayService _gatewayService;
+        private readonly ILedgerWriterRepository _ledgerWriterRepository;
 		private readonly ILogger _logger;
 
-		public ExecutionContext(IServiceProvider serviceProvider, IGatewayService gatewayService, ILoggerService loggerService)
+		public ExecutionContext(IServiceProvider serviceProvider, ILedgerWriterRepository ledgerWriterRepository, ILoggerService loggerService)
 		{
 			_serviceProvider = serviceProvider;
-			_gatewayService = gatewayService;
+            _ledgerWriterRepository = ledgerWriterRepository;
 			_logger = loggerService.GetLogger(nameof(ExecutionContext));
 		}
 
-		public void Initialize(long accountId, byte[] secretKey)
+		public async Task Initialize(long accountId, byte[] secretKey)
 		{
 			_logger.Info($"{nameof(Initialize)} for account with id {accountId}");
 
@@ -41,8 +41,10 @@ namespace O10.Server.IdentityProvider.Common.Services
 
 				clientCryptoService.Initialize(secretKey);
 
-				transactionsService.Initialize(accountId);
-				transactionsService.GetSourcePipe<TaskCompletionWrapper<PacketBase>>().LinkTo(_gatewayService.PipeInTransactions);
+				await transactionsService.Initialize(accountId).ConfigureAwait(false);
+				var ledgerWriter = _ledgerWriterRepository.GetInstance(LedgerType.O10State);
+				await ledgerWriter.Initialize(accountId).ConfigureAwait(false);
+				transactionsService.GetSourcePipe<TaskCompletionWrapper<TransactionBase>>().LinkTo(ledgerWriter.PipeIn);
 
 			}
 			catch (Exception ex)
