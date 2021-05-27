@@ -264,7 +264,7 @@ namespace O10.Client.Web.Saml.Common.Services
 		{
 			Name = name;
 			_secretViewKey = secretViewKey;
-			_publicViewKey = ConfidentialAssetsHelper.GetPublicKey(_secretViewKey);
+			_publicViewKey = CryptoHelper.GetPublicKey(_secretViewKey);
 			_publicSpendKey = publicSpendKey;
 
 			_publicSpendKeyString = _publicSpendKey.ToHexString();

@@ -37,7 +37,7 @@ namespace O10.Client.Common.Tests
             : base(coreFixture, testOutputHelper)
         {
             _configurationService = Substitute.For<IConfigurationService>();
-            _issuer = ConfidentialAssetsHelper.GetRandomSeed().ToHexString();
+            _issuer = CryptoHelper.GetRandomSeed().ToHexString();
             _identityKeyProvidersRegistry = Substitute.For<IIdentityKeyProvidersRegistry>();
             _identityKeyProvidersRegistry.GetInstance().ReturnsForAnyArgs(new DefaultKeyProvider());
             _gatewayService = Substitute.For<IGatewayService>();
@@ -74,7 +74,7 @@ namespace O10.Client.Common.Tests
 
                 for (int i = 0; i < ringSize; i++)
                 {
-                    issuanceCommitments[i] = ConfidentialAssetsHelper.GetRandomSeed();
+                    issuanceCommitments[i] = CryptoHelper.GetRandomSeed();
                 }
 
                 return issuanceCommitments;
@@ -89,16 +89,16 @@ namespace O10.Client.Common.Tests
 
             await boundedAssetsService.Initialize("pwd").ConfigureAwait(false);
 
-            byte[] issuer = ConfidentialAssetsHelper.GetRandomSeed();
+            byte[] issuer = CryptoHelper.GetRandomSeed();
 
             string rootAttributeValue = "rootAttribute";
             byte[] rootAttributeAssetId = _assetsService.GenerateAssetId(1, rootAttributeValue);
-            byte[] issuanceBf = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] issuanceCommitment = ConfidentialAssetsHelper.GetAssetCommitment(issuanceBf, rootAttributeAssetId);
+            byte[] issuanceBf = CryptoHelper.GetRandomSeed();
+            byte[] issuanceCommitment = CryptoHelper.GetAssetCommitment(issuanceBf, rootAttributeAssetId);
 
             string associatedAttributeValue = "associatedAttribute";
             byte[] associatedAttributeAssetId = _assetsService.GenerateAssetId(2, associatedAttributeValue);
-            byte[] bf = ConfidentialAssetsHelper.GetRandomSeed();
+            byte[] bf = CryptoHelper.GetRandomSeed();
 
             UserRootAttribute userRootAttribute = new UserRootAttribute
             {
@@ -123,15 +123,15 @@ namespace O10.Client.Common.Tests
 
             await boundedAssetsService.Initialize("pwd").ConfigureAwait(false);
 
-            IKey issuer = _identityKeyProvidersRegistry.GetInstance().GetKey(ConfidentialAssetsHelper.GetRandomSeed());
+            IKey issuer = _identityKeyProvidersRegistry.GetInstance().GetKey(CryptoHelper.GetRandomSeed());
 
 
             string rootAttributeValue = "rootAttribute";
 
             var rootAssetInput = new BlindingAssetInput(_assetsService.GenerateAssetId(1, rootAttributeValue));
 
-            byte[] issuanceBf = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] issuanceCommitment = ConfidentialAssetsHelper.GetAssetCommitment(issuanceBf, rootAssetInput.AssetId);
+            byte[] issuanceBf = CryptoHelper.GetRandomSeed();
+            byte[] issuanceCommitment = CryptoHelper.GetAssetCommitment(issuanceBf, rootAssetInput.AssetId);
 
             UserRootAttribute userRootAttribute = new UserRootAttribute
             {
@@ -188,15 +188,15 @@ namespace O10.Client.Common.Tests
 
             await boundedAssetsService.Initialize("pwd").ConfigureAwait(false);
 
-            IKey issuer1 = _identityKeyProvidersRegistry.GetInstance().GetKey(ConfidentialAssetsHelper.GetRandomSeed());
-            IKey issuer2 = _identityKeyProvidersRegistry.GetInstance().GetKey(ConfidentialAssetsHelper.GetRandomSeed());
+            IKey issuer1 = _identityKeyProvidersRegistry.GetInstance().GetKey(CryptoHelper.GetRandomSeed());
+            IKey issuer2 = _identityKeyProvidersRegistry.GetInstance().GetKey(CryptoHelper.GetRandomSeed());
 
             string rootAttributeParentValue = "rootAttributParent";
 
             var rootAssetInput = new BlindingAssetInput(_assetsService.GenerateAssetId(1, rootAttributeParentValue));
 
-            byte[] issuanceBf = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] issuanceCommitment = ConfidentialAssetsHelper.GetAssetCommitment(issuanceBf, rootAssetInput.AssetId);
+            byte[] issuanceBf = CryptoHelper.GetRandomSeed();
+            byte[] issuanceCommitment = CryptoHelper.GetAssetCommitment(issuanceBf, rootAssetInput.AssetId);
 
             UserRootAttribute userRootAttribute = new UserRootAttribute
             {

@@ -90,8 +90,8 @@ namespace O10.Client.Common.Identities
                 }
 
                 byte[] secretKey = _externalDataAccessService.GetBiometricSecretKey();
-                _expandedSecretKey = ConfidentialAssetsHelper.GetExpandedPrivateKey(secretKey);
-                _publicKey = ConfidentialAssetsHelper.GetPublicKeyFromSeed(secretKey);
+                _expandedSecretKey = CryptoHelper.GetExpandedPrivateKey(secretKey);
+                _publicKey = CryptoHelper.GetPublicKeyFromSeed(secretKey);
             }
 #pragma warning disable CS0168 // The variable 'ex' is declared but never used
             catch (Exception ex)
@@ -417,7 +417,7 @@ namespace O10.Client.Common.Identities
 
         public Tuple<byte[], byte[]> Sign(byte[] msg)
         {
-            byte[] signature = ConfidentialAssetsHelper.Sign(msg, _expandedSecretKey);
+            byte[] signature = CryptoHelper.Sign(msg, _expandedSecretKey);
 
             return new Tuple<byte[], byte[]>(_publicKey, signature);
         }

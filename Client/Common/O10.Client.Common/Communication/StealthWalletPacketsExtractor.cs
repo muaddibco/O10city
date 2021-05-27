@@ -65,7 +65,7 @@ namespace O10.Client.Common.Communication
 
                 _logger.LogIfDebug(() => $"[{AccountId}]: Checking KeyImage {nextKeyImage?.ToHexString() ?? "NULL"} compromised");
 
-                if (!nextKeyImage.Equals32(_nextKeyImage) && (packetWitness.KeyImage?.Equals32(nextKeyImage) ?? false))
+                if (!nextKeyImage.Equals32(_nextKeyImage) && (packetWitness.KeyImage?.Equals(nextKeyImage) ?? false))
                 {
                     _logger.LogIfDebug(() => $"[{AccountId}]: KeyImage {nextKeyImage?.ToHexString() ?? "NULL"} is compromised");
                     _propagatorBlockNotifications.SendAsync(new CompromisedKeyImage { KeyImage = packetWitness.KeyImage, TransactionKey = packetWitness.TransactionKey, DestinationKey = packetWitness.DestinationKey, Target = packetWitness.DestinationKey2 });

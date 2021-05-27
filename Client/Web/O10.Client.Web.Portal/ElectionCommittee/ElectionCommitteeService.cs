@@ -77,7 +77,7 @@ namespace O10.Client.Web.Portal.ElectionCommittee
 
         public Candidate AddCandidateToPoll(long pollId, string name)
         {
-            IKey assetId = _identityKeyProvider.GetKey(ConfidentialAssetsHelper.GetRandomSeed());
+            IKey assetId = _identityKeyProvider.GetKey(CryptoHelper.GetRandomSeed());
 
             var id = _dataAccessService.AddCandidateToPoll(pollId, name, assetId.ToString());
 
@@ -232,7 +232,7 @@ namespace O10.Client.Web.Portal.ElectionCommittee
             EcPollRecord poll = _dataAccessService.GetEcPoll(pollId);
             byte[][] assetIds = poll.Candidates.Select(c => c.AssetId.HexStringToByteArray()).ToArray();
 
-            bool res1 = ConfidentialAssetsHelper.VerifySurjectionProof(request.CandidateCommitmentProofs, request.Commitment);
+            bool res1 = CryptoHelper.VerifySurjectionProof(request.CandidateCommitmentProofs, request.Commitment);
             if(!res1)
             {
                 throw new ArgumentException("Verification to candidate commitments failed");
@@ -240,15 +240,15 @@ namespace O10.Client.Web.Portal.ElectionCommittee
 
             foreach (var candidateCommitment in request.CandidateCommitments)
             {
-                bool res2 = ConfidentialAssetsHelper.VerifyIssuanceSurjectionProof(candidateCommitment.IssuanceProof, candidateCommitment.Commitment, assetIds);
+                bool res2 = CryptoHelper.VerifyIssuanceSurjectionProof(candidateCommitment.IssuanceProof, candidateCommitment.Commitment, assetIds);
                 if(!res2)
                 {
                     throw new ArgumentException($"Verification of candidate's {candidateCommitment.Commitment.ToHexString()} issuance proof failed");
                 }
             }
 
-            byte[] ecBlindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] ecCommitment = ConfidentialAssetsHelper.BlindAssetCommitment(request.Commitment, ecBlindingFactor);
+            byte[] ecBlindingFactor = CryptoHelper.GetRandomSeed();
+            byte[] ecCommitment = CryptoHelper.BlindAssetCommitment(request.Commitment, ecBlindingFactor);
 
             _dataAccessService.AddPollSelection(pollId, ecCommitment.ToHexString(), ecBlindingFactor.ToHexString());
 
@@ -273,8 +273,8 @@ namespace O10.Client.Web.Portal.ElectionCommittee
             string ecCommitment = proofRequest.EcCommitment.ToHexString();
             var pollSelection = _dataAccessService.GetPollSelection(pollId, ecCommitment);
             byte[] ecBf = pollSelection.EcBlindingFactor.HexStringToByteArray();
-            byte[] bf = ConfidentialAssetsHelper.SumScalars(ecBf, proofRequest.PartialBlindingFactor);
-            var sp = ConfidentialAssetsHelper.CreateSurjectionProof(proofRequest.EcCommitment, proofRequest.CandidateCommitments, proofRequest.Index, bf);
+            byte[] bf = CryptoHelper.SumScalars(ecBf, proofRequest.PartialBlindingFactor);
+            var sp = CryptoHelper.CreateSurjectionProof(proofRequest.EcCommitment, proofRequest.CandidateCommitments, proofRequest.Index, bf);
 
             return sp;
         }
@@ -320,7 +320,7 @@ namespace O10.Client.Web.Portal.ElectionCommittee
             foreach (var candidate in poll.Candidates)
             {
                 byte[] assetId = candidate.AssetId.HexStringToByteArray();
-                byte[] commitment = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(assetId);
+                byte[] commitment = CryptoHelper.GetNonblindedAssetCommitment(assetId);
                 votes.Add(commitment, new PollResult
                 { 
                     Candidate = _translatorsRepository.GetInstance<EcCandidateRecord, Candidate>().Translate(candidate),
@@ -333,9 +333,9 @@ namespace O10.Client.Web.Portal.ElectionCommittee
                 byte[] ecCommitment = vote.EcCommitment.HexStringToByteArray();
                 byte[] ecBf = vote.EcBlindingFactor.HexStringToByteArray();
                 byte[] voterBf = vote.VoterBlindingFactor.HexStringToByteArray();
-                byte[] bf = ConfidentialAssetsHelper.SumScalars(ecBf, voterBf);
-                byte[] blindingPoint = ConfidentialAssetsHelper.GetPublicKey(bf);
-                byte[] commitment = ConfidentialAssetsHelper.SubCommitments(ecCommitment, blindingPoint);
+                byte[] bf = CryptoHelper.SumScalars(ecBf, voterBf);
+                byte[] blindingPoint = CryptoHelper.GetPublicKey(bf);
+                byte[] commitment = CryptoHelper.SubCommitments(ecCommitment, blindingPoint);
 
                 if(votes.ContainsKey(commitment))
                 {

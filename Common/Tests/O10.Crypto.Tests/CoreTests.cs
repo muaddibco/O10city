@@ -25,11 +25,11 @@ namespace O10.Crypto.Tests
 		[Fact]
 		public void TestDifferentHash2Point()
 		{
-			byte[] sk = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] pk = ConfidentialAssetsHelper.GetPublicKey(sk);
-			GroupElementP3 hash2P_P3 = ConfidentialAssetsHelper.Hash2Point(pk);
+			byte[] sk = CryptoHelper.GetRandomSeed();
+			byte[] pk = CryptoHelper.GetPublicKey(sk);
+            GroupElementP3 hash2P_P3 = CryptoHelper.Hash2Point(pk);
 
-			byte[] keyImage1 = ConfidentialAssetsHelper.GenerateKeyImage(sk);
+			byte[] keyImage1 = CryptoHelper.GenerateKeyImage(sk);
 
 			GroupOperations.ge_scalarmult(out GroupElementP2 keyImage2_P2, sk, ref hash2P_P3);
 			byte[] keyImage2 = new byte[32];
@@ -41,15 +41,15 @@ namespace O10.Crypto.Tests
 		[Fact]
 		public void TestMLSAG_Sign()
 		{
-			byte[] sk = ConfidentialAssetsHelper.GetRandomSeed();
-			GroupElementP3 pk_P3 = ConfidentialAssetsHelper.GetPublicKeyP3(sk);
+			byte[] sk = CryptoHelper.GetRandomSeed();
+            GroupElementP3 pk_P3 = CryptoHelper.GetPublicKeyP3(sk);
 
-			byte[] alpha = ConfidentialAssetsHelper.GetRandomSeed();
+			byte[] alpha = CryptoHelper.GetRandomSeed();
 			GroupOperations.ge_scalarmult_base(out GroupElementP3 A, alpha, 0);
 			byte[] A_bytes = new byte[32];
 			GroupOperations.ge_p3_tobytes(A_bytes, 0, ref A);
 
-			byte[] c = ConfidentialAssetsHelper.GetRandomSeed();
+			byte[] c = CryptoHelper.GetRandomSeed();
 			
 			byte[] s = new byte[32];
 
@@ -65,19 +65,19 @@ namespace O10.Crypto.Tests
 		[Fact]
 		public void TestMLSAG_SignatureIsCorrect()
 		{
-			byte[] msg = ConfidentialAssetsHelper.GetRandomSeed();
+			byte[] msg = CryptoHelper.GetRandomSeed();
 
-			byte[] myPrevSeed = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] aliceSeed = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] bobSeed = ConfidentialAssetsHelper.GetRandomSeed();
+			byte[] myPrevSeed = CryptoHelper.GetRandomSeed();
+			byte[] aliceSeed = CryptoHelper.GetRandomSeed();
+			byte[] bobSeed = CryptoHelper.GetRandomSeed();
 
-			byte[] myPrevPublicKey = ConfidentialAssetsHelper.GetPublicKey(myPrevSeed);
-			byte[] alicePublicKey = ConfidentialAssetsHelper.GetPublicKey(aliceSeed);
-			byte[] bobPublicKey = ConfidentialAssetsHelper.GetPublicKey(bobSeed);
+			byte[] myPrevPublicKey = CryptoHelper.GetPublicKey(myPrevSeed);
+			byte[] alicePublicKey = CryptoHelper.GetPublicKey(aliceSeed);
+			byte[] bobPublicKey = CryptoHelper.GetPublicKey(bobSeed);
 
-			byte[] myPrevBlindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] aliceBlindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] bobBlindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
+			byte[] myPrevBlindingFactor = CryptoHelper.GetRandomSeed();
+			byte[] aliceBlindingFactor = CryptoHelper.GetRandomSeed();
+			byte[] bobBlindingFactor = CryptoHelper.GetRandomSeed();
 
 
 			IHash hash = HashFactory.Crypto.SHA3.CreateKeccak256();
@@ -86,9 +86,9 @@ namespace O10.Crypto.Tests
 			byte[] aliceAsset = hash.ComputeBytes(Encoding.UTF8.GetBytes("assetAlice")).GetBytes();
 			byte[] bobAsset = hash.ComputeBytes(Encoding.UTF8.GetBytes("assetBob")).GetBytes();
 
-			byte[] myPrevCommitment = ConfidentialAssetsHelper.GetAssetCommitment(myPrevBlindingFactor, myAsset);
-			byte[] aliceCommitment = ConfidentialAssetsHelper.GetAssetCommitment(aliceBlindingFactor, aliceAsset);
-			byte[] bobCommitment = ConfidentialAssetsHelper.GetAssetCommitment(bobBlindingFactor, bobAsset);
+			byte[] myPrevCommitment = CryptoHelper.GetAssetCommitment(myPrevBlindingFactor, myAsset);
+			byte[] aliceCommitment = CryptoHelper.GetAssetCommitment(aliceBlindingFactor, aliceAsset);
+			byte[] bobCommitment = CryptoHelper.GetAssetCommitment(bobBlindingFactor, bobAsset);
 
 			CtTuple[][] pubs = new CtTuple[][]
 			{
@@ -97,18 +97,18 @@ namespace O10.Crypto.Tests
 				new CtTuple[] { new CtTuple { Dest = bobPublicKey, Mask = bobCommitment} },
 			};
 
-			byte[] myNewBlindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] myNewCommitment = ConfidentialAssetsHelper.GetAssetCommitment(myNewBlindingFactor, myAsset);
+			byte[] myNewBlindingFactor = CryptoHelper.GetRandomSeed();
+			byte[] myNewCommitment = CryptoHelper.GetAssetCommitment(myNewBlindingFactor, myAsset);
 
-			byte[] newSk = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] newPk = ConfidentialAssetsHelper.GetPublicKey(newSk);
+			byte[] newSk = CryptoHelper.GetRandomSeed();
+			byte[] newPk = CryptoHelper.GetPublicKey(newSk);
 
 			CtTuple[] inSk = new CtTuple[] { new CtTuple { Dest = myPrevSeed, Mask = myPrevBlindingFactor} };
 			CtTuple[] outSk = new CtTuple[] { new CtTuple { Dest = newSk, Mask = myNewBlindingFactor } };
 			CtTuple[] outPk = new CtTuple[] { new CtTuple { Dest = newPk, Mask = myNewCommitment } };
 
-			MgSig mgSig = ConfidentialAssetsHelper.ProveRctMG(msg, pubs, inSk, outSk, outPk, 0);
-            bool res = ConfidentialAssetsHelper.VerRctMG(mgSig, pubs, outPk, msg);
+            MgSig mgSig = CryptoHelper.ProveRctMG(msg, pubs, inSk, outSk, outPk, 0);
+            bool res = CryptoHelper.VerRctMG(mgSig, pubs, outPk, msg);
 
 			Assert.True(res);
 		}
@@ -116,19 +116,19 @@ namespace O10.Crypto.Tests
 		[Fact]
 		public void TestMLSAG_Mixed_SignatureIsIncorrect()
 		{
-			byte[] msg = ConfidentialAssetsHelper.GetRandomSeed();
+			byte[] msg = CryptoHelper.GetRandomSeed();
 
-			byte[] myPrevSeed = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] aliceSeed = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] bobSeed = ConfidentialAssetsHelper.GetRandomSeed();
+			byte[] myPrevSeed = CryptoHelper.GetRandomSeed();
+			byte[] aliceSeed = CryptoHelper.GetRandomSeed();
+			byte[] bobSeed = CryptoHelper.GetRandomSeed();
 
-			byte[] myPrevPublicKey = ConfidentialAssetsHelper.GetPublicKey(myPrevSeed);
-			byte[] alicePublicKey = ConfidentialAssetsHelper.GetPublicKey(aliceSeed);
-			byte[] bobPublicKey = ConfidentialAssetsHelper.GetPublicKey(bobSeed);
+			byte[] myPrevPublicKey = CryptoHelper.GetPublicKey(myPrevSeed);
+			byte[] alicePublicKey = CryptoHelper.GetPublicKey(aliceSeed);
+			byte[] bobPublicKey = CryptoHelper.GetPublicKey(bobSeed);
 
-			byte[] myPrevBlindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] aliceBlindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] bobBlindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
+			byte[] myPrevBlindingFactor = CryptoHelper.GetRandomSeed();
+			byte[] aliceBlindingFactor = CryptoHelper.GetRandomSeed();
+			byte[] bobBlindingFactor = CryptoHelper.GetRandomSeed();
 
 
 			IHash hash = HashFactory.Crypto.SHA3.CreateKeccak256();
@@ -137,9 +137,9 @@ namespace O10.Crypto.Tests
 			byte[] aliceAsset = hash.ComputeBytes(Encoding.UTF8.GetBytes("assetAlice")).GetBytes();
 			byte[] bobAsset = hash.ComputeBytes(Encoding.UTF8.GetBytes("assetBob")).GetBytes();
 
-			byte[] myPrevCommitment = ConfidentialAssetsHelper.GetAssetCommitment(myPrevBlindingFactor, myAsset);
-			byte[] aliceCommitment = ConfidentialAssetsHelper.GetAssetCommitment(aliceBlindingFactor, aliceAsset);
-			byte[] bobCommitment = ConfidentialAssetsHelper.GetAssetCommitment(bobBlindingFactor, bobAsset);
+			byte[] myPrevCommitment = CryptoHelper.GetAssetCommitment(myPrevBlindingFactor, myAsset);
+			byte[] aliceCommitment = CryptoHelper.GetAssetCommitment(aliceBlindingFactor, aliceAsset);
+			byte[] bobCommitment = CryptoHelper.GetAssetCommitment(bobBlindingFactor, bobAsset);
 
 			CtTuple[][] pubs = new CtTuple[][]
 			{
@@ -148,18 +148,18 @@ namespace O10.Crypto.Tests
 				new CtTuple[] { new CtTuple { Dest = bobPublicKey, Mask = bobCommitment} },
 			};
 
-			byte[] myNewBlindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] myNewCommitment = ConfidentialAssetsHelper.GetAssetCommitment(myNewBlindingFactor, aliceAsset);
+			byte[] myNewBlindingFactor = CryptoHelper.GetRandomSeed();
+			byte[] myNewCommitment = CryptoHelper.GetAssetCommitment(myNewBlindingFactor, aliceAsset);
 
-			byte[] newSk = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] newPk = ConfidentialAssetsHelper.GetPublicKey(newSk);
+			byte[] newSk = CryptoHelper.GetRandomSeed();
+			byte[] newPk = CryptoHelper.GetPublicKey(newSk);
 
 			CtTuple[] inSk = new CtTuple[] { new CtTuple { Dest = myPrevSeed, Mask = myPrevBlindingFactor } };
 			CtTuple[] outSk = new CtTuple[] { new CtTuple { Dest = newSk, Mask = myNewBlindingFactor } };
 			CtTuple[] outPk = new CtTuple[] { new CtTuple { Dest = newPk, Mask = myNewCommitment } };
 
-			MgSig mgSig = ConfidentialAssetsHelper.ProveRctMG(msg, pubs, inSk, outSk, outPk, 0);
-			bool res = ConfidentialAssetsHelper.VerRctMG(mgSig, pubs, outPk, msg);
+            MgSig mgSig = CryptoHelper.ProveRctMG(msg, pubs, inSk, outSk, outPk, 0);
+			bool res = CryptoHelper.VerRctMG(mgSig, pubs, outPk, msg);
 
 			Assert.False(res);
 		}
@@ -172,7 +172,7 @@ namespace O10.Crypto.Tests
 
 			for (int i = 0; i < count; i++)
 			{
-				ConfidentialAssetsHelper.PasswordHash("Password");
+                CryptoHelper.PasswordHash("Password");
 			}
 
 			stopwatch.Stop();
@@ -272,19 +272,19 @@ namespace O10.Crypto.Tests
 		[Fact]
 		public void MultipleAssetBasedRegistrationTest()
         {
-			byte[] assetId1 = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] assetId2 = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] bfReg = ConfidentialAssetsHelper.GetRandomSeed();
+			byte[] assetId1 = CryptoHelper.GetRandomSeed();
+			byte[] assetId2 = CryptoHelper.GetRandomSeed();
+			byte[] bfReg = CryptoHelper.GetRandomSeed();
 
-			byte[] commitmentReg = ConfidentialAssetsHelper.GetAssetCommitment(bfReg, assetId1, assetId2);
+			byte[] commitmentReg = CryptoHelper.GetAssetCommitment(bfReg, assetId1, assetId2);
 
-			byte[] bfVer = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] bfDiff = ConfidentialAssetsHelper.GetDifferentialBlindingFactor(bfVer, bfReg);
-			byte[] commitmentVer = ConfidentialAssetsHelper.GetAssetCommitment(bfVer, assetId1, assetId2);
+			byte[] bfVer = CryptoHelper.GetRandomSeed();
+			byte[] bfDiff = CryptoHelper.GetDifferentialBlindingFactor(bfVer, bfReg);
+			byte[] commitmentVer = CryptoHelper.GetAssetCommitment(bfVer, assetId1, assetId2);
 
-			SurjectionProof surjectionProof = ConfidentialAssetsHelper.CreateSurjectionProof(commitmentVer, new byte[][] { commitmentReg }, 0, bfDiff);
+            SurjectionProof surjectionProof = CryptoHelper.CreateSurjectionProof(commitmentVer, new byte[][] { commitmentReg }, 0, bfDiff);
 
-			bool res = ConfidentialAssetsHelper.VerifySurjectionProof(surjectionProof, commitmentVer);
+			bool res = CryptoHelper.VerifySurjectionProof(surjectionProof, commitmentVer);
 
 			Assert.True(res);
 		}
@@ -292,23 +292,23 @@ namespace O10.Crypto.Tests
 		[Fact]
 		public void MultipleAssetBasedRegistration2Test()
 		{
-			byte[] assetId1 = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] assetId2 = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] bfReg = ConfidentialAssetsHelper.GetRandomSeed();
+			byte[] assetId1 = CryptoHelper.GetRandomSeed();
+			byte[] assetId2 = CryptoHelper.GetRandomSeed();
+			byte[] bfReg = CryptoHelper.GetRandomSeed();
 
-			byte[] commitmentReg = ConfidentialAssetsHelper.GetAssetCommitment(bfReg, assetId1, assetId2);
+			byte[] commitmentReg = CryptoHelper.GetAssetCommitment(bfReg, assetId1, assetId2);
 
-			byte[] bfVer1 = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] bfVer2 = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] commitmentVer1 = ConfidentialAssetsHelper.GetAssetCommitment(bfVer1, assetId1);
-			byte[] commitmentVer2 = ConfidentialAssetsHelper.GetAssetCommitment(bfVer2, assetId2);
-			byte[] bfVerTotal = ConfidentialAssetsHelper.SumScalars(bfVer1, bfVer2);
-			byte[] bfDiff = ConfidentialAssetsHelper.GetDifferentialBlindingFactor(bfVerTotal, bfReg);
-			byte[] commitmentVerSum = ConfidentialAssetsHelper.SumCommitments(commitmentVer1, commitmentVer2);
+			byte[] bfVer1 = CryptoHelper.GetRandomSeed();
+			byte[] bfVer2 = CryptoHelper.GetRandomSeed();
+			byte[] commitmentVer1 = CryptoHelper.GetAssetCommitment(bfVer1, assetId1);
+			byte[] commitmentVer2 = CryptoHelper.GetAssetCommitment(bfVer2, assetId2);
+			byte[] bfVerTotal = CryptoHelper.SumScalars(bfVer1, bfVer2);
+			byte[] bfDiff = CryptoHelper.GetDifferentialBlindingFactor(bfVerTotal, bfReg);
+			byte[] commitmentVerSum = CryptoHelper.SumCommitments(commitmentVer1, commitmentVer2);
 
-			SurjectionProof surjectionProof = ConfidentialAssetsHelper.CreateSurjectionProof(commitmentVerSum, new byte[][] { commitmentReg }, 0, bfDiff);
+            SurjectionProof surjectionProof = CryptoHelper.CreateSurjectionProof(commitmentVerSum, new byte[][] { commitmentReg }, 0, bfDiff);
 
-			bool res = ConfidentialAssetsHelper.VerifySurjectionProof(surjectionProof, commitmentVerSum);
+			bool res = CryptoHelper.VerifySurjectionProof(surjectionProof, commitmentVerSum);
 
 			Assert.True(res);
 		}

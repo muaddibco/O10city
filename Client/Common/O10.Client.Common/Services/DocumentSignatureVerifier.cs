@@ -53,10 +53,10 @@ namespace O10.Client.Common.Services
 				ulong combinedBlockHeight = await _gatewayService.GetCombinedBlockByTransactionHash(documentCreator, signatureTransactionHash).ConfigureAwait(false);
                 res.IsNotCompromised = !(await _gatewayService.IsKeyImageCompromised(documentSignRecord.KeyImage).ConfigureAwait(false));
 				res.DocumentHashMatch = documentSignRecord.DocumentHash.Equals(documentHash);
-				res.SignerSignatureMatch = ConfidentialAssetsHelper.VerifySurjectionProof(documentSignRecord.SignerGroupRelationProof, documentSignRecord.SignerCommitment.Value.Span, documentHash, documentRecordTransactionHash);
+				res.SignerSignatureMatch = O10.Crypto.ConfidentialAssets.CryptoHelper.VerifySurjectionProof(documentSignRecord.SignerGroupRelationProof, documentSignRecord.SignerCommitment.Value.Span, documentHash, documentRecordTransactionHash);
 				res.EligibilityCorrect = await CheckEligibilityProofsWereValid(documentSignRecord.SignerCommitment.Value, documentSignRecord.EligibilityProof, documentSignRecord.Issuer, combinedBlockHeight).ConfigureAwait(false);
-				res.AllowedGroupRelation = ConfidentialAssetsHelper.VerifySurjectionProof(documentSignRecord.SignerGroupProof, documentSignRecord.SignerGroupCommitment.Value.Span);
-				res.AllowedGroupMatching = ConfidentialAssetsHelper.VerifySurjectionProof(documentSignRecord.SignerAllowedGroupsProof, documentSignRecord.SignerGroupCommitment.Value.Span);
+				res.AllowedGroupRelation = O10.Crypto.ConfidentialAssets.CryptoHelper.VerifySurjectionProof(documentSignRecord.SignerGroupProof, documentSignRecord.SignerGroupCommitment.Value.Span);
+				res.AllowedGroupMatching = O10.Crypto.ConfidentialAssets.CryptoHelper.VerifySurjectionProof(documentSignRecord.SignerAllowedGroupsProof, documentSignRecord.SignerGroupCommitment.Value.Span);
 
 				//PacketInfoEx packetInfo = _gatewayService.GetTransactionBySourceAndHeight(documentSignRecord.GroupIssuer.ToHexString(), signatureRecordBlockHeight);
 
@@ -68,7 +68,7 @@ namespace O10.Client.Common.Services
 		private async Task<bool> CheckEligibilityProofs(byte[] assetCommitment, SurjectionProof eligibilityProofs, byte[] issuer)
 		{
 			_logger.LogIfDebug(() => $"{nameof(CheckEligibilityProofs)} with assetCommitment={assetCommitment.ToHexString()}, issuer={issuer.ToHexString()}, eligibilityProofs={JsonConvert.SerializeObject(eligibilityProofs, new ByteArrayJsonConverter())}");
-			bool isCommitmentCorrect = ConfidentialAssetsHelper.VerifySurjectionProof(eligibilityProofs, assetCommitment);
+			bool isCommitmentCorrect = O10.Crypto.ConfidentialAssets.CryptoHelper.VerifySurjectionProof(eligibilityProofs, assetCommitment);
 
 			if (!isCommitmentCorrect)
 			{
@@ -90,7 +90,7 @@ namespace O10.Client.Common.Services
 		private async Task<bool> CheckEligibilityProofsWereValid(Memory<byte> assetCommitment, SurjectionProof eligibilityProofs, IKey issuer, ulong combinedBlockHeight)
 		{
 			_logger.LogIfDebug(() => $"{nameof(CheckEligibilityProofsWereValid)} with assetCommitment={assetCommitment.ToHexString()}, issuer={issuer}, combinedBlockHeight={combinedBlockHeight}, eligibilityProofs={JsonConvert.SerializeObject(eligibilityProofs, new ByteArrayJsonConverter())}");
-			bool isCommitmentCorrect = ConfidentialAssetsHelper.VerifySurjectionProof(eligibilityProofs, assetCommitment.Span);
+			bool isCommitmentCorrect = O10.Crypto.ConfidentialAssets.CryptoHelper.VerifySurjectionProof(eligibilityProofs, assetCommitment.Span);
 
 			if (!isCommitmentCorrect)
 			{

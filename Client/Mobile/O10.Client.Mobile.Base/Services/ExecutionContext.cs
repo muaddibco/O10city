@@ -149,7 +149,7 @@ namespace O10.Client.Mobile.Base.Services
             async Task SyncWithSecureStore(string key, string seed)
             {
                 string seedControlStr = await SecureStorage.GetAsync($"{key}.ctrl").ConfigureAwait(false);
-                string seedControl = ConfidentialAssetsHelper.FastHash256(Encoding.UTF8.GetBytes(seed)).ToHexString();
+                string seedControl = CryptoHelper.FastHash256(Encoding.UTF8.GetBytes(seed)).ToHexString();
                 byte[] bindingKey = null;
 
                 if (seedControl.Equals(seedControlStr, StringComparison.InvariantCultureIgnoreCase))

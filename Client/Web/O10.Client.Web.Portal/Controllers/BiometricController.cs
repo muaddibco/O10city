@@ -142,7 +142,7 @@ namespace O10.Client.Web.Portal.Controllers
 
             string commitmentToRoot = inherenceData.AssetRootCommitment.ToHexString();
 
-            if (!ConfidentialAssetsHelper.VerifySurjectionProof(inherenceData.RootRegistrationProof, inherenceData.AssetRootCommitment))
+            if (!CryptoHelper.VerifySurjectionProof(inherenceData.RootRegistrationProof, inherenceData.AssetRootCommitment))
             {
                 _logger.Error($"[{_inherenceService.AccountId}]: Registration Proofs failed for {nameof(biometricPersonData.SessionKey)}={biometricPersonData.SessionKey}");
                 throw new InherenceRegistrationProofsIncorrectException();
@@ -161,12 +161,12 @@ namespace O10.Client.Web.Portal.Controllers
 
                 _logger.LogIfDebug(() => $"[{_inherenceService.AccountId}]: {nameof(RegisterPerson)}, {nameof(InherenceData)} with {nameof(biometricPersonData.SessionKey)}={biometricPersonData.SessionKey} contains {nameof(inherenceData.AssociatedRootCommitment)}");
 
-                byte[] commitment = ConfidentialAssetsHelper.SumCommitments(inherenceData.AssetRootCommitment, inherenceData.AssociatedRootCommitment);
+                byte[] commitment = CryptoHelper.SumCommitments(inherenceData.AssetRootCommitment, inherenceData.AssociatedRootCommitment);
 
-                if (!ConfidentialAssetsHelper.VerifySurjectionProof(inherenceData.AssociatedRegistrationProof, commitment))
+                if (!CryptoHelper.VerifySurjectionProof(inherenceData.AssociatedRegistrationProof, commitment))
                 {
                     _logger.Error($"[{_inherenceService.AccountId}]: {nameof(inherenceData.AssociatedRegistrationProof)} failed for {nameof(biometricPersonData.SessionKey)}={biometricPersonData.SessionKey}");
-                    return BadRequest(Resources.ERR_INHERENCE_REGISTRATION_PROOFS_INCORRECT);
+                    return base.BadRequest(Resources.ERR_INHERENCE_REGISTRATION_PROOFS_INCORRECT);
                 }
 
                 string commitmentToAssociated = inherenceData.AssociatedRootCommitment.ToHexString();
@@ -400,9 +400,9 @@ namespace O10.Client.Web.Portal.Controllers
                 }
             };
 
-            if (!ConfidentialAssetsHelper.VerifyIssuanceSurjectionProof(surjectionProof, sourceImageCommitment, new byte[][] { assetId }))
+            if (!CryptoHelper.VerifyIssuanceSurjectionProof(surjectionProof, sourceImageCommitment, new byte[][] { assetId }))
             {
-                return BadRequest("Surjection proofs validation failed");
+                return base.BadRequest("Surjection proofs validation failed");
             }
 
             //byte[] auxBytes = null; // Convert.FromBase64String(biometricPersonData.AuxMessage);

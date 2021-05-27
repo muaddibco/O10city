@@ -124,13 +124,13 @@ namespace O10.Client.Mobile.Base.ViewModels
             _assetsService.GetBlindingPoint(bindingKey, rootAssetId, out byte[] blindingPoint, out byte[] blindingFactor);
 
             byte[] protectionAssetId = await _assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD, rootAssetId.ToHexString(), _issuer).ConfigureAwait(false);
-            byte[] protectionAssetNonBlindedCommitment = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(protectionAssetId);
-            byte[] protectionAssetCommitment = ConfidentialAssetsHelper.SumCommitments(protectionAssetNonBlindedCommitment, blindingPoint);
-            byte[] sessionBlindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] sessionCommitment = ConfidentialAssetsHelper.GetAssetCommitment(sessionBlindingFactor, protectionAssetId);
-            byte[] diffBlindingFactor = ConfidentialAssetsHelper.GetDifferentialBlindingFactor(sessionBlindingFactor, blindingFactor);
+            byte[] protectionAssetNonBlindedCommitment = Crypto.ConfidentialAssets.CryptoHelper.GetNonblindedAssetCommitment(protectionAssetId);
+            byte[] protectionAssetCommitment = Crypto.ConfidentialAssets.CryptoHelper.SumCommitments(protectionAssetNonBlindedCommitment, blindingPoint);
+            byte[] sessionBlindingFactor = Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
+            byte[] sessionCommitment = Crypto.ConfidentialAssets.CryptoHelper.GetAssetCommitment(sessionBlindingFactor, protectionAssetId);
+            byte[] diffBlindingFactor = Crypto.ConfidentialAssets.CryptoHelper.GetDifferentialBlindingFactor(sessionBlindingFactor, blindingFactor);
 
-            SurjectionProof surjectionProof = ConfidentialAssetsHelper.CreateSurjectionProof(sessionCommitment, new byte[][] { protectionAssetCommitment }, 0, diffBlindingFactor);
+            SurjectionProof surjectionProof = Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(sessionCommitment, new byte[][] { protectionAssetCommitment }, 0, diffBlindingFactor);
 
             IdentityBaseData sessionData = new IdentityBaseData
             {

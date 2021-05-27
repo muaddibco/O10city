@@ -182,7 +182,7 @@ namespace O10.Client.Web.Portal.Services
 
         public string InitiateRelationProofsSession(ProofsRequest proofsRequest)
         {
-            string sessionKey = ConfidentialAssetsHelper.GetRandomSeed().ToHexString();
+            string sessionKey = CryptoHelper.GetRandomSeed().ToHexString();
             _relationProofSessions.AddOrUpdate(sessionKey, new RelationProofsSession { ProofsRequest = proofsRequest }, (k, v) => v);
             return sessionKey;
         }

@@ -55,7 +55,7 @@ namespace O10.Client.Common.Services
 			{
 				byte[] image = Convert.FromBase64String(proofSession.ProofsData.ImageContent);
 				validationResults.ImageContent = proofSession.ProofsData.ImageContent;
-				imageHashFromSession = ConfidentialAssetsHelper.FastHash256(image);
+				imageHashFromSession = O10.Crypto.ConfidentialAssets.CryptoHelper.FastHash256(image);
 			}
 			else
 			{
@@ -83,12 +83,12 @@ namespace O10.Client.Common.Services
                 {
                     byte[] registrationCommitment = relationProof.RelationProof.AssetCommitments[0];
                     byte[] groupNameCommitment = await _gatewayService.GetEmployeeRecordGroup(relationProof.GroupOwner, registrationCommitment).ConfigureAwait(false);
-                    bool isRelationProofCorrect = groupNameCommitment != null ? ConfidentialAssetsHelper.VerifySurjectionProof(relationProof.RelationProof, relationsProofs.AssetCommitment) : false;
+                    bool isRelationProofCorrect = groupNameCommitment != null ? O10.Crypto.ConfidentialAssets.CryptoHelper.VerifySurjectionProof(relationProof.RelationProof, relationsProofs.AssetCommitment) : false;
 
                     if (isRelationProofCorrect)
                     {
                         byte[] relationAssetId = await _assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_EMPLOYEEGROUP, relationProof.GroupOwner.ToHexString() + relationEntry.RelatedAssetName, relationProof.GroupOwner.ToHexString()).ConfigureAwait(false);
-                        if (ConfidentialAssetsHelper.VerifyIssuanceSurjectionProof(relationProof.GroupNameProof, groupNameCommitment, new byte[][] { relationAssetId }))
+                        if (O10.Crypto.ConfidentialAssets.CryptoHelper.VerifyIssuanceSurjectionProof(relationProof.GroupNameProof, groupNameCommitment, new byte[][] { relationAssetId }))
                         {
                             isRelationContentMatching = true;
                             break;
@@ -106,7 +106,7 @@ namespace O10.Client.Common.Services
 		{
 			_logger.LogIfDebug(() => $"{nameof(CheckEligibilityProofs)} with assetCommitment={assetCommitment.ToHexString()}, issuer={issuer.ToHexString()}, eligibilityProofs={JsonConvert.SerializeObject(eligibilityProofs, new ByteArrayJsonConverter())}");
 
-			bool isCommitmentCorrect = ConfidentialAssetsHelper.VerifySurjectionProof(eligibilityProofs, assetCommitment);
+			bool isCommitmentCorrect = O10.Crypto.ConfidentialAssets.CryptoHelper.VerifySurjectionProof(eligibilityProofs, assetCommitment);
 
 			if (!isCommitmentCorrect)
 			{
@@ -138,14 +138,14 @@ namespace O10.Client.Common.Services
 
 			if (associatedProofs is AssociatedAssetProofs associatedAssetProofs)
 			{
-				associatedProofValid = ConfidentialAssetsHelper.VerifySurjectionProof(associatedAssetProofs.AssociationProofs, associatedAssetProofs.AssociatedAssetCommitment);
+				associatedProofValid = O10.Crypto.ConfidentialAssets.CryptoHelper.VerifySurjectionProof(associatedAssetProofs.AssociationProofs, associatedAssetProofs.AssociatedAssetCommitment);
 			}
 			else
 			{
                 return false;
 			}
 
-			bool rootProofValid = ConfidentialAssetsHelper.VerifySurjectionProof(associatedProofs.RootProofs, commitment);
+			bool rootProofValid = O10.Crypto.ConfidentialAssets.CryptoHelper.VerifySurjectionProof(associatedProofs.RootProofs, commitment);
 
 			if (!rootProofValid || !associatedProofValid)
 			{

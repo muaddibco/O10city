@@ -80,8 +80,8 @@ namespace O10.Server.IdentityProvider.Common.Controllers
 			if(!_dataAccessService.DoesAssetExist(assetIdExpr))
 			{
 				string sessionKey = Guid.NewGuid().ToString();
-				byte[] sessionBlindingFactor = ConfidentialAssetsHelper.ReduceScalar32(ConfidentialAssetsHelper.FastHash256(Encoding.ASCII.GetBytes(activationEmail.Passphrase)));
-				byte[] sessionCommitment = ConfidentialAssetsHelper.BlindAssetCommitment(ConfidentialAssetsHelper.GetNonblindedAssetCommitment(assetId), sessionBlindingFactor);
+				byte[] sessionBlindingFactor = Crypto.ConfidentialAssets.CryptoHelper.ReduceScalar32(Crypto.ConfidentialAssets.CryptoHelper.FastHash256(Encoding.ASCII.GetBytes(activationEmail.Passphrase)));
+				byte[] sessionCommitment = Crypto.ConfidentialAssets.CryptoHelper.BlindAssetCommitment(Crypto.ConfidentialAssets.CryptoHelper.GetNonblindedAssetCommitment(assetId), sessionBlindingFactor);
 				long registrationSessionId = _dataAccessService.AddAssetRegistrationSession(sessionKey, sessionCommitment.ToHexString());
 
 				if(await SendMail(email, sessionKey, Uri.UnescapeDataString(activationEmail.BaseUri)).ConfigureAwait(false))
@@ -146,7 +146,7 @@ namespace O10.Server.IdentityProvider.Common.Controllers
                     {
 						var persistency = _executionContext.GetContext();
 						var transactionsService = persistency.Scope.ServiceProvider.GetService<IStateTransactionsService>();
-						byte[] issuanceBlindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
+						byte[] issuanceBlindingFactor = Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
 						var packet = await transactionsService.IssueBlindedAsset2(assetIdEmail, issuanceBlindingFactor).ConfigureAwait(false);
 
 						byte[] protectionCommitment = null;
@@ -240,7 +240,7 @@ namespace O10.Server.IdentityProvider.Common.Controllers
 				}
 			};
 
-			if(ConfidentialAssetsHelper.VerifySurjectionProof(surjectionProof, sessionData.Protection.SessionCommitment.HexStringToByteArray()))
+			if(Crypto.ConfidentialAssets.CryptoHelper.VerifySurjectionProof(surjectionProof, sessionData.Protection.SessionCommitment.HexStringToByteArray()))
 			{
 				bool faceComparisonSucceeded = true; // false;
 
@@ -263,16 +263,16 @@ namespace O10.Server.IdentityProvider.Common.Controllers
 					var transactionsService = persistency.Scope.ServiceProvider.GetService<IStateTransactionsService>();
 					transactionsService.TransferAssetToStealth2(assetId, issuanceCommitment,
 						new ConfidentialAccount
-						{
+                        {
 							PublicSpendKey = sessionData.PublicSpendKey.HexStringToByteArray(),
 							PublicViewKey = sessionData.PublicViewKey.HexStringToByteArray()
 						});
 
 					await _hubContext.Clients.Group(sessionKey).SendAsync("AttributeIssued").ConfigureAwait(false);
-					IEnumerable<AttributeDefinition> attributeDefinitions = _coreDataAccessService
-						.GetAttributesSchemeByIssuer(account.PublicSpendKey.ToHexString(), true)
+                    IEnumerable<AttributeDefinition> attributeDefinitions = _coreDataAccessService
+                        .GetAttributesSchemeByIssuer(account.PublicSpendKey.ToHexString(), true)
 						.Select(a => new AttributeDefinition
-							{
+                        {
 								SchemeId = a.IdentitiesSchemeId,
 								AttributeName = a.AttributeName,
 								SchemeName = a.AttributeSchemeName,
@@ -281,24 +281,24 @@ namespace O10.Server.IdentityProvider.Common.Controllers
 								IsActive = a.IsActive,
 								IsRoot = a.CanBeRoot
 							});
-					AttributeValue attributeValue = new AttributeValue
-					{
+                    AttributeValue attributeValue = new AttributeValue
+                    {
 						Value = sessionData.Content,
 						Definition = attributeDefinitions.FirstOrDefault(d => d.AttributeName == AttributesSchemes.ATTR_SCHEME_NAME_EMAIL)
 					};
 
-					return Ok(new List<AttributeValue> { attributeValue });
+					return base.Ok(new List<AttributeValue> { attributeValue });
 				}
                 else
                 {
                     await _hubContext.Clients.Group(sessionKey).SendAsync("AttributeIssueFailed", "Faces comparison failed").ConfigureAwait(false);
-					return BadRequest("Faces comparison failed");
+					return base.BadRequest("Faces comparison failed");
 				}
 			}
             else
             {
                 await _hubContext.Clients.Group(sessionKey).SendAsync("AttributeIssueFailed", "Password is incorrect").ConfigureAwait(false);
-				return BadRequest("Password is incorrect");
+				return base.BadRequest("Password is incorrect");
 			}
 		}
 

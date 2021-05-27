@@ -43,9 +43,9 @@ namespace O10.Client.Common.Crypto
         public async Task<SurjectionProof> CreateProofToRegistration(byte[] receiverPublicKey, byte[] blindingFactor, byte[] assetCommitment, params Memory<byte>[] assetIds)
         {
             (byte[] registrationBlindingFactor, byte[] registrationCommitment) = await GetBoundedCommitment(receiverPublicKey, assetIds).ConfigureAwait(false);
-            byte[] blindingFactorToRegistration = ConfidentialAssetsHelper.GetDifferentialBlindingFactor(blindingFactor, registrationBlindingFactor);
+            byte[] blindingFactorToRegistration = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, registrationBlindingFactor);
 
-            return ConfidentialAssetsHelper.CreateSurjectionProof(assetCommitment, new byte[][] { registrationCommitment }, 0, blindingFactorToRegistration);
+            return O10.Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(assetCommitment, new byte[][] { registrationCommitment }, 0, blindingFactorToRegistration);
         }
 
         public void GetBoundedCommitment(Memory<byte> assetId, Memory<byte> receiverPublicKey, out byte[] blindingFactor, out byte[] assetCommitment, params byte[][] scalars)
@@ -61,23 +61,23 @@ namespace O10.Client.Common.Crypto
 
             if ((scalars?.Length ?? 0) > 0)
             {
-                sk = ConfidentialAssetsHelper.SumScalars(scalars);
-                sk = ConfidentialAssetsHelper.SumScalars(sk, bindingKey);
+                sk = O10.Crypto.ConfidentialAssets.CryptoHelper.SumScalars(scalars);
+                sk = O10.Crypto.ConfidentialAssets.CryptoHelper.SumScalars(sk, bindingKey);
             }
             else
             {
                 sk = bindingKey;
             }
 
-            blindingFactor = ConfidentialAssetsHelper.GetReducedSharedSecret(sk, receiverPublicKey.Span);
-            assetCommitment = ConfidentialAssetsHelper.GetAssetCommitment(blindingFactor, assetId);
+            blindingFactor = O10.Crypto.ConfidentialAssets.CryptoHelper.GetReducedSharedSecret(sk, receiverPublicKey.Span);
+            assetCommitment = O10.Crypto.ConfidentialAssets.CryptoHelper.GetAssetCommitment(blindingFactor, assetId);
         }
 
         public async Task<(byte[] blindingFactor, byte[] boundedCommitment)> GetBoundedCommitment(Memory<byte> receiverPublicKey, params Memory<byte>[] assetIds)
         {
             byte[] bindingKey = await _bindingKeySource.Task.ConfigureAwait(false);
-            byte[] blindingFactor = ConfidentialAssetsHelper.GetReducedSharedSecret(bindingKey, receiverPublicKey.Span);
-            byte[] boundedCommitment = ConfidentialAssetsHelper.GetAssetCommitment(blindingFactor, assetIds);
+            byte[] blindingFactor = O10.Crypto.ConfidentialAssets.CryptoHelper.GetReducedSharedSecret(bindingKey, receiverPublicKey.Span);
+            byte[] boundedCommitment = O10.Crypto.ConfidentialAssets.CryptoHelper.GetAssetCommitment(blindingFactor, assetIds);
 
             return (blindingFactor, boundedCommitment);
         }
@@ -110,7 +110,7 @@ namespace O10.Client.Common.Crypto
 
         public byte[] GetBindingKey(string pwd)
         {
-            byte[] pwdHash = ConfidentialAssetsHelper.PasswordHash(pwd);
+            byte[] pwdHash = O10.Crypto.ConfidentialAssets.CryptoHelper.PasswordHash(pwd);
 
             return pwdHash;
         }
@@ -127,8 +127,8 @@ namespace O10.Client.Common.Crypto
                 throw new ArgumentNullException(nameof(rootAttribute));
             }
 
-            byte[] commitment = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(rootAttribute.AssetId);
-            byte[] commitmentToRoot = ConfidentialAssetsHelper.BlindAssetCommitment(commitment, bf);
+            byte[] commitment = O10.Crypto.ConfidentialAssets.CryptoHelper.GetNonblindedAssetCommitment(rootAttribute.AssetId);
+            byte[] commitmentToRoot = O10.Crypto.ConfidentialAssets.CryptoHelper.BlindAssetCommitment(commitment, bf);
             byte[] issuer = rootAttribute.Source.HexStringToByteArray();
             SurjectionProof eligibilityProof = await _eligibilityProofsProvider.CreateEligibilityProof(rootAttribute.OriginalCommitment, rootAttribute.OriginalBlindingFactor, commitmentToRoot, bf, issuer).ConfigureAwait(false);
 
@@ -145,7 +145,7 @@ namespace O10.Client.Common.Crypto
                 }
             };
 
-            bool res = ConfidentialAssetsHelper.VerifySurjectionProof(attributeProofs.BindingProof, attributeProofs.Commitment.Value.Span);
+            bool res = O10.Crypto.ConfidentialAssets.CryptoHelper.VerifySurjectionProof(attributeProofs.BindingProof, attributeProofs.Commitment.Value.Span);
 
             return attributeProofs;
         }
@@ -162,27 +162,27 @@ namespace O10.Client.Common.Crypto
                 throw new ArgumentNullException(nameof(parentAssetInput));
             }
 
-            byte[] commitmentToParentNB = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(parentAssetInput.AssetId);
-            byte[] commitmentToParent = ConfidentialAssetsHelper.BlindAssetCommitment(commitmentToParentNB, parentAssetInput.BlindingFactor);
+            byte[] commitmentToParentNB = O10.Crypto.ConfidentialAssets.CryptoHelper.GetNonblindedAssetCommitment(parentAssetInput.AssetId);
+            byte[] commitmentToParent = O10.Crypto.ConfidentialAssets.CryptoHelper.BlindAssetCommitment(commitmentToParentNB, parentAssetInput.BlindingFactor);
 
             byte[] bindingKey = await GetBindingKey().ConfigureAwait(false);
             (byte[] bfToParent, byte[] blindingPointParent) = _assetsService.GetBlindingFactorAndPoint(bindingKey, parentAssetInput.AssetId);
             (byte[] bfValueBounded, byte[] blindingPointValue) = _assetsService.GetBlindingFactorAndPoint(bindingKey, parentAssetInput.AssetId, assetInput.AssetId);
             
-            byte[] commitmentToValueNB = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(assetInput.AssetId);
+            byte[] commitmentToValueNB = O10.Crypto.ConfidentialAssets.CryptoHelper.GetNonblindedAssetCommitment(assetInput.AssetId);
             
-            byte[] commitmentToValueBounded = ConfidentialAssetsHelper.SumCommitments(blindingPointValue, commitmentToValueNB);
-            byte[] commitmentToRootBinding = ConfidentialAssetsHelper.SumCommitments(blindingPointParent, commitmentToParentNB);
-            commitmentToRootBinding = ConfidentialAssetsHelper.SumCommitments(commitmentToRootBinding, commitmentToValueNB);
+            byte[] commitmentToValueBounded = O10.Crypto.ConfidentialAssets.CryptoHelper.SumCommitments(blindingPointValue, commitmentToValueNB);
+            byte[] commitmentToRootBinding = O10.Crypto.ConfidentialAssets.CryptoHelper.SumCommitments(blindingPointParent, commitmentToParentNB);
+            commitmentToRootBinding = O10.Crypto.ConfidentialAssets.CryptoHelper.SumCommitments(commitmentToRootBinding, commitmentToValueNB);
 
-            byte[] commitmentToValue = ConfidentialAssetsHelper.BlindAssetCommitment(commitmentToValueNB, assetInput.BlindingFactor);
-            byte[] bfToValueDiff = ConfidentialAssetsHelper.GetDifferentialBlindingFactor(assetInput.BlindingFactor, bfValueBounded);
-            var surjectionProofValue = ConfidentialAssetsHelper.CreateSurjectionProof(commitmentToValue, new byte[][] { commitmentToValueBounded }, 0, bfToValueDiff);
+            byte[] commitmentToValue = O10.Crypto.ConfidentialAssets.CryptoHelper.BlindAssetCommitment(commitmentToValueNB, assetInput.BlindingFactor);
+            byte[] bfToValueDiff = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDifferentialBlindingFactor(assetInput.BlindingFactor, bfValueBounded);
+            var surjectionProofValue = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(commitmentToValue, new byte[][] { commitmentToValueBounded }, 0, bfToValueDiff);
             
-            byte[] commitmentToRootAndBinding = ConfidentialAssetsHelper.SumCommitments(commitmentToValue, commitmentToParent);
-            byte[] bfProtectionAndRoot = ConfidentialAssetsHelper.SumScalars(assetInput.BlindingFactor, parentAssetInput.BlindingFactor);
-            byte[] bfToRootDiff = ConfidentialAssetsHelper.GetDifferentialBlindingFactor(bfProtectionAndRoot, bfToParent);
-            var surjectionProofRoot = ConfidentialAssetsHelper.CreateSurjectionProof(commitmentToRootAndBinding, new byte[][] { commitmentToRootBinding }, 0, bfToRootDiff);
+            byte[] commitmentToRootAndBinding = O10.Crypto.ConfidentialAssets.CryptoHelper.SumCommitments(commitmentToValue, commitmentToParent);
+            byte[] bfProtectionAndRoot = O10.Crypto.ConfidentialAssets.CryptoHelper.SumScalars(assetInput.BlindingFactor, parentAssetInput.BlindingFactor);
+            byte[] bfToRootDiff = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDifferentialBlindingFactor(bfProtectionAndRoot, bfToParent);
+            var surjectionProofRoot = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(commitmentToRootAndBinding, new byte[][] { commitmentToRootBinding }, 0, bfToRootDiff);
 
             AttributeProofs associatedAttribute = new AttributeProofs
             {
@@ -213,7 +213,7 @@ namespace O10.Client.Common.Crypto
             var protectionAssetInput = new BlindingAssetInput
             {
                 AssetId = await _assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD, rootAssetInput.AssetId.ToHexString(), issuer).ConfigureAwait(false),
-                BlindingFactor = ConfidentialAssetsHelper.GetRandomSeed()
+                BlindingFactor = O10.Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed()
             };
 
             return await GetAssociatedAttributeProofs(protectionAssetInput, rootAssetInput, AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD).ConfigureAwait(false);
@@ -231,22 +231,22 @@ namespace O10.Client.Common.Crypto
                 throw new ArgumentNullException(nameof(parentAssetInput));
             }
 
-            byte[] commitment = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(parentAssetInput.AssetId);
-            byte[] commitmentToRoot = ConfidentialAssetsHelper.BlindAssetCommitment(commitment, parentAssetInput.BlindingFactor);
+            byte[] commitment = O10.Crypto.ConfidentialAssets.CryptoHelper.GetNonblindedAssetCommitment(parentAssetInput.AssetId);
+            byte[] commitmentToRoot = O10.Crypto.ConfidentialAssets.CryptoHelper.BlindAssetCommitment(commitment, parentAssetInput.BlindingFactor);
 
             byte[] bindingKey = await GetBindingKey().ConfigureAwait(false);
             byte[] bfRoot = _assetsService.GetBlindingFactor(bindingKey, parentAssetInput.AssetId);
             byte[] blindingPointRoot = _assetsService.GetBlindingPoint(bindingKey, parentAssetInput.AssetId);
-            byte[] nonBlindedRootCommitment = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(parentAssetInput.AssetId);
-            byte[] nonBlindedAttributeCommitment = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(assetInput.AssetId);
-            byte[] commitmentToRootBinding = ConfidentialAssetsHelper.SumCommitments(blindingPointRoot, nonBlindedRootCommitment);
-            commitmentToRootBinding = ConfidentialAssetsHelper.SumCommitments(commitmentToRootBinding, nonBlindedAttributeCommitment);
+            byte[] nonBlindedRootCommitment = O10.Crypto.ConfidentialAssets.CryptoHelper.GetNonblindedAssetCommitment(parentAssetInput.AssetId);
+            byte[] nonBlindedAttributeCommitment = O10.Crypto.ConfidentialAssets.CryptoHelper.GetNonblindedAssetCommitment(assetInput.AssetId);
+            byte[] commitmentToRootBinding = O10.Crypto.ConfidentialAssets.CryptoHelper.SumCommitments(blindingPointRoot, nonBlindedRootCommitment);
+            commitmentToRootBinding = O10.Crypto.ConfidentialAssets.CryptoHelper.SumCommitments(commitmentToRootBinding, nonBlindedAttributeCommitment);
 
-            byte[] blindedAttributeCommitment = ConfidentialAssetsHelper.BlindAssetCommitment(nonBlindedAttributeCommitment, assetInput.BlindingFactor);
-            byte[] commitmentToRootAndBinding = ConfidentialAssetsHelper.SumCommitments(blindedAttributeCommitment, commitmentToRoot);
-            byte[] bfProtectionAndRoot = ConfidentialAssetsHelper.SumScalars(assetInput.BlindingFactor, parentAssetInput.BlindingFactor);
-            byte[] bfToRootDiff = ConfidentialAssetsHelper.GetDifferentialBlindingFactor(bfProtectionAndRoot, bfRoot);
-            var surjectionProofRoot = ConfidentialAssetsHelper.CreateSurjectionProof(commitmentToRootAndBinding, new byte[][] { commitmentToRootBinding }, 0, bfToRootDiff);
+            byte[] blindedAttributeCommitment = O10.Crypto.ConfidentialAssets.CryptoHelper.BlindAssetCommitment(nonBlindedAttributeCommitment, assetInput.BlindingFactor);
+            byte[] commitmentToRootAndBinding = O10.Crypto.ConfidentialAssets.CryptoHelper.SumCommitments(blindedAttributeCommitment, commitmentToRoot);
+            byte[] bfProtectionAndRoot = O10.Crypto.ConfidentialAssets.CryptoHelper.SumScalars(assetInput.BlindingFactor, parentAssetInput.BlindingFactor);
+            byte[] bfToRootDiff = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDifferentialBlindingFactor(bfProtectionAndRoot, bfRoot);
+            var surjectionProofRoot = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(commitmentToRootAndBinding, new byte[][] { commitmentToRootBinding }, 0, bfToRootDiff);
 
             return surjectionProofRoot;
         }
@@ -302,7 +302,7 @@ namespace O10.Client.Common.Crypto
                     var rootAttrDefinition = await _assetsService.GetRootAttributeDefinition(issuerKey).ConfigureAwait(false);
                     foreach (var attr in attrsByIssuer)
                     {
-                        byte[] attrBf = ConfidentialAssetsHelper.GetRandomSeed();
+                        byte[] attrBf = O10.Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
                         byte[] attrAssetId = await _assetsService.GenerateAssetId(attr.AttributeSchemeName, attr.Content, attr.Source).ConfigureAwait(false);
 
                         var childAssetInput = new BlindingAssetInput(attrAssetId);

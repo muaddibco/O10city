@@ -14,6 +14,7 @@ using O10.Tests.Core;
 using O10.Tests.Core.Fixtures;
 using Xunit.Abstractions;
 using O10.Crypto.Services;
+using Chaos.NaCl.Internal.Ed25519Ref10;
 
 namespace O10.Crypto.Tests
 {
@@ -40,23 +41,23 @@ namespace O10.Crypto.Tests
 
             for (int i = 0; i < totalAssets; i++)
             {
-                assetIds[i] = ConfidentialAssetsHelper.GetRandomSeed();
-                blindingFactors[i] = ConfidentialAssetsHelper.GetRandomSeed();
-                assetCommitments[i] = ConfidentialAssetsHelper.GetAssetCommitment(blindingFactors[i], assetIds[i]);
+                assetIds[i] = CryptoHelper.GetRandomSeed();
+                blindingFactors[i] = CryptoHelper.GetRandomSeed();
+                assetCommitments[i] = CryptoHelper.GetAssetCommitment(blindingFactors[i], assetIds[i]);
 
-                sideAssetIds[i] = ConfidentialAssetsHelper.GetRandomSeed();
-                sideBlindingFactors[i] = ConfidentialAssetsHelper.GetRandomSeed();
-                sideAssetCommitments[i] = ConfidentialAssetsHelper.GetAssetCommitment(blindingFactors[i], assetIds[i]);
+                sideAssetIds[i] = CryptoHelper.GetRandomSeed();
+                sideBlindingFactors[i] = CryptoHelper.GetRandomSeed();
+                sideAssetCommitments[i] = CryptoHelper.GetAssetCommitment(blindingFactors[i], assetIds[i]);
             }
 
             for (int i = 0; i < totalAssets; i++)
             {
-                issuanceProofs[i] = ConfidentialAssetsHelper.CreateNewIssuanceSurjectionProof(assetCommitments[i], assetIds, i, blindingFactors[i]);
-                bool issuanceValid = ConfidentialAssetsHelper.VerifyIssuanceSurjectionProof(issuanceProofs[i], assetCommitments[i], assetIds);
+                issuanceProofs[i] = CryptoHelper.CreateNewIssuanceSurjectionProof(assetCommitments[i], assetIds, i, blindingFactors[i]);
+                bool issuanceValid = CryptoHelper.VerifyIssuanceSurjectionProof(issuanceProofs[i], assetCommitments[i], assetIds);
                 Assert.True(issuanceValid);
 
-                sideIssuanceProofs[i] = ConfidentialAssetsHelper.CreateNewIssuanceSurjectionProof(sideAssetCommitments[i], sideAssetIds, i, sideBlindingFactors[i]);
-                bool sideIssuanceValid = ConfidentialAssetsHelper.VerifyIssuanceSurjectionProof(sideIssuanceProofs[i], sideAssetCommitments[i], assetIds);
+                sideIssuanceProofs[i] = CryptoHelper.CreateNewIssuanceSurjectionProof(sideAssetCommitments[i], sideAssetIds, i, sideBlindingFactors[i]);
+                bool sideIssuanceValid = CryptoHelper.VerifyIssuanceSurjectionProof(sideIssuanceProofs[i], sideAssetCommitments[i], assetIds);
                 Assert.False(sideIssuanceValid);
             }
         }
@@ -71,61 +72,61 @@ namespace O10.Crypto.Tests
             byte[][] blindingFactors = new byte[totalAssets][];
             byte[][] assetCommitments = new byte[totalAssets][];
             byte[] newCommitment, diffBlindingFactor;
-			byte[] aux = ConfidentialAssetsHelper.FastHash256(Encoding.ASCII.GetBytes("some string for test"));
+			byte[] aux = CryptoHelper.FastHash256(Encoding.ASCII.GetBytes("some string for test"));
 
 			for (int i = 0; i < totalAssets; i++)
             {
-                assetIds[i] = ConfidentialAssetsHelper.GetRandomSeed();
-                blindingFactors[i] = ConfidentialAssetsHelper.GetRandomSeed();
-                assetCommitments[i] = ConfidentialAssetsHelper.GetAssetCommitment(blindingFactors[i], assetIds[i]);
+                assetIds[i] = CryptoHelper.GetRandomSeed();
+                blindingFactors[i] = CryptoHelper.GetRandomSeed();
+                assetCommitments[i] = CryptoHelper.GetAssetCommitment(blindingFactors[i], assetIds[i]);
             }
 
-            diffBlindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
-            newCommitment = ConfidentialAssetsHelper.BlindAssetCommitment(assetCommitments[transferredAssetIndex], diffBlindingFactor);
+            diffBlindingFactor = CryptoHelper.GetRandomSeed();
+            newCommitment = CryptoHelper.BlindAssetCommitment(assetCommitments[transferredAssetIndex], diffBlindingFactor);
 
-            SurjectionProof surjectionProof = ConfidentialAssetsHelper.CreateSurjectionProof(newCommitment, assetCommitments, transferredAssetIndex, diffBlindingFactor, aux);
+            SurjectionProof surjectionProof = CryptoHelper.CreateSurjectionProof(newCommitment, assetCommitments, transferredAssetIndex, diffBlindingFactor, aux);
 
-            bool res = ConfidentialAssetsHelper.VerifySurjectionProof(surjectionProof, newCommitment, aux);
+            bool res = CryptoHelper.VerifySurjectionProof(surjectionProof, newCommitment, aux);
 
             Assert.True(res);
 
-			byte[] newCommitmentCorrupted = ConfidentialAssetsHelper.BlindAssetCommitment(assetCommitments[(transferredAssetIndex + 1) % totalAssets], diffBlindingFactor);
-			SurjectionProof surjectionProofCorrupted = ConfidentialAssetsHelper.CreateSurjectionProof(newCommitmentCorrupted, assetCommitments, transferredAssetIndex, diffBlindingFactor, aux);
-			bool resCorrupted = ConfidentialAssetsHelper.VerifySurjectionProof(surjectionProofCorrupted, newCommitmentCorrupted, aux);
+			byte[] newCommitmentCorrupted = CryptoHelper.BlindAssetCommitment(assetCommitments[(transferredAssetIndex + 1) % totalAssets], diffBlindingFactor);
+            SurjectionProof surjectionProofCorrupted = CryptoHelper.CreateSurjectionProof(newCommitmentCorrupted, assetCommitments, transferredAssetIndex, diffBlindingFactor, aux);
+			bool resCorrupted = CryptoHelper.VerifySurjectionProof(surjectionProofCorrupted, newCommitmentCorrupted, aux);
 			Assert.False(resCorrupted);
 
-			byte[] totalBlindingFactor = ConfidentialAssetsHelper.SumScalars(blindingFactors[transferredAssetIndex], diffBlindingFactor);
-            byte[] assetCommitment = ConfidentialAssetsHelper.GetAssetCommitment(totalBlindingFactor, assetIds[transferredAssetIndex]);
+			byte[] totalBlindingFactor = CryptoHelper.SumScalars(blindingFactors[transferredAssetIndex], diffBlindingFactor);
+            byte[] assetCommitment = CryptoHelper.GetAssetCommitment(totalBlindingFactor, assetIds[transferredAssetIndex]);
 
             Assert.True(assetCommitment.Equals32(newCommitment));
 
-            res = ConfidentialAssetsHelper.VerifySurjectionProof(surjectionProof, ConfidentialAssetsHelper.GetRandomSeed(), aux);
+            res = CryptoHelper.VerifySurjectionProof(surjectionProof, CryptoHelper.GetRandomSeed(), aux);
             Assert.False(res);
 
-            res = ConfidentialAssetsHelper.VerifySurjectionProof(surjectionProof, assetCommitments[transferredAssetIndex], aux);
+            res = CryptoHelper.VerifySurjectionProof(surjectionProof, assetCommitments[transferredAssetIndex], aux);
             Assert.False(res);
 
-            byte[] randomCommitment = ConfidentialAssetsHelper.GetRandomSeed();
+            byte[] randomCommitment = CryptoHelper.GetRandomSeed();
 
-            while(!ConfidentialAssetsHelper.IsPointValid(randomCommitment))
+            while(!CryptoHelper.IsPointValid(randomCommitment))
             {
-                randomCommitment = ConfidentialAssetsHelper.GetRandomSeed();
+                randomCommitment = CryptoHelper.GetRandomSeed();
             }
 
-            surjectionProof = ConfidentialAssetsHelper.CreateSurjectionProof(randomCommitment, assetCommitments, 6, ConfidentialAssetsHelper.GetRandomSeed());
-            res = ConfidentialAssetsHelper.VerifySurjectionProof(surjectionProof, randomCommitment);
+            surjectionProof = CryptoHelper.CreateSurjectionProof(randomCommitment, assetCommitments, 6, CryptoHelper.GetRandomSeed());
+            res = CryptoHelper.VerifySurjectionProof(surjectionProof, randomCommitment);
 
             Assert.False(res);
 
-            randomCommitment = ConfidentialAssetsHelper.GetRandomSeed();
+            randomCommitment = CryptoHelper.GetRandomSeed();
 
-            while (ConfidentialAssetsHelper.IsPointValid(randomCommitment))
+            while (CryptoHelper.IsPointValid(randomCommitment))
             {
-                randomCommitment = ConfidentialAssetsHelper.GetRandomSeed();
+                randomCommitment = CryptoHelper.GetRandomSeed();
             }
 
-            surjectionProof = ConfidentialAssetsHelper.CreateSurjectionProof(randomCommitment, assetCommitments, 6, ConfidentialAssetsHelper.GetRandomSeed());
-            res = ConfidentialAssetsHelper.VerifySurjectionProof(surjectionProof, randomCommitment);
+            surjectionProof = CryptoHelper.CreateSurjectionProof(randomCommitment, assetCommitments, 6, CryptoHelper.GetRandomSeed());
+            res = CryptoHelper.VerifySurjectionProof(surjectionProof, randomCommitment);
 
             Assert.False(res);
         }
@@ -143,26 +144,26 @@ namespace O10.Crypto.Tests
 
             for (int i = 0; i < totalAssets; i++)
             {
-                assetIds[i] = ConfidentialAssetsHelper.GetRandomSeed();
-                blindingFactors[i] = ConfidentialAssetsHelper.GetRandomSeed();
-                assetCommitments[i] = ConfidentialAssetsHelper.GetAssetCommitment(blindingFactors[i], assetIds[i]);
+                assetIds[i] = CryptoHelper.GetRandomSeed();
+                blindingFactors[i] = CryptoHelper.GetRandomSeed();
+                assetCommitments[i] = CryptoHelper.GetAssetCommitment(blindingFactors[i], assetIds[i]);
             }
 
-            diffBlindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
-            diffBlindingFactor2 = ConfidentialAssetsHelper.GetRandomSeed();
-            diffBlindingFactorSum = ConfidentialAssetsHelper.SumScalars(diffBlindingFactor, diffBlindingFactor2);
+            diffBlindingFactor = CryptoHelper.GetRandomSeed();
+            diffBlindingFactor2 = CryptoHelper.GetRandomSeed();
+            diffBlindingFactorSum = CryptoHelper.SumScalars(diffBlindingFactor, diffBlindingFactor2);
             
-            newCommitment = ConfidentialAssetsHelper.BlindAssetCommitment(assetCommitments[transferredAssetIndex], diffBlindingFactor);
-            newCommitment2 = ConfidentialAssetsHelper.BlindAssetCommitment(newCommitment, diffBlindingFactor2);
+            newCommitment = CryptoHelper.BlindAssetCommitment(assetCommitments[transferredAssetIndex], diffBlindingFactor);
+            newCommitment2 = CryptoHelper.BlindAssetCommitment(newCommitment, diffBlindingFactor2);
 
-            SurjectionProof surjectionProof = ConfidentialAssetsHelper.CreateSurjectionProof(newCommitment2, assetCommitments, transferredAssetIndex, diffBlindingFactorSum);
+            SurjectionProof surjectionProof = CryptoHelper.CreateSurjectionProof(newCommitment2, assetCommitments, transferredAssetIndex, diffBlindingFactorSum);
 
-            bool res = ConfidentialAssetsHelper.VerifySurjectionProof(surjectionProof, newCommitment2);
+            bool res = CryptoHelper.VerifySurjectionProof(surjectionProof, newCommitment2);
 
             Assert.True(res);
 
-            byte[] totalBlindingFactor = ConfidentialAssetsHelper.SumScalars(blindingFactors[transferredAssetIndex], diffBlindingFactorSum);
-            byte[] assetCommitment = ConfidentialAssetsHelper.GetAssetCommitment(totalBlindingFactor, assetIds[transferredAssetIndex]);
+            byte[] totalBlindingFactor = CryptoHelper.SumScalars(blindingFactors[transferredAssetIndex], diffBlindingFactorSum);
+            byte[] assetCommitment = CryptoHelper.GetAssetCommitment(totalBlindingFactor, assetIds[transferredAssetIndex]);
 
             Assert.True(assetCommitment.Equals32(newCommitment2));
         }
@@ -173,11 +174,11 @@ namespace O10.Crypto.Tests
 			int totalAssets = 9;
 			int transferredAssetIndex = 4;
 
-			byte[] senderSk = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] senderPk = ConfidentialAssetsHelper.GetPublicKey(senderSk);
-			byte[] receiverSk = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] receiverPk = ConfidentialAssetsHelper.GetPublicKey(receiverSk);
-			byte[] sharedSecret = ConfidentialAssetsHelper.GetReducedSharedSecret(senderSk, receiverPk);
+			byte[] senderSk = CryptoHelper.GetRandomSeed();
+			byte[] senderPk = CryptoHelper.GetPublicKey(senderSk);
+			byte[] receiverSk = CryptoHelper.GetRandomSeed();
+			byte[] receiverPk = CryptoHelper.GetPublicKey(receiverSk);
+			byte[] sharedSecret = CryptoHelper.GetReducedSharedSecret(senderSk, receiverPk);
 
 			byte[][] assetIds = new byte[totalAssets][];
 			byte[][] blindingFactors = new byte[totalAssets][];
@@ -186,25 +187,25 @@ namespace O10.Crypto.Tests
 
 			for (int i = 0; i < totalAssets; i++)
 			{
-				assetIds[i] = ConfidentialAssetsHelper.GetRandomSeed();
-				blindingFactors[i] = ConfidentialAssetsHelper.GetRandomSeed();
-				assetCommitments[i] = ConfidentialAssetsHelper.GetAssetCommitment(blindingFactors[i], assetIds[i]);
+				assetIds[i] = CryptoHelper.GetRandomSeed();
+				blindingFactors[i] = CryptoHelper.GetRandomSeed();
+				assetCommitments[i] = CryptoHelper.GetAssetCommitment(blindingFactors[i], assetIds[i]);
 			}
 
-			transferBlindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
+			transferBlindingFactor = CryptoHelper.GetRandomSeed();
 			registrationBlindingFactor = sharedSecret;
-			registrationToPrevBlindingFactorSub = ConfidentialAssetsHelper.GetDifferentialBlindingFactor(registrationBlindingFactor, blindingFactors[transferredAssetIndex]);
-			registrationToTransferBlindingFactorSub = ConfidentialAssetsHelper.GetDifferentialBlindingFactor(registrationBlindingFactor, transferBlindingFactor);
+			registrationToPrevBlindingFactorSub = CryptoHelper.GetDifferentialBlindingFactor(registrationBlindingFactor, blindingFactors[transferredAssetIndex]);
+			registrationToTransferBlindingFactorSub = CryptoHelper.GetDifferentialBlindingFactor(registrationBlindingFactor, transferBlindingFactor);
 
-			transferCommitment = ConfidentialAssetsHelper.GetAssetCommitment(transferBlindingFactor, assetIds[transferredAssetIndex]);
+			transferCommitment = CryptoHelper.GetAssetCommitment(transferBlindingFactor, assetIds[transferredAssetIndex]);
 
-			registrationCommitment = ConfidentialAssetsHelper.GetAssetCommitment(registrationBlindingFactor, assetIds[transferredAssetIndex]);
+			registrationCommitment = CryptoHelper.GetAssetCommitment(registrationBlindingFactor, assetIds[transferredAssetIndex]);
 
-			SurjectionProof surjectionProofOwnership = ConfidentialAssetsHelper.CreateSurjectionProof(registrationCommitment, assetCommitments, transferredAssetIndex, registrationToPrevBlindingFactorSub);
-			SurjectionProof surjectionProofTransfer = ConfidentialAssetsHelper.CreateSurjectionProof(registrationCommitment, new byte[][] { transferCommitment }, 0, registrationToTransferBlindingFactorSub);
+            SurjectionProof surjectionProofOwnership = CryptoHelper.CreateSurjectionProof(registrationCommitment, assetCommitments, transferredAssetIndex, registrationToPrevBlindingFactorSub);
+            SurjectionProof surjectionProofTransfer = CryptoHelper.CreateSurjectionProof(registrationCommitment, new byte[][] { transferCommitment }, 0, registrationToTransferBlindingFactorSub);
 
-			bool resOwnership = ConfidentialAssetsHelper.VerifySurjectionProof(surjectionProofOwnership, registrationCommitment);
-			bool resTransfer = ConfidentialAssetsHelper.VerifySurjectionProof(surjectionProofTransfer, registrationCommitment);
+			bool resOwnership = CryptoHelper.VerifySurjectionProof(surjectionProofOwnership, registrationCommitment);
+			bool resTransfer = CryptoHelper.VerifySurjectionProof(surjectionProofTransfer, registrationCommitment);
 
 			Assert.True(resOwnership);
 			Assert.True(resTransfer);
@@ -213,22 +214,22 @@ namespace O10.Crypto.Tests
 		[Fact]
         public void InversedSurjectionProofTest()
         {
-            byte[] assetId = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] nonBlindedAssetCommitment = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(assetId);
-            byte[] blindingFactor1 = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] blindedAssetCommitment1 = ConfidentialAssetsHelper.BlindAssetCommitment(nonBlindedAssetCommitment, blindingFactor1);
-            byte[] blindingFactor2 = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] blindedAssetCommitment2 = ConfidentialAssetsHelper.BlindAssetCommitment(blindedAssetCommitment1, blindingFactor2);
+            byte[] assetId = CryptoHelper.GetRandomSeed();
+            byte[] nonBlindedAssetCommitment = CryptoHelper.GetNonblindedAssetCommitment(assetId);
+            byte[] blindingFactor1 = CryptoHelper.GetRandomSeed();
+            byte[] blindedAssetCommitment1 = CryptoHelper.BlindAssetCommitment(nonBlindedAssetCommitment, blindingFactor1);
+            byte[] blindingFactor2 = CryptoHelper.GetRandomSeed();
+            byte[] blindedAssetCommitment2 = CryptoHelper.BlindAssetCommitment(blindedAssetCommitment1, blindingFactor2);
 
-            SurjectionProof surjectionProof1 = ConfidentialAssetsHelper.CreateSurjectionProof(blindedAssetCommitment2, new byte[][] { blindedAssetCommitment1 }, 0, blindingFactor2);
-            bool res1 = ConfidentialAssetsHelper.VerifySurjectionProof(surjectionProof1, blindedAssetCommitment2);
+            SurjectionProof surjectionProof1 = CryptoHelper.CreateSurjectionProof(blindedAssetCommitment2, new byte[][] { blindedAssetCommitment1 }, 0, blindingFactor2);
+            bool res1 = CryptoHelper.VerifySurjectionProof(surjectionProof1, blindedAssetCommitment2);
 
             Assert.True(res1);
 
-            byte[] blindingFactorNegated = ConfidentialAssetsHelper.NegateBlindingFactor(blindingFactor2);
+            byte[] blindingFactorNegated = CryptoHelper.NegateBlindingFactor(blindingFactor2);
 
-            SurjectionProof surjectionProof2 = ConfidentialAssetsHelper.CreateSurjectionProof(blindedAssetCommitment1, new byte[][] { blindedAssetCommitment2 }, 0, blindingFactorNegated);
-            bool res2 = ConfidentialAssetsHelper.VerifySurjectionProof(surjectionProof2, blindedAssetCommitment1);
+            SurjectionProof surjectionProof2 = CryptoHelper.CreateSurjectionProof(blindedAssetCommitment1, new byte[][] { blindedAssetCommitment2 }, 0, blindingFactorNegated);
+            bool res2 = CryptoHelper.VerifySurjectionProof(surjectionProof2, blindedAssetCommitment1);
 
             Assert.True(res2);
         }
@@ -236,27 +237,27 @@ namespace O10.Crypto.Tests
         [Fact]
         public void DynamicSurjectionProofTest()
         {
-            byte[] blindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] pk = ConfidentialAssetsHelper.GetPublicKey(blindingFactor);
+            byte[] blindingFactor = CryptoHelper.GetRandomSeed();
+            byte[] pk = CryptoHelper.GetPublicKey(blindingFactor);
 
-            byte[] assetId = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] nonBlindedCommitment = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(assetId);
+            byte[] assetId = CryptoHelper.GetRandomSeed();
+            byte[] nonBlindedCommitment = CryptoHelper.GetNonblindedAssetCommitment(assetId);
 
-            byte[] blindedCommitment = ConfidentialAssetsHelper.SumCommitments(pk, nonBlindedCommitment);
+            byte[] blindedCommitment = CryptoHelper.SumCommitments(pk, nonBlindedCommitment);
 
-            SurjectionProof surjectionProof = ConfidentialAssetsHelper.CreateNewIssuanceSurjectionProof(blindedCommitment, new byte[][] { assetId }, 0, blindingFactor);
-            bool res = ConfidentialAssetsHelper.VerifyIssuanceSurjectionProof(surjectionProof, blindedCommitment, new byte[][] { assetId });
+            SurjectionProof surjectionProof = CryptoHelper.CreateNewIssuanceSurjectionProof(blindedCommitment, new byte[][] { assetId }, 0, blindingFactor);
+            bool res = CryptoHelper.VerifyIssuanceSurjectionProof(surjectionProof, blindedCommitment, new byte[][] { assetId });
 
             Assert.True(res);
 
-            surjectionProof = ConfidentialAssetsHelper.CreateNewIssuanceSurjectionProof(blindedCommitment, new byte[][] { assetId }, 0, ConfidentialAssetsHelper.GetRandomSeed());
-            res = ConfidentialAssetsHelper.VerifyIssuanceSurjectionProof(surjectionProof, blindedCommitment, new byte[][] { assetId });
+            surjectionProof = CryptoHelper.CreateNewIssuanceSurjectionProof(blindedCommitment, new byte[][] { assetId }, 0, CryptoHelper.GetRandomSeed());
+            res = CryptoHelper.VerifyIssuanceSurjectionProof(surjectionProof, blindedCommitment, new byte[][] { assetId });
 
             Assert.False(res);
         }
 
         [Fact]
-        public void AssetsRingSignaturesTest()
+        public void AssetsLinkableRingSignaturesTest()
         {
             int totalAssets = 9;
             int transferredAssetIndex = 4;
@@ -270,65 +271,125 @@ namespace O10.Crypto.Tests
 
             for (int i = 0; i < totalAssets; i++)
             {
-                assetIds[i] = ConfidentialAssetsHelper.GetRandomSeed();
-                blindingFactors[i] = ConfidentialAssetsHelper.GetRandomSeed();
-                nonBlindedAssetCommitments[i] = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(assetIds[i]);
-                assetCommitments[i] = ConfidentialAssetsHelper.GetAssetCommitment(blindingFactors[i], assetIds[i]);
-                pks[i] = ConfidentialAssetsHelper.SubCommitments(assetCommitments[i], nonBlindedAssetCommitments[i]);
+                assetIds[i] = CryptoHelper.GetRandomSeed();
+                blindingFactors[i] = CryptoHelper.GetRandomSeed();
+                nonBlindedAssetCommitments[i] = CryptoHelper.GetNonblindedAssetCommitment(assetIds[i]);
+                assetCommitments[i] = CryptoHelper.GetAssetCommitment(blindingFactors[i], assetIds[i]);
+                pks[i] = CryptoHelper.SubCommitments(assetCommitments[i], nonBlindedAssetCommitments[i]);
             }
 
-            diffBlindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
-            newCommitment = ConfidentialAssetsHelper.BlindAssetCommitment(assetCommitments[transferredAssetIndex], diffBlindingFactor);
+            diffBlindingFactor = CryptoHelper.GetRandomSeed();
+            newCommitment = CryptoHelper.BlindAssetCommitment(assetCommitments[transferredAssetIndex], diffBlindingFactor);
 
-            SurjectionProof surjectionProof = ConfidentialAssetsHelper.CreateSurjectionProof(newCommitment, assetCommitments, transferredAssetIndex, diffBlindingFactor);
+            SurjectionProof surjectionProof = CryptoHelper.CreateSurjectionProof(newCommitment, assetCommitments, transferredAssetIndex, diffBlindingFactor);
 
-            bool res = ConfidentialAssetsHelper.VerifySurjectionProof(surjectionProof, newCommitment);
+            bool res = CryptoHelper.VerifySurjectionProof(surjectionProof, newCommitment);
 
             Assert.True(res);
 
-            byte[] msg = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] keyImage = ConfidentialAssetsHelper.GenerateKeyImage(blindingFactors[transferredAssetIndex]);
+            byte[] msg = CryptoHelper.GetRandomSeed();
+            byte[] keyImage = CryptoHelper.GenerateKeyImage(blindingFactors[transferredAssetIndex]);
 
             IIdentityKeyProvidersRegistry identityKeyProvidersRegistry = Substitute.For<IIdentityKeyProvidersRegistry>();
             identityKeyProvidersRegistry.GetInstance().ReturnsForAnyArgs(new DefaultKeyProvider());
             StealthSigningService cryptoService = new StealthSigningService(identityKeyProvidersRegistry, CoreFixture.LoggerService);
 
-            RingSignature[] ringSignatures = ConfidentialAssetsHelper.GenerateRingSignature(msg, keyImage, pks, blindingFactors[transferredAssetIndex], transferredAssetIndex);
-            res = ConfidentialAssetsHelper.VerifyRingSignature(msg, keyImage, pks, ringSignatures);
+            RingSignature[] ringSignatures = CryptoHelper.GenerateRingSignature(msg, keyImage, pks.Select(s => s.AsMemory()).ToArray(), blindingFactors[transferredAssetIndex], transferredAssetIndex);
+            res = CryptoHelper.VerifyRingSignature(msg, keyImage, pks, ringSignatures);
 
             Assert.True(res);
 
-            res = ConfidentialAssetsHelper.VerifyRingSignature(msg, ConfidentialAssetsHelper.GetRandomSeed(), pks, ringSignatures);
+            res = CryptoHelper.VerifyRingSignature(msg, CryptoHelper.GenerateKeyImage(CryptoHelper.GetRandomSeed()), pks, ringSignatures);
             Assert.False(res);
+        }
+
+        [Fact]
+        public void AssetsLinkedByAssetRingSignaturesTest()
+        {
+            int totalAssets = 9;
+            int transferredAssetIndex = 4;
+
+            byte[][] assetIds = new byte[totalAssets][];
+            byte[][] blindingFactors = new byte[totalAssets][];
+            byte[][] nonBlindedAssetCommitments = new byte[totalAssets][];
+            byte[][] assetCommitments = new byte[totalAssets][];
+            byte[] newCommitment, diffBlindingFactor;
+            byte[][] pks = new byte[totalAssets][];
+
+            diffBlindingFactor = CryptoHelper.GetRandomSeed();
+
+            for (int i = 0; i < totalAssets; i++)
+            {
+                assetIds[i] = CryptoHelper.GetRandomSeed();
+                blindingFactors[i] = CryptoHelper.GetRandomSeed();
+                nonBlindedAssetCommitments[i] = CryptoHelper.GetNonblindedAssetCommitment(assetIds[i]);
+                assetCommitments[i] = CryptoHelper.GetAssetCommitment(blindingFactors[i], assetIds[i]);
+            }
+
+            newCommitment = CryptoHelper.BlindAssetCommitment(assetCommitments[transferredAssetIndex], diffBlindingFactor);
+
+            for (int i = 0; i < totalAssets; i++)
+            {
+                pks[i] = CryptoHelper.SubCommitments(newCommitment, assetCommitments[i]);
+            }
+
+            SurjectionProof surjectionProof = CryptoHelper.CreateSurjectionProof(newCommitment, assetCommitments, transferredAssetIndex, diffBlindingFactor);
+
+            bool res = CryptoHelper.VerifySurjectionProof(surjectionProof, newCommitment);
+
+            Assert.True(res);
+
+            byte[] msg = CryptoHelper.GetRandomSeed();
+            byte[] keyImage = CryptoHelper.GenerateKeyImage(diffBlindingFactor);
+
+            IIdentityKeyProvidersRegistry identityKeyProvidersRegistry = Substitute.For<IIdentityKeyProvidersRegistry>();
+            identityKeyProvidersRegistry.GetInstance().ReturnsForAnyArgs(new DefaultKeyProvider());
+            StealthSigningService cryptoService = new StealthSigningService(identityKeyProvidersRegistry, CoreFixture.LoggerService);
+
+            RingSignature[] ringSignatures = CryptoHelper.GenerateRingSignature(msg, keyImage, pks.Select(s => s.AsMemory()).ToArray(), diffBlindingFactor, transferredAssetIndex);
+            res = CryptoHelper.VerifyRingSignature(msg, keyImage, pks, ringSignatures);
+
+            Assert.True(res);
+
+            res = CryptoHelper.VerifyRingSignature(msg, CryptoHelper.GetRandomSeed(), pks, ringSignatures);
+            Assert.False(res);
+        }
+
+        [Fact]
+        public void DestinationKeysAndAssetCommitmentLinkageTest()
+        {
+            int totalAssets = 9;
+            int transferredAssetIndex = 4;
+
         }
 
         [Fact]
         public void SingleRingSignatureTest()
         {
-            byte[] msg = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] otsk = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] keyImage = ConfidentialAssetsHelper.GenerateKeyImage(otsk);
+            byte[] msg = CryptoHelper.GetRandomSeed();
+            byte[] otsk = CryptoHelper.GetRandomSeed();
+            byte[] keyImage = CryptoHelper.GenerateKeyImage(otsk);
             byte[][] pks = new byte[1][];
-            pks[0] = ConfidentialAssetsHelper.GetPublicKey(otsk);
+            pks[0] = CryptoHelper.GetPublicKey(otsk);
 
             IIdentityKeyProvidersRegistry identityKeyProvidersRegistry = Substitute.For<IIdentityKeyProvidersRegistry>();
             identityKeyProvidersRegistry.GetInstance().ReturnsForAnyArgs(new DefaultKeyProvider());
             StealthSigningService cryptoService = new StealthSigningService(identityKeyProvidersRegistry, CoreFixture.LoggerService);
 
-            RingSignature[] ringSignatures = ConfidentialAssetsHelper.GenerateRingSignature(msg, keyImage, pks, otsk, 0);
-            bool res = ConfidentialAssetsHelper.VerifyRingSignature(msg, keyImage, pks, ringSignatures);
+            RingSignature[] ringSignatures = CryptoHelper.GenerateRingSignature(msg, keyImage, pks.Select(s => s.AsMemory()).ToArray(), otsk, 0);
+            bool res = CryptoHelper.VerifyRingSignature(msg, keyImage, pks, ringSignatures);
 
             Assert.True(res);
 
-            byte[] keyImage1 = ConfidentialAssetsHelper.GenerateKeyImage(ConfidentialAssetsHelper.GetRandomSeed());
-            ringSignatures = ConfidentialAssetsHelper.GenerateRingSignature(msg, keyImage1, pks, otsk, 0);
-            res = ConfidentialAssetsHelper.VerifyRingSignature(msg, keyImage1, pks, ringSignatures);
+            byte[] keyImage1 = CryptoHelper.GenerateKeyImage(CryptoHelper.GetRandomSeed());
+            ringSignatures = CryptoHelper.GenerateRingSignature(msg, keyImage1, pks.Select(s => s.AsMemory()).ToArray(), otsk, 0);
+            res = CryptoHelper.VerifyRingSignature(msg, keyImage1, pks, ringSignatures);
 
             Assert.False(res);
 
-            pks[0] = ConfidentialAssetsHelper.GetPublicKey(ConfidentialAssetsHelper.GetRandomSeed());
-            ringSignatures = ConfidentialAssetsHelper.GenerateRingSignature(msg, keyImage, pks, otsk, 0);
-            res = ConfidentialAssetsHelper.VerifyRingSignature(msg, keyImage, pks, ringSignatures);
+            pks[0] = CryptoHelper.GetPublicKey(CryptoHelper.GetRandomSeed());
+            ringSignatures = CryptoHelper.GenerateRingSignature(msg, keyImage, pks.Select(s => s.AsMemory()).ToArray(), otsk, 0);
+            res = CryptoHelper.VerifyRingSignature(msg, keyImage, pks, ringSignatures);
 
             Assert.False(res);
         }
@@ -339,62 +400,62 @@ namespace O10.Crypto.Tests
             int totalAssets = 9;
             int transferredAssetIndex = 4;
 
-            byte[] blindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
+            byte[] blindingFactor = CryptoHelper.GetRandomSeed();
             byte[][] assetIds = new byte[totalAssets][];
             byte[] assetCommitment;
 
             for (int i = 0; i < totalAssets; i++)
             {
-                assetIds[i] = ConfidentialAssetsHelper.GetRandomSeed();
+                assetIds[i] = CryptoHelper.GetRandomSeed();
             }
 
-            assetCommitment = ConfidentialAssetsHelper.GetAssetCommitment(blindingFactor, assetIds[transferredAssetIndex]);
+            assetCommitment = CryptoHelper.GetAssetCommitment(blindingFactor, assetIds[transferredAssetIndex]);
 
-            SurjectionProof surjectionProof = ConfidentialAssetsHelper.CreateNewIssuanceSurjectionProof(assetCommitment, assetIds, transferredAssetIndex, blindingFactor);
+            SurjectionProof surjectionProof = CryptoHelper.CreateNewIssuanceSurjectionProof(assetCommitment, assetIds, transferredAssetIndex, blindingFactor);
 
-            bool res = ConfidentialAssetsHelper.VerifyIssuanceSurjectionProof(surjectionProof, assetCommitment, assetIds);
+            bool res = CryptoHelper.VerifyIssuanceSurjectionProof(surjectionProof, assetCommitment, assetIds);
 
             Assert.True(res);
 
-            surjectionProof = ConfidentialAssetsHelper.CreateNewIssuanceSurjectionProof(assetCommitment, assetIds, transferredAssetIndex, blindingFactor);
+            surjectionProof = CryptoHelper.CreateNewIssuanceSurjectionProof(assetCommitment, assetIds, transferredAssetIndex, blindingFactor);
 
-            res = ConfidentialAssetsHelper.VerifyIssuanceSurjectionProof(surjectionProof, assetCommitment, assetIds.Skip(1).Union(new byte[][] { ConfidentialAssetsHelper.GetRandomSeed() }).ToArray());
-
-            Assert.False(res);
-
-            surjectionProof = ConfidentialAssetsHelper.CreateNewIssuanceSurjectionProof(assetCommitment, assetIds, (transferredAssetIndex + 1) % totalAssets, blindingFactor);
-
-            res = ConfidentialAssetsHelper.VerifyIssuanceSurjectionProof(surjectionProof, assetCommitment, assetIds);
+            res = CryptoHelper.VerifyIssuanceSurjectionProof(surjectionProof, assetCommitment, assetIds.Skip(1).Union(new byte[][] { CryptoHelper.GetRandomSeed() }).ToArray());
 
             Assert.False(res);
 
-            surjectionProof = ConfidentialAssetsHelper.CreateNewIssuanceSurjectionProof(assetCommitment, assetIds.Skip(transferredAssetIndex + 1).ToArray(), 0, blindingFactor);
+            surjectionProof = CryptoHelper.CreateNewIssuanceSurjectionProof(assetCommitment, assetIds, (transferredAssetIndex + 1) % totalAssets, blindingFactor);
 
-            res = ConfidentialAssetsHelper.VerifyIssuanceSurjectionProof(surjectionProof, assetCommitment, assetIds.Skip(transferredAssetIndex + 1).ToArray());
+            res = CryptoHelper.VerifyIssuanceSurjectionProof(surjectionProof, assetCommitment, assetIds);
 
             Assert.False(res);
 
-            byte[] randomCommitment = ConfidentialAssetsHelper.GetRandomSeed();
+            surjectionProof = CryptoHelper.CreateNewIssuanceSurjectionProof(assetCommitment, assetIds.Skip(transferredAssetIndex + 1).ToArray(), 0, blindingFactor);
 
-            while (!ConfidentialAssetsHelper.IsPointValid(randomCommitment))
+            res = CryptoHelper.VerifyIssuanceSurjectionProof(surjectionProof, assetCommitment, assetIds.Skip(transferredAssetIndex + 1).ToArray());
+
+            Assert.False(res);
+
+            byte[] randomCommitment = CryptoHelper.GetRandomSeed();
+
+            while (!CryptoHelper.IsPointValid(randomCommitment))
             {
-                randomCommitment = ConfidentialAssetsHelper.GetRandomSeed();
+                randomCommitment = CryptoHelper.GetRandomSeed();
             }
 
-            surjectionProof = ConfidentialAssetsHelper.CreateNewIssuanceSurjectionProof(randomCommitment, assetIds, transferredAssetIndex, ConfidentialAssetsHelper.GetRandomSeed());
-            res = ConfidentialAssetsHelper.VerifySurjectionProof(surjectionProof, randomCommitment);
+            surjectionProof = CryptoHelper.CreateNewIssuanceSurjectionProof(randomCommitment, assetIds, transferredAssetIndex, CryptoHelper.GetRandomSeed());
+            res = CryptoHelper.VerifySurjectionProof(surjectionProof, randomCommitment);
 
             Assert.False(res);
 
-            randomCommitment = ConfidentialAssetsHelper.GetRandomSeed();
+            randomCommitment = CryptoHelper.GetRandomSeed();
 
-            while (ConfidentialAssetsHelper.IsPointValid(randomCommitment))
+            while (CryptoHelper.IsPointValid(randomCommitment))
             {
-                randomCommitment = ConfidentialAssetsHelper.GetRandomSeed();
+                randomCommitment = CryptoHelper.GetRandomSeed();
             }
 
-            surjectionProof = ConfidentialAssetsHelper.CreateNewIssuanceSurjectionProof(randomCommitment, assetIds, transferredAssetIndex, ConfidentialAssetsHelper.GetRandomSeed());
-            res = ConfidentialAssetsHelper.VerifySurjectionProof(surjectionProof, randomCommitment);
+            surjectionProof = CryptoHelper.CreateNewIssuanceSurjectionProof(randomCommitment, assetIds, transferredAssetIndex, CryptoHelper.GetRandomSeed());
+            res = CryptoHelper.VerifySurjectionProof(surjectionProof, randomCommitment);
 
             Assert.False(res);
         }
@@ -405,26 +466,26 @@ namespace O10.Crypto.Tests
             int totalAssets = 1;
             int transferredAssetIndex = 0;
 
-            byte[] blindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
+            byte[] blindingFactor = CryptoHelper.GetRandomSeed();
             byte[][] assetIds = new byte[totalAssets][];
             byte[] assetCommitment;
 
             for (int i = 0; i < totalAssets; i++)
             {
-                assetIds[i] = ConfidentialAssetsHelper.GetRandomSeed();
+                assetIds[i] = CryptoHelper.GetRandomSeed();
             }
 
-            assetCommitment = ConfidentialAssetsHelper.GetAssetCommitment(blindingFactor, assetIds[transferredAssetIndex]);
+            assetCommitment = CryptoHelper.GetAssetCommitment(blindingFactor, assetIds[transferredAssetIndex]);
 
-            SurjectionProof surjectionProof = ConfidentialAssetsHelper.CreateNewIssuanceSurjectionProof(assetCommitment, assetIds, transferredAssetIndex, blindingFactor);
+            SurjectionProof surjectionProof = CryptoHelper.CreateNewIssuanceSurjectionProof(assetCommitment, assetIds, transferredAssetIndex, blindingFactor);
 
-            bool res = ConfidentialAssetsHelper.VerifyIssuanceSurjectionProof(surjectionProof, assetCommitment, assetIds);
+            bool res = CryptoHelper.VerifyIssuanceSurjectionProof(surjectionProof, assetCommitment, assetIds);
 
             Assert.True(res);
 
-            surjectionProof = ConfidentialAssetsHelper.CreateNewIssuanceSurjectionProof(assetCommitment, assetIds, transferredAssetIndex, blindingFactor);
+            surjectionProof = CryptoHelper.CreateNewIssuanceSurjectionProof(assetCommitment, assetIds, transferredAssetIndex, blindingFactor);
 
-            res = ConfidentialAssetsHelper.VerifyIssuanceSurjectionProof(surjectionProof, assetCommitment, new byte[][] { ConfidentialAssetsHelper.GetRandomSeed() });
+            res = CryptoHelper.VerifyIssuanceSurjectionProof(surjectionProof, assetCommitment, new byte[][] { CryptoHelper.GetRandomSeed() });
 
             Assert.False(res);
         }
@@ -432,14 +493,14 @@ namespace O10.Crypto.Tests
         [Fact]
         public void DestinationKeyTest()
         {
-            byte[] secretTransactionKey = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] publicTransactionKey = ConfidentialAssetsHelper.GetPublicKey(secretTransactionKey);
-            byte[] secretViewKey = ConfidentialAssetsHelper.GetRandomSeed(), secretSpendKey = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] publicViewKey = ConfidentialAssetsHelper.GetPublicKey(secretViewKey), publicSpendKey = ConfidentialAssetsHelper.GetPublicKey(secretSpendKey);
+            byte[] secretTransactionKey = CryptoHelper.GetRandomSeed();
+            byte[] publicTransactionKey = CryptoHelper.GetPublicKey(secretTransactionKey);
+            byte[] secretViewKey = CryptoHelper.GetRandomSeed(), secretSpendKey = CryptoHelper.GetRandomSeed();
+            byte[] publicViewKey = CryptoHelper.GetPublicKey(secretViewKey), publicSpendKey = CryptoHelper.GetPublicKey(secretSpendKey);
 
-            byte[] destinationKey = ConfidentialAssetsHelper.GetDestinationKey(secretTransactionKey, publicSpendKey, publicViewKey);
+            byte[] destinationKey = CryptoHelper.GetDestinationKey(secretTransactionKey, publicSpendKey, publicViewKey);
 
-            bool isDestinationKeyMine = ConfidentialAssetsHelper.IsDestinationKeyMine(destinationKey, publicTransactionKey, secretViewKey, publicSpendKey);
+            bool isDestinationKeyMine = CryptoHelper.IsDestinationKeyMine(destinationKey, publicTransactionKey, secretViewKey, publicSpendKey);
 
             Assert.True(isDestinationKeyMine);
         }
@@ -447,22 +508,22 @@ namespace O10.Crypto.Tests
         //[Fact]
         public void AssetValueRangeProof()
         {
-            byte[] assetId = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] nonBlindedAssetCommitment = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(assetId);
+            byte[] assetId = CryptoHelper.GetRandomSeed();
+            byte[] nonBlindedAssetCommitment = CryptoHelper.GetNonblindedAssetCommitment(assetId);
 
-            byte[] assetBlindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] assetCommitment = ConfidentialAssetsHelper.BlindAssetCommitment(nonBlindedAssetCommitment, assetBlindingFactor);
+            byte[] assetBlindingFactor = CryptoHelper.GetRandomSeed();
+            byte[] assetCommitment = CryptoHelper.BlindAssetCommitment(nonBlindedAssetCommitment, assetBlindingFactor);
 
-            byte[] valueBlindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] valueAssetCommitment = ConfidentialAssetsHelper.CreateBlindedValueCommitmentFromBlindingFactor(assetCommitment, 1, valueBlindingFactor);
+            byte[] valueBlindingFactor = CryptoHelper.GetRandomSeed();
+            byte[] valueAssetCommitment = CryptoHelper.CreateBlindedValueCommitmentFromBlindingFactor(assetCommitment, 1, valueBlindingFactor);
 
-            RangeProof rangeProof = ConfidentialAssetsHelper.CreateValueRangeProof(assetCommitment, valueAssetCommitment, 1, valueBlindingFactor);
-            bool res = ConfidentialAssetsHelper.VerifyValueRangeProof(rangeProof, assetCommitment, valueAssetCommitment);
+            RangeProof rangeProof = CryptoHelper.CreateValueRangeProof(assetCommitment, valueAssetCommitment, 1, valueBlindingFactor);
+            bool res = CryptoHelper.VerifyValueRangeProof(rangeProof, assetCommitment, valueAssetCommitment);
 
             Assert.True(res);
 
-            RangeProof rangeProof1 = ConfidentialAssetsHelper.CreateValueRangeProof(assetCommitment, valueAssetCommitment, 11, valueBlindingFactor);
-            bool res1 = ConfidentialAssetsHelper.VerifyValueRangeProof(rangeProof1, assetCommitment, valueAssetCommitment);
+            RangeProof rangeProof1 = CryptoHelper.CreateValueRangeProof(assetCommitment, valueAssetCommitment, 11, valueBlindingFactor);
+            bool res1 = CryptoHelper.VerifyValueRangeProof(rangeProof1, assetCommitment, valueAssetCommitment);
 
             Assert.False(res1);
         }
@@ -470,7 +531,7 @@ namespace O10.Crypto.Tests
         //[Fact]
         public void BorromeanRSTest()
         {
-            byte[] msg = ConfidentialAssetsHelper.GetRandomSeed();
+            byte[] msg = CryptoHelper.GetRandomSeed();
 
             int totalGroups = 64;
             int itemsInGroup = 2;
@@ -490,8 +551,8 @@ namespace O10.Crypto.Tests
 
                 for (int j = 0; j < itemsInGroup; j++)
                 {
-                    sks[i][j] = ConfidentialAssetsHelper.GetRandomSeed();
-                    pks[i][j] = ConfidentialAssetsHelper.GetPublicKey(sks[i][j]);
+                    sks[i][j] = CryptoHelper.GetRandomSeed();
+                    pks[i][j] = CryptoHelper.GetPublicKey(sks[i][j]);
 
                     if(indicies[i] == j)
                     {
@@ -500,8 +561,8 @@ namespace O10.Crypto.Tests
                 }
             }
 
-            BorromeanRingSignatureEx brs = ConfidentialAssetsHelper.GenerateBorromeanRingSignature(msg, pks, sksMine, indicies);
-            bool res = ConfidentialAssetsHelper.VerifyBorromeanRingSignature(brs, msg, pks);
+            BorromeanRingSignatureEx brs = CryptoHelper.GenerateBorromeanRingSignature(msg, pks, sksMine, indicies);
+            bool res = CryptoHelper.VerifyBorromeanRingSignature(brs, msg, pks);
 
             Assert.True(res);
         }
@@ -509,15 +570,15 @@ namespace O10.Crypto.Tests
 		[Fact]
 		public void EncodeDecodeAssetTest()
 		{
-			byte[] bf = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] assetId = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] sk = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] pk = ConfidentialAssetsHelper.GetPublicKey(sk);
-			byte[] svk = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] pvk = ConfidentialAssetsHelper.GetPublicKey(svk);
+			byte[] bf = CryptoHelper.GetRandomSeed();
+			byte[] assetId = CryptoHelper.GetRandomSeed();
+			byte[] sk = CryptoHelper.GetRandomSeed();
+			byte[] pk = CryptoHelper.GetPublicKey(sk);
+			byte[] svk = CryptoHelper.GetRandomSeed();
+			byte[] pvk = CryptoHelper.GetPublicKey(svk);
 
-			EcdhTupleCA ecdhTuple = ConfidentialAssetsHelper.CreateEcdhTupleCA(bf, assetId, sk, pvk);
-			ConfidentialAssetsHelper.DecodeEcdhTuple(ecdhTuple, pk, svk, out byte[] bfDecoded, out byte[] assetIdDecoded);
+            EcdhTupleCA ecdhTuple = CryptoHelper.CreateEcdhTupleCA(bf, assetId, sk, pvk);
+            CryptoHelper.DecodeEcdhTuple(ecdhTuple, pk, svk, out byte[] bfDecoded, out byte[] assetIdDecoded);
 
 			Assert.Equal(assetId, assetIdDecoded);
 			Assert.Equal(bf, bfDecoded);
@@ -526,21 +587,21 @@ namespace O10.Crypto.Tests
 		[Fact]
 		public void EncryptDecryptTest()
 		{
-			byte[] sk = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] pk = ConfidentialAssetsHelper.GetPublicKey(sk);
-			Sodium.SodiumCore.Init();
+			byte[] sk = CryptoHelper.GetRandomSeed();
+			byte[] pk = CryptoHelper.GetPublicKey(sk);
+            SodiumCore.Init();
 
 			KeyPair keyPair = PublicKeyBox.GenerateKeyPair(sk);
 
-			byte[] pk1 = ConfidentialAssetsHelper.GetPublicKey(keyPair.PrivateKey);
+			byte[] pk1 = CryptoHelper.GetPublicKey(keyPair.PrivateKey);
 			
 			string text = "Text text!";
 
 			byte[] textBytes = Encoding.ASCII.GetBytes(text);
 
-			byte[] cipher = Sodium.SealedPublicKeyBox.Create(text, keyPair.PublicKey);
+			byte[] cipher = SealedPublicKeyBox.Create(text, keyPair.PublicKey);
 
-			byte[] textDecodedBytes = Sodium.SealedPublicKeyBox.Open(cipher, sk, keyPair.PublicKey);
+			byte[] textDecodedBytes = SealedPublicKeyBox.Open(cipher, sk, keyPair.PublicKey);
 
 			string decodedText = Encoding.ASCII.GetString(textDecodedBytes);
 
@@ -550,29 +611,29 @@ namespace O10.Crypto.Tests
 		[Fact]
 		public void AssetsUniquenessCrossIssuersTest()
 		{
-			byte[] blindingFactor1 = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] blindingFactor2 = ConfidentialAssetsHelper.GetRandomSeed();
+			byte[] blindingFactor1 = CryptoHelper.GetRandomSeed();
+			byte[] blindingFactor2 = CryptoHelper.GetRandomSeed();
 
-			byte[] assetIdSame = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] assetId1 = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] assetId2 = ConfidentialAssetsHelper.GetRandomSeed();
+			byte[] assetIdSame = CryptoHelper.GetRandomSeed();
+			byte[] assetId1 = CryptoHelper.GetRandomSeed();
+			byte[] assetId2 = CryptoHelper.GetRandomSeed();
 
-			byte[] assetSP = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] commitmentSP_1 = ConfidentialAssetsHelper.GetAssetCommitment(blindingFactor1, assetSP);
-			byte[] commitmentSP_2 = ConfidentialAssetsHelper.GetAssetCommitment(blindingFactor2, assetSP);
+			byte[] assetSP = CryptoHelper.GetRandomSeed();
+			byte[] commitmentSP_1 = CryptoHelper.GetAssetCommitment(blindingFactor1, assetSP);
+			byte[] commitmentSP_2 = CryptoHelper.GetAssetCommitment(blindingFactor2, assetSP);
 
-			byte[] deltaSP = ConfidentialAssetsHelper.SubCommitments(commitmentSP_2, commitmentSP_1);
+			byte[] deltaSP = CryptoHelper.SubCommitments(commitmentSP_2, commitmentSP_1);
 
-			byte[] commitmentSame_1 = ConfidentialAssetsHelper.GetAssetCommitment(blindingFactor1, assetIdSame);
-			byte[] commitmentSame_2 = ConfidentialAssetsHelper.GetAssetCommitment(blindingFactor2, assetIdSame);
-			byte[] deltaSame = ConfidentialAssetsHelper.SubCommitments(commitmentSame_2, commitmentSame_1);
+			byte[] commitmentSame_1 = CryptoHelper.GetAssetCommitment(blindingFactor1, assetIdSame);
+			byte[] commitmentSame_2 = CryptoHelper.GetAssetCommitment(blindingFactor2, assetIdSame);
+			byte[] deltaSame = CryptoHelper.SubCommitments(commitmentSame_2, commitmentSame_1);
 
 			
-			byte[] commitment1_1 = ConfidentialAssetsHelper.GetAssetCommitment(blindingFactor1, assetId1);
-			byte[] commitment1_2 = ConfidentialAssetsHelper.GetAssetCommitment(blindingFactor2, assetId1);
-			byte[] commitment1_2_ByDelta = ConfidentialAssetsHelper.SumCommitments(commitment1_1, deltaSP);
+			byte[] commitment1_1 = CryptoHelper.GetAssetCommitment(blindingFactor1, assetId1);
+			byte[] commitment1_2 = CryptoHelper.GetAssetCommitment(blindingFactor2, assetId1);
+			byte[] commitment1_2_ByDelta = CryptoHelper.SumCommitments(commitment1_1, deltaSP);
 
-			byte[] commitment2_2 = ConfidentialAssetsHelper.GetAssetCommitment(blindingFactor2, assetId2);
+			byte[] commitment2_2 = CryptoHelper.GetAssetCommitment(blindingFactor2, assetId2);
 
 			Assert.True(deltaSP.Equals32(deltaSame));
 			Assert.True(commitment1_2.Equals32(commitment1_2_ByDelta));
@@ -582,20 +643,20 @@ namespace O10.Crypto.Tests
 		[Fact]
 		public void EcdhTupleProofsTest()
 		{
-			byte[] blindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] assetId = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] issuer = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] payload = ConfidentialAssetsHelper.GetRandomSeed();
+			byte[] blindingFactor = CryptoHelper.GetRandomSeed();
+			byte[] assetId = CryptoHelper.GetRandomSeed();
+			byte[] issuer = CryptoHelper.GetRandomSeed();
+			byte[] payload = CryptoHelper.GetRandomSeed();
 
-			byte[] senderSk = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] senderPk = ConfidentialAssetsHelper.GetPublicKey(senderSk);
+			byte[] senderSk = CryptoHelper.GetRandomSeed();
+			byte[] senderPk = CryptoHelper.GetPublicKey(senderSk);
 
-			byte[] receiverSk = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] receiverPk = ConfidentialAssetsHelper.GetPublicKey(receiverSk);
+			byte[] receiverSk = CryptoHelper.GetRandomSeed();
+			byte[] receiverPk = CryptoHelper.GetPublicKey(receiverSk);
 
-			EcdhTupleProofs proofs = ConfidentialAssetsHelper.CreateEcdhTupleProofs(blindingFactor, assetId, issuer, payload, senderSk, receiverPk);
+            EcdhTupleProofs proofs = CryptoHelper.CreateEcdhTupleProofs(blindingFactor, assetId, issuer, payload, senderSk, receiverPk);
 
-			ConfidentialAssetsHelper.DecodeEcdhTuple(proofs, senderPk, receiverSk, out byte[] actualBlindingFactor, out byte[] actualAssetId, out byte[] actuaIssuer, out byte[] actualPayload);
+            CryptoHelper.DecodeEcdhTuple(proofs, senderPk, receiverSk, out byte[] actualBlindingFactor, out byte[] actualAssetId, out byte[] actuaIssuer, out byte[] actualPayload);
 
 			Assert.Equal(blindingFactor, actualBlindingFactor);
 			Assert.Equal(assetId, actualAssetId);
@@ -606,16 +667,16 @@ namespace O10.Crypto.Tests
 		[Fact]
 		public void EncodedCommitmentTest()
 		{
-			byte[] commitment = ConfidentialAssetsHelper.GetRandomSeed();
+			byte[] commitment = CryptoHelper.GetRandomSeed();
 
-			byte[] senderSk = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] senderPk = ConfidentialAssetsHelper.GetPublicKey(senderSk);
+			byte[] senderSk = CryptoHelper.GetRandomSeed();
+			byte[] senderPk = CryptoHelper.GetPublicKey(senderSk);
 
-			byte[] receiverSk = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] receiverPk = ConfidentialAssetsHelper.GetPublicKey(receiverSk);
+			byte[] receiverSk = CryptoHelper.GetRandomSeed();
+			byte[] receiverPk = CryptoHelper.GetPublicKey(receiverSk);
 
-			byte[] encodedCommitment = ConfidentialAssetsHelper.CreateEncodedCommitment(commitment, senderSk, receiverPk);
-			byte[] decodedCommitment = ConfidentialAssetsHelper.DecodeCommitment(encodedCommitment, senderPk, receiverSk);
+			byte[] encodedCommitment = CryptoHelper.CreateEncodedCommitment(commitment, senderSk, receiverPk);
+			byte[] decodedCommitment = CryptoHelper.DecodeCommitment(encodedCommitment, senderPk, receiverSk);
 
 			Assert.Equal(commitment, decodedCommitment);
 		}
@@ -624,11 +685,11 @@ namespace O10.Crypto.Tests
 		public void SkPkTest()
 		{
 
-			byte[] seed = ConfidentialAssetsHelper.GetRandomSeed();
+			byte[] seed = CryptoHelper.GetRandomSeed();
 			byte[] secretKey = Ed25519.SecretKeyFromSeed(seed);
 			Ed25519.KeyPairFromSeed(out byte[] publicKey, out byte[] expandedPrivateKey, seed);
 
-			byte[] pk = ConfidentialAssetsHelper.GetPublicKey(secretKey);
+			byte[] pk = CryptoHelper.GetPublicKey(secretKey);
 
 			Assert.Equal(publicKey, pk);
 		}
@@ -644,32 +705,32 @@ namespace O10.Crypto.Tests
 			byte[] associatedAssetId = GetAssetId(associatedContent);
 
 			string blindingFactorSeedString = $"{associatedContent}{pwd}";
-			byte[] blindingFactorSeed = ConfidentialAssetsHelper.FastHash256(Encoding.ASCII.GetBytes(blindingFactorSeedString));
-			byte[] blindingFactor = ConfidentialAssetsHelper.ReduceScalar32(blindingFactorSeed);
-			byte[] blindingPoint = ConfidentialAssetsHelper.GetPublicKey(blindingFactor);
-			byte[] nonBlindedAssociatedCommitment = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(associatedAssetId);
-			byte[] nonBlindedRootCommitment = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(rootAssetId);
-			byte[] associatedCommitment = ConfidentialAssetsHelper.SumCommitments(blindingPoint, nonBlindedAssociatedCommitment);
-			byte[] rootCommitment = ConfidentialAssetsHelper.SumCommitments(blindingPoint, nonBlindedRootCommitment);
+			byte[] blindingFactorSeed = CryptoHelper.FastHash256(Encoding.ASCII.GetBytes(blindingFactorSeedString));
+			byte[] blindingFactor = CryptoHelper.ReduceScalar32(blindingFactorSeed);
+			byte[] blindingPoint = CryptoHelper.GetPublicKey(blindingFactor);
+			byte[] nonBlindedAssociatedCommitment = CryptoHelper.GetNonblindedAssetCommitment(associatedAssetId);
+			byte[] nonBlindedRootCommitment = CryptoHelper.GetNonblindedAssetCommitment(rootAssetId);
+			byte[] associatedCommitment = CryptoHelper.SumCommitments(blindingPoint, nonBlindedAssociatedCommitment);
+			byte[] rootCommitment = CryptoHelper.SumCommitments(blindingPoint, nonBlindedRootCommitment);
 
 
-			byte[] blindingFactorRoot = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] rootCommitment2 = ConfidentialAssetsHelper.GetAssetCommitment(blindingFactorRoot, rootAssetId);
-			byte[] rootBfDiff = ConfidentialAssetsHelper.GetDifferentialBlindingFactor(blindingFactorRoot, blindingFactor);
+			byte[] blindingFactorRoot = CryptoHelper.GetRandomSeed();
+			byte[] rootCommitment2 = CryptoHelper.GetAssetCommitment(blindingFactorRoot, rootAssetId);
+			byte[] rootBfDiff = CryptoHelper.GetDifferentialBlindingFactor(blindingFactorRoot, blindingFactor);
 
-			SurjectionProof rootSurjectionProof = ConfidentialAssetsHelper.CreateSurjectionProof(rootCommitment2, new byte[][] { rootCommitment }, 0, rootBfDiff);
+            SurjectionProof rootSurjectionProof = CryptoHelper.CreateSurjectionProof(rootCommitment2, new byte[][] { rootCommitment }, 0, rootBfDiff);
 
-			bool rootRes = ConfidentialAssetsHelper.VerifySurjectionProof(rootSurjectionProof, rootCommitment2);
+			bool rootRes = CryptoHelper.VerifySurjectionProof(rootSurjectionProof, rootCommitment2);
 
 			Assert.True(rootRes);
 
-			byte[] blindingFactorAssociated = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] associatedCommitment2 = ConfidentialAssetsHelper.GetAssetCommitment(blindingFactorAssociated, associatedAssetId);
-			byte[] associatedBfDiff = ConfidentialAssetsHelper.GetDifferentialBlindingFactor(blindingFactorAssociated, blindingFactor);
+			byte[] blindingFactorAssociated = CryptoHelper.GetRandomSeed();
+			byte[] associatedCommitment2 = CryptoHelper.GetAssetCommitment(blindingFactorAssociated, associatedAssetId);
+			byte[] associatedBfDiff = CryptoHelper.GetDifferentialBlindingFactor(blindingFactorAssociated, blindingFactor);
 
-			SurjectionProof associatedSurjectoinProof = ConfidentialAssetsHelper.CreateSurjectionProof(associatedCommitment2, new byte[][] { associatedCommitment }, 0, associatedBfDiff);
+            SurjectionProof associatedSurjectoinProof = CryptoHelper.CreateSurjectionProof(associatedCommitment2, new byte[][] { associatedCommitment }, 0, associatedBfDiff);
 
-			bool associatedRes = ConfidentialAssetsHelper.VerifySurjectionProof(associatedSurjectoinProof, associatedCommitment2);
+			bool associatedRes = CryptoHelper.VerifySurjectionProof(associatedSurjectoinProof, associatedCommitment2);
 
 			Assert.True(associatedRes);
 		}

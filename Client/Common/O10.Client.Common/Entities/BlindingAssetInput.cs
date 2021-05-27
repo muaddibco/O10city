@@ -12,7 +12,7 @@ namespace O10.Client.Common.Entities
         public BlindingAssetInput(byte[] assetId)
         {
             AssetId = assetId;
-            BlindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
+            BlindingFactor = CryptoHelper.GetRandomSeed();
         }
 
         public byte[] AssetId { get; set; }

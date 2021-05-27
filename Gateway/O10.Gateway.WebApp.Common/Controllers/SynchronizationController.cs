@@ -158,7 +158,7 @@ namespace O10.Gateway.WebApp.Common.Controllers
         [HttpGet("GetOutputs/{amount}")]
         public IActionResult GetOutputs(int amount)
         {
-            OutputModel[] outputModels = _dataAccessService.GetOutputs(amount).Select(o => new OutputModel { Commitment = o.Commitment.HexStringToByteArray(), DestinationKey = o.DestinationKey.HexStringToByteArray() }).ToArray();
+            OutputModel[] outputModels = _dataAccessService.GetOutputs(amount).Select(o => new OutputModel { Commitment = _identityKeyProvider.GetKey(o.Commitment.HexStringToByteArray()), DestinationKey = _identityKeyProvider.GetKey(o.DestinationKey.HexStringToByteArray()) }).ToArray();
 
             return Ok(outputModels);
         }

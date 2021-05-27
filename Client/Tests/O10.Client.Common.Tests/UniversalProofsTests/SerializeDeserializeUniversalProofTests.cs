@@ -12,8 +12,8 @@ namespace O10.Client.Common.Tests.UniversalProofsTests
         [Fact]
         public void SerializeUniversalProofTest()
         {
-            byte[] issuer = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] commitment = ConfidentialAssetsHelper.GetRandomSeed();
+            byte[] issuer = CryptoHelper.GetRandomSeed();
+            byte[] commitment = CryptoHelper.GetRandomSeed();
 
             UniversalProofs universalProofs = new UniversalProofs
             {

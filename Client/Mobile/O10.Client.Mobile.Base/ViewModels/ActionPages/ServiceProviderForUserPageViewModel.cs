@@ -276,10 +276,10 @@ namespace O10.Client.Mobile.Base.ViewModels
             BiometricProof biometricProof;
             UserRootAttribute rootAttribute = _dataAccessService.GetUserRootAttribute(SelectedAttribute.AttributeId);
             _executionContext.RelationsBindingService.GetBoundedCommitment(rootAttribute.AssetId, _inherencePublicKey, out byte[] registrationBlindingFactor, out byte[] registrationCommitment);
-            byte[] blindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] assetCommitment = ConfidentialAssetsHelper.GetAssetCommitment(blindingFactor, rootAttribute.AssetId);
-            byte[] blindingFactorToRegistration = ConfidentialAssetsHelper.GetDifferentialBlindingFactor(blindingFactor, registrationBlindingFactor);
-            SurjectionProof authenticationProof = ConfidentialAssetsHelper.CreateSurjectionProof(assetCommitment, new byte[][] { registrationCommitment }, 0, blindingFactorToRegistration);
+            byte[] blindingFactor = Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
+            byte[] assetCommitment = Crypto.ConfidentialAssets.CryptoHelper.GetAssetCommitment(blindingFactor, rootAttribute.AssetId);
+            byte[] blindingFactorToRegistration = Crypto.ConfidentialAssets.CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, registrationBlindingFactor);
+            SurjectionProof authenticationProof = Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(assetCommitment, new byte[][] { registrationCommitment }, 0, blindingFactorToRegistration);
 
             return new BiometricProof
             {
@@ -452,9 +452,9 @@ namespace O10.Client.Mobile.Base.ViewModels
         private async Task SendProofs(BiometricProof biometricProof, AssociatedProofPreparation[] associatedProofPreparations = null)
         {
             var rootAttribute = _dataAccessService.GetUserRootAttribute(_selectedAttribute.AttributeId);
-            byte[] commitment = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(rootAttribute.AssetId);
-            byte[] bf = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] commitmentToRoot = ConfidentialAssetsHelper.BlindAssetCommitment(commitment, bf);
+            byte[] commitment = Crypto.ConfidentialAssets.CryptoHelper.GetNonblindedAssetCommitment(rootAttribute.AssetId);
+            byte[] bf = Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
+            byte[] commitmentToRoot = Crypto.ConfidentialAssets.CryptoHelper.BlindAssetCommitment(commitment, bf);
             byte[] issuer = rootAttribute.Source.HexStringToByteArray();
             Random random = new Random(BitConverter.ToInt32(bf, 0));
             byte[][] issuanceCommitments = await _gatewayService.GetIssuanceCommitments(issuer, _restApiConfiguration.RingSize + 1).ConfigureAwait(false);

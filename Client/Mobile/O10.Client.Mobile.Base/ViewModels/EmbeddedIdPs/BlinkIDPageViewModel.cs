@@ -415,12 +415,12 @@ namespace O10.Client.Mobile.Base.ViewModels
                         // =======================================================================================================================
                         byte[] protectionAssetId = await _assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD, rootAssetId.ToHexString(), issuerBlinkID).ConfigureAwait(false);
                         _assetsService.GetBlindingPoint(await _bindingKeySource.Task.ConfigureAwait(false), rootAssetId, protectionAssetId, out byte[] blindingPoint, out byte[] blindingFactor);
-                        byte[] protectionAssetNonBlindedCommitment = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(protectionAssetId);
-                        byte[] protectionAssetCommitment = ConfidentialAssetsHelper.SumCommitments(protectionAssetNonBlindedCommitment, blindingPoint);
-                        byte[] sessionBlindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
-                        byte[] sessionCommitment = ConfidentialAssetsHelper.GetAssetCommitment(sessionBlindingFactor, protectionAssetId);
-                        byte[] diffBlindingFactor = ConfidentialAssetsHelper.GetDifferentialBlindingFactor(sessionBlindingFactor, blindingFactor);
-                        SurjectionProof surjectionProof = ConfidentialAssetsHelper.CreateSurjectionProof(sessionCommitment, new byte[][] { protectionAssetCommitment }, 0, diffBlindingFactor);
+                        byte[] protectionAssetNonBlindedCommitment = Crypto.ConfidentialAssets.CryptoHelper.GetNonblindedAssetCommitment(protectionAssetId);
+                        byte[] protectionAssetCommitment = Crypto.ConfidentialAssets.CryptoHelper.SumCommitments(protectionAssetNonBlindedCommitment, blindingPoint);
+                        byte[] sessionBlindingFactor = Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
+                        byte[] sessionCommitment = Crypto.ConfidentialAssets.CryptoHelper.GetAssetCommitment(sessionBlindingFactor, protectionAssetId);
+                        byte[] diffBlindingFactor = Crypto.ConfidentialAssets.CryptoHelper.GetDifferentialBlindingFactor(sessionBlindingFactor, blindingFactor);
+                        SurjectionProof surjectionProof = Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(sessionCommitment, new byte[][] { protectionAssetCommitment }, 0, diffBlindingFactor);
                         // =======================================================================================================================
 
                         byte[] bindingKey = await _bindingKeySource.Task.ConfigureAwait(false);

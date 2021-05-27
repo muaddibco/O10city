@@ -59,7 +59,7 @@ namespace O10.Client.Web.Portal.Controllers
         [HttpGet("GetSessionInfo/{spId}")]
         public IActionResult GetSessionInfo(long spId)
         {
-            string nonce = ConfidentialAssetsHelper.GetRandomSeed().ToHexString();
+            string nonce = CryptoHelper.GetRandomSeed().ToHexString();
             AccountDescriptor spAccount = _accountsService.GetById(spId);
 
             return Ok(new
@@ -155,8 +155,8 @@ namespace O10.Client.Web.Portal.Controllers
         public async Task<IActionResult> AddAllowedSigner(long spId, long documentId, [FromBody] AllowedSignerDto allowedSigner)
         {
             byte[] groupAssetId = await _assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_EMPLOYEEGROUP, allowedSigner.GroupOwner + allowedSigner.GroupName, allowedSigner.GroupOwner).ConfigureAwait(false);
-            byte[] blindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] groupCommitment = ConfidentialAssetsHelper.GetAssetCommitment(blindingFactor, groupAssetId);
+            byte[] blindingFactor = CryptoHelper.GetRandomSeed();
+            byte[] groupCommitment = CryptoHelper.GetAssetCommitment(blindingFactor, groupAssetId);
 
             allowedSigner.AllowedSignerId = _dataAccessService.AddSpDocumentAllowedSigner(spId, documentId, allowedSigner.GroupOwner, allowedSigner.GroupName, groupCommitment.ToHexString(), blindingFactor.ToHexString());
 

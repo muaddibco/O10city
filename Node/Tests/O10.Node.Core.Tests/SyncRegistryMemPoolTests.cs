@@ -182,7 +182,7 @@ namespace O10.Node.Core.Tests
         private static ISigningService GetRandomCryptoService()
         {
             ISigningService signingService = Substitute.For<ISigningService>();
-            byte[] privateKey = ConfidentialAssetsHelper.GetRandomSeed();
+            byte[] privateKey = Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
             byte[] expandedPrivateKey;
             byte[] publicKey;
             Ed25519.KeyPairFromSeed(out publicKey, out expandedPrivateKey, privateKey);

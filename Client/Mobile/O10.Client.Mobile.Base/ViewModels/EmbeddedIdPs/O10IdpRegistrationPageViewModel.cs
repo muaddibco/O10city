@@ -102,8 +102,8 @@ namespace O10.Client.Mobile.Base.ViewModels
             AccountDescriptor account = _accountsService.GetById(_executionContext.AccountId);
             IssuerActionDetails actionDetails = await _executionContext.GetActionDetails(_targetUri).ConfigureAwait(false);
             byte[] rootAssetId = await _assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_EMAIL, RootAttributeContent, actionDetails.Issuer).ConfigureAwait(false);
-            byte[] sessionBlindingFactor = ConfidentialAssetsHelper.ReduceScalar32(ConfidentialAssetsHelper.FastHash256(Encoding.ASCII.GetBytes(OneTimePassphrase)));
-            byte[] sessionCommitment = ConfidentialAssetsHelper.BlindAssetCommitment(ConfidentialAssetsHelper.GetNonblindedAssetCommitment(rootAssetId), sessionBlindingFactor);
+            byte[] sessionBlindingFactor = CryptoHelper.ReduceScalar32(CryptoHelper.FastHash256(Encoding.ASCII.GetBytes(OneTimePassphrase)));
+            byte[] sessionCommitment = CryptoHelper.BlindAssetCommitment(CryptoHelper.GetNonblindedAssetCommitment(rootAssetId), sessionBlindingFactor);
             byte[] protectionAssetId = await _assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD, rootAssetId.ToHexString(), actionDetails.Issuer).ConfigureAwait(false);
 
             try

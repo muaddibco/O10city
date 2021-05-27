@@ -56,7 +56,7 @@ namespace O10.Client.DataLayer.Services
                     {
                         byte[] initializationVector = new byte[16];
                         RandomNumberGenerator.Create().GetBytes(initializationVector);
-                        _dataContext.SystemSettings.Add(new SystemSettings { InitializationVector = initializationVector, BiometricSecretKey = ConfidentialAssetsHelper.GetRandomSeed() });
+                        _dataContext.SystemSettings.Add(new SystemSettings { InitializationVector = initializationVector, BiometricSecretKey = CryptoHelper.GetRandomSeed() });
 
                         _dataContext.SaveChanges();
                     }
@@ -1011,7 +1011,7 @@ namespace O10.Client.DataLayer.Services
                     .AsEnumerable()
                     .FirstOrDefault(a =>
                         {
-                            byte[] pk = ConfidentialAssetsHelper.GetPublicKey(Ed25519.SecretKeyFromSeed(a.SecretSpendKey));
+                            byte[] pk = CryptoHelper.GetPublicKey(Ed25519.SecretKeyFromSeed(a.SecretSpendKey));
                             return pk.Equals32(publicKey);
                         });
             }

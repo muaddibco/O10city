@@ -24,7 +24,7 @@ namespace O10.Client.Common.Tests
 
         public IdentityLogicTests(ITestOutputHelper testOutputHelper)
         {
-            _issuer = ConfidentialAssetsHelper.GetRandomSeed().ToHexString();
+            _issuer = CryptoHelper.GetRandomSeed().ToHexString();
             _testOutputHelper = testOutputHelper;
             IHashCalculationsRepository hashCalculationsRepository = Substitute.For<IHashCalculationsRepository>();
             hashCalculationsRepository.Create(HashType.Tiger4).Returns(new Tiger4HashCalculation());
@@ -50,11 +50,11 @@ namespace O10.Client.Common.Tests
             byte[] rootAttributeAssetId = _assetsService.GenerateAssetId(1, rootAttributeContent);
 
             TaskCompletionSource<byte[]> bindingKeySource = new TaskCompletionSource<byte[]>();
-            bindingKeySource.SetResult(ConfidentialAssetsHelper.PasswordHash(pwd));
+            bindingKeySource.SetResult(CryptoHelper.PasswordHash(pwd));
 
-            byte[] commitment = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(rootAttributeAssetId);
-            byte[] bf = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] commitmentToRoot = ConfidentialAssetsHelper.BlindAssetCommitment(commitment, bf);
+            byte[] commitment = CryptoHelper.GetNonblindedAssetCommitment(rootAttributeAssetId);
+            byte[] bf = CryptoHelper.GetRandomSeed();
+            byte[] commitmentToRoot = CryptoHelper.BlindAssetCommitment(commitment, bf);
 
             (SurjectionProof surjectionProofValue, SurjectionProof surjectionProofRoot) = 
                 await GetAttributeProofs(bf, commitmentToRoot, rootAttributeContent, rootAttributeAssetId, bindingKeySource)
@@ -72,24 +72,24 @@ namespace O10.Client.Common.Tests
             byte[] blindingPointRoot = _assetsService.GetBlindingPoint(await bindingKeySource.Task.ConfigureAwait(false), rootAttributeContentBytes);
             byte[] bfValue = _assetsService.GetBlindingFactor(await bindingKeySource.Task.ConfigureAwait(false), rootAttributeContentBytes, await bindingKeySource.Task.ConfigureAwait(false));
             byte[] blindingPointValue = _assetsService.GetBlindingPoint(await bindingKeySource.Task.ConfigureAwait(false), rootAttributeContentBytes, await bindingKeySource.Task.ConfigureAwait(false));
-            byte[] nonBlindedRootCommitment = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(rootAttributeAssetId);
+            byte[] nonBlindedRootCommitment = CryptoHelper.GetNonblindedAssetCommitment(rootAttributeAssetId);
             byte[] protectionAssetId = await _assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD, rootAttributeAssetId.ToHexString(), _issuer).ConfigureAwait(false);
-            byte[] nonBlindedProtectionCommitment = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(protectionAssetId);
-            byte[] commitmentToValueProtection = ConfidentialAssetsHelper.SumCommitments(blindingPointValue, nonBlindedProtectionCommitment);
-            byte[] commitmentToRootProtection = ConfidentialAssetsHelper.SumCommitments(blindingPointRoot, nonBlindedRootCommitment);
-            commitmentToRootProtection = ConfidentialAssetsHelper.SumCommitments(commitmentToRootProtection, nonBlindedProtectionCommitment);
+            byte[] nonBlindedProtectionCommitment = CryptoHelper.GetNonblindedAssetCommitment(protectionAssetId);
+            byte[] commitmentToValueProtection = CryptoHelper.SumCommitments(blindingPointValue, nonBlindedProtectionCommitment);
+            byte[] commitmentToRootProtection = CryptoHelper.SumCommitments(blindingPointRoot, nonBlindedRootCommitment);
+            commitmentToRootProtection = CryptoHelper.SumCommitments(commitmentToRootProtection, nonBlindedProtectionCommitment);
 
-            byte[] bfProtection = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] bfToValueDiff = ConfidentialAssetsHelper.GetDifferentialBlindingFactor(bfProtection, bfValue);
-            byte[] commitmentToProtectionValue = ConfidentialAssetsHelper.BlindAssetCommitment(nonBlindedProtectionCommitment, bfProtection);
-            var surjectionProofValue = ConfidentialAssetsHelper.CreateSurjectionProof(commitmentToProtectionValue, new byte[][] { commitmentToValueProtection }, 0, bfToValueDiff);
-            byte[] commitmentToProtectionRoot = ConfidentialAssetsHelper.SumCommitments(commitmentToProtectionValue, commitmentToRoot);
-            byte[] bfProtectionAndRoot = ConfidentialAssetsHelper.SumScalars(bfProtection, bf);
-            byte[] bfToRootDiff = ConfidentialAssetsHelper.GetDifferentialBlindingFactor(bfProtectionAndRoot, bfRoot);
-            var surjectionProofRoot = ConfidentialAssetsHelper.CreateSurjectionProof(commitmentToProtectionRoot, new byte[][] { commitmentToRootProtection }, 0, bfToRootDiff);
+            byte[] bfProtection = CryptoHelper.GetRandomSeed();
+            byte[] bfToValueDiff = CryptoHelper.GetDifferentialBlindingFactor(bfProtection, bfValue);
+            byte[] commitmentToProtectionValue = CryptoHelper.BlindAssetCommitment(nonBlindedProtectionCommitment, bfProtection);
+            var surjectionProofValue = CryptoHelper.CreateSurjectionProof(commitmentToProtectionValue, new byte[][] { commitmentToValueProtection }, 0, bfToValueDiff);
+            byte[] commitmentToProtectionRoot = CryptoHelper.SumCommitments(commitmentToProtectionValue, commitmentToRoot);
+            byte[] bfProtectionAndRoot = CryptoHelper.SumScalars(bfProtection, bf);
+            byte[] bfToRootDiff = CryptoHelper.GetDifferentialBlindingFactor(bfProtectionAndRoot, bfRoot);
+            var surjectionProofRoot = CryptoHelper.CreateSurjectionProof(commitmentToProtectionRoot, new byte[][] { commitmentToRootProtection }, 0, bfToRootDiff);
 
-            bool resProtectionValue = ConfidentialAssetsHelper.VerifySurjectionProof(surjectionProofValue, commitmentToProtectionValue);
-            bool resProtectionRoot = ConfidentialAssetsHelper.VerifySurjectionProof(surjectionProofRoot, commitmentToProtectionRoot);
+            bool resProtectionValue = CryptoHelper.VerifySurjectionProof(surjectionProofValue, commitmentToProtectionValue);
+            bool resProtectionRoot = CryptoHelper.VerifySurjectionProof(surjectionProofRoot, commitmentToProtectionRoot);
 
             Assert.True(resProtectionValue, "Verification of Proof to Value failed");
             Assert.True(resProtectionRoot, "Verification of Proof to Binding failed");

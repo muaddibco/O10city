@@ -24,7 +24,7 @@ namespace O10.Gateway.WebApp.Common.Services
 
         public string Push(RelationProofSession relationProofSession)
         {
-            string sessionKey = ConfidentialAssetsHelper.GetRandomSeed().ToHexString();
+            string sessionKey = CryptoHelper.GetRandomSeed().ToHexString();
             _relationProofSessions.AddOrUpdate(sessionKey, relationProofSession, (k, v) => v);
 
             return sessionKey;

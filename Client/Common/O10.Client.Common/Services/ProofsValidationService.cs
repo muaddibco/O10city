@@ -62,7 +62,7 @@ namespace O10.Client.Common.Services
         {
             Contract.Requires(eligibilityProofs != null);
 
-            bool isCommitmentCorrect = ConfidentialAssetsHelper.VerifySurjectionProof(eligibilityProofs, assetCommitment.Span);
+            bool isCommitmentCorrect = O10.Crypto.ConfidentialAssets.CryptoHelper.VerifySurjectionProof(eligibilityProofs, assetCommitment.Span);
 
             if (!isCommitmentCorrect)
             {
@@ -94,7 +94,7 @@ namespace O10.Client.Common.Services
 
             if (_dataAccessService.GetServiceProviderRegistrationId(accountId, authenticationProof.AssetCommitments[0], out long registrationId))
             {
-                bool isAuthenticationProofValid = ConfidentialAssetsHelper.VerifySurjectionProof(authenticationProof, assetCommitment.Span);
+                bool isAuthenticationProofValid = O10.Crypto.ConfidentialAssets.CryptoHelper.VerifySurjectionProof(authenticationProof, assetCommitment.Span);
 
                 if (!isAuthenticationProofValid)
                 {
@@ -159,14 +159,14 @@ namespace O10.Client.Common.Services
                 throw new AssociatedAttrProofsMalformedException(schemeName);
             }
 
-            if (!ConfidentialAssetsHelper.VerifySurjectionProof(attr.CommitmentProof.SurjectionProof, attr.Commitment.ArraySegment.Array))
+            if (!O10.Crypto.ConfidentialAssets.CryptoHelper.VerifySurjectionProof(attr.CommitmentProof.SurjectionProof, attr.Commitment.ArraySegment.Array))
             {
                 throw new AssociatedAttrProofToValueKnowledgeIncorrectException(schemeName);
             }
 
             IKey commitmentKey = rootIssuer.IssuersAttributes.FirstOrDefault(a => a.Issuer.Equals(rootIssuer.Issuer))?.RootAttribute.Commitment;
-            byte[] commitment = ConfidentialAssetsHelper.SumCommitments(commitmentKey.Value.Span, attr.Commitment.Value.Span);
-            if (!ConfidentialAssetsHelper.VerifySurjectionProof(attr.BindingProof, commitment))
+            byte[] commitment = O10.Crypto.ConfidentialAssets.CryptoHelper.SumCommitments(commitmentKey.Value.Span, attr.Commitment.Value.Span);
+            if (!O10.Crypto.ConfidentialAssets.CryptoHelper.VerifySurjectionProof(attr.BindingProof, commitment))
             {
                 throw new AssociatedAttrProofToBindingIncorrectException(schemeName);
             }
@@ -208,7 +208,7 @@ namespace O10.Client.Common.Services
                 // when the found attribute resides at the Root Identity need to prove 
                 // binding of the associated attribute to the root attribute
 
-                bool proofToRoot = ConfidentialAssetsHelper.VerifySurjectionProof(attributesForCheck.RootAttribute.BindingProof, attributesForCheck.RootAttribute.Commitment.Value.Span);
+                bool proofToRoot = O10.Crypto.ConfidentialAssets.CryptoHelper.VerifySurjectionProof(attributesForCheck.RootAttribute.BindingProof, attributesForCheck.RootAttribute.Commitment.Value.Span);
                 if (!proofToRoot)
                 {
                     _logger.Error("Proof of binding to Issuance failed");
@@ -287,7 +287,7 @@ namespace O10.Client.Common.Services
             {
                 long schemeId = await _assetsService.GetSchemeId(attributeForCheck.SchemeName, issuer.ToString()).ConfigureAwait(false);
                 byte[][] assetIds = attributeForCheck.CommitmentProof.Values.Select(v => _assetsService.GenerateAssetId(schemeId, v)).ToArray();
-                bool proofOfValue = ConfidentialAssetsHelper.VerifyIssuanceSurjectionProof(attributeForCheck.CommitmentProof.SurjectionProof, attributeForCheck.Commitment.Value.Span, assetIds);
+                bool proofOfValue = O10.Crypto.ConfidentialAssets.CryptoHelper.VerifyIssuanceSurjectionProof(attributeForCheck.CommitmentProof.SurjectionProof, attributeForCheck.Commitment.Value.Span, assetIds);
                 if (!proofOfValue)
                 {
                     _logger.Error("Proof of value failed");
@@ -296,7 +296,7 @@ namespace O10.Client.Common.Services
             }
             else
             {
-                bool proofOfValueKnowledge = ConfidentialAssetsHelper.VerifySurjectionProof(attributeForCheck.CommitmentProof.SurjectionProof, attributeForCheck.Commitment.Value.Span);
+                bool proofOfValueKnowledge = O10.Crypto.ConfidentialAssets.CryptoHelper.VerifySurjectionProof(attributeForCheck.CommitmentProof.SurjectionProof, attributeForCheck.Commitment.Value.Span);
                 if (!proofOfValueKnowledge)
                 {
                     _logger.Error("Proof of value knowledge failed");
@@ -318,8 +318,8 @@ namespace O10.Client.Common.Services
             }
 
             // Check binding to the Parent Attribute
-            byte[] commitmentToParentAndBinding = ConfidentialAssetsHelper.SumCommitments(attributeForCheck.Commitment.Value.Span, parentCommitment.Value.Span);
-            bool proofToParent = ConfidentialAssetsHelper.VerifySurjectionProof(attributeForCheck.BindingProof, commitmentToParentAndBinding);
+            byte[] commitmentToParentAndBinding = O10.Crypto.ConfidentialAssets.CryptoHelper.SumCommitments(attributeForCheck.Commitment.Value.Span, parentCommitment.Value.Span);
+            bool proofToParent = O10.Crypto.ConfidentialAssets.CryptoHelper.VerifySurjectionProof(attributeForCheck.BindingProof, commitmentToParentAndBinding);
             if (!proofToParent)
             {
                 _logger.Error("Proof of binding to parent failed");
@@ -343,14 +343,14 @@ namespace O10.Client.Common.Services
 
             if (associatedProofs is AssociatedAssetProofs associatedAssetProofs)
             {
-                associatedProofValid = ConfidentialAssetsHelper.VerifySurjectionProof(associatedAssetProofs.AssociationProofs, associatedAssetProofs.AssociatedAssetCommitment);
+                associatedProofValid = O10.Crypto.ConfidentialAssets.CryptoHelper.VerifySurjectionProof(associatedAssetProofs.AssociationProofs, associatedAssetProofs.AssociatedAssetCommitment);
             }
             else
             {
-                associatedProofValid = ConfidentialAssetsHelper.VerifySurjectionProof(associatedProofs.AssociationProofs, commitment.Span);
+                associatedProofValid = O10.Crypto.ConfidentialAssets.CryptoHelper.VerifySurjectionProof(associatedProofs.AssociationProofs, commitment.Span);
             }
 
-            bool rootProofValid = ConfidentialAssetsHelper.VerifySurjectionProof(associatedProofs.RootProofs, commitment.Span);
+            bool rootProofValid = O10.Crypto.ConfidentialAssets.CryptoHelper.VerifySurjectionProof(associatedProofs.RootProofs, commitment.Span);
 
             if (!rootProofValid || !associatedProofValid)
             {

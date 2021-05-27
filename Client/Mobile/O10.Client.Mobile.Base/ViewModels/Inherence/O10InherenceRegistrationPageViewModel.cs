@@ -172,7 +172,7 @@ namespace O10.Client.Mobile.Base.ViewModels
 
             try
             {
-                byte[] sessionKey = ConfidentialAssetsHelper.GetRandomSeed();
+                byte[] sessionKey = Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
 
                 (byte[] bf, byte[] commitmentToRoot, SurjectionProof proofToRegistration) = await GenerateRegistrationCommitmentAndProof(_target, _rootAttribute.AssetId).ConfigureAwait(false);
 
@@ -309,16 +309,16 @@ namespace O10.Client.Mobile.Base.ViewModels
 
         private async Task<(byte[] bf, byte[] commitmentToRoot, SurjectionProof proofToRegistration)> GenerateRegistrationCommitmentAndProof(byte[] target, byte[] assetId, byte[] parentAssetId = null, byte[] parentBf = null)
         {
-            byte[] commitmentNonblinded = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(assetId);
-            byte[] bf = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] commitmentToRoot = ConfidentialAssetsHelper.BlindAssetCommitment(commitmentNonblinded, bf);
+            byte[] commitmentNonblinded = Crypto.ConfidentialAssets.CryptoHelper.GetNonblindedAssetCommitment(assetId);
+            byte[] bf = Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
+            byte[] commitmentToRoot = Crypto.ConfidentialAssets.CryptoHelper.BlindAssetCommitment(commitmentNonblinded, bf);
             byte[] bfSum;
             byte[] commitmentBlinded;
             if (parentAssetId != null)
             {
-                byte[] commitmentToParent = ConfidentialAssetsHelper.GetAssetCommitment(parentBf, parentAssetId);
-                commitmentBlinded = ConfidentialAssetsHelper.SumCommitments(commitmentToRoot, commitmentToParent);
-                bfSum = ConfidentialAssetsHelper.SumScalars(bf, parentBf);
+                byte[] commitmentToParent = Crypto.ConfidentialAssets.CryptoHelper.GetAssetCommitment(parentBf, parentAssetId);
+                commitmentBlinded = Crypto.ConfidentialAssets.CryptoHelper.SumCommitments(commitmentToRoot, commitmentToParent);
+                bfSum = Crypto.ConfidentialAssets.CryptoHelper.SumScalars(bf, parentBf);
             }
             else
             {

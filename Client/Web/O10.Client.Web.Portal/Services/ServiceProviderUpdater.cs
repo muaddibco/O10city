@@ -340,7 +340,7 @@ namespace O10.Client.Web.Portal.Services
                 _logger.Debug($"[{_accountId}]: Eligibility proofs were correct");
             }
 
-            if (!ConfidentialAssetsHelper.VerifySurjectionProof(packet.SignerGroupRelationProof, packet.AssetCommitment, documentHash, BitConverter.GetBytes(spDocument.LastChangeRecordHeight)))
+            if (!CryptoHelper.VerifySurjectionProof(packet.SignerGroupRelationProof, packet.AssetCommitment, documentHash, BitConverter.GetBytes(spDocument.LastChangeRecordHeight)))
             {
                 _logger.Error($"[{_accountId}]: Signer group relation proofs were wrong");
                 await _idenitiesHubContext.Clients.Group(sessionKey).SendAsync("PushDocumentSignIncorrect", new { Code = 2, Message = "Signer group relation proofs were wrong" }).ConfigureAwait(false);
@@ -356,15 +356,15 @@ namespace O10.Client.Web.Portal.Services
                 _logger.LogIfDebug(() => $"[{_accountId}]: Checking agains allowed signer definition {JsonConvert.SerializeObject(allowedSigner, new ByteArrayJsonConverter())}");
 
                 byte[] groupAssetId = await _assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_EMPLOYEEGROUP, allowedSigner.GroupIssuer + allowedSigner.GroupName, allowedSigner.GroupIssuer).ConfigureAwait(false);
-                byte[] expectedGroupCommitment = ConfidentialAssetsHelper.GetAssetCommitment(groupNameBlindingFactor, groupAssetId);
+                byte[] expectedGroupCommitment = CryptoHelper.GetAssetCommitment(groupNameBlindingFactor, groupAssetId);
                 if (packet.AllowedGroupCommitment.Equals32(expectedGroupCommitment))
                 {
                     _logger.Debug($"[{_accountId}]: Checking allowed signer started");
                     byte[] groupCommitment = await _gatewayService.GetEmployeeRecordGroup(allowedSigner.GroupIssuer.HexStringToByteArray(), packet.SignerGroupRelationProof.AssetCommitments[0]).ConfigureAwait(false);
-                    if (groupCommitment != null && ConfidentialAssetsHelper.VerifySurjectionProof(packet.AllowedGroupNameSurjectionProof, packet.AllowedGroupCommitment))
+                    if (groupCommitment != null && CryptoHelper.VerifySurjectionProof(packet.AllowedGroupNameSurjectionProof, packet.AllowedGroupCommitment))
                     {
                         _logger.Debug($"[{_accountId}]: validation of signer succeeded");
-                        byte[] diffBF = ConfidentialAssetsHelper.GetDifferentialBlindingFactor(groupNameBlindingFactor, allowedSigner.BlindingFactor);
+                        byte[] diffBF = CryptoHelper.GetDifferentialBlindingFactor(groupNameBlindingFactor, allowedSigner.BlindingFactor);
                         byte[][] commitments = spDocument.AllowedSigners.Select(s => s.GroupCommitment).ToArray();
                         byte[] allowedGroupCommitment = allowedSigner.GroupCommitment;
                         int index = 0;
@@ -377,7 +377,7 @@ namespace O10.Client.Web.Portal.Services
                             }
                         }
 
-                        signatureGroupProof = ConfidentialAssetsHelper.CreateSurjectionProof(packet.AllowedGroupCommitment, commitments, index, diffBF);
+                        signatureGroupProof = CryptoHelper.CreateSurjectionProof(packet.AllowedGroupCommitment, commitments, index, diffBF);
                         groupIssuer = allowedSigner.GroupIssuer;
                         break;
                     }
@@ -434,7 +434,7 @@ namespace O10.Client.Web.Portal.Services
             List<SpEmployee> spEmployees = _dataAccessService.GetSpEmployees(_accountId);
             SpEmployee spEmployee = null;
 
-            byte[] registrationCommitment = ConfidentialAssetsHelper.GetAssetCommitment(blindingFactor, assetId);
+            byte[] registrationCommitment = CryptoHelper.GetAssetCommitment(blindingFactor, assetId);
             if (!registrationCommitment.Equals32(packet.AssetCommitment))
             {
                 await _idenitiesHubContext.Clients.Group(sessionKey).SendAsync("PushEmployeeIncorrectRegistration", new { Code = 1, Message = "RegistrationCommitment does not match to provided Asset Id" }).ConfigureAwait(false);
@@ -465,7 +465,7 @@ namespace O10.Client.Web.Portal.Services
                 byte[] groupAssetId = await _assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_EMPLOYEEGROUP, _clientCryptoService.PublicKeys[0].ArraySegment.Array.ToHexString() + spEmployee.SpEmployeeGroup.GroupName, _clientCryptoService.PublicKeys[0].ArraySegment.Array.ToHexString()).ConfigureAwait(false);
 
                 long relationId;
-                if (ConfidentialAssetsHelper.VerifyIssuanceSurjectionProof(packet.GroupSurjectionProof, packet.GroupCommitment, new byte[][] { groupAssetId }))
+                if (CryptoHelper.VerifyIssuanceSurjectionProof(packet.GroupSurjectionProof, packet.GroupCommitment, new byte[][] { groupAssetId }))
                 {
                     relationId = spEmployee.SpEmployeeId;
                 }

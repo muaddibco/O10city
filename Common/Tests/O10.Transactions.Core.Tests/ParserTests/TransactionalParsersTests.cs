@@ -29,10 +29,10 @@ namespace O10.Transactions.Core.Tests.ParserTests
 			byte[] body;
 			ulong uptodateFunds = 10001;
 
-			byte[] assetId = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] assetCommitment = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] mask = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] maskedAssetId = ConfidentialAssetsHelper.GetRandomSeed();
+			byte[] assetId = CryptoHelper.GetRandomSeed();
+			byte[] assetCommitment = CryptoHelper.GetRandomSeed();
+			byte[] mask = CryptoHelper.GetRandomSeed();
+			byte[] maskedAssetId = CryptoHelper.GetRandomSeed();
 
 			using (MemoryStream ms = new MemoryStream())
 			{
@@ -53,7 +53,7 @@ namespace O10.Transactions.Core.Tests.ParserTests
 		[Fact]
 		public void IssueBlindedAssetParserTest()
 		{
-			byte[] groupId = ConfidentialAssetsHelper.GetRandomSeed();
+			byte[] groupId = CryptoHelper.GetRandomSeed();
 			ulong syncBlockHeight = 1;
 			uint nonce = 4;
 			byte[] powHash = BinaryHelper.GetPowHash(1234);
@@ -62,12 +62,12 @@ namespace O10.Transactions.Core.Tests.ParserTests
 			byte[] body;
 			ulong uptodateFunds = 10001;
 
-			byte[] assetCommitment = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] mask = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] maskedAssetId = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] keyImage = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] c = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] r = ConfidentialAssetsHelper.GetRandomSeed();
+			byte[] assetCommitment = CryptoHelper.GetRandomSeed();
+			byte[] mask = CryptoHelper.GetRandomSeed();
+			byte[] maskedAssetId = CryptoHelper.GetRandomSeed();
+			byte[] keyImage = CryptoHelper.GetRandomSeed();
+			byte[] c = CryptoHelper.GetRandomSeed();
+			byte[] r = CryptoHelper.GetRandomSeed();
 
 			using (MemoryStream ms = new MemoryStream())
 			{
@@ -116,24 +116,24 @@ namespace O10.Transactions.Core.Tests.ParserTests
 			ulong blockHeight = 9;
 			ulong uptodateFunds = 10002;
 
-			byte[] destinationKey = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] transactionKey = ConfidentialAssetsHelper.GetRandomSeed();
+			byte[] destinationKey = CryptoHelper.GetRandomSeed();
+			byte[] transactionKey = CryptoHelper.GetRandomSeed();
 
 			byte[] body;
 
-			byte[] assetCommitment = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] mask = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] maskedAssetId = ConfidentialAssetsHelper.GetRandomSeed();
+			byte[] assetCommitment = CryptoHelper.GetRandomSeed();
+			byte[] mask = CryptoHelper.GetRandomSeed();
+			byte[] maskedAssetId = CryptoHelper.GetRandomSeed();
 
 			ushort assetCommitmentsCount = 10;
 			byte[][] assetCommitments = new byte[assetCommitmentsCount][];
-			byte[] e = ConfidentialAssetsHelper.GetRandomSeed();
+			byte[] e = CryptoHelper.GetRandomSeed();
 			byte[][] s = new byte[assetCommitmentsCount][];
 
 			for (int i = 0; i < assetCommitmentsCount; i++)
 			{
-				assetCommitments[i] = ConfidentialAssetsHelper.GetRandomSeed();
-				s[i] = ConfidentialAssetsHelper.GetRandomSeed();
+				assetCommitments[i] = CryptoHelper.GetRandomSeed();
+				s[i] = CryptoHelper.GetRandomSeed();
 			}
 
 			using (MemoryStream ms = new MemoryStream())

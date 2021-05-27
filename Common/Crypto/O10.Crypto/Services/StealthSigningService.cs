@@ -48,8 +48,8 @@ namespace O10.Crypto.Services
 
             _secretSpendKey = secretKeys[0];
             _secretViewKey = secretKeys[1];
-            PublicKeys[0] = _identityKeyProvider.GetKey(ConfidentialAssetsHelper.GetPublicKey(_secretSpendKey));
-            PublicKeys[1] = _identityKeyProvider.GetKey(ConfidentialAssetsHelper.GetPublicKey(_secretViewKey));
+            PublicKeys[0] = _identityKeyProvider.GetKey(CryptoHelper.GetPublicKey(_secretSpendKey));
+            PublicKeys[1] = _identityKeyProvider.GetKey(CryptoHelper.GetPublicKey(_secretViewKey));
         }
 
         public byte[] Sign(string msg, object? args = null)
@@ -65,18 +65,17 @@ namespace O10.Crypto.Services
                 throw new ArgumentNullException(nameof(args), $"{nameof(StealthSigningService)} expects argument args of type {nameof(StealthSignatureInput)}");
             }
 
-            byte[][] publicKeys = signatureInput.PublicKeys;
             int index = signatureInput.KeyPosition;
-            byte[] otsk = ConfidentialAssetsHelper.GetOTSK(signatureInput.SourceTransactionKey, _secretViewKey, _secretSpendKey);
+            byte[] otsk = CryptoHelper.GetOTSK(signatureInput.SourceTransactionKey, _secretViewKey, _secretSpendKey);
 
-            byte[] keyImage = ConfidentialAssetsHelper.GenerateKeyImage(otsk);
+            byte[] keyImage = CryptoHelper.GenerateKeyImage(otsk);
 
             byte[] msg2 = new byte[msg.Length + keyImage.Length];
 
             Array.Copy(msg.ToArray(), 0, msg2, 0, msg.Length);
             Array.Copy(keyImage, 0, msg2, msg.Length, keyImage.Length);
 
-            RingSignature[] ringSignatures = ConfidentialAssetsHelper.GenerateRingSignature(msg2, keyImage, publicKeys, otsk, index);
+            RingSignature[] ringSignatures = CryptoHelper.GenerateRingSignature(msg2, keyImage, signatureInput.PublicKeys, otsk, index);
 
             byte[] signature = new byte[64 * ringSignatures.Length];
             for (int i = 0; i < ringSignatures.Length; i++)
@@ -105,18 +104,17 @@ namespace O10.Crypto.Services
                 throw new ArgumentException($"{nameof(StealthSigningService)} expects argument args of type {nameof(StealthSignatureInput)}", nameof(args));
             }
 
-            byte[][] publicKeys = signatureInput.PublicKeys;
             int index = signatureInput.KeyPosition;
-            byte[] otsk = ConfidentialAssetsHelper.GetOTSK(signatureInput.SourceTransactionKey, _secretViewKey, _secretSpendKey);
+            byte[] otsk = CryptoHelper.GetOTSK(signatureInput.SourceTransactionKey, _secretViewKey, _secretSpendKey);
 
-            byte[] keyImage = ConfidentialAssetsHelper.GenerateKeyImage(otsk);
+            byte[] keyImage = CryptoHelper.GenerateKeyImage(otsk);
             stealthBody.KeyImage = _identityKeyProvider.GetKey(keyImage);
 
             signatureInput.UpdatePacketAction?.Invoke(stealthBody);
 
-            RingSignature[] ringSignatures = ConfidentialAssetsHelper.GenerateRingSignature(payload.ToByteArray(), keyImage, publicKeys, otsk, index);
+            RingSignature[] ringSignatures = CryptoHelper.GenerateRingSignature(payload.ToByteArray(), keyImage, signatureInput.PublicKeys, otsk, index);
 
-            stealthBody.Sources = signatureInput.PublicKeys.Select(p => _identityKeyProvider.GetKey(p)).ToArray();
+            stealthBody.Sources = signatureInput.PublicKeys;
 
             return new StealthSignature
             {
@@ -149,7 +147,7 @@ namespace O10.Crypto.Services
             byte[] msg = stealthBody.ToByteArray();
             byte[] keyImage = stealthBody.KeyImage.ToByteArray();
 
-            return ConfidentialAssetsHelper.VerifyRingSignature(msg, keyImage, stealthBody.Sources.Select(p => p.Value.ToArray()).ToArray(), stealthSignature.Signature.ToArray());
+            return CryptoHelper.VerifyRingSignature(msg, keyImage, stealthBody.Sources.Select(p => p.Value.ToArray()).ToArray(), stealthSignature.Signature.ToArray());
         }
 
         public bool CheckTarget(params IKey[] targetValues)
@@ -166,14 +164,14 @@ namespace O10.Crypto.Services
 
             try
             {
-                _logger.LogIfDebug(() => $"{nameof(ConfidentialAssetsHelper)}.{nameof(ConfidentialAssetsHelper.IsDestinationKeyMine)}({targetValues[0]}, {targetValues[1]}, {_secretViewKey.ToHexString()}, {PublicKeys[0].Value.ToArray().ToHexString()})");
-                bool res = ConfidentialAssetsHelper.IsDestinationKeyMine(targetValues[0].ToByteArray(), targetValues[1].ToByteArray(), _secretViewKey, PublicKeys[0].Value.ToArray());
+                _logger.LogIfDebug(() => $"{nameof(CryptoHelper)}.{nameof(CryptoHelper.IsDestinationKeyMine)}({targetValues[0]}, {targetValues[1]}, {_secretViewKey.ToHexString()}, {PublicKeys[0].Value.ToArray().ToHexString()})");
+                bool res = CryptoHelper.IsDestinationKeyMine(targetValues[0].ToByteArray(), targetValues[1].ToByteArray(), _secretViewKey, PublicKeys[0].Value.ToArray());
                 return res;
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failure at {nameof(ConfidentialAssetsHelper)}.{nameof(ConfidentialAssetsHelper.IsDestinationKeyMine)}", ex);
-                _logger.Error($"args: {nameof(ConfidentialAssetsHelper)}.{nameof(ConfidentialAssetsHelper.IsDestinationKeyMine)}({targetValues[0]}, {targetValues[1]}, {_secretViewKey.ToHexString()}, {PublicKeys[0].Value.ToArray().ToHexString()})");
+                _logger.Error($"Failure at {nameof(CryptoHelper)}.{nameof(CryptoHelper.IsDestinationKeyMine)}", ex);
+                _logger.Error($"args: {nameof(CryptoHelper)}.{nameof(CryptoHelper.IsDestinationKeyMine)}({targetValues[0]}, {targetValues[1]}, {_secretViewKey.ToHexString()}, {PublicKeys[0].Value.ToArray().ToHexString()})");
                 throw;
             }
         }

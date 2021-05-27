@@ -24,7 +24,7 @@ namespace O10.Transactions.Core.Ledgers.Stealth.Transactions
 		public IKey? TransactionPublicKey { get; set; }
 	
 		/// <summary>
-		/// C = x * G + I, where I is elliptic curve point representing assert id
+		/// C = x * G + I, where I is elliptic curve point representing asset id
 		/// </summary>
 		public IKey? AssetCommitment { get; set; }
 

@@ -71,66 +71,16 @@ namespace O10.Tests.Core
             return result;
         }
 
-		public static byte[] GetStealthPacket(LedgerType ledgerType, ulong syncBlockHeight, uint nonce, byte[] powHash, ushort version, ushort blockType, byte[] keyImage, byte[] destinationKey, byte[] destinationKey2, byte[] transactionPublicKey, byte[] body, byte[][] pubKeys, byte[] secretKey, int secIndex, out RingSignature[] ringSignatures)
-        {
-            byte[] bodyBytes = null;
-            byte[] result = null;
-
-            using (MemoryStream ms = new MemoryStream())
-            {
-                using (BinaryWriter bw = new BinaryWriter(ms))
-                {
-                    bw.Write((ushort)packetType);
-                    bw.Write(syncBlockHeight);
-                    bw.Write(nonce);
-                    bw.Write(powHash);
-                    bw.Write(version);
-                    bw.Write(blockType);
-                    bw.Write(destinationKey);
-                    bw.Write(destinationKey2);
-					bw.Write(transactionPublicKey);
-                    bw.Write(body);
-                    bw.Write(keyImage);
-                }
-
-                bodyBytes = ms.ToArray();
-            }
-
-            ringSignatures = ConfidentialAssetsHelper.GenerateRingSignature(bodyBytes, keyImage, pubKeys, secretKey, secIndex);
-            
-            using (MemoryStream ms = new MemoryStream())
-            {
-                using (BinaryWriter bw = new BinaryWriter(ms))
-                {
-                    bw.Write(bodyBytes);
-                    bw.Write((ushort)ringSignatures.Length);
-                    for (int i = 0; i < pubKeys.Length; i++)
-                    {
-                        bw.Write(pubKeys[i]);
-                    }
-                    for (int i = 0; i < pubKeys.Length; i++)
-                    {
-                        bw.Write(ringSignatures[i].C);
-                        bw.Write(ringSignatures[i].R);
-                    }
-                }
-
-                result = ms.ToArray();
-            }
-
-            return result;
-        }
-
         public static byte[] GetRandomPublicKey()
         {
-            byte[] seed = ConfidentialAssetsHelper.GetRandomSeed();
+            byte[] seed = Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
 
             return Ed25519.PublicKeyFromSeed(seed);
         }
 
         public static byte[] GetRandomPublicKey(out byte[] secretKey)
         {
-            secretKey = ConfidentialAssetsHelper.GetRandomSeed();
+            secretKey = Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
 
             return Ed25519.PublicKeyFromSeed(secretKey);
         }

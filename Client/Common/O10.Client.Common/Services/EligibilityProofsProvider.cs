@@ -39,9 +39,9 @@ namespace O10.Client.Common.Services
 
             
             GetEligibilityCommitmentAndProofs(originalCommitment, issuanceCommitments, out int actualAssetPos, out byte[][] commitments);
-            byte[] blindingFactorToEligibility = ConfidentialAssetsHelper.GetDifferentialBlindingFactor(newBlindingFactor, originalBlindingFactor);
-            SurjectionProof eligibilityProof = ConfidentialAssetsHelper.CreateSurjectionProof(assetCommitment, commitments, actualAssetPos, blindingFactorToEligibility);
-            bool res = ConfidentialAssetsHelper.VerifySurjectionProof(eligibilityProof, assetCommitment);
+            byte[] blindingFactorToEligibility = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDifferentialBlindingFactor(newBlindingFactor, originalBlindingFactor);
+            SurjectionProof eligibilityProof = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(assetCommitment, commitments, actualAssetPos, blindingFactorToEligibility);
+            bool res = O10.Crypto.ConfidentialAssets.CryptoHelper.VerifySurjectionProof(eligibilityProof, assetCommitment);
             return eligibilityProof;
         }
 

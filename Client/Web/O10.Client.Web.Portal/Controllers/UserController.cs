@@ -391,9 +391,9 @@ namespace O10.Client.Web.Portal.Controllers
 
             byte[] sourceImageBytes = Convert.FromBase64String(imageAttr.Content);
             byte[] sourceImageAssetId = await assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_PASSPORTPHOTO, imageAttr.Content, userAttributeTransfer.Source).ConfigureAwait(false);
-            byte[] sourceImageBlindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] sourceImageCommitment = ConfidentialAssetsHelper.GetAssetCommitment(sourceImageBlindingFactor, sourceImageAssetId);
-            SurjectionProof surjectionProof = ConfidentialAssetsHelper.CreateNewIssuanceSurjectionProof(sourceImageCommitment, new byte[][] { sourceImageAssetId }, 0, sourceImageBlindingFactor);
+            byte[] sourceImageBlindingFactor = CryptoHelper.GetRandomSeed();
+            byte[] sourceImageCommitment = CryptoHelper.GetAssetCommitment(sourceImageBlindingFactor, sourceImageAssetId);
+            SurjectionProof surjectionProof = CryptoHelper.CreateNewIssuanceSurjectionProof(sourceImageCommitment, new byte[][] { sourceImageAssetId }, 0, sourceImageBlindingFactor);
 
             BiometricPersonDataForSignatureDto biometricPersonDataForSignature = new BiometricPersonDataForSignatureDto
             {
@@ -489,12 +489,12 @@ namespace O10.Client.Web.Portal.Controllers
         private async Task<BiometricProof> GetBiometricProof(BiometricPersonDataForSignatureDto biometricPersonDataForSignature, BiometricSignedVerificationDto biometricSignedVerification, string rootAttributeContent, string password, byte[] sourceImageBlindingFactor, IAssetsService assetsService)
         {
             byte[] assetId = await assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_PASSPORTPHOTO, biometricPersonDataForSignature.ImageSource, null).ConfigureAwait(false);
-            assetsService.GetBlindingPoint(ConfidentialAssetsHelper.PasswordHash(password), assetId, out byte[] blindingPoint, out byte[] blindingFactor);
+            assetsService.GetBlindingPoint(CryptoHelper.PasswordHash(password), assetId, out byte[] blindingPoint, out byte[] blindingFactor);
 
             byte[] photoIssuanceCommitment = assetsService.GetCommitmentBlindedByPoint(assetId, blindingPoint);
             byte[] sourceImageCommitment = biometricPersonDataForSignature.SourceImageCommitment.HexStringToByteArray();
-            byte[] diffBF = ConfidentialAssetsHelper.GetDifferentialBlindingFactor(sourceImageBlindingFactor, blindingFactor);
-            SurjectionProof surjectionProof = ConfidentialAssetsHelper.CreateSurjectionProof(sourceImageCommitment, new byte[][] { photoIssuanceCommitment }, 0, diffBF);
+            byte[] diffBF = CryptoHelper.GetDifferentialBlindingFactor(sourceImageBlindingFactor, blindingFactor);
+            SurjectionProof surjectionProof = CryptoHelper.CreateSurjectionProof(sourceImageCommitment, new byte[][] { photoIssuanceCommitment }, 0, diffBF);
 
             return new BiometricProof
             {
@@ -527,7 +527,7 @@ namespace O10.Client.Web.Portal.Controllers
             RequestInput requestInput = null;
             foreach (var pool in request.IdentityPools)
             {
-                byte[] bf = ConfidentialAssetsHelper.GetRandomSeed();
+                byte[] bf = CryptoHelper.GetRandomSeed();
                 var rootIssuer = await GenerateFromIdentityPool(accountId, bf, pool).ConfigureAwait(false);
                 universalProofs.RootIssuers.Add(rootIssuer);
 
@@ -917,10 +917,10 @@ namespace O10.Client.Web.Portal.Controllers
             AccountDescriptor account = _accountsService.GetById(accountId);
             string email = Uri.UnescapeDataString(requestForIdentity.IdCardContent);
             byte[] assetId = await assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_EMAIL, email, registrationDetails.Issuer).ConfigureAwait(false);
-            byte[] sessionBlindingFactor = ConfidentialAssetsHelper.ReduceScalar32(ConfidentialAssetsHelper.FastHash256(Encoding.ASCII.GetBytes(requestForIdentity.Passphrase)));
-            byte[] sessionCommitment = ConfidentialAssetsHelper.BlindAssetCommitment(ConfidentialAssetsHelper.GetNonblindedAssetCommitment(assetId), sessionBlindingFactor);
+            byte[] sessionBlindingFactor = CryptoHelper.ReduceScalar32(CryptoHelper.FastHash256(Encoding.ASCII.GetBytes(requestForIdentity.Passphrase)));
+            byte[] sessionCommitment = CryptoHelper.BlindAssetCommitment(CryptoHelper.GetNonblindedAssetCommitment(assetId), sessionBlindingFactor);
 
-            assetsService.GetBlindingPoint(ConfidentialAssetsHelper.PasswordHash(requestForIdentity.Password), assetId, out byte[] blindingPoint, out byte[] blindingFactor);
+            assetsService.GetBlindingPoint(CryptoHelper.PasswordHash(requestForIdentity.Password), assetId, out byte[] blindingPoint, out byte[] blindingFactor);
 
             string error = null;
             await registrationDetails.ActionUri.DecodeFromString64().PostJsonAsync(
@@ -1018,12 +1018,12 @@ namespace O10.Client.Web.Portal.Controllers
                     // =======================================================================================================================
                     byte[] protectionAssetId = await assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD, rootAssetId.ToHexString(), issuer).ConfigureAwait(false);
                     assetsService.GetBlindingPoint(await boundedAssetsService.GetBindingKey().ConfigureAwait(false), rootAssetId, protectionAssetId, out byte[] blindingPoint, out byte[] blindingFactor);
-                    byte[] protectionAssetNonBlindedCommitment = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(protectionAssetId);
-                    byte[] protectionAssetCommitment = ConfidentialAssetsHelper.SumCommitments(protectionAssetNonBlindedCommitment, blindingPoint);
-                    byte[] sessionBlindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
-                    byte[] sessionCommitment = ConfidentialAssetsHelper.GetAssetCommitment(sessionBlindingFactor, protectionAssetId);
-                    byte[] diffBlindingFactor = ConfidentialAssetsHelper.GetDifferentialBlindingFactor(sessionBlindingFactor, blindingFactor);
-                    SurjectionProof surjectionProof = ConfidentialAssetsHelper.CreateSurjectionProof(sessionCommitment, new byte[][] { protectionAssetCommitment }, 0, diffBlindingFactor);
+                    byte[] protectionAssetNonBlindedCommitment = CryptoHelper.GetNonblindedAssetCommitment(protectionAssetId);
+                    byte[] protectionAssetCommitment = CryptoHelper.SumCommitments(protectionAssetNonBlindedCommitment, blindingPoint);
+                    byte[] sessionBlindingFactor = CryptoHelper.GetRandomSeed();
+                    byte[] sessionCommitment = CryptoHelper.GetAssetCommitment(sessionBlindingFactor, protectionAssetId);
+                    byte[] diffBlindingFactor = CryptoHelper.GetDifferentialBlindingFactor(sessionBlindingFactor, blindingFactor);
+                    SurjectionProof surjectionProof = CryptoHelper.CreateSurjectionProof(sessionCommitment, new byte[][] { protectionAssetCommitment }, 0, diffBlindingFactor);
                     // =======================================================================================================================
 
                     byte[] bindingKey = await boundedAssetsService.GetBindingKey().ConfigureAwait(false);
@@ -1122,14 +1122,14 @@ namespace O10.Client.Web.Portal.Controllers
                 byte[] rootAssetId = assetsService.GenerateAssetId(rootAttributeDefinition.SchemeId, Uri.UnescapeDataString(requestForIdentity.IdCardContent));
                 byte[] protectionAssetId = await assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD, rootAssetId.ToHexString(), actionDetails.Issuer).ConfigureAwait(false);
 
-                assetsService.GetBlindingPoint(ConfidentialAssetsHelper.PasswordHash(requestForIdentity.Password), protectionAssetId, out byte[] blindingPoint, out byte[] blindingFactor);
+                assetsService.GetBlindingPoint(CryptoHelper.PasswordHash(requestForIdentity.Password), protectionAssetId, out byte[] blindingPoint, out byte[] blindingFactor);
 
-                byte[] protectionAssetNonBlindedCommitment = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(protectionAssetId);
-                byte[] protectionAssetCommitment = ConfidentialAssetsHelper.SumCommitments(protectionAssetNonBlindedCommitment, blindingPoint);
-                byte[] sessionBlindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
-                byte[] sessionCommitment = ConfidentialAssetsHelper.GetAssetCommitment(sessionBlindingFactor, protectionAssetId);
-                byte[] diffBlindingFactor = ConfidentialAssetsHelper.GetDifferentialBlindingFactor(sessionBlindingFactor, blindingFactor);
-                SurjectionProof surjectionProof = ConfidentialAssetsHelper.CreateSurjectionProof(sessionCommitment, new byte[][] { protectionAssetCommitment }, 0, diffBlindingFactor);
+                byte[] protectionAssetNonBlindedCommitment = CryptoHelper.GetNonblindedAssetCommitment(protectionAssetId);
+                byte[] protectionAssetCommitment = CryptoHelper.SumCommitments(protectionAssetNonBlindedCommitment, blindingPoint);
+                byte[] sessionBlindingFactor = CryptoHelper.GetRandomSeed();
+                byte[] sessionCommitment = CryptoHelper.GetAssetCommitment(sessionBlindingFactor, protectionAssetId);
+                byte[] diffBlindingFactor = CryptoHelper.GetDifferentialBlindingFactor(sessionBlindingFactor, blindingFactor);
+                SurjectionProof surjectionProof = CryptoHelper.CreateSurjectionProof(sessionCommitment, new byte[][] { protectionAssetCommitment }, 0, diffBlindingFactor);
 
                 IdentityBaseData identityRequest = new IdentityBaseData
                 {
@@ -1528,7 +1528,7 @@ namespace O10.Client.Web.Portal.Controllers
                     if (!string.IsNullOrEmpty(relationsProofs.ImageContent))
                     {
                         byte[] imageContent = Convert.FromBase64String(relationsProofs.ImageContent);
-                        imageHash = ConfidentialAssetsHelper.FastHash256(imageContent);
+                        imageHash = CryptoHelper.FastHash256(imageContent);
                     }
                     else
                     {
@@ -1540,14 +1540,14 @@ namespace O10.Client.Web.Portal.Controllers
                     if (relationsProofs.WithKnowledgeProof)
                     {
 
-                        assetsService.GetBlindingPoint(ConfidentialAssetsHelper.PasswordHash(relationsProofs.Password), userRootAttribute.AssetId, out byte[] blindingPoint, out byte[] blindingFactor);
+                        assetsService.GetBlindingPoint(CryptoHelper.PasswordHash(relationsProofs.Password), userRootAttribute.AssetId, out byte[] blindingPoint, out byte[] blindingFactor);
 
                         byte[] rootOriginatingCommitment = assetsService.GetCommitmentBlindedByPoint(userRootAttribute.AssetId, blindingPoint);
                         byte[] protectionAssetId = await assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD, assetId, relationsProofs.Source).ConfigureAwait(false);
-                        byte[] protectionAssetNonBlindedCommitment = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(protectionAssetId);
-                        byte[] protectionAssetCommitment = ConfidentialAssetsHelper.SumCommitments(protectionAssetNonBlindedCommitment, blindingPoint);
-                        byte[] associatedBlindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
-                        byte[] associatedCommitment = ConfidentialAssetsHelper.GetAssetCommitment(associatedBlindingFactor, protectionAssetId);
+                        byte[] protectionAssetNonBlindedCommitment = CryptoHelper.GetNonblindedAssetCommitment(protectionAssetId);
+                        byte[] protectionAssetCommitment = CryptoHelper.SumCommitments(protectionAssetNonBlindedCommitment, blindingPoint);
+                        byte[] associatedBlindingFactor = CryptoHelper.GetRandomSeed();
+                        byte[] associatedCommitment = CryptoHelper.GetAssetCommitment(associatedBlindingFactor, protectionAssetId);
                         AssociatedProofPreparation associatedProofPreparation = new AssociatedProofPreparation
                         {
                             SchemeName = AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD,
@@ -1691,23 +1691,23 @@ namespace O10.Client.Web.Portal.Controllers
             }
             for (int i = 0; i < vote.CandidateAssetIds.Length; i++)
             {
-                bfs[i] = ConfidentialAssetsHelper.GetRandomSeed();
-                byte[] candidateCommitment = ConfidentialAssetsHelper.GetAssetCommitment(bfs[i], assetIds[i]);
+                bfs[i] = CryptoHelper.GetRandomSeed();
+                byte[] candidateCommitment = CryptoHelper.GetAssetCommitment(bfs[i], assetIds[i]);
                 commitments[i] = new CandidateCommitment
                 {
                     Commitment = candidateCommitment,
-                    IssuanceProof = ConfidentialAssetsHelper.CreateNewIssuanceSurjectionProof(candidateCommitment, assetIds, i, bfs[i])
+                    IssuanceProof = CryptoHelper.CreateNewIssuanceSurjectionProof(candidateCommitment, assetIds, i, bfs[i])
                 };
             }
 
-            byte[] selectionBf = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] selectionCommitment = ConfidentialAssetsHelper.BlindAssetCommitment(commitments[index].Commitment, selectionBf);
+            byte[] selectionBf = CryptoHelper.GetRandomSeed();
+            byte[] selectionCommitment = CryptoHelper.BlindAssetCommitment(commitments[index].Commitment, selectionBf);
 
             SelectionCommitmentRequest commitmentRequest = new SelectionCommitmentRequest
             {
                 Commitment = selectionCommitment,
                 CandidateCommitments = commitments,
-                CandidateCommitmentProofs = ConfidentialAssetsHelper.CreateSurjectionProof(selectionCommitment, commitments.Select(c => c.Commitment).ToArray(), index, selectionBf)
+                CandidateCommitmentProofs = CryptoHelper.CreateSurjectionProof(selectionCommitment, commitments.Select(c => c.Commitment).ToArray(), index, selectionBf)
             };
 
             SignedEcCommitment ecCommitment =
@@ -1732,7 +1732,7 @@ namespace O10.Client.Web.Portal.Controllers
                 .ReceiveJson<SurjectionProof>()
                 .ConfigureAwait(false);
 
-            byte[] voterBf = ConfidentialAssetsHelper.SumScalars(selectionBf, bfs[index]);
+            byte[] voterBf = CryptoHelper.SumScalars(selectionBf, bfs[index]);
 
             ElectionCommitteePayload payload = new ElectionCommitteePayload
             {
@@ -1741,10 +1741,10 @@ namespace O10.Client.Web.Portal.Controllers
                 EcCommitment = _identityKeyProvider.GetKey(ecCommitment.EcCommitment)
             };
 
-            var bfBase = ConfidentialAssetsHelper.GetRandomSeed();
+            var bfBase = CryptoHelper.GetRandomSeed();
             var rootIssuerBase = await boundedAssetsService.GetAttributeProofs(bfBase, rootAttribute, withProtectionAttribute: true).ConfigureAwait(false);
             
-            var bf = ConfidentialAssetsHelper.GetRandomSeed();
+            var bf = CryptoHelper.GetRandomSeed();
             var rootIssuerPoll = await boundedAssetsService.GetAttributeProofs(bf, rootAttributePoll).ConfigureAwait(false);
 
             UniversalProofs universalProofs = new UniversalProofs

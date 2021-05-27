@@ -15,8 +15,8 @@ namespace O10.Client.Common.Extensions
 
             Tuple<byte[], byte[]> keys = GetSecretKeys(account, passphrase, aesInitializationVector);
 
-            publicSpendKeyBuf = ConfidentialAssetsHelper.GetPublicKey(keys.Item1);
-            publicViewKeyBuf = ConfidentialAssetsHelper.GetPublicKey(keys.Item2);
+            publicSpendKeyBuf = CryptoHelper.GetPublicKey(keys.Item1);
+            publicViewKeyBuf = CryptoHelper.GetPublicKey(keys.Item2);
 
             bool res = publicSpendKeyBuf.Equals32(account.PublicSpendKey) && publicViewKeyBuf.Equals32(account.PublicViewKey);
 

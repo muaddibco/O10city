@@ -10,19 +10,19 @@ namespace O10.Crypto.Tests
 		public void TestRangeProof()
 		{
 			ulong amount = 100;
-			byte[] assetCommitment = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(ConfidentialAssetsHelper.GetRandomSeed());
-			RangeProof rangeProof = ConfidentialAssetsHelper.ProveRange(out byte[] C, out byte[] mask, 100, assetCommitment);
-			bool res = ConfidentialAssetsHelper.VerRange(C, rangeProof, assetCommitment);
+			byte[] assetCommitment = CryptoHelper.GetNonblindedAssetCommitment(CryptoHelper.GetRandomSeed());
+            RangeProof rangeProof = CryptoHelper.ProveRange(out byte[] C, out byte[] mask, 100, assetCommitment);
+			bool res = CryptoHelper.VerRange(C, rangeProof, assetCommitment);
 
 			Assert.True(res);
 
-			RangeProof rangeProof2 = ConfidentialAssetsHelper.ProveRange(out byte[] C2, out byte[] mask2, 101, assetCommitment);
-			res = ConfidentialAssetsHelper.VerRange(C2, rangeProof, assetCommitment);
+            RangeProof rangeProof2 = CryptoHelper.ProveRange(out byte[] C2, out byte[] mask2, 101, assetCommitment);
+			res = CryptoHelper.VerRange(C2, rangeProof, assetCommitment);
 
 			Assert.False(res);
 
-			byte[] assetCommitment2 = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(ConfidentialAssetsHelper.GetRandomSeed());
-			res = ConfidentialAssetsHelper.VerRange(C, rangeProof, assetCommitment2);
+			byte[] assetCommitment2 = CryptoHelper.GetNonblindedAssetCommitment(CryptoHelper.GetRandomSeed());
+			res = CryptoHelper.VerRange(C, rangeProof, assetCommitment2);
 
 			Assert.False(res);
 		}
@@ -32,9 +32,9 @@ namespace O10.Crypto.Tests
 		{
 			for (int i = 0; i < 100; i++)
 			{
-				byte[] assetCommitment = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(ConfidentialAssetsHelper.GetRandomSeed());
-				RangeProof rangeProof = ConfidentialAssetsHelper.ProveRange(out byte[] C, out byte[] mask, 100, assetCommitment);
-				bool res = ConfidentialAssetsHelper.VerRange(C, rangeProof, assetCommitment);
+				byte[] assetCommitment = CryptoHelper.GetNonblindedAssetCommitment(CryptoHelper.GetRandomSeed());
+                RangeProof rangeProof = CryptoHelper.ProveRange(out byte[] C, out byte[] mask, 100, assetCommitment);
+				bool res = CryptoHelper.VerRange(C, rangeProof, assetCommitment);
 
 				Assert.True(res);
 			}

@@ -13,10 +13,11 @@ using O10.Core;
 using O10.Core.Cryptography;
 using O10.Core.ExtensionMethods;
 using O10.Crypto.ExtensionMethods;
+using O10.Core.Identity;
 
 namespace O10.Crypto.ConfidentialAssets
 {
-    public static class ConfidentialAssetsHelper
+    public static class CryptoHelper
     {
         public static byte[] I = new byte[] { 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
@@ -109,8 +110,16 @@ namespace O10.Crypto.ConfidentialAssets
             return buf;
         }
 
-        public static SurjectionProof CreateSurjectionProof(Span<byte> assetCommitment, byte[][] candidateAssetCommitments, int index, byte[] blindingFactor, params byte[][] aux)
+        public static SurjectionProof CreateSurjectionProof(Span<byte> assetCommitment, byte[][] candidateAssetCommitments, int index, byte[] blindingFactor, params byte[][] aux) =>
+            CreateSurjectionProof(assetCommitment, candidateAssetCommitments.Select(s => s.AsMemory()).ToArray(), index, blindingFactor, aux);
+
+        public static SurjectionProof CreateSurjectionProof(Span<byte> assetCommitment, Memory<byte>[] candidateAssetCommitments, int index, byte[] blindingFactor, params byte[][] aux)
         {
+            if (candidateAssetCommitments is null)
+            {
+                throw new ArgumentNullException(nameof(candidateAssetCommitments));
+            }
+
             GroupOperations.ge_frombytes(out GroupElementP3 assetCommitmentP3, assetCommitment, 0);
 
             GroupElementP3[] candidateAssetCommitmentsP3 = TranslatePoints(candidateAssetCommitments);
@@ -119,7 +128,7 @@ namespace O10.Crypto.ConfidentialAssets
 
             SurjectionProof assetRangeProof = new SurjectionProof
             {
-                AssetCommitments = candidateAssetCommitments,
+                AssetCommitments = candidateAssetCommitments.Select(m => m.ToArray()).ToArray(),
                 Rs = ringSignature
             };
 
@@ -248,12 +257,17 @@ namespace O10.Crypto.ConfidentialAssets
 
         public static bool VerifySurjectionProof(SurjectionProof assetRangeProof, Span<byte> assetCommitment, params byte[][] aux)
         {
+            if (assetRangeProof is null)
+            {
+                throw new ArgumentNullException(nameof(assetRangeProof));
+            }
+
             if (GroupOperations.ge_frombytes(out GroupElementP3 assetCommitmentP3, assetCommitment, 0) != 0)
             {
                 return false;
             }
 
-            GroupElementP3[] candidateAssetCommitmentsP3 = TranslatePoints(assetRangeProof.AssetCommitments);
+            GroupElementP3[] candidateAssetCommitmentsP3 = TranslatePoints(assetRangeProof.AssetCommitments.Select(s => s.AsMemory()).ToArray());
 
             byte[] msg = CalcAssetRangeProofMsg(assetCommitmentP3, candidateAssetCommitmentsP3, aux);
 
@@ -418,7 +432,10 @@ namespace O10.Crypto.ConfidentialAssets
             return res;
         }
 
-        public static RingSignature[] GenerateRingSignature(byte[] msg, byte[] keyImage, byte[][] publicKeys, byte[] secretKey, int secretKeyIndex)
+        public static RingSignature[] GenerateRingSignature(byte[] msg, byte[] keyImage, IEnumerable<IKey> publicKeys, byte[] secretKey, int secretKeyIndex) =>
+            GenerateRingSignature(msg, keyImage, publicKeys.Select(s => s.Value).ToArray(), secretKey, secretKeyIndex);
+
+        public static RingSignature[] GenerateRingSignature(byte[] msg, byte[] keyImage, Memory<byte>[] publicKeys, byte[] secretKey, int secretKeyIndex)
         {
             RingSignature[] signatures = new RingSignature[publicKeys.Length];
 
@@ -443,7 +460,7 @@ namespace O10.Crypto.ConfidentialAssets
                     byte[] kGbytes = new byte[32];
                     GroupOperations.ge_p3_tobytes(kGbytes, 0, ref kG);
                     hasher.TransformBytes(kGbytes);
-                    GroupElementP3 hash2Point_I = Hash2Point(publicKeys[i]);
+                    GroupElementP3 hash2Point_I = Hash2Point(publicKeys[i].Span);
                     GroupOperations.ge_scalarmult(out GroupElementP2 kH2P, k, ref hash2Point_I);
                     byte[] kH2Pbytes = new byte[32];
                     GroupOperations.ge_tobytes(kH2Pbytes, 0, ref kH2P);
@@ -453,12 +470,12 @@ namespace O10.Crypto.ConfidentialAssets
                 {
                     signatures[i].C = GetRandomSeed();
                     signatures[i].R = GetRandomSeed();
-                    GroupOperations.ge_frombytes(out GroupElementP3 tmp3, publicKeys[i], 0);
+                    GroupOperations.ge_frombytes(out GroupElementP3 tmp3, publicKeys[i].Span, 0);
                     GroupOperations.ge_double_scalarmult_vartime(out GroupElementP2 tmp2, signatures[i].C, ref tmp3, signatures[i].R);
                     byte[] tmp2bytes = new byte[32];
                     GroupOperations.ge_tobytes(tmp2bytes, 0, ref tmp2);
                     hasher.TransformBytes(tmp2bytes);
-                    tmp3 = Hash2Point(publicKeys[i]);
+                    tmp3 = Hash2Point(publicKeys[i].Span);
                     GroupOperations.ge_double_scalarmult_precomp_vartime(out tmp2, signatures[i].R, tmp3, signatures[i].C, image_pre);
                     tmp2bytes = new byte[32];
                     GroupOperations.ge_tobytes(tmp2bytes, 0, ref tmp2);
@@ -621,9 +638,9 @@ namespace O10.Crypto.ConfidentialAssets
             return Ed25519.Sign(msg, expandedPrivateKey);
         }
 
-        public static byte[] GetOTSK(byte[] transactionKey, byte[] secretViewKey, byte[] secretSpendKey)
+        public static byte[] GetOTSK(Memory<byte> transactionKey, byte[] secretViewKey, byte[] secretSpendKey)
         {
-            GroupOperations.ge_frombytes(out GroupElementP3 transactionKeyP3, transactionKey, 0);
+            GroupOperations.ge_frombytes(out GroupElementP3 transactionKeyP3, transactionKey.Span, 0);
             GroupOperations.ge_scalarmult_p3(out GroupElementP3 p3, secretViewKey, ref transactionKeyP3);
 
             byte[] p3Bytes = new byte[32];
@@ -805,7 +822,7 @@ namespace O10.Crypto.ConfidentialAssets
             bool less32, isZero;
             do
             {
-                RNGCryptoServiceProvider.Create().GetNonZeroBytes(seed);
+                RandomNumberGenerator.Create().GetNonZeroBytes(seed);
                 isZero = ScalarOperations.sc_isnonzero(seed) == 0;
                 less32 = Less32(seed, limit);
             } while (isZero && !less32);
@@ -1569,12 +1586,12 @@ namespace O10.Crypto.ConfidentialAssets
             return res;
         }
 
-        private static GroupElementP3[] TranslatePoints(byte[][] points)
+        private static GroupElementP3[] TranslatePoints(Memory<byte>[] points)
         {
             GroupElementP3[] pointsP3 = new GroupElementP3[points.Length];
             for (int i = 0; i < points.Length; i++)
             {
-                GroupOperations.ge_frombytes(out pointsP3[i], points[i], 0);
+                GroupOperations.ge_frombytes(out pointsP3[i], points[i].Span, 0);
             }
 
             return pointsP3;
@@ -1592,7 +1609,7 @@ namespace O10.Crypto.ConfidentialAssets
             return false;
         }
 
-        internal static GroupElementP3 Hash2Point(byte[] hashed)
+        internal static GroupElementP3 Hash2Point(Span<byte> hashed)
         {
             byte[] hashValue = HashFactory.Crypto.SHA3.CreateKeccak256().ComputeBytes(hashed).GetBytes();
             //byte[] hashValue = HashFactory.Crypto.SHA3.CreateKeccak512().ComputeBytes(hashed).GetBytes();

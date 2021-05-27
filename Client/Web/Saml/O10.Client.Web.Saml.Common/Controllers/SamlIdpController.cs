@@ -49,7 +49,7 @@ namespace O10.Client.Web.Saml.Common.Controllers
         [HttpGet("SecretKey")]
         public ActionResult<string> GenerateSecretKey()
         {
-            return ConfidentialAssetsHelper.GetRandomSeed().ToHexString();
+            return CryptoHelper.GetRandomSeed().ToHexString();
         }
 
         [HttpGet("InitiateSamlSession")]

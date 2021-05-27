@@ -80,7 +80,7 @@ namespace O10.Client.Common.Services
             {
                 byte[] pwdBytes = Encoding.ASCII.GetBytes(authenticationInput.Password);
 
-                byte[] pwdHash = ConfidentialAssetsHelper.FastHash256(pwdBytes);
+                byte[] pwdHash = CryptoHelper.FastHash256(pwdBytes);
 
                 accountDescriptor = TranslateToAccountDescriptor(authenticationInput.Account, pwdHash);
             }
@@ -115,14 +115,14 @@ namespace O10.Client.Common.Services
                 throw new IndexOutOfRangeException(nameof(accountId));
             }
 
-            byte[] secretSpendKey = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] secretViewKey = (account.AccountType == AccountType.User) ? ConfidentialAssetsHelper.GetRandomSeed() : null;
+            byte[] secretSpendKey = CryptoHelper.GetRandomSeed();
+            byte[] secretViewKey = (account.AccountType == AccountType.User) ? CryptoHelper.GetRandomSeed() : null;
             byte[] pwdHash = _hashCalculation.CalculateHash(Encoding.UTF8.GetBytes(passphrase));
-            byte[] secretSpendKeyPwd = ConfidentialAssetsHelper.SumScalars(secretSpendKey, pwdHash);
-            byte[] secretViewKeyPwd = (account.AccountType == AccountType.User) ? ConfidentialAssetsHelper.SumScalars(secretViewKey, pwdHash) : null;
+            byte[] secretSpendKeyPwd = CryptoHelper.SumScalars(secretSpendKey, pwdHash);
+            byte[] secretViewKeyPwd = (account.AccountType == AccountType.User) ? CryptoHelper.SumScalars(secretViewKey, pwdHash) : null;
 
-            byte[] publicSpendKey = (account.AccountType == AccountType.User) ? ConfidentialAssetsHelper.GetPublicKey(secretSpendKeyPwd) : ConfidentialAssetsHelper.GetPublicKey(Ed25519.SecretKeyFromSeed(secretSpendKeyPwd));
-            byte[] publicViewKey = (account.AccountType == AccountType.User) ? ConfidentialAssetsHelper.GetPublicKey(secretViewKeyPwd) : null;
+            byte[] publicSpendKey = (account.AccountType == AccountType.User) ? CryptoHelper.GetPublicKey(secretSpendKeyPwd) : CryptoHelper.GetPublicKey(Ed25519.SecretKeyFromSeed(secretSpendKeyPwd));
+            byte[] publicViewKey = (account.AccountType == AccountType.User) ? CryptoHelper.GetPublicKey(secretViewKeyPwd) : null;
 
             //EncryptKeys(account.AccountType, password, secretSpendKey, secretViewKey, out byte[] secretSpendKeyEnc, out byte[] secretViewKeyEnc);
 
@@ -188,28 +188,28 @@ namespace O10.Client.Common.Services
 
         private static void GenerateSecretKeys(AccountType accountType, out byte[] secretSpendKey, out byte[] secretViewKey)
         {
-            secretSpendKey = ConfidentialAssetsHelper.GetRandomSeed();
-            secretViewKey = (accountType == AccountType.User) ? ConfidentialAssetsHelper.GetRandomSeed() : null;
+            secretSpendKey = CryptoHelper.GetRandomSeed();
+            secretViewKey = (accountType == AccountType.User) ? CryptoHelper.GetRandomSeed() : null;
         }
 
         private void GeneratePasswordKeys(AccountType accountType, string passphrase, byte[] secretSpendKey, byte[] secretViewKey, out byte[] publicSpendKey, out byte[] publicViewKey)
         {
             byte[] pwdHash = _hashCalculation.CalculateHash(Encoding.UTF8.GetBytes(passphrase));
-            byte[] secretSpendKeyPwd = ConfidentialAssetsHelper.SumScalars(secretSpendKey, pwdHash);
-            byte[] secretViewKeyPwd = (accountType == AccountType.User) ? ConfidentialAssetsHelper.SumScalars(secretViewKey, pwdHash) : null;
+            byte[] secretSpendKeyPwd = CryptoHelper.SumScalars(secretSpendKey, pwdHash);
+            byte[] secretViewKeyPwd = (accountType == AccountType.User) ? CryptoHelper.SumScalars(secretViewKey, pwdHash) : null;
 
-            publicSpendKey = (accountType == AccountType.User) ? ConfidentialAssetsHelper.GetPublicKey(secretSpendKeyPwd) : ConfidentialAssetsHelper.GetPublicKey(Ed25519.SecretKeyFromSeed(secretSpendKeyPwd));
-            publicViewKey = (accountType == AccountType.User) ? ConfidentialAssetsHelper.GetPublicKey(secretViewKeyPwd) : null;
+            publicSpendKey = (accountType == AccountType.User) ? CryptoHelper.GetPublicKey(secretSpendKeyPwd) : CryptoHelper.GetPublicKey(Ed25519.SecretKeyFromSeed(secretSpendKeyPwd));
+            publicViewKey = (accountType == AccountType.User) ? CryptoHelper.GetPublicKey(secretViewKeyPwd) : null;
         }
 
         private void OverrideEncryptedAccount(AccountType accountType, long accountId, string passphrase, byte[] secretSpendKey, byte[] secretViewKey, ulong lastRegistryCombinedBlockHeight)
         {
             byte[] pwdHash = _hashCalculation.CalculateHash(Encoding.UTF8.GetBytes(passphrase));
-            byte[] secretSpendKeyPwd = ConfidentialAssetsHelper.SumScalars(secretSpendKey, pwdHash);
-            byte[] secretViewKeyPwd = (accountType == AccountType.User) ? ConfidentialAssetsHelper.SumScalars(secretViewKey, pwdHash) : null;
+            byte[] secretSpendKeyPwd = CryptoHelper.SumScalars(secretSpendKey, pwdHash);
+            byte[] secretViewKeyPwd = (accountType == AccountType.User) ? CryptoHelper.SumScalars(secretViewKey, pwdHash) : null;
 
-            byte[] publicSpendKey = (accountType == AccountType.User) ? ConfidentialAssetsHelper.GetPublicKey(secretSpendKeyPwd) : ConfidentialAssetsHelper.GetPublicKey(Ed25519.SecretKeyFromSeed(secretSpendKeyPwd));
-            byte[] publicViewKey = (accountType == AccountType.User) ? ConfidentialAssetsHelper.GetPublicKey(secretViewKeyPwd) : null;
+            byte[] publicSpendKey = (accountType == AccountType.User) ? CryptoHelper.GetPublicKey(secretSpendKeyPwd) : CryptoHelper.GetPublicKey(Ed25519.SecretKeyFromSeed(secretSpendKeyPwd));
+            byte[] publicViewKey = (accountType == AccountType.User) ? CryptoHelper.GetPublicKey(secretViewKeyPwd) : null;
 
             //EncryptKeys(accountType, passphrase, secretSpendKey, secretViewKey, out byte[] secretSpendKeyEnc, out byte[] secretViewKeyEnc);
 
@@ -243,11 +243,11 @@ namespace O10.Client.Common.Services
         private bool IsPasswordValid(Account account, string passphrase)
         {
             byte[] pwdHash = _hashCalculation.CalculateHash(Encoding.UTF8.GetBytes(passphrase));
-            byte[] secretSpendKeyPwd = ConfidentialAssetsHelper.SumScalars(account.SecretSpendKey, pwdHash);
-            byte[] secretViewKeyPwd = (account.AccountType == AccountType.User) ? ConfidentialAssetsHelper.SumScalars(account.SecretViewKey, pwdHash) : null;
+            byte[] secretSpendKeyPwd = CryptoHelper.SumScalars(account.SecretSpendKey, pwdHash);
+            byte[] secretViewKeyPwd = (account.AccountType == AccountType.User) ? CryptoHelper.SumScalars(account.SecretViewKey, pwdHash) : null;
 
-            byte[] publicSpendKey = (account.AccountType == AccountType.User) ? ConfidentialAssetsHelper.GetPublicKey(secretSpendKeyPwd) : ConfidentialAssetsHelper.GetPublicKey(Ed25519.SecretKeyFromSeed(secretSpendKeyPwd));
-            byte[] publicViewKey = (account.AccountType == AccountType.User) ? ConfidentialAssetsHelper.GetPublicKey(secretViewKeyPwd) : null;
+            byte[] publicSpendKey = (account.AccountType == AccountType.User) ? CryptoHelper.GetPublicKey(secretSpendKeyPwd) : CryptoHelper.GetPublicKey(Ed25519.SecretKeyFromSeed(secretSpendKeyPwd));
+            byte[] publicViewKey = (account.AccountType == AccountType.User) ? CryptoHelper.GetPublicKey(secretViewKeyPwd) : null;
 
             bool res = publicSpendKey.Equals32(account.PublicSpendKey) && (publicViewKey?.Equals32(account.PublicViewKey) ?? true);
 
@@ -284,7 +284,7 @@ namespace O10.Client.Common.Services
                 secretSpendKey = aes.CreateDecryptor().TransformFinalBlock(account.SecretSpendKey, 0, account.SecretSpendKey.Length);
             }
 
-            byte[] publicSpendKeyBuf = ConfidentialAssetsHelper.GetPublicKey(Ed25519.SecretKeyFromSeed(secretSpendKey));
+            byte[] publicSpendKeyBuf = CryptoHelper.GetPublicKey(Ed25519.SecretKeyFromSeed(secretSpendKey));
 
             bool res = publicSpendKeyBuf.Equals32(account.PublicSpendKey);
 

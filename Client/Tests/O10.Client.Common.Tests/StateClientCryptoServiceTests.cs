@@ -59,7 +59,7 @@ namespace O10.Client.Common.Tests
         public void DecodeEcdhTupleSucceeded()
         {
             StateClientCryptoService clientCryptoService = new StateClientCryptoService(_hashCalculationsRepository, _identityKeyProvidersRegistry);
-            clientCryptoService.Initialize(ConfidentialAssetsHelper.GetRandomSeed());
+            clientCryptoService.Initialize(CryptoHelper.GetRandomSeed());
 
             byte[] arr1 = Array.Empty<byte>();
             byte[] arr2 = Array.Empty<byte>();
@@ -138,13 +138,13 @@ namespace O10.Client.Common.Tests
         [Fact]
 		public void EncodeDecodeAssetTest()
 		{
-			byte[] secretKey = ConfidentialAssetsHelper.GetRandomSeed();
+			byte[] secretKey = CryptoHelper.GetRandomSeed();
 			StateClientCryptoService clientCryptoService = new StateClientCryptoService(_hashCalculationsRepository, _identityKeyProvidersRegistry);
 			clientCryptoService.Initialize(secretKey);
 
 			byte[] assetId = _assetsService.GenerateAssetId(1, "123456789");
-			byte[] blindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
-			byte[] nonBlindedAssetId = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(assetId);
+			byte[] blindingFactor = CryptoHelper.GetRandomSeed();
+			byte[] nonBlindedAssetId = CryptoHelper.GetNonblindedAssetCommitment(assetId);
 			EcdhTupleCA ecdhTupleCA = clientCryptoService.EncodeEcdhTuple(blindingFactor, assetId);
 			clientCryptoService.DecodeEcdhTuple(ecdhTupleCA, null, out byte[] blindingFactorDecoded, out byte[] assetIdDecoded);
 

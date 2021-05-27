@@ -90,9 +90,9 @@ namespace O10.Client.Mobile.Base.Services
         private async Task<(BiometricPersonDataForSignatureDto signatureData, byte[] sourceImageBlindingFactor)> GetInputDataForBiometricSignature(string sourceImage, string targetImage, string issuer)
         {
             byte[] sourceImageAssetId = await _assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_PASSPORTPHOTO, sourceImage, issuer);
-            byte[] sourceImageBlindingFactor = ConfidentialAssetsHelper.GetRandomSeed();
-            byte[] sourceImageCommitment = ConfidentialAssetsHelper.GetAssetCommitment(sourceImageBlindingFactor, sourceImageAssetId);
-            SurjectionProof surjectionProof = ConfidentialAssetsHelper.CreateNewIssuanceSurjectionProof(sourceImageCommitment, new byte[][] { sourceImageAssetId }, 0, sourceImageBlindingFactor);
+            byte[] sourceImageBlindingFactor = Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
+            byte[] sourceImageCommitment = Crypto.ConfidentialAssets.CryptoHelper.GetAssetCommitment(sourceImageBlindingFactor, sourceImageAssetId);
+            SurjectionProof surjectionProof = Crypto.ConfidentialAssets.CryptoHelper.CreateNewIssuanceSurjectionProof(sourceImageCommitment, new byte[][] { sourceImageAssetId }, 0, sourceImageBlindingFactor);
 
             BiometricPersonDataForSignatureDto biometricPersonDataForSignature = new BiometricPersonDataForSignatureDto
             {
@@ -114,8 +114,8 @@ namespace O10.Client.Mobile.Base.Services
 
             byte[] photoIssuanceCommitment = _assetsService.GetCommitmentBlindedByPoint(assetId, blindingPoint);
             byte[] sourceImageCommitment = biometricPersonDataForSignature.SourceImageCommitment.HexStringToByteArray();
-            byte[] diffBF = ConfidentialAssetsHelper.GetDifferentialBlindingFactor(sourceImageBlindingFactor, blindingFactor);
-            SurjectionProof surjectionProof = ConfidentialAssetsHelper.CreateSurjectionProof(sourceImageCommitment, new byte[][] { photoIssuanceCommitment }, 0, diffBF);
+            byte[] diffBF = Crypto.ConfidentialAssets.CryptoHelper.GetDifferentialBlindingFactor(sourceImageBlindingFactor, blindingFactor);
+            SurjectionProof surjectionProof = Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(sourceImageCommitment, new byte[][] { photoIssuanceCommitment }, 0, diffBF);
 
             return new BiometricProof
             {

@@ -741,7 +741,7 @@ namespace O10.Client.Web.Portal.Controllers
                     }
                 };
 
-                bool res = ConfidentialAssetsHelper.VerifySurjectionProof(surjectionProof, sessionCommitment);
+                bool res = CryptoHelper.VerifySurjectionProof(surjectionProof, sessionCommitment);
                 return res;
             }
 
@@ -827,7 +827,7 @@ namespace O10.Client.Web.Portal.Controllers
                             .PostJsonAsync(
                                 new BiometricVerificationDataDto
                                 {
-                                    KeyImage = ConfidentialAssetsHelper.GetRandomSeed().ToHexString(),
+                                    KeyImage = CryptoHelper.GetRandomSeed().ToHexString(),
                                     Issuer = publicKey,
                                     RegistrationKey = idContent,
                                     ImageString = imageContent

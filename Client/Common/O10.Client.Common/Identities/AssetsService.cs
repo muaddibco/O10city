@@ -55,7 +55,7 @@ namespace O10.Client.Common.Identities
         public byte[] GenerateAssetCommitment(long schemeId, string attributeContent)
         {
             byte[] assetId = GenerateAssetId(schemeId, attributeContent);
-            byte[] assetCommitment = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(assetId);
+            byte[] assetCommitment = CryptoHelper.GetNonblindedAssetCommitment(assetId);
             return assetCommitment;
         }
 
@@ -97,48 +97,48 @@ namespace O10.Client.Common.Identities
 
         public void GetBlindingPoint(byte[] bindingKey, byte[] rootAssetId, out byte[] blindingPoint, out byte[] blindingFactor)
         {
-            byte[] blindingFactorSeed = ConfidentialAssetsHelper.FastHash256(bindingKey, rootAssetId);
-            blindingFactor = ConfidentialAssetsHelper.ReduceScalar32(blindingFactorSeed);
-            blindingPoint = ConfidentialAssetsHelper.GetPublicKey(blindingFactor);
+            byte[] blindingFactorSeed = CryptoHelper.FastHash256(bindingKey, rootAssetId);
+            blindingFactor = CryptoHelper.ReduceScalar32(blindingFactorSeed);
+            blindingPoint = CryptoHelper.GetPublicKey(blindingFactor);
         }
 
         public void GetBlindingPoint(byte[] bindingKey, byte[] rootAssetId, byte[] assetId, out byte[] blindingPoint, out byte[] blindingFactor)
         {
-            byte[] blindingFactorSeed = ConfidentialAssetsHelper.FastHash256(bindingKey, rootAssetId, assetId);
-            blindingFactor = ConfidentialAssetsHelper.ReduceScalar32(blindingFactorSeed);
-            blindingPoint = ConfidentialAssetsHelper.GetPublicKey(blindingFactor);
+            byte[] blindingFactorSeed = CryptoHelper.FastHash256(bindingKey, rootAssetId, assetId);
+            blindingFactor = CryptoHelper.ReduceScalar32(blindingFactorSeed);
+            blindingPoint = CryptoHelper.GetPublicKey(blindingFactor);
         }
 
         public byte[] GetBlindingPoint(params byte[][] scalars)
         {
-            byte[] blindingFactorSeed = ConfidentialAssetsHelper.FastHash256(scalars.Select(s => new Memory<byte>(s)).ToArray());
-            byte[] blindingFactor = ConfidentialAssetsHelper.ReduceScalar32(blindingFactorSeed);
-            byte[] blindingPoint = ConfidentialAssetsHelper.GetPublicKey(blindingFactor);
+            byte[] blindingFactorSeed = CryptoHelper.FastHash256(scalars.Select(s => new Memory<byte>(s)).ToArray());
+            byte[] blindingFactor = CryptoHelper.ReduceScalar32(blindingFactorSeed);
+            byte[] blindingPoint = CryptoHelper.GetPublicKey(blindingFactor);
 
             return blindingPoint;
         }
 
         public (byte[] blindingFactor, byte[] blindingPoint) GetBlindingFactorAndPoint(params byte[][] scalars)
         {
-            byte[] blindingFactorSeed = ConfidentialAssetsHelper.FastHash256(scalars.Select(s => new Memory<byte>(s)).ToArray());
-            byte[] blindingFactor = ConfidentialAssetsHelper.ReduceScalar32(blindingFactorSeed);
-            byte[] blindingPoint = ConfidentialAssetsHelper.GetPublicKey(blindingFactor);
+            byte[] blindingFactorSeed = CryptoHelper.FastHash256(scalars.Select(s => new Memory<byte>(s)).ToArray());
+            byte[] blindingFactor = CryptoHelper.ReduceScalar32(blindingFactorSeed);
+            byte[] blindingPoint = CryptoHelper.GetPublicKey(blindingFactor);
 
             return (blindingFactor, blindingPoint);
         }
 
         public byte[] GetBlindingFactor(params byte[][] scalars)
         {
-            byte[] blindingFactorSeed = ConfidentialAssetsHelper.FastHash256(scalars.Select(s => new Memory<byte>(s)).ToArray());
-            byte[] blindingFactor = ConfidentialAssetsHelper.ReduceScalar32(blindingFactorSeed);
+            byte[] blindingFactorSeed = CryptoHelper.FastHash256(scalars.Select(s => new Memory<byte>(s)).ToArray());
+            byte[] blindingFactor = CryptoHelper.ReduceScalar32(blindingFactorSeed);
 
             return blindingFactor;
         }
 
         public byte[] GetCommitmentBlindedByPoint(byte[] assetId, byte[] blindingPoint)
         {
-            byte[] nonBlindedCommitment = ConfidentialAssetsHelper.GetNonblindedAssetCommitment(assetId);
-            byte[] blindedCommitment = ConfidentialAssetsHelper.SumCommitments(nonBlindedCommitment, blindingPoint);
+            byte[] nonBlindedCommitment = CryptoHelper.GetNonblindedAssetCommitment(assetId);
+            byte[] blindedCommitment = CryptoHelper.SumCommitments(nonBlindedCommitment, blindingPoint);
 
             return blindedCommitment;
         }

@@ -18,8 +18,8 @@ namespace O10.Client.Mobile.Base.Services
 
         public DataAccessServiceWrapperSimulator()
         {
-            _issuers.Add(ConfidentialAssetsHelper.GetRandomSeed().ToHexString(), "Trusted Idenity Provider");
-            _issuers.Add(ConfidentialAssetsHelper.GetRandomSeed().ToHexString(), "O10 IdP");
+            _issuers.Add(CryptoHelper.GetRandomSeed().ToHexString(), "Trusted Idenity Provider");
+            _issuers.Add(CryptoHelper.GetRandomSeed().ToHexString(), "O10 IdP");
 
             _associatedAttrs.Add(_issuers.Keys.ElementAt(0),
                 new List<UserAssociatedAttribute>
@@ -63,20 +63,20 @@ namespace O10.Client.Mobile.Base.Services
                         new UserRootAttribute
                         {
                             AccountId = accountId,
-                            AssetId = ConfidentialAssetsHelper.GetRandomSeed(),
+                            AssetId = CryptoHelper.GetRandomSeed(),
                             Content = "3334567982",
                             ConfirmationTime = DateTime.Now,
                             CreationTime = DateTime.Now,
                             IsOverriden = false,
-                            IssuanceCommitment = ConfidentialAssetsHelper.GetRandomSeed(),
-                            LastBlindingFactor = ConfidentialAssetsHelper.GetRandomSeed(),
-                            LastCommitment = ConfidentialAssetsHelper.GetRandomSeed(),
-                            LastDestinationKey = ConfidentialAssetsHelper.GetRandomSeed(),
-                            LastTransactionKey = ConfidentialAssetsHelper.GetRandomSeed(),
+                            IssuanceCommitment = CryptoHelper.GetRandomSeed(),
+                            LastBlindingFactor = CryptoHelper.GetRandomSeed(),
+                            LastCommitment = CryptoHelper.GetRandomSeed(),
+                            LastDestinationKey = CryptoHelper.GetRandomSeed(),
+                            LastTransactionKey = CryptoHelper.GetRandomSeed(),
                             LastUpdateTime = DateTime.Now,
-                            NextKeyImage = ConfidentialAssetsHelper.GetRandomSeed().ToHexString(),
-                            OriginalBlindingFactor = ConfidentialAssetsHelper.GetRandomSeed(),
-                            OriginalCommitment = ConfidentialAssetsHelper.GetRandomSeed(),
+                            NextKeyImage = CryptoHelper.GetRandomSeed().ToHexString(),
+                            OriginalBlindingFactor = CryptoHelper.GetRandomSeed(),
+                            OriginalCommitment = CryptoHelper.GetRandomSeed(),
                             SchemeName = "ID Card",
                             Source = _issuers.Keys.ElementAt(0),
                             UserAttributeId = 1
@@ -84,20 +84,20 @@ namespace O10.Client.Mobile.Base.Services
                         new UserRootAttribute
                         {
                             AccountId = accountId,
-                            AssetId = ConfidentialAssetsHelper.GetRandomSeed(),
+                            AssetId = CryptoHelper.GetRandomSeed(),
                             Content = "qqq@gmail.com",
                             ConfirmationTime = DateTime.Now,
                             CreationTime = DateTime.Now,
                             IsOverriden = false,
-                            IssuanceCommitment = ConfidentialAssetsHelper.GetRandomSeed(),
-                            LastBlindingFactor = ConfidentialAssetsHelper.GetRandomSeed(),
-                            LastCommitment = ConfidentialAssetsHelper.GetRandomSeed(),
-                            LastDestinationKey = ConfidentialAssetsHelper.GetRandomSeed(),
-                            LastTransactionKey = ConfidentialAssetsHelper.GetRandomSeed(),
+                            IssuanceCommitment = CryptoHelper.GetRandomSeed(),
+                            LastBlindingFactor = CryptoHelper.GetRandomSeed(),
+                            LastCommitment = CryptoHelper.GetRandomSeed(),
+                            LastDestinationKey = CryptoHelper.GetRandomSeed(),
+                            LastTransactionKey = CryptoHelper.GetRandomSeed(),
                             LastUpdateTime = DateTime.Now,
-                            NextKeyImage = ConfidentialAssetsHelper.GetRandomSeed().ToHexString(),
-                            OriginalBlindingFactor = ConfidentialAssetsHelper.GetRandomSeed(),
-                            OriginalCommitment = ConfidentialAssetsHelper.GetRandomSeed(),
+                            NextKeyImage = CryptoHelper.GetRandomSeed().ToHexString(),
+                            OriginalBlindingFactor = CryptoHelper.GetRandomSeed(),
+                            OriginalCommitment = CryptoHelper.GetRandomSeed(),
                             SchemeName = "Email",
                             Source = _issuers.Keys.ElementAt(1),
                             UserAttributeId = 1
