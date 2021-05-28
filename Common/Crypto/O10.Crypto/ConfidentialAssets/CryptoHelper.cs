@@ -45,6 +45,13 @@ namespace O10.Crypto.ConfidentialAssets
             return destinationKey.Equals32(destinationKey1);
         }
 
+        /// <summary>
+        /// H(sk * pVk) * G + pSk
+        /// </summary>
+        /// <param name="secretKey"></param>
+        /// <param name="publicSpendKey"></param>
+        /// <param name="publicViewKey"></param>
+        /// <returns></returns>
         public static byte[] GetDestinationKey(byte[] secretKey, byte[] publicSpendKey, byte[] publicViewKey)
         {
             GroupOperations.ge_frombytes(out GroupElementP3 publicViewKeyP3, publicViewKey, 0);
@@ -54,6 +61,7 @@ namespace O10.Crypto.ConfidentialAssets
             byte[] f = new byte[32];
             GroupOperations.ge_tobytes(f, 0, ref fP3);
             byte[] hs = FastHash256(f);
+            ScalarOperations.sc_reduce32(hs);
 
             GroupOperations.ge_scalarmult_base(out GroupElementP3 hsG, hs, 0);
             GroupOperations.ge_p3_to_cached(out GroupElementCached publicSpendKeyCached, ref publicSpendKeyP3);
@@ -646,6 +654,7 @@ namespace O10.Crypto.ConfidentialAssets
             byte[] p3Bytes = new byte[32];
             GroupOperations.ge_p3_tobytes(p3Bytes, 0, ref p3);
             byte[] p3hash = FastHash256(p3Bytes);
+            ScalarOperations.sc_reduce32(p3hash);
 
             byte[] otsk = new byte[32];
             ScalarOperations.sc_add(otsk, p3hash, secretSpendKey);

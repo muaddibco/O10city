@@ -361,6 +361,59 @@ namespace O10.Crypto.Tests
             int totalAssets = 9;
             int transferredAssetIndex = 4;
 
+            byte[][] assetIds = new byte[totalAssets][];
+            byte[][] privateSpendKeys = new byte[totalAssets][];
+            byte[][] privateViewKeys = new byte[totalAssets][];
+            byte[][] publicSpendKeys = new byte[totalAssets][];
+            byte[][] publicViewKeys = new byte[totalAssets][];
+            byte[][] transactionSecretKeys = new byte[totalAssets][];
+            byte[][] transactionPublicKeys = new byte[totalAssets][];
+            byte[][] destinationKeys = new byte[totalAssets][];
+
+            byte[][] blindingFactors = new byte[totalAssets][];
+            byte[][] nonBlindedAssetCommitments = new byte[totalAssets][];
+            byte[][] assetCommitments = new byte[totalAssets][];
+            byte[][] newCommitments = new byte[totalAssets][];
+            byte[][] diffBlindingFactors = new byte[totalAssets][];
+
+            for (int i = 0; i < totalAssets; i++)
+            {
+                assetIds[i] = CryptoHelper.GetRandomSeed();
+                privateSpendKeys[i] = CryptoHelper.GetRandomSeed();
+                privateViewKeys[i] = CryptoHelper.GetRandomSeed();
+                transactionSecretKeys[i] = CryptoHelper.GetRandomSeed();
+                publicSpendKeys[i] = CryptoHelper.GetPublicKey(privateSpendKeys[i]);
+                publicViewKeys[i] = CryptoHelper.GetPublicKey(privateViewKeys[i]);
+                transactionPublicKeys[i] = CryptoHelper.GetPublicKey(transactionSecretKeys[i]);
+                destinationKeys[i] = CryptoHelper.GetDestinationKey(transactionSecretKeys[i], publicSpendKeys[i], publicViewKeys[i]);
+
+                blindingFactors[i] = CryptoHelper.GetRandomSeed();
+                diffBlindingFactors[i] = CryptoHelper.GetRandomSeed();
+                nonBlindedAssetCommitments[i] = CryptoHelper.GetNonblindedAssetCommitment(assetIds[i]);
+                assetCommitments[i] = CryptoHelper.GetAssetCommitment(blindingFactors[i], assetIds[i]);
+                newCommitments[i] = CryptoHelper.BlindAssetCommitment(assetCommitments[i], diffBlindingFactors[i]);
+
+                byte[] destinationKeyTmp1 = CryptoHelper.SumCommitments(destinationKeys[i], newCommitments[i]);
+                byte[] destinationKeyTmp2 = CryptoHelper.SubCommitments(destinationKeyTmp1, newCommitments[i]);
+                Assert.True(destinationKeys[i].Equals32(destinationKeyTmp2), $"Sum of commitments {destinationKeys[i].ToHexString()} + {newCommitments[i].ToHexString()} = {destinationKeyTmp1.ToHexString()} does not results right because sub = {destinationKeyTmp2.ToHexString()} and not {destinationKeys[i].ToHexString()}");
+                destinationKeys[i] = destinationKeyTmp1;
+            }
+
+            byte[] newTransactionSecretKey = CryptoHelper.GetRandomSeed();
+            byte[] newDestinationKey = CryptoHelper.GetDestinationKey(newTransactionSecretKey, publicSpendKeys[transferredAssetIndex], publicViewKeys[transferredAssetIndex]);
+            byte[] otsk = CryptoHelper.GetOTSK(transactionPublicKeys[transferredAssetIndex], privateViewKeys[transferredAssetIndex], privateSpendKeys[transferredAssetIndex]);
+            byte[] otpk = CryptoHelper.GetPublicKey(otsk);
+            byte[] keyImage = CryptoHelper.GenerateKeyImage(otsk);
+            byte[] msg = CryptoHelper.GetRandomSeed();
+
+            destinationKeys[transferredAssetIndex] = CryptoHelper.SubCommitments(destinationKeys[transferredAssetIndex], newCommitments[transferredAssetIndex]);
+            Assert.True(otpk.Equals32(destinationKeys[transferredAssetIndex]), $"Calculated OTPK {otpk.ToHexString()} does not equal Destination Key {destinationKeys[transferredAssetIndex].ToHexString()}");
+
+            RingSignature[] ringSignatures = CryptoHelper.GenerateRingSignature(msg, keyImage, destinationKeys.Select(s => s.AsMemory()).ToArray(), otsk, transferredAssetIndex);
+
+            var res = CryptoHelper.VerifyRingSignature(msg, keyImage, destinationKeys, ringSignatures);
+
+            Assert.True(res);
         }
 
         [Fact]
