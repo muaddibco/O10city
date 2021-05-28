@@ -220,31 +220,31 @@ namespace O10.Client.Common.Communication
 
         private GroupsRelationsProofs CreateRelationsProofs(RelationsProofsInput requestInput, AssociatedProofPreparation[] associatedProofPreparations, OutputModel[] outputModels, byte[][] issuanceCommitments)
         {
-            byte[] secretKey = O10.Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
-            byte[] transactionKey = O10.Crypto.ConfidentialAssets.CryptoHelper.GetPublicKey(secretKey);
-            byte[] destinationKey = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDestinationKey(secretKey, _clientCryptoService.PublicKeys[0].ArraySegment.Array, _clientCryptoService.PublicKeys[1].ArraySegment.Array);
-            byte[] destinationKey2 = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDestinationKey(secretKey, requestInput.PublicSpendKey, requestInput.PublicViewKey);
-            byte[] blindingFactor = O10.Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
-            byte[] assetCommitment = O10.Crypto.ConfidentialAssets.CryptoHelper.GetAssetCommitment(blindingFactor, requestInput.AssetId);
+            byte[] secretKey = CryptoHelper.GetRandomSeed();
+            byte[] transactionKey = CryptoHelper.GetPublicKey(secretKey);
+            byte[] destinationKey = CryptoHelper.GetDestinationKey(secretKey, _clientCryptoService.PublicKeys[0].ArraySegment.Array, _clientCryptoService.PublicKeys[1].ArraySegment.Array);
+            byte[] destinationKey2 = CryptoHelper.GetDestinationKey(secretKey, requestInput.PublicSpendKey, requestInput.PublicViewKey);
+            byte[] blindingFactor = CryptoHelper.GetRandomSeed();
+            byte[] assetCommitment = CryptoHelper.GetAssetCommitment(blindingFactor, requestInput.AssetId);
 
 
-            byte[] onboardingToOwnershipBlindingFactor = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.PrevBlindingFactor);
+            byte[] onboardingToOwnershipBlindingFactor = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.PrevBlindingFactor);
             GetAssetCommitmentsRing(requestInput.PrevAssetCommitment, outputModels, out int pos, out IKey[] assetCommitments);
-            SurjectionProof ownershipProof = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(assetCommitment, assetCommitments.Select(s => s.ToByteArray()).ToArray(), pos, onboardingToOwnershipBlindingFactor);
+            SurjectionProof ownershipProof = CryptoHelper.CreateSurjectionProof(assetCommitment, assetCommitments.Select(s => s.ToByteArray()).ToArray(), pos, onboardingToOwnershipBlindingFactor);
 
-            byte[] onboardingToEligibilityBlindingFactor = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.EligibilityBlindingFactor);
+            byte[] onboardingToEligibilityBlindingFactor = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.EligibilityBlindingFactor);
             _eligibilityProofsProvider.GetEligibilityCommitmentAndProofs(requestInput.EligibilityCommitment, issuanceCommitments, out int actualAssetPos, out byte[][] commitments);
-            SurjectionProof eligibilityProof = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(assetCommitment, commitments, actualAssetPos, onboardingToEligibilityBlindingFactor);
+            SurjectionProof eligibilityProof = CryptoHelper.CreateSurjectionProof(assetCommitment, commitments, actualAssetPos, onboardingToEligibilityBlindingFactor);
 
             GroupRelationProof[] groupRelationProofs = new GroupRelationProof[requestInput.Relations.Length];
             int i = 0;
             foreach (var relation in requestInput.Relations)
             {
                 _relationsBindingService.GetBoundedCommitment(requestInput.AssetId, relation.RelatedAssetOwner, out byte[] groupEntryBlindingFactor, out byte[] groupEntryCommitment, relation.RelatedAssetId);
-                byte[] diffBF = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, groupEntryBlindingFactor);
-                SurjectionProof groupEntryProof = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(assetCommitment, new byte[][] { groupEntryCommitment }, 0, diffBF);
+                byte[] diffBF = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, groupEntryBlindingFactor);
+                SurjectionProof groupEntryProof = CryptoHelper.CreateSurjectionProof(assetCommitment, new byte[][] { groupEntryCommitment }, 0, diffBF);
                 _relationsBindingService.GetBoundedCommitment(relation.RelatedAssetId, relation.RelatedAssetOwner, out byte[] groupNameBlindingFactor, out byte[] groupNameCommitment, relation.RelatedAssetId);
-                SurjectionProof groupNameProof = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateNewIssuanceSurjectionProof(groupNameCommitment, new byte[][] { relation.RelatedAssetId }, 0, groupNameBlindingFactor);
+                SurjectionProof groupNameProof = CryptoHelper.CreateNewIssuanceSurjectionProof(groupNameCommitment, new byte[][] { relation.RelatedAssetId }, 0, groupNameBlindingFactor);
 
                 GroupRelationProof groupRelationProof = new GroupRelationProof
                 {
@@ -280,32 +280,32 @@ namespace O10.Client.Common.Communication
 
         private DocumentSignRequest CreateDocumentSignRequest(DocumentSignRequestInput requestInput, AssociatedProofPreparation[] associatedProofPreparations, OutputModel[] outputModels, byte[][] issuanceCommitments)
 		{
-			byte[] secretKey = O10.Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
-			byte[] transactionKey = O10.Crypto.ConfidentialAssets.CryptoHelper.GetPublicKey(secretKey);
-			byte[] destinationKey = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDestinationKey(secretKey, _clientCryptoService.PublicKeys[0].ArraySegment.Array, _clientCryptoService.PublicKeys[1].ArraySegment.Array);
+			byte[] secretKey = CryptoHelper.GetRandomSeed();
+			byte[] transactionKey = CryptoHelper.GetPublicKey(secretKey);
+			byte[] destinationKey = CryptoHelper.GetDestinationKey(secretKey, _clientCryptoService.PublicKeys[0].ArraySegment.Array, _clientCryptoService.PublicKeys[1].ArraySegment.Array);
             _relationsBindingService.GetBoundedCommitment(requestInput.AssetId, requestInput.PublicSpendKey, out byte[] blindingFactor, out byte[] assetCommitment, requestInput.DocumentHash);
 
-			byte[] onboardingToOwnershipBlindingFactor = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.PrevBlindingFactor);
+			byte[] onboardingToOwnershipBlindingFactor = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.PrevBlindingFactor);
 			GetAssetCommitmentsRing(requestInput.PrevAssetCommitment, outputModels, out int pos, out IKey[] assetCommitments);
-            SurjectionProof ownershipProof = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(assetCommitment, assetCommitments.Select(s => s.Value).ToArray(), pos, onboardingToOwnershipBlindingFactor);
+            SurjectionProof ownershipProof = CryptoHelper.CreateSurjectionProof(assetCommitment, assetCommitments.Select(s => s.Value).ToArray(), pos, onboardingToOwnershipBlindingFactor);
 
-			byte[] onboardingToEligibilityBlindingFactor = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.EligibilityBlindingFactor);
+			byte[] onboardingToEligibilityBlindingFactor = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.EligibilityBlindingFactor);
 			_eligibilityProofsProvider.GetEligibilityCommitmentAndProofs(requestInput.EligibilityCommitment, issuanceCommitments, out int actualAssetPos, out byte[][] commitments);
-            SurjectionProof eligibilityProof = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(assetCommitment, commitments, actualAssetPos, onboardingToEligibilityBlindingFactor);
+            SurjectionProof eligibilityProof = CryptoHelper.CreateSurjectionProof(assetCommitment, commitments, actualAssetPos, onboardingToEligibilityBlindingFactor);
 
 			AssociatedProofs[] associatedProofs = GetAssociatedProofs(associatedProofPreparations, blindingFactor, assetCommitment);
 
             _relationsBindingService.GetBoundedCommitment(requestInput.AssetId, requestInput.GroupIssuer, out byte[] groupBlindingFactor, out byte[] groupEntryAssetCommitment, requestInput.GroupAssetId);
-			byte[] signToGroupEntryBlindingFactor = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, groupBlindingFactor);
+			byte[] signToGroupEntryBlindingFactor = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, groupBlindingFactor);
 
-            SurjectionProof groupEntrySurjectionProof = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(assetCommitment, new byte[][] { groupEntryAssetCommitment }, 0, signToGroupEntryBlindingFactor, requestInput.DocumentHash, BitConverter.GetBytes(requestInput.DocumentRecordHeight));
+            SurjectionProof groupEntrySurjectionProof = CryptoHelper.CreateSurjectionProof(assetCommitment, new byte[][] { groupEntryAssetCommitment }, 0, signToGroupEntryBlindingFactor, requestInput.DocumentHash, BitConverter.GetBytes(requestInput.DocumentRecordHeight));
 
             _relationsBindingService.GetBoundedCommitment(requestInput.GroupAssetId, requestInput.GroupIssuer, out byte[] groupNameBlindingFactor, out byte[] groupNameCommitment, requestInput.GroupAssetId);
 
-			byte[] allowedGroupNameBlindingFactor = O10.Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
-			byte[] allowedGroupNameCommitment = O10.Crypto.ConfidentialAssets.CryptoHelper.GetAssetCommitment(allowedGroupNameBlindingFactor, requestInput.GroupAssetId);
-			byte[] diffAllowedGroupNameBlindingFactor = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDifferentialBlindingFactor(allowedGroupNameBlindingFactor, groupNameBlindingFactor);
-            SurjectionProof allowedGroupNameSurjectionProof = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(allowedGroupNameCommitment, new byte[][] { groupNameCommitment }, 0, diffAllowedGroupNameBlindingFactor);
+			byte[] allowedGroupNameBlindingFactor = CryptoHelper.GetRandomSeed();
+			byte[] allowedGroupNameCommitment = CryptoHelper.GetAssetCommitment(allowedGroupNameBlindingFactor, requestInput.GroupAssetId);
+			byte[] diffAllowedGroupNameBlindingFactor = CryptoHelper.GetDifferentialBlindingFactor(allowedGroupNameBlindingFactor, groupNameBlindingFactor);
+            SurjectionProof allowedGroupNameSurjectionProof = CryptoHelper.CreateSurjectionProof(allowedGroupNameCommitment, new byte[][] { groupNameCommitment }, 0, diffAllowedGroupNameBlindingFactor);
 
 			DocumentSignRequest block = new DocumentSignRequest
 			{
@@ -331,24 +331,24 @@ namespace O10.Client.Common.Communication
 
 		private EmployeeRegistrationRequest CreateEmployeeRegistrationRequest(EmployeeRequestInput requestInput, AssociatedProofPreparation[] associatedProofPreparations, OutputModel[] outputModels, byte[][] issuanceCommitments)
         {
-            byte[] secretKey = O10.Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
-            byte[] transactionKey = O10.Crypto.ConfidentialAssets.CryptoHelper.GetPublicKey(secretKey);
-            byte[] destinationKey = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDestinationKey(secretKey, _clientCryptoService.PublicKeys[0].ArraySegment.Array, _clientCryptoService.PublicKeys[1].ArraySegment.Array);
+            byte[] secretKey = CryptoHelper.GetRandomSeed();
+            byte[] transactionKey = CryptoHelper.GetPublicKey(secretKey);
+            byte[] destinationKey = CryptoHelper.GetDestinationKey(secretKey, _clientCryptoService.PublicKeys[0].ArraySegment.Array, _clientCryptoService.PublicKeys[1].ArraySegment.Array);
             _relationsBindingService.GetBoundedCommitment(requestInput.AssetId, requestInput.PublicSpendKey, out byte[] blindingFactor, out byte[] assetCommitment, requestInput.GroupAssetId);
 
-            byte[] onboardingToOwnershipBlindingFactor = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.PrevBlindingFactor);
+            byte[] onboardingToOwnershipBlindingFactor = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.PrevBlindingFactor);
             GetAssetCommitmentsRing(requestInput.PrevAssetCommitment, outputModels, out int pos, out IKey[] assetCommitments);
-            SurjectionProof ownershipProof = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(assetCommitment, assetCommitments.Select(s => s.Value).ToArray(), pos, onboardingToOwnershipBlindingFactor);
+            SurjectionProof ownershipProof = CryptoHelper.CreateSurjectionProof(assetCommitment, assetCommitments.Select(s => s.Value).ToArray(), pos, onboardingToOwnershipBlindingFactor);
 
-            byte[] onboardingToEligibilityBlindingFactor = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.EligibilityBlindingFactor);
+            byte[] onboardingToEligibilityBlindingFactor = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.EligibilityBlindingFactor);
             _eligibilityProofsProvider.GetEligibilityCommitmentAndProofs(requestInput.EligibilityCommitment, issuanceCommitments, out int actualAssetPos, out byte[][] commitments);
-            SurjectionProof eligibilityProof = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(assetCommitment, commitments, actualAssetPos, onboardingToEligibilityBlindingFactor);
+            SurjectionProof eligibilityProof = CryptoHelper.CreateSurjectionProof(assetCommitment, commitments, actualAssetPos, onboardingToEligibilityBlindingFactor);
 
             AssociatedProofs[] associatedProofs = GetAssociatedProofs(associatedProofPreparations, blindingFactor, assetCommitment);
 
             _relationsBindingService.GetBoundedCommitment(requestInput.GroupAssetId, requestInput.PublicSpendKey, out byte[] groupBlindingFactor, out byte[] groupCommitment, requestInput.GroupAssetId);
 
-            SurjectionProof groupSurjectionProof = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateNewIssuanceSurjectionProof(groupCommitment, new byte[][] { requestInput.GroupAssetId }, 0, groupBlindingFactor);
+            SurjectionProof groupSurjectionProof = CryptoHelper.CreateNewIssuanceSurjectionProof(groupCommitment, new byte[][] { requestInput.GroupAssetId }, 0, groupBlindingFactor);
 
             EmployeeRegistrationRequest block = new EmployeeRegistrationRequest
             {
@@ -373,20 +373,20 @@ namespace O10.Client.Common.Communication
 
 		private RevokeIdentity CreateRevokeIdentityPacket(RequestInput requestInput, OutputModel[] outputModels, byte[][] issuanceCommitments)
 		{
-			byte[] secretKey = O10.Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
-			byte[] transactionKey = O10.Crypto.ConfidentialAssets.CryptoHelper.GetPublicKey(secretKey);
-			byte[] destinationKey = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDestinationKey(secretKey, _clientCryptoService.PublicKeys[0].ArraySegment.Array, _clientCryptoService.PublicKeys[1].ArraySegment.Array);
-			byte[] destinationKey2 = requestInput.PublicViewKey != null ? O10.Crypto.ConfidentialAssets.CryptoHelper.GetDestinationKey(secretKey, requestInput.PublicSpendKey, requestInput.PublicViewKey) : requestInput.PublicSpendKey;
-			byte[] blindingFactor = O10.Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
-			byte[] blindingFactorToOwnership = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.PrevBlindingFactor);
-			byte[] blindingFactorToEligibility = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.EligibilityBlindingFactor);
-			byte[] assetCommitment = O10.Crypto.ConfidentialAssets.CryptoHelper.GetAssetCommitment(blindingFactor, requestInput.AssetId);
+			byte[] secretKey = CryptoHelper.GetRandomSeed();
+			byte[] transactionKey = CryptoHelper.GetPublicKey(secretKey);
+			byte[] destinationKey = CryptoHelper.GetDestinationKey(secretKey, _clientCryptoService.PublicKeys[0].ArraySegment.Array, _clientCryptoService.PublicKeys[1].ArraySegment.Array);
+			byte[] destinationKey2 = requestInput.PublicViewKey != null ? CryptoHelper.GetDestinationKey(secretKey, requestInput.PublicSpendKey, requestInput.PublicViewKey) : requestInput.PublicSpendKey;
+			byte[] blindingFactor = CryptoHelper.GetRandomSeed();
+			byte[] blindingFactorToOwnership = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.PrevBlindingFactor);
+			byte[] blindingFactorToEligibility = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.EligibilityBlindingFactor);
+			byte[] assetCommitment = CryptoHelper.GetAssetCommitment(blindingFactor, requestInput.AssetId);
 
 			GetAssetCommitmentsRing(requestInput.PrevAssetCommitment, outputModels, out int pos, out IKey[] assetCommitments);
-            SurjectionProof ownershipProof = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(assetCommitment, assetCommitments.Select(s => s.Value).ToArray(), pos, blindingFactorToOwnership);
+            SurjectionProof ownershipProof = CryptoHelper.CreateSurjectionProof(assetCommitment, assetCommitments.Select(s => s.Value).ToArray(), pos, blindingFactorToOwnership);
 
 			_eligibilityProofsProvider.GetEligibilityCommitmentAndProofs(requestInput.EligibilityCommitment, issuanceCommitments, out int actualAssetPos, out byte[][] commitments);
-            SurjectionProof eligibilityProof = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(assetCommitment, commitments, actualAssetPos, blindingFactorToEligibility);
+            SurjectionProof eligibilityProof = CryptoHelper.CreateSurjectionProof(assetCommitment, commitments, actualAssetPos, blindingFactorToEligibility);
 
 			RevokeIdentity block = new RevokeIdentity
 			{
@@ -407,16 +407,16 @@ namespace O10.Client.Common.Communication
 
 		private async Task<IdentityProofs> CreateIdentityProofsPacket(RequestInput requestInput, AssociatedProofPreparation[] associatedProofPreparations, OutputModel[] outputModels, byte[] issuer)
         {
-            byte[] secretKey = O10.Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
-            byte[] transactionKey = O10.Crypto.ConfidentialAssets.CryptoHelper.GetPublicKey(secretKey);
-            byte[] destinationKey = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDestinationKey(secretKey, _clientCryptoService.PublicKeys[0].ArraySegment.Array, _clientCryptoService.PublicKeys[1].ArraySegment.Array);
-            byte[] destinationKey2 = requestInput.PublicViewKey != null ? O10.Crypto.ConfidentialAssets.CryptoHelper.GetDestinationKey(secretKey, requestInput.PublicSpendKey, requestInput.PublicViewKey) : requestInput.PublicSpendKey;
-            byte[] blindingFactor = O10.Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
-            byte[] blindingFactorToOwnership = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.PrevBlindingFactor);
-            byte[] assetCommitment = O10.Crypto.ConfidentialAssets.CryptoHelper.GetAssetCommitment(blindingFactor, requestInput.AssetId);
+            byte[] secretKey = CryptoHelper.GetRandomSeed();
+            byte[] transactionKey = CryptoHelper.GetPublicKey(secretKey);
+            byte[] destinationKey = CryptoHelper.GetDestinationKey(secretKey, _clientCryptoService.PublicKeys[0].ArraySegment.Array, _clientCryptoService.PublicKeys[1].ArraySegment.Array);
+            byte[] destinationKey2 = requestInput.PublicViewKey != null ? CryptoHelper.GetDestinationKey(secretKey, requestInput.PublicSpendKey, requestInput.PublicViewKey) : requestInput.PublicSpendKey;
+            byte[] blindingFactor = CryptoHelper.GetRandomSeed();
+            byte[] blindingFactorToOwnership = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.PrevBlindingFactor);
+            byte[] assetCommitment = CryptoHelper.GetAssetCommitment(blindingFactor, requestInput.AssetId);
 
             GetAssetCommitmentsRing(requestInput.PrevAssetCommitment, outputModels, out int pos, out IKey[] assetCommitments);
-            SurjectionProof ownershipProof = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(assetCommitment, assetCommitments.Select(s => s.Value).ToArray(), pos, blindingFactorToOwnership);
+            SurjectionProof ownershipProof = CryptoHelper.CreateSurjectionProof(assetCommitment, assetCommitments.Select(s => s.Value).ToArray(), pos, blindingFactorToOwnership);
             SurjectionProof eligibilityProof = await _eligibilityProofsProvider.CreateEligibilityProof(requestInput.EligibilityCommitment, requestInput.EligibilityBlindingFactor, assetCommitment, blindingFactor, issuer).ConfigureAwait(false);
             SurjectionProof authenticationProof = await _relationsBindingService.CreateProofToRegistration(requestInput.PublicSpendKey, blindingFactor, assetCommitment, requestInput.AssetId).ConfigureAwait(false);
             AssociatedProofs[] associatedProofs = GetAssociatedProofs(associatedProofPreparations, blindingFactor, assetCommitment);
@@ -461,30 +461,30 @@ namespace O10.Client.Common.Communication
 
         private static AssociatedProofs GetAssociatedProof(AssociatedProofPreparation[] associatedProofPreparations, byte[] blindingFactor, byte[] assetCommitment, int i)
         {
-            byte[] rootBlindingFactorDiff = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, associatedProofPreparations[i].OriginatingBlindingFactor);
+            byte[] rootBlindingFactorDiff = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, associatedProofPreparations[i].OriginatingBlindingFactor);
             AssociatedProofs associatedProof;
 
             if (associatedProofPreparations[i].Commitment == null)
             {
-                byte[] associatedBlindingFactorDiff = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, associatedProofPreparations[i].OriginatingBlindingFactor);
+                byte[] associatedBlindingFactorDiff = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, associatedProofPreparations[i].OriginatingBlindingFactor);
 
                 associatedProof = new AssociatedProofs
                 {
                     SchemeName = associatedProofPreparations[i].SchemeName,
-                    AssociationProofs = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(assetCommitment, new byte[][] { associatedProofPreparations[i].OriginatingAssociatedCommitment }, 0, associatedBlindingFactorDiff),
-                    RootProofs = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(assetCommitment, new byte[][] { associatedProofPreparations[i].OriginatingRootCommitment }, 0, rootBlindingFactorDiff)
+                    AssociationProofs = CryptoHelper.CreateSurjectionProof(assetCommitment, new byte[][] { associatedProofPreparations[i].OriginatingAssociatedCommitment }, 0, associatedBlindingFactorDiff),
+                    RootProofs = CryptoHelper.CreateSurjectionProof(assetCommitment, new byte[][] { associatedProofPreparations[i].OriginatingRootCommitment }, 0, rootBlindingFactorDiff)
                 };
             }
             else
             {
-                byte[] associatedBlindingFactorDiff = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDifferentialBlindingFactor(associatedProofPreparations[i].CommitmentBlindingFactor, associatedProofPreparations[i].OriginatingBlindingFactor);
+                byte[] associatedBlindingFactorDiff = CryptoHelper.GetDifferentialBlindingFactor(associatedProofPreparations[i].CommitmentBlindingFactor, associatedProofPreparations[i].OriginatingBlindingFactor);
 
                 associatedProof = new AssociatedAssetProofs
                 {
                     AssociatedAssetCommitment = associatedProofPreparations[i].Commitment,
                     SchemeName = associatedProofPreparations[i].SchemeName,
-                    AssociationProofs = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(associatedProofPreparations[i].Commitment, new byte[][] { associatedProofPreparations[i].OriginatingAssociatedCommitment }, 0, associatedBlindingFactorDiff),
-                    RootProofs = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(assetCommitment, new byte[][] { associatedProofPreparations[i].OriginatingRootCommitment }, 0, rootBlindingFactorDiff)
+                    AssociationProofs = CryptoHelper.CreateSurjectionProof(associatedProofPreparations[i].Commitment, new byte[][] { associatedProofPreparations[i].OriginatingAssociatedCommitment }, 0, associatedBlindingFactorDiff),
+                    RootProofs = CryptoHelper.CreateSurjectionProof(assetCommitment, new byte[][] { associatedProofPreparations[i].OriginatingRootCommitment }, 0, rootBlindingFactorDiff)
                 };
             }
 
@@ -493,10 +493,10 @@ namespace O10.Client.Common.Communication
 
         private TransitionCompromisedProofs CreateTransitionCompromisedProofs(RequestInput requestInput, byte[] compromisedKeyImage, byte[] compromisedTransactionKey, byte[] destinationKey, OutputModel[] outputModels, byte[][] issuanceCommitments)
         {
-            byte[] blindingFactor = O10.Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
-            byte[] blindingFactorToOwnership = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.PrevBlindingFactor);
-            byte[] blindingFactorToEligibility = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.EligibilityBlindingFactor);
-            byte[] assetCommitment = O10.Crypto.ConfidentialAssets.CryptoHelper.GetAssetCommitment(blindingFactor, requestInput.AssetId);
+            byte[] blindingFactor = CryptoHelper.GetRandomSeed();
+            byte[] blindingFactorToOwnership = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.PrevBlindingFactor);
+            byte[] blindingFactorToEligibility = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.EligibilityBlindingFactor);
+            byte[] assetCommitment = CryptoHelper.GetAssetCommitment(blindingFactor, requestInput.AssetId);
             //_relationsBindingService.GetBoundedCommitment(requestInput.AssetId, requestInput.PublicSpendKey, out byte[] registrationBlindingFactor, out byte[] registrationCommitment);
             //byte[] blindingFactorToRegistration = ConfidentialAssetsHelper.GetDifferentialBlindingFactor(blindingFactor, registrationBlindingFactor);
             //byte[] encodedRegistrationCommitment = ConfidentialAssetsHelper.CreateEncodedCommitment(registrationCommitment, secretKey, target);
@@ -505,8 +505,8 @@ namespace O10.Client.Common.Communication
 
             _eligibilityProofsProvider.GetEligibilityCommitmentAndProofs(requestInput.EligibilityCommitment, issuanceCommitments, out int actualAssetPos, out byte[][] commitments);
 
-            SurjectionProof ownershipProof = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(assetCommitment, assetCommitments.Select(s => s.Value).ToArray(), pos, blindingFactorToOwnership);
-            SurjectionProof eligibilityProof = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(assetCommitment, commitments, actualAssetPos, blindingFactorToEligibility);
+            SurjectionProof ownershipProof = CryptoHelper.CreateSurjectionProof(assetCommitment, assetCommitments.Select(s => s.Value).ToArray(), pos, blindingFactorToOwnership);
+            SurjectionProof eligibilityProof = CryptoHelper.CreateSurjectionProof(assetCommitment, commitments, actualAssetPos, blindingFactorToEligibility);
             //SurjectionProof authenticationProof = ConfidentialAssetsHelper.CreateSurjectionProof(assetCommitment, new byte[][] { registrationCommitment }, 0, blindingFactorToRegistration);
             //authenticationProof.AssetCommitments[0] = encodedRegistrationCommitment;
 
@@ -518,7 +518,7 @@ namespace O10.Client.Common.Communication
                 CompromisedKeyImage = compromisedKeyImage,
                 AssetCommitment = assetCommitment,
                 EligibilityProof = eligibilityProof,
-                EcdhTuple = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateEcdhTupleCA(blindingFactor, requestInput.AssetId, compromisedTransactionKey, requestInput.PublicSpendKey),
+                EcdhTuple = CryptoHelper.CreateEcdhTupleCA(blindingFactor, requestInput.AssetId, compromisedTransactionKey, requestInput.PublicSpendKey),
             };
 
             FillSyncData(block);
@@ -529,14 +529,14 @@ namespace O10.Client.Common.Communication
 
         private UniversalTransport CreateUniversalTransportPacket(RequestInput requestInput, OutputModel[] outputModels, UniversalProofs universalProofs)
         {
-            byte[] secretKey = O10.Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
-            byte[] transactionKey = O10.Crypto.ConfidentialAssets.CryptoHelper.GetPublicKey(secretKey);
-            byte[] destinationKey = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDestinationKey(secretKey, _clientCryptoService.PublicKeys[0].ArraySegment.Array, _clientCryptoService.PublicKeys[1].ArraySegment.Array);
-            byte[] destinationKey2 = requestInput.PublicViewKey != null ? O10.Crypto.ConfidentialAssets.CryptoHelper.GetDestinationKey(secretKey, requestInput.PublicSpendKey, requestInput.PublicViewKey) : requestInput.PublicSpendKey;
-            byte[] blindingFactorToOwnership = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDifferentialBlindingFactor(requestInput.BlindingFactor.Span, requestInput.PrevBlindingFactor);
+            byte[] secretKey = CryptoHelper.GetRandomSeed();
+            byte[] transactionKey = CryptoHelper.GetPublicKey(secretKey);
+            byte[] destinationKey = CryptoHelper.GetDestinationKey(secretKey, _clientCryptoService.PublicKeys[0].ArraySegment.Array, _clientCryptoService.PublicKeys[1].ArraySegment.Array);
+            byte[] destinationKey2 = requestInput.PublicViewKey != null ? CryptoHelper.GetDestinationKey(secretKey, requestInput.PublicSpendKey, requestInput.PublicViewKey) : requestInput.PublicSpendKey;
+            byte[] blindingFactorToOwnership = CryptoHelper.GetDifferentialBlindingFactor(requestInput.BlindingFactor.Span, requestInput.PrevBlindingFactor);
 
             GetAssetCommitmentsRing(requestInput.PrevAssetCommitment, outputModels, out int pos, out IKey[] assetCommitments);
-            SurjectionProof ownershipProof = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(requestInput.AssetCommitment.Span, assetCommitments.Select(s => s.Value).ToArray(), pos, blindingFactorToOwnership);
+            SurjectionProof ownershipProof = CryptoHelper.CreateSurjectionProof(requestInput.AssetCommitment.Span, assetCommitments.Select(s => s.Value).ToArray(), pos, blindingFactorToOwnership);
 
             UniversalTransport block = new UniversalTransport
             {

@@ -350,7 +350,7 @@ namespace O10.Client.Mobile.Base.ViewModels
                 AssetId = userRootAttribute.AssetId.ToHexString(),
                 AttributeSchemeName = userRootAttribute.SchemeName,
                 Content = userRootAttribute.Content,
-                AttributeState = userRootAttribute.IsOverriden ? Enums.AttributeState.Disabled : (userRootAttribute.LastCommitment.ToHexString() == "0000000000000000000000000000000000000000000000000000000000000000" ? Enums.AttributeState.NotConfirmed : Enums.AttributeState.Confirmed),
+                AttributeState = userRootAttribute.IsOverriden ? AttributeState.Disabled : (userRootAttribute.LastCommitment.ToHexString() == "0000000000000000000000000000000000000000000000000000000000000000" ? AttributeState.NotConfirmed : AttributeState.Confirmed),
                 CreationTime = userRootAttribute.CreationTime ?? DateTime.MinValue,
                 ConfirmationTime = userRootAttribute.ConfirmationTime ?? DateTime.MinValue,
                 LastUpdateTime = userRootAttribute.LastUpdateTime ?? DateTime.MinValue,

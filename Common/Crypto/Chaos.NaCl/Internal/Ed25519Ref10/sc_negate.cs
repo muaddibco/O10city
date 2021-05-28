@@ -4,7 +4,7 @@
     {
         internal static void sc_negate(byte[] n, byte[] s)
         {
-            sc_muladd(n, ScalarOperations.negone, s, ScalarOperations.zero);
+            sc_muladd(n, negone, s, zero);
         }
     }
 }

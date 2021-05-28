@@ -148,11 +148,11 @@ namespace Microsoft.Win32
         [ResourceExposure(ResourceScope.Process)]
         internal static extern int LoadString(SafeLibraryHandle handle, int id, StringBuilder buffer, int bufferLength);
 
-        [DllImport("KERNEL32", CharSet = System.Runtime.InteropServices.CharSet.Unicode, SetLastError = true)]
+        [DllImport("KERNEL32", CharSet = CharSet.Unicode, SetLastError = true)]
         [ResourceExposure(ResourceScope.Machine)]
         internal static extern SafeLibraryHandle LoadLibraryEx(string libFilename, IntPtr reserved, int flags);
 
-        [DllImport("KERNEL32", CharSet = System.Runtime.InteropServices.CharSet.Unicode)]
+        [DllImport("KERNEL32", CharSet = CharSet.Unicode)]
         [return: MarshalAs(UnmanagedType.Bool)]
         [ResourceExposure(ResourceScope.None)]
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]

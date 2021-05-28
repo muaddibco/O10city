@@ -50,8 +50,8 @@ namespace O10.Transactions.Core.Tests
             _hashCalculationRepository.Create(HashType.MurMur).Returns(new MurMurHashCalculation());
             _blockParsersRepositoriesRepository.GetBlockParsersRepository(LedgerType.Registry).ReturnsForAnyArgs(_blockParsersRepository);
 
-            _privateKey = Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
-            _privateViewKey = Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
+            _privateKey = CryptoHelper.GetRandomSeed();
+            _privateViewKey = CryptoHelper.GetRandomSeed();
             Ed25519.KeyPairFromSeed(out _publicKey, out _expandedPrivateKey, _privateKey);
 
             _signingService.WhenForAnyArgs(s => s.Sign(null, null)).Do(c => 

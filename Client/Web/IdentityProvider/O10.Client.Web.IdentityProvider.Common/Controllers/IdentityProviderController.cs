@@ -80,8 +80,8 @@ namespace O10.Server.IdentityProvider.Common.Controllers
 			if(!_dataAccessService.DoesAssetExist(assetIdExpr))
 			{
 				string sessionKey = Guid.NewGuid().ToString();
-				byte[] sessionBlindingFactor = Crypto.ConfidentialAssets.CryptoHelper.ReduceScalar32(Crypto.ConfidentialAssets.CryptoHelper.FastHash256(Encoding.ASCII.GetBytes(activationEmail.Passphrase)));
-				byte[] sessionCommitment = Crypto.ConfidentialAssets.CryptoHelper.BlindAssetCommitment(Crypto.ConfidentialAssets.CryptoHelper.GetNonblindedAssetCommitment(assetId), sessionBlindingFactor);
+				byte[] sessionBlindingFactor = CryptoHelper.ReduceScalar32(CryptoHelper.FastHash256(Encoding.ASCII.GetBytes(activationEmail.Passphrase)));
+				byte[] sessionCommitment = CryptoHelper.BlindAssetCommitment(CryptoHelper.GetNonblindedAssetCommitment(assetId), sessionBlindingFactor);
 				long registrationSessionId = _dataAccessService.AddAssetRegistrationSession(sessionKey, sessionCommitment.ToHexString());
 
 				if(await SendMail(email, sessionKey, Uri.UnescapeDataString(activationEmail.BaseUri)).ConfigureAwait(false))
@@ -146,7 +146,7 @@ namespace O10.Server.IdentityProvider.Common.Controllers
                     {
 						var persistency = _executionContext.GetContext();
 						var transactionsService = persistency.Scope.ServiceProvider.GetService<IStateTransactionsService>();
-						byte[] issuanceBlindingFactor = Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
+						byte[] issuanceBlindingFactor = CryptoHelper.GetRandomSeed();
 						var packet = await transactionsService.IssueBlindedAsset2(assetIdEmail, issuanceBlindingFactor).ConfigureAwait(false);
 
 						byte[] protectionCommitment = null;
@@ -240,7 +240,7 @@ namespace O10.Server.IdentityProvider.Common.Controllers
 				}
 			};
 
-			if(Crypto.ConfidentialAssets.CryptoHelper.VerifySurjectionProof(surjectionProof, sessionData.Protection.SessionCommitment.HexStringToByteArray()))
+			if(CryptoHelper.VerifySurjectionProof(surjectionProof, sessionData.Protection.SessionCommitment.HexStringToByteArray()))
 			{
 				bool faceComparisonSucceeded = true; // false;
 

@@ -172,7 +172,7 @@ namespace O10.Client.Mobile.Base.ViewModels
 
             try
             {
-                byte[] sessionKey = Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
+                byte[] sessionKey = CryptoHelper.GetRandomSeed();
 
                 (byte[] bf, byte[] commitmentToRoot, SurjectionProof proofToRegistration) = await GenerateRegistrationCommitmentAndProof(_target, _rootAttribute.AssetId).ConfigureAwait(false);
 
@@ -309,16 +309,16 @@ namespace O10.Client.Mobile.Base.ViewModels
 
         private async Task<(byte[] bf, byte[] commitmentToRoot, SurjectionProof proofToRegistration)> GenerateRegistrationCommitmentAndProof(byte[] target, byte[] assetId, byte[] parentAssetId = null, byte[] parentBf = null)
         {
-            byte[] commitmentNonblinded = Crypto.ConfidentialAssets.CryptoHelper.GetNonblindedAssetCommitment(assetId);
-            byte[] bf = Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
-            byte[] commitmentToRoot = Crypto.ConfidentialAssets.CryptoHelper.BlindAssetCommitment(commitmentNonblinded, bf);
+            byte[] commitmentNonblinded = CryptoHelper.GetNonblindedAssetCommitment(assetId);
+            byte[] bf = CryptoHelper.GetRandomSeed();
+            byte[] commitmentToRoot = CryptoHelper.BlindAssetCommitment(commitmentNonblinded, bf);
             byte[] bfSum;
             byte[] commitmentBlinded;
             if (parentAssetId != null)
             {
-                byte[] commitmentToParent = Crypto.ConfidentialAssets.CryptoHelper.GetAssetCommitment(parentBf, parentAssetId);
-                commitmentBlinded = Crypto.ConfidentialAssets.CryptoHelper.SumCommitments(commitmentToRoot, commitmentToParent);
-                bfSum = Crypto.ConfidentialAssets.CryptoHelper.SumScalars(bf, parentBf);
+                byte[] commitmentToParent = CryptoHelper.GetAssetCommitment(parentBf, parentAssetId);
+                commitmentBlinded = CryptoHelper.SumCommitments(commitmentToRoot, commitmentToParent);
+                bfSum = CryptoHelper.SumScalars(bf, parentBf);
             }
             else
             {

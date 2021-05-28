@@ -222,9 +222,9 @@ namespace O10.Client.Common.Communication
                                                                               byte[] blindingPointValue,
                                                                               byte[] blindingPointRoot)
 		{
-			byte[] nonBlindedAssociatedCommitment = O10.Crypto.ConfidentialAssets.CryptoHelper.GetNonblindedAssetCommitment(assetId);
-			byte[] commitmentToValue = O10.Crypto.ConfidentialAssets.CryptoHelper.SumCommitments(blindingPointValue, nonBlindedAssociatedCommitment);
-			byte[] commitmentToBinding = O10.Crypto.ConfidentialAssets.CryptoHelper.SumCommitments(blindingPointRoot, nonBlindedAssociatedCommitment);
+			byte[] nonBlindedAssociatedCommitment = CryptoHelper.GetNonblindedAssetCommitment(assetId);
+			byte[] commitmentToValue = CryptoHelper.SumCommitments(blindingPointValue, nonBlindedAssociatedCommitment);
+			byte[] commitmentToBinding = CryptoHelper.SumCommitments(blindingPointRoot, nonBlindedAssociatedCommitment);
 
 			IssueAssociatedBlindedAsset issueAssociatedBlindedAsset = new IssueAssociatedBlindedAsset
 			{
@@ -261,11 +261,11 @@ namespace O10.Client.Common.Communication
         private IssueBlindedAsset CreateIssueBlindedAsset2(byte[] assetId, byte[] blindingFactor)
         {
             //TODO: must be replaced with usage of constant secret key of issuing
-            byte[] issuanceNonBlindedCommitment = O10.Crypto.ConfidentialAssets.CryptoHelper.GetNonblindedAssetCommitment(assetId);
-            byte[] issuanceCommitment = O10.Crypto.ConfidentialAssets.CryptoHelper.BlindAssetCommitment(issuanceNonBlindedCommitment, blindingFactor);
-            byte[] keyImage = O10.Crypto.ConfidentialAssets.CryptoHelper.GenerateKeyImage(blindingFactor);
-            byte[] pk = O10.Crypto.ConfidentialAssets.CryptoHelper.SubCommitments(issuanceCommitment, issuanceNonBlindedCommitment);
-            RingSignature ringSignature = O10.Crypto.ConfidentialAssets.CryptoHelper.GenerateRingSignature(issuanceCommitment, keyImage, new byte[][] { pk }, blindingFactor, 0)[0];
+            byte[] issuanceNonBlindedCommitment = CryptoHelper.GetNonblindedAssetCommitment(assetId);
+            byte[] issuanceCommitment = CryptoHelper.BlindAssetCommitment(issuanceNonBlindedCommitment, blindingFactor);
+            byte[] keyImage = CryptoHelper.GenerateKeyImage(blindingFactor);
+            byte[] pk = CryptoHelper.SubCommitments(issuanceCommitment, issuanceNonBlindedCommitment);
+            RingSignature ringSignature = CryptoHelper.GenerateRingSignature(issuanceCommitment, keyImage, new byte[][] { pk }, blindingFactor, 0)[0];
 
             IssueBlindedAsset issueBlindedAsset = new IssueBlindedAsset
             {
@@ -284,13 +284,13 @@ namespace O10.Client.Common.Communication
         private TransferAssetToStealth CreateTransferAssetToStealth(byte[] assetId, ConfidentialAccount receiver)
         {
             _clientCryptoService.GetBoundedCommitment(assetId, out byte[] issuedAssetCommitment, out byte[] keyImage, out RingSignature ringSignature);
-            byte[] secretKey = O10.Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
-            byte[] transactionKey = O10.Crypto.ConfidentialAssets.CryptoHelper.GetPublicKey(secretKey);
-            byte[] destinationKey = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDestinationKey(secretKey, receiver.PublicSpendKey, receiver.PublicViewKey);
-            byte[] blindingFactor = O10.Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
-            byte[] assetCommitment = O10.Crypto.ConfidentialAssets.CryptoHelper.GetAssetCommitment(blindingFactor, assetId);
+            byte[] secretKey = CryptoHelper.GetRandomSeed();
+            byte[] transactionKey = CryptoHelper.GetPublicKey(secretKey);
+            byte[] destinationKey = CryptoHelper.GetDestinationKey(secretKey, receiver.PublicSpendKey, receiver.PublicViewKey);
+            byte[] blindingFactor = CryptoHelper.GetRandomSeed();
+            byte[] assetCommitment = CryptoHelper.GetAssetCommitment(blindingFactor, assetId);
 
-            SurjectionProof surjectionProof = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(assetCommitment, new byte[][] { issuedAssetCommitment }, 0, blindingFactor);
+            SurjectionProof surjectionProof = CryptoHelper.CreateSurjectionProof(assetCommitment, new byte[][] { issuedAssetCommitment }, 0, blindingFactor);
 
             _logger.LogIfDebug(() => $"{nameof(TransferAssetToStealth)} with secretKey={secretKey.ToHexString()}, transactionKey={transactionKey.ToHexString()}, destinationKey={destinationKey.ToHexString()}");
 
@@ -301,7 +301,7 @@ namespace O10.Client.Common.Communication
                 TransferredAsset = new EncryptedAsset
                 {
                     AssetCommitment = assetCommitment,
-                    EcdhTuple = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateEcdhTupleCA(blindingFactor, assetId, secretKey, receiver.PublicViewKey)
+                    EcdhTuple = CryptoHelper.CreateEcdhTupleCA(blindingFactor, assetId, secretKey, receiver.PublicViewKey)
                 },
                 SurjectionProof = surjectionProof
             };
@@ -315,13 +315,13 @@ namespace O10.Client.Common.Communication
 
         private TransferAssetToStealth CreateTransferAssetToStealth2(byte[] assetId, byte[] issuanceAssetCommitment, ConfidentialAccount receiver)
         {
-            byte[] secretKey = O10.Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
-            byte[] transactionKey = O10.Crypto.ConfidentialAssets.CryptoHelper.GetPublicKey(secretKey);
-            byte[] destinationKey = O10.Crypto.ConfidentialAssets.CryptoHelper.GetDestinationKey(secretKey, receiver.PublicSpendKey, receiver.PublicViewKey);
-            byte[] blindingFactor = O10.Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
-            byte[] assetCommitment = O10.Crypto.ConfidentialAssets.CryptoHelper.GetAssetCommitment(blindingFactor, assetId);
+            byte[] secretKey = CryptoHelper.GetRandomSeed();
+            byte[] transactionKey = CryptoHelper.GetPublicKey(secretKey);
+            byte[] destinationKey = CryptoHelper.GetDestinationKey(secretKey, receiver.PublicSpendKey, receiver.PublicViewKey);
+            byte[] blindingFactor = CryptoHelper.GetRandomSeed();
+            byte[] assetCommitment = CryptoHelper.GetAssetCommitment(blindingFactor, assetId);
 
-            SurjectionProof surjectionProof = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateSurjectionProof(assetCommitment, new byte[][] { issuanceAssetCommitment }, 0, blindingFactor);
+            SurjectionProof surjectionProof = CryptoHelper.CreateSurjectionProof(assetCommitment, new byte[][] { issuanceAssetCommitment }, 0, blindingFactor);
 
             TransferAssetToStealth transferAssetToStealth = new TransferAssetToStealth
             {
@@ -330,7 +330,7 @@ namespace O10.Client.Common.Communication
                 TransferredAsset = new EncryptedAsset
                 {
                     AssetCommitment = assetCommitment,
-                    EcdhTuple = O10.Crypto.ConfidentialAssets.CryptoHelper.CreateEcdhTupleCA(blindingFactor, assetId, secretKey, receiver.PublicViewKey)
+                    EcdhTuple = CryptoHelper.CreateEcdhTupleCA(blindingFactor, assetId, secretKey, receiver.PublicViewKey)
                 },
                 SurjectionProof = surjectionProof
             };

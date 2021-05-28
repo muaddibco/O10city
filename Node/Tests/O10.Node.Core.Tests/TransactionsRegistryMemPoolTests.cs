@@ -52,7 +52,7 @@ namespace O10.Node.Core.Tests
 
             statesRepository.GetInstance<ISynchronizationContext>().Returns(synchronizationContext);
 
-            byte[] privateKey = Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
+            byte[] privateKey = CryptoHelper.GetRandomSeed();
             Ed25519.KeyPairFromSeed(out byte[] publicKey, out byte[] expandedPrivateKey, privateKey);
 
             signingService.WhenForAnyArgs(s => s.Sign(null, null)).Do(c =>

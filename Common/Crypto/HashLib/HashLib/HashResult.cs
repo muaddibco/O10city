@@ -73,7 +73,7 @@ namespace HashLib
 
         public bool Equals(HashResult a_hashResult)
         {
-            return HashResult.SameArrays(a_hashResult.GetBytes(), m_hash);
+            return SameArrays(a_hashResult.GetBytes(), m_hash);
         }
 
         public override int GetHashCode()
@@ -83,7 +83,7 @@ namespace HashLib
 
         private static bool SameArrays(byte[] a_ar1, byte[] a_ar2)
         {
-            if (Object.ReferenceEquals(a_ar1, a_ar2))
+            if (ReferenceEquals(a_ar1, a_ar2))
                 return true;
 
             if (a_ar1.Length != a_ar2.Length)

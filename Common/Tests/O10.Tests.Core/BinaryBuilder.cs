@@ -73,21 +73,21 @@ namespace O10.Tests.Core
 
         public static byte[] GetRandomPublicKey()
         {
-            byte[] seed = Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
+            byte[] seed = CryptoHelper.GetRandomSeed();
 
             return Ed25519.PublicKeyFromSeed(seed);
         }
 
         public static byte[] GetRandomPublicKey(out byte[] secretKey)
         {
-            secretKey = Crypto.ConfidentialAssets.CryptoHelper.GetRandomSeed();
+            secretKey = CryptoHelper.GetRandomSeed();
 
             return Ed25519.PublicKeyFromSeed(secretKey);
         }
 
         public static byte[] GetTransactionKeyHash(int forValue = 0)
         {
-            IHash hash = HashLib.HashFactory.Hash128.CreateMurmur3_128();
+            IHash hash = HashFactory.Hash128.CreateMurmur3_128();
             byte[] originBytes = BitConverter.GetBytes(forValue);
             byte[] hashBytes = hash.ComputeBytes(originBytes).GetBytes();
 
@@ -96,7 +96,7 @@ namespace O10.Tests.Core
 
         public static byte[] GetPowHash(int forValue = 0)
         {
-            IHash hash = HashLib.HashFactory.Crypto.CreateTiger_4_192();
+            IHash hash = HashFactory.Crypto.CreateTiger_4_192();
             byte[] powHashOrigin = BitConverter.GetBytes(forValue);
             byte[] powHash = hash.ComputeBytes(powHashOrigin).GetBytes();
 
@@ -105,7 +105,7 @@ namespace O10.Tests.Core
 
         public static byte[] GetDefaultHash(int forValue = 0)
         {
-            IHash hash = HashLib.HashFactory.Crypto.CreateSHA256();
+            IHash hash = HashFactory.Crypto.CreateSHA256();
             byte[] hashOrigin = BitConverter.GetBytes(forValue);
             byte[] hashBytes = hash.ComputeBytes(hashOrigin).GetBytes();
 
@@ -114,7 +114,7 @@ namespace O10.Tests.Core
 
         public static byte[] GetDefaultHash(byte[] bytes)
         {
-            IHash hash = HashLib.HashFactory.Crypto.CreateSHA256();
+            IHash hash = HashFactory.Crypto.CreateSHA256();
             byte[] hashBytes = hash.ComputeBytes(bytes).GetBytes();
 
             return hashBytes;

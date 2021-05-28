@@ -21,7 +21,7 @@ namespace Microsoft.Win32.SafeHandles
     ///     SafeHandle representing a BCRYPT_ALG_HANDLE
     /// </summary>
 #pragma warning disable 618    // Have not migrated to v4 transparency yet
-    [System.Security.SecurityCritical(System.Security.SecurityCriticalScope.Everything)]
+    [System.Security.SecurityCritical(SecurityCriticalScope.Everything)]
 #pragma warning restore 618
     internal sealed class SafeBCryptAlgorithmHandle : SafeHandleZeroOrMinusOneIsInvalid
     {
@@ -44,7 +44,7 @@ namespace Microsoft.Win32.SafeHandles
     ///     Safe handle representing a BCRYPT_HASH_HANDLE and the associated buffer holding the hash object
     /// </summary>
 #pragma warning disable 618    // Have not migrated to v4 transparency yet
-    [System.Security.SecurityCritical(System.Security.SecurityCriticalScope.Everything)]
+    [System.Security.SecurityCritical(SecurityCriticalScope.Everything)]
 #pragma warning restore 618
     internal sealed class SafeBCryptHashHandle : SafeHandleZeroOrMinusOneIsInvalid
     {
@@ -112,7 +112,7 @@ namespace Microsoft.Win32.SafeHandles
         /// </summary>
 #if !FEATURE_CORESYSTEM
 #pragma warning disable 618    // Have not migrated to v4 transparency yet
-        [System.Security.SecurityCritical(System.Security.SecurityCriticalScope.Everything)]
+        [System.Security.SecurityCritical(SecurityCriticalScope.Everything)]
 #pragma warning restore 618
 #endif
         internal sealed class SafeAxlBufferHandle : SafeHandleZeroOrMinusOneIsInvalid
@@ -291,7 +291,7 @@ namespace Microsoft.Win32.SafeHandles
     [System.Security.SecurityCritical]
 #else
 #pragma warning disable 618    // Have not migrated to v4 transparency yet
-        [System.Security.SecurityCritical(System.Security.SecurityCriticalScope.Everything)]
+        [System.Security.SecurityCritical(SecurityCriticalScope.Everything)]
 #pragma warning restore 618
 #endif
         internal sealed class SafeCapiHashHandle : SafeCapiHandleBase
@@ -354,7 +354,7 @@ namespace Microsoft.Win32.SafeHandles
     [System.Security.SecurityCritical]
 #else
 #pragma warning disable 618    // Have not migrated to v4 transparency yet
-        [System.Security.SecurityCritical(System.Security.SecurityCriticalScope.Everything)]
+        [System.Security.SecurityCritical(SecurityCriticalScope.Everything)]
 #pragma warning restore 618
 #endif
         internal sealed class SafeCapiKeyHandle : SafeCapiHandleBase
@@ -450,7 +450,7 @@ namespace Microsoft.Win32.SafeHandles
     [System.Security.SecurityCritical]
 #else
 #pragma warning disable 618    // Have not migrated to v4 transparency yet
-    [System.Security.SecurityCritical(System.Security.SecurityCriticalScope.Everything)]
+    [System.Security.SecurityCritical(SecurityCriticalScope.Everything)]
 #pragma warning restore 618
 #endif
     internal sealed class SafeCspHandle : SafeHandleZeroOrMinusOneIsInvalid

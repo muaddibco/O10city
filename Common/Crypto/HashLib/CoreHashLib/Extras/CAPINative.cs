@@ -553,8 +553,8 @@ using System.Core;
                     // If the platform doesn't have the specified CSP, we'll either get a ProviderTypeNotDefined
                     // or a KeysetNotDefined error depending on the CAPI version.
                     int error = Marshal.GetLastWin32Error();
-                    if (throwPlatformException && (error == (int)CapiNative.ErrorCode.ProviderTypeNotDefined ||
-                                                   error == (int)CapiNative.ErrorCode.KeysetNotDefined))
+                    if (throwPlatformException && (error == (int)ErrorCode.ProviderTypeNotDefined ||
+                                                   error == (int)ErrorCode.KeysetNotDefined))
                     {
                         throw new PlatformNotSupportedException("SR.Cryptography_PlatformNotSupported");
                     }
@@ -644,7 +644,7 @@ using System.Core;
             internal static byte[] GetHashParameter(SafeCapiHashHandle hashHandle, CapiNative.HashParameter parameter)
             {
                 Contract.Requires(hashHandle != null);
-                Contract.Requires(CapiNative.HashParameter.AlgorithmId <= parameter && parameter <= CapiNative.HashParameter.HashSize);
+                Contract.Requires(HashParameter.AlgorithmId <= parameter && parameter <= HashParameter.HashSize);
                 Contract.Ensures(Contract.Result<byte[]>() != null);
 
                 //
@@ -652,14 +652,14 @@ using System.Core;
                 //
 
                 int parameterSize = 0;
-                if (!CapiNative.UnsafeNativeMethods.CryptGetHashParam(hashHandle, parameter, null, ref parameterSize, 0))
+                if (!UnsafeNativeMethods.CryptGetHashParam(hashHandle, parameter, null, ref parameterSize, 0))
                 {
                     throw new CryptographicException(Marshal.GetLastWin32Error());
                 }
 
                 Debug.Assert(0 < parameterSize, "Invalid parameter size returned");
                 byte[] parameterValue = new byte[parameterSize];
-                if (!CapiNative.UnsafeNativeMethods.CryptGetHashParam(hashHandle, parameter, parameterValue, ref parameterSize, 0))
+                if (!UnsafeNativeMethods.CryptGetHashParam(hashHandle, parameter, parameterValue, ref parameterSize, 0))
                 {
                     throw new CryptographicException(Marshal.GetLastWin32Error());
                 }

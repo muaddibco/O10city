@@ -302,7 +302,7 @@ namespace HashLib
         public static byte[] ConvertStringToBytes(string a_in)
         {
             byte[] bytes = new byte[a_in.Length * sizeof(char)];
-            System.Buffer.BlockCopy(a_in.ToCharArray(), 0, bytes, 0, bytes.Length);
+            Buffer.BlockCopy(a_in.ToCharArray(), 0, bytes, 0, bytes.Length);
             return bytes;
         }
 
@@ -316,7 +316,7 @@ namespace HashLib
             Check<char>(a_in, 2, 1);
 
             byte[] bytes = new byte[a_in.Length * sizeof(char)];
-            System.Buffer.BlockCopy(a_in, 0, bytes, 0, bytes.Length);
+            Buffer.BlockCopy(a_in, 0, bytes, 0, bytes.Length);
             return bytes;
         }
 
