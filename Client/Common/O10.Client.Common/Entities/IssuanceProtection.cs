@@ -2,8 +2,8 @@
 {
     public class IssuanceProtection
     {
-		public string SessionCommitment { get; set; }
-		public string SignatureE { get; set; }
-		public string SignatureS { get; set; }
-	}
+        public string SessionCommitment { get; set; }
+        public string SignatureE { get; set; }
+        public string SignatureS { get; set; }
+    }
 }

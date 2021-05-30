@@ -163,10 +163,10 @@ namespace O10.Client.DataLayer.Services
 
         public long AddOrUpdateIdentityTarget(long identityId, string publicSpendKey, string publicViewKey)
         {
-            lock(_sync)
+            lock (_sync)
             {
                 var identityTarget = _dataContext.IdentityTargets.FirstOrDefault(i => i.IdentityId == identityId);
-                if(identityTarget == null)
+                if (identityTarget == null)
                 {
                     identityTarget = new IdentityTarget
                     {
@@ -186,10 +186,10 @@ namespace O10.Client.DataLayer.Services
 
         public IdentityTarget GetIdentityTarget(long identityId)
         {
-            lock(_sync)
+            lock (_sync)
             {
                 var identityTarget = _dataContext.IdentityTargets.FirstOrDefault(i => i.IdentityId == identityId);
-                if(identityTarget == null)
+                if (identityTarget == null)
                 {
                     throw new ArgumentOutOfRangeException(nameof(identityId));
                 }
@@ -209,14 +209,14 @@ namespace O10.Client.DataLayer.Services
                 {
                     attr.AssetId = userRootAttribute.AssetId;
                     attr.SchemeName = userRootAttribute.SchemeName;
-                    attr.IssuanceCommitment = userRootAttribute.IssuanceCommitment;
+                    attr.AnchoringOriginationCommitment = userRootAttribute.AnchoringOriginationCommitment;
                     attr.LastBlindingFactor = userRootAttribute.LastBlindingFactor;
                     attr.LastCommitment = userRootAttribute.LastCommitment;
                     attr.LastDestinationKey = userRootAttribute.LastDestinationKey;
                     attr.LastTransactionKey = userRootAttribute.LastTransactionKey;
                     attr.NextKeyImage = userRootAttribute.NextKeyImage;
                     attr.OriginalBlindingFactor = userRootAttribute.OriginalBlindingFactor;
-                    attr.OriginalCommitment = userRootAttribute.OriginalCommitment;
+                    attr.IssuanceCommitment = userRootAttribute.IssuanceCommitment;
                     attr.Source = userRootAttribute.Source;
                     attr.ConfirmationTime = DateTime.Now;
                     attr.LastUpdateTime = DateTime.Now;
@@ -258,7 +258,7 @@ namespace O10.Client.DataLayer.Services
             {
                 return _dataContext.UserRootAttributes.Where(r => r.AccountId == accountId && !r.IsOverriden)
                                           .ToList()
-                                          .FirstOrDefault(r => originalCommitment.Equals(r.OriginalCommitment));
+                                          .FirstOrDefault(r => originalCommitment.Equals(r.IssuanceCommitment));
             }
         }
 
@@ -293,14 +293,14 @@ namespace O10.Client.DataLayer.Services
                     AssetId = assetId,
                     Content = content,
                     SchemeName = schemeName,
-                    IssuanceCommitment = new byte[Globals.DEFAULT_HASH_SIZE],
+                    AnchoringOriginationCommitment = new byte[Globals.DEFAULT_HASH_SIZE],
                     LastBlindingFactor = new byte[Globals.DEFAULT_HASH_SIZE],
                     LastCommitment = new byte[Globals.DEFAULT_HASH_SIZE],
                     LastDestinationKey = new byte[Globals.DEFAULT_HASH_SIZE],
                     LastTransactionKey = new byte[Globals.DEFAULT_HASH_SIZE],
                     NextKeyImage = string.Empty,
                     OriginalBlindingFactor = new byte[Globals.DEFAULT_HASH_SIZE],
-                    OriginalCommitment = new byte[Globals.DEFAULT_HASH_SIZE],
+                    IssuanceCommitment = new byte[Globals.DEFAULT_HASH_SIZE],
                     Source = issuer,
                     CreationTime = DateTime.Now,
                     LastUpdateTime = DateTime.Now
@@ -320,7 +320,7 @@ namespace O10.Client.DataLayer.Services
                 _logger.Info($"Adding user attribute with keyImage = {attribute.NextKeyImage}");
                 bool modified = false;
 
-                if (!_dataContext.UserRootAttributes.AsEnumerable().Any(u => u.AccountId == accountId && u.OriginalCommitment.Equals32(attribute.OriginalCommitment)))
+                if (!_dataContext.UserRootAttributes.AsEnumerable().Any(u => u.AccountId == accountId && u.IssuanceCommitment.Equals32(attribute.IssuanceCommitment)))
                 {
                     modified = true;
                     attribute.AccountId = accountId;
@@ -377,7 +377,7 @@ namespace O10.Client.DataLayer.Services
             }
         }
 
-        public bool UpdateUserAttribute(long accountId, string oldKeyImage, string keyImage, byte[] lastBlindingFactor, IKey lastCommitment, IKey lastTransactionKey, IKey lastDestinationKey)
+        public bool UpdateUserAttribute(long accountId, string oldKeyImage, string keyImage, IKey lastCommitment, IKey lastTransactionKey, IKey lastDestinationKey)
         {
             lock (_sync)
             {
@@ -386,7 +386,6 @@ namespace O10.Client.DataLayer.Services
 
                 if (attr != null)
                 {
-                    attr.LastBlindingFactor = lastBlindingFactor;
                     attr.LastCommitment = lastCommitment.ToByteArray();
                     attr.LastTransactionKey = lastTransactionKey.ToByteArray();
                     attr.NextKeyImage = keyImage;
@@ -467,7 +466,7 @@ namespace O10.Client.DataLayer.Services
 
             lock (_sync)
             {
-                IEnumerable<UserRootAttribute> rootAttributes = _dataContext.UserRootAttributes.AsEnumerable().Where(c => c.AccountId == accountId && !c.IsOverriden && c.IssuanceCommitment.Equals32(issuanceCommitment));
+                IEnumerable<UserRootAttribute> rootAttributes = _dataContext.UserRootAttributes.AsEnumerable().Where(c => c.AccountId == accountId && !c.IsOverriden && c.AnchoringOriginationCommitment.Equals32(issuanceCommitment));
 
                 foreach (var attr in rootAttributes)
                 {
@@ -489,7 +488,7 @@ namespace O10.Client.DataLayer.Services
         {
             lock (_sync)
             {
-                UserRootAttribute rootAttribute = _dataContext.UserRootAttributes.AsEnumerable().FirstOrDefault(c => c.AccountId == accountId && !c.IsOverriden && c.OriginalCommitment.Equals32(originalCommitment));
+                UserRootAttribute rootAttribute = _dataContext.UserRootAttributes.AsEnumerable().FirstOrDefault(c => c.AccountId == accountId && !c.IsOverriden && c.IssuanceCommitment.Equals32(originalCommitment));
 
                 if (rootAttribute != null)
                 {
@@ -508,7 +507,7 @@ namespace O10.Client.DataLayer.Services
         {
             lock (_sync)
             {
-                UserRootAttribute attr = _dataContext.UserRootAttributes.AsEnumerable().FirstOrDefault(c => c.AccountId == accountId && c.OriginalCommitment.Equals32(originalCommitment));
+                UserRootAttribute attr = _dataContext.UserRootAttributes.AsEnumerable().FirstOrDefault(c => c.AccountId == accountId && c.IssuanceCommitment.Equals32(originalCommitment));
 
                 if (attr != null)
                 {
@@ -821,7 +820,7 @@ namespace O10.Client.DataLayer.Services
             }
         }
 
-        public void AddUserTransactionSecret(long accountId, string keyImage, string issuer, string assetId, string blindingFactor)
+        public void AddUserTransactionSecret(long accountId, string keyImage, string issuer, string assetId)
         {
             lock (_sync)
             {
@@ -830,8 +829,7 @@ namespace O10.Client.DataLayer.Services
                     AccountId = accountId,
                     KeyImage = keyImage,
                     Issuer = issuer,
-                    AssetId = assetId,
-                    BlindingFactor = blindingFactor
+                    AssetId = assetId
                 };
 
                 _dataContext.UserTransactionSecrets.Add(transactionSecrets);
@@ -914,7 +912,7 @@ namespace O10.Client.DataLayer.Services
 
         public string GetAccountKeyValue(long accountId, string key)
         {
-            lock(_sync)
+            lock (_sync)
             {
                 return _dataContext.AccountKeyValues.FirstOrDefault(kv => kv.AccountId == accountId && kv.Key == key)?.Value;
             }
@@ -922,7 +920,7 @@ namespace O10.Client.DataLayer.Services
 
         public Dictionary<string, string> GetAccountKeyValues(long accountId, params string[] filter)
         {
-            lock(_sync)
+            lock (_sync)
             {
                 var accountKvs = _dataContext.AccountKeyValues.Where(kv => kv.AccountId == accountId).ToList();
 
@@ -932,12 +930,12 @@ namespace O10.Client.DataLayer.Services
 
         public void SetAccountKeyValues(long accountId, Dictionary<string, string> keyValues)
         {
-            if(keyValues == null || keyValues.Count == 0)
+            if (keyValues == null || keyValues.Count == 0)
             {
                 return;
             }
 
-            lock(_sync)
+            lock (_sync)
             {
                 var accountKvs = _dataContext.AccountKeyValues.Where(kv => kv.AccountId == accountId).ToList();
                 var forUpdate = accountKvs.Where(kv => keyValues.ContainsKey(kv.Key) && !string.IsNullOrEmpty(keyValues[kv.Key])).ToList();
@@ -960,7 +958,7 @@ namespace O10.Client.DataLayer.Services
                     _dataContext.AccountKeyValues.Remove(item);
                 }
 
-                if(forUpdate.Any() || forAdd.Any() || forDelete.Any())
+                if (forUpdate.Any() || forAdd.Any() || forDelete.Any())
                 {
                     _dataContext.SaveChanges();
                 }
@@ -2897,10 +2895,10 @@ namespace O10.Client.DataLayer.Services
         }
         public void SetPollState(long pollId, int state)
         {
-            lock(_sync)
+            lock (_sync)
             {
                 var poll = _dataContext.PollRecords.FirstOrDefault(p => p.EcPollRecordId == pollId);
-                if(poll == null)
+                if (poll == null)
                 {
                     throw new ArgumentOutOfRangeException(nameof(pollId));
                 }
@@ -2913,7 +2911,7 @@ namespace O10.Client.DataLayer.Services
 
         public EcPollRecord GetEcPoll(long pollId, bool includeCandidates = false, bool includeSelections = false)
         {
-            lock(_sync)
+            lock (_sync)
             {
                 EcPollRecord poll = null;
 
@@ -2964,16 +2962,16 @@ namespace O10.Client.DataLayer.Services
 
         public long AddCandidateToPoll(long pollId, string candidateName, string assetId)
         {
-            lock(_sync)
+            lock (_sync)
             {
                 var candidate = _dataContext.CandidateRecords.Include(c => c.EcPollRecord).FirstOrDefault(c => c.EcPollRecord.EcPollRecordId == pollId && (c.Name == candidateName || c.AssetId == assetId));
-                if(candidate != null)
+                if (candidate != null)
                 {
                     throw new ArgumentException($"A candidate with either the same {nameof(candidateName)} or {nameof(assetId)} already registered");
                 }
 
                 var poll = _dataContext.PollRecords.FirstOrDefault(p => p.EcPollRecordId == pollId);
-                if(poll == null)
+                if (poll == null)
                 {
                     throw new ArgumentOutOfRangeException(nameof(pollId));
                 }
@@ -2995,10 +2993,10 @@ namespace O10.Client.DataLayer.Services
 
         public void SetCandidateStatus(long candidateId, bool isActive)
         {
-            lock(_sync)
+            lock (_sync)
             {
                 var candidate = _dataContext.CandidateRecords.FirstOrDefault(c => c.EcCandidateRecordId == candidateId);
-                if(candidate == null)
+                if (candidate == null)
                 {
                     throw new ArgumentOutOfRangeException(nameof(candidateId));
                 }
@@ -3011,7 +3009,7 @@ namespace O10.Client.DataLayer.Services
 
         public EcCandidateRecord GetCandidateRecord(long candidateId)
         {
-            lock(_sync)
+            lock (_sync)
             {
                 var candidate = _dataContext.CandidateRecords.FirstOrDefault(c => c.EcCandidateRecordId == candidateId);
                 if (candidate == null)
@@ -3025,7 +3023,7 @@ namespace O10.Client.DataLayer.Services
 
         public EcPollSelection AddPollSelection(long pollId, string ecCommitment, string ecBlindingFactor)
         {
-            lock(_sync)
+            lock (_sync)
             {
                 var poll = _dataContext.PollRecords.FirstOrDefault(p => p.EcPollRecordId == pollId);
                 if (poll == null)
@@ -3034,7 +3032,7 @@ namespace O10.Client.DataLayer.Services
                 }
 
                 var entry = _dataContext.PollSelections.Include(p => p.EcPollRecord).FirstOrDefault(p => p.EcPollRecord.EcPollRecordId == pollId && (p.EcCommitment == ecCommitment || p.EcBlindingFactor == ecBlindingFactor));
-                if(entry != null)
+                if (entry != null)
                 {
                     throw new ArgumentException($"Invalid {nameof(ecCommitment)} and {nameof(ecBlindingFactor)}");
                 }
@@ -3055,7 +3053,7 @@ namespace O10.Client.DataLayer.Services
 
         public EcPollSelection GetPollSelection(long pollId, string ecCommitment)
         {
-            lock(_sync)
+            lock (_sync)
             {
                 var selection = _dataContext.PollSelections.FirstOrDefault(s => s.EcPollRecord.EcPollRecordId == pollId && s.EcCommitment == ecCommitment);
 
@@ -3070,7 +3068,7 @@ namespace O10.Client.DataLayer.Services
 
         public EcPollSelection UpdatePollSelection(long pollId, string ecCommitment, string voterBlindingFactor)
         {
-            lock(_sync)
+            lock (_sync)
             {
                 var selection = _dataContext.PollSelections.FirstOrDefault(s => s.EcPollRecord.EcPollRecordId == pollId && s.EcCommitment == ecCommitment);
 
@@ -3079,7 +3077,7 @@ namespace O10.Client.DataLayer.Services
                     throw new ArgumentOutOfRangeException(nameof(ecCommitment));
                 }
 
-                if(!string.IsNullOrEmpty(selection.VoterBlindingFactor))
+                if (!string.IsNullOrEmpty(selection.VoterBlindingFactor))
                 {
                     throw new ArgumentException($"{nameof(selection.VoterBlindingFactor)} already set for poll with is {pollId} and EC commitment {ecCommitment}");
                 }

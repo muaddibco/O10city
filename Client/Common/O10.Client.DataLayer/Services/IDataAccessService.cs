@@ -14,24 +14,24 @@ using O10.Core.Identity;
 
 namespace O10.Client.DataLayer.Services
 {
-    [ServiceContract]
+	[ServiceContract]
 	public interface IDataAccessService
 	{
-        bool Initialize();
+		bool Initialize();
 
-        #region Identity
+		#region Identity
 
-        Identity CreateIdentity(long accountId, string description, (string attrName, string content)[] attributes);
+		Identity CreateIdentity(long accountId, string description, (string attrName, string content)[] attributes);
 
 		Identity GetIdentity(long id);
 
 		void DuplicateAssociatedAttributes(long oldAccountId, long newAccountId);
 
 		void UpdateIdentityAttributeCommitment(long identityAttributeId, byte[] commitment);
-		
+
 		Identity GetIdentityByAttribute(long accountId, string attributeName, string attributeValue);
 
-        IEnumerable<Identity> GetIdentities(long accountId);
+		IEnumerable<Identity> GetIdentities(long accountId);
 
 		long AddOrUpdateIdentityTarget(long identityId, string publicSpendKey, string publicViewKey);
 		IdentityTarget GetIdentityTarget(long identityId);
@@ -44,20 +44,20 @@ namespace O10.Client.DataLayer.Services
 
 		bool RemoveUserAttribute(long accountId, long userAttributeId);
 
-        long AddNonConfirmedRootAttribute(long accountId, string content, string issuer, string schemeName, byte[] assetId);
+		long AddNonConfirmedRootAttribute(long accountId, string content, string issuer, string schemeName, byte[] assetId);
 
-        List<UserRootAttribute> GetAllNonConfirmedRootAttributes(long accountId);
+		List<UserRootAttribute> GetAllNonConfirmedRootAttributes(long accountId);
 
-        void UpdateConfirmedRootAttribute(UserRootAttribute userRootAttribute);
+		void UpdateConfirmedRootAttribute(UserRootAttribute userRootAttribute);
 
-        bool DeleteNonConfirmedUserRootAttribute(long accountId, string content);
+		bool DeleteNonConfirmedUserRootAttribute(long accountId, string content);
 
 		UserRootAttribute GetUserRootAttribute(long rootAttributeId);
-        UserRootAttribute GetRootAttributeByOriginalCommitment(long accountId, IKey originalCommitment);
+		UserRootAttribute GetRootAttributeByOriginalCommitment(long accountId, IKey originalCommitment);
 
-        long AddUserRootAttribute(long accountId, UserRootAttribute attribute);
+		long AddUserRootAttribute(long accountId, UserRootAttribute attribute);
 
-		bool UpdateUserAttribute(long accountId, string oldKeyImage, string keyImage, byte[] lastBlindingFactor, IKey lastCommitment, IKey lastTransactionKey, IKey lastDestinationKey);
+		bool UpdateUserAttribute(long accountId, string oldKeyImage, string keyImage, IKey lastCommitment, IKey lastTransactionKey, IKey lastDestinationKey);
 
 		bool UpdateUserAttributeContent(long userAttributeId, string content);
 
@@ -88,7 +88,7 @@ namespace O10.Client.DataLayer.Services
 
 		IEnumerable<AssociatedAttributeBackup> GetAssociatedAttributeBackups(string rootIssuer, string rootAssetId);
 
-		void AddUserTransactionSecret(long accountId, string keyImage, string issuer, string assetId, string blindingFactor);
+		void AddUserTransactionSecret(long accountId, string keyImage, string issuer, string assetId);
 
 		UserTransactionSecrets GetUserTransactionSecrets(long accountId, string keyImage);
 
@@ -107,18 +107,18 @@ namespace O10.Client.DataLayer.Services
 		Account GetAccount(long accountId);
 		Account GetAccount(byte[] publicKey);
 
-        List<Account> GetAccountsByType(AccountType accountType);
+		List<Account> GetAccountsByType(AccountType accountType);
 
 		void SetAccountCompromised(long accountId);
 
-        void ClearAccountCompromised(long accountId);
+		void ClearAccountCompromised(long accountId);
 
 		long AddAccount(byte accountType, string accountInfo, byte[] secretSpendKeyEnc, byte[] secretViewKeyEnc, byte[] publicSpendKey, byte[] publicViewKey, long lastAggregatedRegistrations, bool isPrivate = false);
 		void UpdateAccount(long accountId, string accountInfo, byte[] publicSpendKey, byte[] publicViewKey);
 		void ResetAccount(long accountId, byte[] secretSpendKeyEnc, byte[] secretViewKeyEnc, byte[] publicSpendKey, byte[] publicViewKey, long lastAggregatedRegistrations);
 		bool GetAccountId(byte[] publicKey, out long accountId);
 		bool GetAccountId(byte[] publicSpendKey, byte[] publicViewKey, out long accountId);
-        void RemoveAccount(long accountId);
+		void RemoveAccount(long accountId);
 
 		long DuplicateUserAccount(long accountId, string accountInfo);
 
@@ -132,10 +132,10 @@ namespace O10.Client.DataLayer.Services
 
 		byte[] GetBiometricSecretKey();
 
-        void AddBiometricRecord(string userData, Guid personGuid);
-        void UpdateBiometricRecord(string userData, Guid personGuid);
+		void AddBiometricRecord(string userData, Guid personGuid);
+		void UpdateBiometricRecord(string userData, Guid personGuid);
 
-        Guid FindPersonGuid(string userData);
+		Guid FindPersonGuid(string userData);
 
 		bool RemoveBiometricPerson(string userData);
 
@@ -165,37 +165,37 @@ namespace O10.Client.DataLayer.Services
 
 		void UpdateSpEmployeeCategory(long accountId, long spEmployeeId, long groupId);
 
-        SpEmployee SetSpEmployeeRegistrationCommitment(long accountId, long relationId, string registrationCommitment);
+		SpEmployee SetSpEmployeeRegistrationCommitment(long accountId, long relationId, string registrationCommitment);
 
-        SpEmployee RemoveSpEmployee(long accountId, long spEmployeeId);
-        List<SpEmployee> GetSpEmployees(long accountId, string attributeContent);
-        List<SpEmployee> GetSpEmployees(long accountId);
+		SpEmployee RemoveSpEmployee(long accountId, long spEmployeeId);
+		List<SpEmployee> GetSpEmployees(long accountId, string attributeContent);
+		List<SpEmployee> GetSpEmployees(long accountId);
 		IEnumerable<SpEmployee> GetSpEmployeesByGroup(long accountId, long groupId);
 		IEnumerable<SpEmployee> GetAllSpEmployees(long accountId);
 		IEnumerable<SpEmployee> GetSpEmployeesUngrouped(long accountId);
-        bool IsSpEmployeeExist(long accountId, string registrationCommitment);
+		bool IsSpEmployeeExist(long accountId, string registrationCommitment);
 
-        IEnumerable<SpDocument> GetSpDocuments(long accountId);
+		IEnumerable<SpDocument> GetSpDocuments(long accountId);
 
 		SignedDocumentEntity GetSpDocument(long accountId, string hash);
 		SpDocument GetSpDocument(long accountId, long spDocumentId);
 
-        long AddSpDocument(long accountId, string documentName, string hash);
+		long AddSpDocument(long accountId, string documentName, string hash);
 
 		void UpdateSpDocumentChangeRecord(long accountId, string hash, ulong recordHeight);
 
-        void RemoveSpDocument(long accountId, long spDocumentId);
+		void RemoveSpDocument(long accountId, long spDocumentId);
 
-        long AddSpDocumentAllowedSigner(long accountId, long spDocumentId, string groupOwner, string groupName, string groupCommitment, string blindingFactor);
+		long AddSpDocumentAllowedSigner(long accountId, long spDocumentId, string groupOwner, string groupName, string groupCommitment, string blindingFactor);
 
-        long RemoveSpDocumentAllowedSigner(long accountId, long spDocumentAllowedSignerId);
+		long RemoveSpDocumentAllowedSigner(long accountId, long spDocumentAllowedSignerId);
 
-        long AddSpDocumentSignature(long accountId, long spDocumentId, ulong documentRecordHeight, ulong signatureRecordHeight);
-        bool UpdateSpDocumentSignature(long accountId, string documentHash, ulong documentRecordHeight, ulong signatureRecordHeight, byte[] documentSignRecord);
+		long AddSpDocumentSignature(long accountId, long spDocumentId, ulong documentRecordHeight, ulong signatureRecordHeight);
+		bool UpdateSpDocumentSignature(long accountId, string documentHash, ulong documentRecordHeight, ulong signatureRecordHeight, byte[] documentSignRecord);
 
-        IEnumerable<SpDocumentSignature> GetSpDocumentSignatures(long accountId, long spDocumentId);
+		IEnumerable<SpDocumentSignature> GetSpDocumentSignatures(long accountId, long spDocumentId);
 
-        string[] GetServiceProviderRelationGroups(long accountId);
+		string[] GetServiceProviderRelationGroups(long accountId);
 
 		IEnumerable<SpUserTransaction> GetSpUserTransactions(long accountId);
 
@@ -212,16 +212,16 @@ namespace O10.Client.DataLayer.Services
 
 		long AddAutoLogin(long accountId, byte[] secretKey);
 
-        bool IsAutoLoginExist(long accountId);
+		bool IsAutoLoginExist(long accountId);
 
-        IEnumerable<AutoLogin> GetAutoLogins();
-        long AddUserGroupRelation(long accountId, string groupOwnerName, string groupOwnerKey, string groupName, string assetId, string issuer);
-        (string groupOwnerName, string issuer, string assetId) GetRelationUserAttributes(long accountId, string groupOwnerKey, string groupName);
-        void RemoveUserGroupRelation(long userGroupRelationId);
-        IEnumerable<UserGroupRelation> GetUserGroupRelations(long accountId);
+		IEnumerable<AutoLogin> GetAutoLogins();
+		long AddUserGroupRelation(long accountId, string groupOwnerName, string groupOwnerKey, string groupName, string assetId, string issuer);
+		(string groupOwnerName, string issuer, string assetId) GetRelationUserAttributes(long accountId, string groupOwnerKey, string groupName);
+		void RemoveUserGroupRelation(long userGroupRelationId);
+		IEnumerable<UserGroupRelation> GetUserGroupRelations(long accountId);
 
-        long AddGroupRelation(string groupOwnerKey, string groupName, string assetId, string issuer);
-        IEnumerable<GroupRelation> GetGroupRelations(string assetId, string issuer);
+		long AddGroupRelation(string groupOwnerKey, string groupName, string assetId, string issuer);
+		IEnumerable<GroupRelation> GetGroupRelations(string assetId, string issuer);
 
 		long AddRegistrationCommitment(string commitment, string description, string assetId, string issuer);
 		IEnumerable<RegistrationCommitment> GetRegistrationCommitments(string assetId, string issuer);
@@ -230,23 +230,23 @@ namespace O10.Client.DataLayer.Services
 
 		IEnumerable<SamlIdentityProvider> GetSamlIdentityProviders();
 
-        long SetSamlIdentityProvider(string entityId, string publicSpendKey, string secretViewKey);
+		long SetSamlIdentityProvider(string entityId, string publicSpendKey, string secretViewKey);
 
 		bool RemoveSamlIdentityProvider(string entityId);
 
-        bool StoreSamlServiceProvider(string entityId, string singleLogoutUrl);
+		bool StoreSamlServiceProvider(string entityId, string singleLogoutUrl);
 
-        SamlServiceProvider GetSamlServiceProvider(string entityId);
+		SamlServiceProvider GetSamlServiceProvider(string entityId);
 
 		void SetSamlSettings(long defaultSamlIdpId, long defaultSamlIdpAccountId);
 
 		SamlSettings GetSamlSettings();
 
-        #endregion SAML
+		#endregion SAML
 
-        #region Identity Schemes
+		#region Identity Schemes
 
-        long AddAttributeToScheme(string issuer, string attributeName, string attributeSchemeName, string alias, string description);
+		long AddAttributeToScheme(string issuer, string attributeName, string attributeSchemeName, string alias, string description);
 
 		IEnumerable<IdentitiesScheme> GetAttributesSchemeByIssuer(string issuer, bool activeOnly = false);
 
@@ -264,9 +264,9 @@ namespace O10.Client.DataLayer.Services
 
 		void SetConsentManagementSettings(ConsentManagementSettings consentManagementSettings);
 
-        #endregion ConsentManagementSettings
+		#endregion ConsentManagementSettings
 
-        bool CheckAttributeSchemeToCommitmentMatching(string schemeName, byte[] commitment);
+		bool CheckAttributeSchemeToCommitmentMatching(string schemeName, byte[] commitment);
 
 		#region Scenarios
 
@@ -278,7 +278,7 @@ namespace O10.Client.DataLayer.Services
 
 		void RemoveScenarioSession(string userSubject, int scenarioId);
 
-        ScenarioSession GetScenarioSession(long scenarioSessionId);
+		ScenarioSession GetScenarioSession(long scenarioSessionId);
 
 		long AddScenarionSessionAccount(long scenarioSessionId, long accountId);
 

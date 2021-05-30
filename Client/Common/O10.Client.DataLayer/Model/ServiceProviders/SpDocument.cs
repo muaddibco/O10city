@@ -17,9 +17,9 @@ namespace O10.Client.DataLayer.Model
 
         public string Hash { get; set; }
 
-		public ulong LastChangeRecordHeight { get; set; }
+        public ulong LastChangeRecordHeight { get; set; }
 
-		public virtual ICollection<SpDocumentAllowedSigner> AllowedSigners { get; set; }
+        public virtual ICollection<SpDocumentAllowedSigner> AllowedSigners { get; set; }
 
         public virtual ICollection<SpDocumentSignature> DocumentSignatures { get; set; }
     }

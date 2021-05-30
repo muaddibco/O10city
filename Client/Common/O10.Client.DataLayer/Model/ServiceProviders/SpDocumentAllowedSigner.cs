@@ -3,11 +3,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Client.DataLayer.Model
 {
-	[Table("sp_document_allowed_signers")]
+    [Table("sp_document_allowed_signers")]
     public class SpDocumentAllowedSigner
     {
-		[Key]
-		[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public long SpDocumentAllowedSignerId { get; set; }
 
         public Account Account { get; set; }
@@ -15,11 +15,11 @@ namespace O10.Client.DataLayer.Model
         public SpDocument Document { get; set; }
 
         public string GroupIssuer { get; set; }
-        
+
         public string GroupName { get; set; }
 
-		public string GroupCommitment { get; set; }
+        public string GroupCommitment { get; set; }
 
-		public string BlindingFactor { get; set; }
-	}
+        public string BlindingFactor { get; set; }
+    }
 }

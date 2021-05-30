@@ -6,13 +6,13 @@ namespace O10.Transactions.Core.Ledgers.O10State.Transactions
 {
     public class TransferAssetTransaction : O10StateTransactionBase
     {
-		public override ushort TransactionType => TransactionTypes.Transaction_TransferAsset;
+        public override ushort TransactionType => TransactionTypes.Transaction_TransferAsset;
 
-		public EncryptedAsset? TransferredAsset { get; set; }
+        public EncryptedAsset? TransferredAsset { get; set; }
 
-		/// <summary>
-		/// Surjection Proof contains reference to AssetCommitment that is being transferred. If referenced AssetCommitment is TransferredAsset of already sent commitment so it cancels previous sending
-		/// </summary>
-		public SurjectionProof? SurjectionProof { get; set; }
-	}
+        /// <summary>
+        /// Surjection Proof contains reference to AssetCommitment that is being transferred. If referenced AssetCommitment is TransferredAsset of already sent commitment so it cancels previous sending
+        /// </summary>
+        public SurjectionProof? SurjectionProof { get; set; }
+    }
 }

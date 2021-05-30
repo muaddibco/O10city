@@ -17,7 +17,5 @@ namespace O10.Client.DataLayer.Model
         public string Issuer { get; set; }
 
         public string AssetId { get; set; }
-
-        public string BlindingFactor { get; set; }
     }
 }

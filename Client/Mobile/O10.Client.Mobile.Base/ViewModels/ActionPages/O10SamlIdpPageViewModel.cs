@@ -295,7 +295,7 @@ namespace O10.Client.Mobile.Base.ViewModels
             {
                 AssetId = rootAttribute.AssetId,
                 EligibilityBlindingFactor = rootAttribute.OriginalBlindingFactor,
-                EligibilityCommitment = rootAttribute.OriginalCommitment,
+                EligibilityCommitment = rootAttribute.IssuanceCommitment,
                 Issuer = rootAttribute.Source.HexStringToByteArray(),
                 PrevAssetCommitment = rootAttribute.LastCommitment,
                 PrevBlindingFactor = rootAttribute.LastBlindingFactor,
@@ -307,7 +307,7 @@ namespace O10.Client.Mobile.Base.ViewModels
                 BiometricProof = biometricProof
             };
 
-            OutputModel[] outputModels = await _gatewayService.GetOutputs(_walletSettings.RingSize + 1).ConfigureAwait(false);
+            OutputSources[] outputModels = await _gatewayService.GetOutputs(_walletSettings.RingSize + 1).ConfigureAwait(false);
             RequestResult requestResult = await _executionContext.TransactionsService.SendIdentityProofs(requestInput, associatedProofPreparations, outputModels, rootAttribute.Source.HexStringToByteArray()).ConfigureAwait(false);
         }
 

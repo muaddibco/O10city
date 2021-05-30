@@ -13,26 +13,30 @@ using O10.Transactions.Core.Ledgers;
 using O10.Crypto.Models;
 using O10.Transactions.Core.Ledgers.O10State.Transactions;
 using O10.Transactions.Core.Ledgers.Stealth.Transactions;
+using System.Linq;
 
 namespace O10.Client.Common.Communication
 {
     [RegisterExtension(typeof(IWalletSynchronizer), Lifetime = LifetimeManagement.Scoped)]
     public class StealthWalletSynchronizer : WalletSynchronizer
     {
-		private readonly IAssetsService _assetsService;
+        private readonly IStealthTransactionsService _stealthTransactionsService;
+        private readonly IAssetsService _assetsService;
 
         public override string Name => "Stealth";
 
-        public StealthWalletSynchronizer(IDataAccessService dataAccessService, 
-                                      IStealthClientCryptoService clientCryptoService, 
-                                      IAssetsService assetsService,
-                                      ILoggerService loggerService)
-			: base(dataAccessService, clientCryptoService, loggerService)
-		{
-			_assetsService = assetsService;
+        public StealthWalletSynchronizer(IDataAccessService dataAccessService,
+                                         IStealthClientCryptoService clientCryptoService,
+                                         IStealthTransactionsService stealthTransactionsService,
+                                         IAssetsService assetsService,
+                                         ILoggerService loggerService)
+            : base(dataAccessService, clientCryptoService, loggerService)
+        {
+            _stealthTransactionsService = stealthTransactionsService;
+            _assetsService = assetsService;
         }
 
-		protected override async Task StorePacket(TransactionBase transaction)
+        protected override async Task StorePacket(TransactionBase transaction)
         {
             await StoreTransferAssetToStealth(transaction).ConfigureAwait(false);
 
@@ -48,7 +52,7 @@ namespace O10.Client.Common.Communication
 
             StoreTransitionCompromisedProofs(transaction);
 
-			StoreRevokeIdentity(transaction);
+            StoreRevokeIdentity(transaction);
 
             if (transaction is O10StateTransitionalTransactionBase transitionalTransaction)
             {
@@ -63,7 +67,7 @@ namespace O10.Client.Common.Communication
             }
         }
 
-		/*private void StoreIdentityProofs(TransactionBase transaction)
+        /*private void StoreIdentityProofs(TransactionBase transaction)
 		{
 			if (transaction is IdentityProofs identityProofs)
 			{
@@ -94,12 +98,10 @@ namespace O10.Client.Common.Communication
         {
             if (transactionBase is UniversalStealthTransaction transaction)
             {
+                var transactionSecrets = _stealthTransactionsService.PopLastTransactionSecrets();
                 string oldKeyImage = transaction.KeyImage.ToString();
-                var transactionSecrets = _dataAccessService.GetUserTransactionSecrets(_accountId, oldKeyImage);
-                _dataAccessService.RemoveUserTransactionSecret(_accountId, oldKeyImage);
-                byte[] blindingFactor = transactionSecrets.BlindingFactor.HexStringToByteArray();
                 string keyImage = ((IStealthClientCryptoService)_clientCryptoService).GetKeyImage(transaction.TransactionPublicKey).ToHexString();
-                bool res = _dataAccessService.UpdateUserAttribute(_accountId, oldKeyImage, keyImage, blindingFactor, transaction.AssetCommitment, transaction.TransactionPublicKey, transaction.DestinationKey);
+                bool res = _dataAccessService.UpdateUserAttribute(_accountId, oldKeyImage, keyImage, transaction.AssetCommitment, transaction.TransactionPublicKey, transaction.DestinationKey);
 
                 if (!res)
                 {
@@ -110,7 +112,6 @@ namespace O10.Client.Common.Communication
                 {
                     Issuer = transactionSecrets.Issuer.HexStringToByteArray(),
                     AssetId = transactionSecrets.AssetId.HexStringToByteArray(),
-                    BlindingFactor = blindingFactor,
                     AssetCommitment = transaction.AssetCommitment,
                     TransactionKey = transaction.TransactionPublicKey,
                     DestinationKey = transaction.DestinationKey
@@ -190,15 +191,14 @@ namespace O10.Client.Common.Communication
             {
                 //((IStealthClientCryptoService)_clientCryptoService).DecodeEcdhTuple(transaction.EcdhTuple, transaction.TransactionPublicKey, out byte[] blindingFactor, out byte[] assetId);
 
-				string oldKeyImage = transaction.KeyImage.Value.ToArray().ToHexString();
-				string keyImage = ((IStealthClientCryptoService)_clientCryptoService).GetKeyImage(transaction.TransactionPublicKey).ToHexString();
-				if(_dataAccessService.UpdateUserAttribute(_accountId, oldKeyImage, keyImage, /*blindingFactor*/null, transaction.AssetCommitment, transaction.TransactionPublicKey, transaction.DestinationKey))
+                string oldKeyImage = transaction.KeyImage.Value.ToArray().ToHexString();
+                string keyImage = ((IStealthClientCryptoService)_clientCryptoService).GetKeyImage(transaction.TransactionPublicKey).ToHexString();
+                if (_dataAccessService.UpdateUserAttribute(_accountId, oldKeyImage, keyImage, transaction.AssetCommitment, transaction.TransactionPublicKey, transaction.DestinationKey))
                 {
                     NotifyObservers(new UserAttributeStateUpdate
                     {
                         Issuer = null,
                         AssetId = /*assetId*/null,
-                        BlindingFactor = /*blindingFactor*/null,
                         AssetCommitment = transaction.AssetCommitment,
                         TransactionKey = transaction.TransactionPublicKey,
                         DestinationKey = transaction.DestinationKey
@@ -207,24 +207,24 @@ namespace O10.Client.Common.Communication
             }
         }
 
-		private void StoreRevokeIdentity(TransactionBase transactionBase)
-		{
-			if (transactionBase is RevokeIdentityTransaction packet)
-			{
-				long disabledId = _dataAccessService.MarkUserRootAttributesOverriden2(_accountId, packet.OwnershipProof.AssetCommitments[0]);
+        private void StoreRevokeIdentity(TransactionBase transactionBase)
+        {
+            if (transactionBase is RevokeIdentityTransaction packet)
+            {
+                long disabledId = _dataAccessService.MarkUserRootAttributesOverriden2(_accountId, packet.OwnershipProof.AssetCommitments[0]);
 
-				if (disabledId > 0)
-				{
-					EligibilityCommitmentsDisabled eligibilityCommitmentsDisabled = new EligibilityCommitmentsDisabled { DisabledIds = new List<long> { disabledId } };
+                if (disabledId > 0)
+                {
+                    EligibilityCommitmentsDisabled eligibilityCommitmentsDisabled = new EligibilityCommitmentsDisabled { DisabledIds = new List<long> { disabledId } };
 
-					NotifyObservers(eligibilityCommitmentsDisabled);
-				}
-			}
-		}
+                    NotifyObservers(eligibilityCommitmentsDisabled);
+                }
+            }
+        }
 
-		//TODO: need to wight to replace storing of UtxoUnspentOutput with sending notification about received packet (like StoreTransitionOnboardingDisclosingProofs)
-		private async Task StoreTransferAssetToStealth(TransactionBase transactionBase)
-		{
+        //TODO: need to wight to replace storing of UtxoUnspentOutput with sending notification about received packet (like StoreTransitionOnboardingDisclosingProofs)
+        private async Task StoreTransferAssetToStealth(TransactionBase transactionBase)
+        {
             if (transactionBase is TransferAssetToStealthTransaction transaction)
             {
                 ((IStealthClientCryptoService)_clientCryptoService).DecodeEcdhTuple(transaction.TransferredAsset.EcdhTuple, transaction.TransactionPublicKey, out byte[] blindingFactor, out byte[] assetId);
@@ -249,16 +249,15 @@ namespace O10.Client.Common.Communication
                 _logger.LogIfDebug(() => $"[{_accountId}]: Target checked for destination key {transaction.DestinationKey} and transaction key {transaction.TransactionPublicKey} and found is mine: {isMine}");
 
                 if (isMine)
-				{
+                {
                     List<UserRootAttribute> userRootAttributes = _dataAccessService.GetAllNonConfirmedRootAttributes(_accountId);
                     UserRootAttribute userRootAttribute = null;
-                    foreach (var item in userRootAttributes)
+                    foreach (var item in from item in userRootAttributes
+                                         where item.AssetId.Equals32(assetId) && transaction.Source.ToString() == item.Source
+                                         select item)
                     {
-                        if (item.AssetId.Equals32(assetId) && transaction.Source.ToString() == item.Source)
-                        {
-                            userRootAttribute = item;
-                            break;
-                        }
+                        userRootAttribute = item;
+                        break;
                     }
 
                     string keyImage = ((IStealthClientCryptoService)_clientCryptoService).GetKeyImage(transaction.TransactionPublicKey).ToHexString();
@@ -266,10 +265,9 @@ namespace O10.Client.Common.Communication
                     if (userRootAttribute != null)
                     {
                         userRootAttribute.AssetId = assetId;
-                        userRootAttribute.OriginalBlindingFactor = blindingFactor;
-                        userRootAttribute.OriginalCommitment = transaction.TransferredAsset.AssetCommitment.ToByteArray();
-                        userRootAttribute.IssuanceCommitment = transaction.SurjectionProof.AssetCommitments[0];
-                        userRootAttribute.LastBlindingFactor = blindingFactor;
+                        userRootAttribute.IssuanceTransactionKey = transaction.TransactionPublicKey.ToByteArray();
+                        userRootAttribute.IssuanceCommitment = transaction.TransferredAsset.AssetCommitment.ToByteArray();
+                        userRootAttribute.AnchoringOriginationCommitment = transaction.SurjectionProof.AssetCommitments[0];
                         userRootAttribute.LastCommitment = transaction.TransferredAsset.AssetCommitment.ToByteArray();
                         userRootAttribute.LastTransactionKey = transaction.TransactionPublicKey.ToByteArray();
                         userRootAttribute.NextKeyImage = keyImage;
@@ -283,20 +281,19 @@ namespace O10.Client.Common.Communication
                         {
                             AssetId = assetId,
                             SchemeName = await _assetsService.GetAttributeSchemeName(assetId, transaction.Source.ToString()).ConfigureAwait(false),
-                            OriginalBlindingFactor = blindingFactor,
-                            OriginalCommitment = transaction.TransferredAsset.AssetCommitment.ToByteArray(),
-                            IssuanceCommitment = transaction.SurjectionProof.AssetCommitments[0],
-                            LastBlindingFactor = blindingFactor,
+                            IssuanceTransactionKey = transaction.TransactionPublicKey.ToByteArray(),
+                            IssuanceCommitment = transaction.TransferredAsset.AssetCommitment.ToByteArray(),
+                            AnchoringOriginationCommitment = transaction.SurjectionProof.AssetCommitments[0],
                             LastCommitment = transaction.TransferredAsset.AssetCommitment.ToByteArray(),
                             LastTransactionKey = transaction.TransactionPublicKey.ToByteArray(),
-							NextKeyImage = keyImage,
-							LastDestinationKey = transaction.DestinationKey.ToByteArray(),
+                            NextKeyImage = keyImage,
+                            LastDestinationKey = transaction.DestinationKey.ToByteArray(),
                             Source = transaction.Source.Value.ToHexString()
                         };
                         _dataAccessService.AddUserRootAttribute(_accountId, userRootAttribute);
                     }
-				}
-			}
-		}
-	}
+                }
+            }
+        }
+    }
 }

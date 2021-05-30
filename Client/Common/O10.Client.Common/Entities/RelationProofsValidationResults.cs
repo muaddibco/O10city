@@ -13,11 +13,11 @@ namespace O10.Client.Common.Entities
 
         public bool IsImageCorrect { get; set; }
 
-		public bool IsEligibilityCorrect { get; set; }
+        public bool IsEligibilityCorrect { get; set; }
 
-		public bool IsKnowledgeFactorCorrect { get; set; }
+        public bool IsKnowledgeFactorCorrect { get; set; }
 
-		public List<RelationProofValidationResult> ValidationResults { get; }
+        public List<RelationProofValidationResult> ValidationResults { get; }
     }
 
     public class RelationProofValidationResult

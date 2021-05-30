@@ -81,7 +81,7 @@ namespace O10.Client.Web.Common.Services
             await _transactionsService.Initialize(scopeInitializationParams.AccountId).ConfigureAwait(false);
             var ledgerWriter = _ledgerWriterRepository.GetInstance(LedgerType.O10State);
             await ledgerWriter.Initialize(scopeInitializationParams.AccountId).ConfigureAwait(false);
-            _transactionsService.GetSourcePipe<TaskCompletionWrapper<TransactionBase>>().LinkTo(ledgerWriter.PipeIn);
+            _transactionsService.PipeOutTransactions.LinkTo(ledgerWriter.PipeIn);
             statePacketsExtractor.Initialize(scopeInitializationParams.AccountId);
 
             IUpdater updater = _updaterRegistry.GetInstance();

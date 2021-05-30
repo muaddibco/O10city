@@ -1,6 +1,11 @@
-﻿using O10.Client.Common.Interfaces;
+﻿using O10.Client.Common.Configuration;
+using O10.Client.Common.Interfaces;
+using O10.Client.Common.Interfaces.Inputs;
+using O10.Client.DataLayer.Services;
 using O10.Core.Architecture;
+using O10.Core.Configuration;
 using O10.Core.Cryptography;
+using O10.Core.ExtensionMethods;
 using O10.Core.Identity;
 using O10.Core.Logging;
 using O10.Core.Models;
@@ -12,6 +17,7 @@ using O10.Transactions.Core.Ledgers.Stealth;
 using O10.Transactions.Core.Ledgers.Stealth.Transactions;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 
@@ -25,18 +31,22 @@ namespace O10.Client.Common.Communication.LedgerWriters
         private readonly ISigningService _signingService;
         private readonly IGatewayService _gatewayService;
         private readonly IIdentityKeyProvider _identityKeyProvider;
+        private readonly IRestApiConfiguration _restApiConfiguration;
 
         public O10StealthLedgerWriter(IStealthClientCryptoService clientCryptoService,
                                       ISigningService signingService,
                                       IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
                                       IGatewayService gatewayService,
+                                      IConfigurationService configurationService,
                                       ILoggerService loggerService)
-            :base(loggerService)
+            : base(loggerService)
         {
             _clientCryptoService = clientCryptoService;
             _signingService = signingService;
             _gatewayService = gatewayService;
             _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
+            _restApiConfiguration = configurationService.Get<IRestApiConfiguration>();
+            _pipeIn = new TransformBlock<TaskCompletionWrapper<TransactionBase>, DependingTaskCompletionWrapper<IPacketBase, TransactionBase>>(ProducePacket);
         }
 
         public override LedgerType LedgerType => LedgerType.Stealth;
@@ -48,63 +58,71 @@ namespace O10.Client.Common.Communication.LedgerWriters
             await base.Initialize(accountId).ConfigureAwait(false);
         }
 
-        private DependingTaskCompletionWrapper<IPacketBase, TransactionBase> ProducePacket(TaskCompletionWrapper<TransactionBase> wrapper)
+        private async Task<DependingTaskCompletionWrapper<IPacketBase, TransactionBase>> ProducePacket(TaskCompletionWrapper<TransactionBase> wrapper)
         {
             if (!(wrapper.State is O10StealthTransactionBase o10StealthTransaction))
             {
                 throw new ArgumentOutOfRangeException(nameof(wrapper));
             }
 
+            if (!(wrapper.Argument is StealthPropagationArgument arg))
+            {
+                throw new ArgumentOutOfRangeException(nameof(wrapper));
+            }
+
             StealthPayload payload = new StealthPayload(o10StealthTransaction);
 
-            var signature = _signingService.Sign(payload) as StealthSignature;
+            OutputSources[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
+            GetDestinationKeysRing(arg.PrevDestinationKey, outputModels.Select(m => m.DestinationKey).ToArray(), out int pos, out IKey[] destinationKeys);
+
+            var signature = _signingService.Sign(payload, new StealthSignatureInput(arg.PrevTransactionKey, destinationKeys, pos, arg.PreSigningAction)) as StealthSignature;
 
             var packet = new StealthPacket
             {
                 Payload = payload,
                 Signature = signature
             };
-        
+
             return new DependingTaskCompletionWrapper<IPacketBase, TransactionBase>(packet, wrapper);
         }
 
         /// <summary>
         /// Returns existing Asset Commitments
         /// </summary>
-        /// <param name="prevCommitment"></param>
-        /// <param name="commitmentsPool"></param>
-        /// <param name="actualAssetPos"></param>
-        /// <param name="commitments"></param>
-        private void GetAssetCommitmentsRing(byte[] prevCommitment, IKey[] commitmentsPool, out int actualAssetPos, out IKey[] commitments)
+        /// <param name="prevDestinationKey"></param>
+        /// <param name="destinationKeysPool"></param>
+        /// <param name="actualPos"></param>
+        /// <param name="destinationKeys"></param>
+        private void GetDestinationKeysRing(IKey prevDestinationKey, IKey[] destinationKeysPool, out int actualPos, out IKey[] destinationKeys)
         {
-            Random random = new Random(BitConverter.ToInt32(prevCommitment, 0));
-            actualAssetPos = random.Next(commitmentsPool.Length);
-            commitments = new IKey[commitmentsPool.Length];
+            Random random = new Random(BitConverter.ToInt32(prevDestinationKey.ToByteArray(), 0));
+            actualPos = random.Next(destinationKeysPool.Length);
+            destinationKeys = new IKey[destinationKeysPool.Length];
             List<int> pickedPositions = new List<int>();
 
-            for (int i = 0; i < commitmentsPool.Length; i++)
+            for (int i = 0; i < destinationKeysPool.Length; i++)
             {
-                if (i == actualAssetPos)
+                if (i == actualPos)
                 {
-                    commitments[i] = _identityKeyProvider.GetKey(prevCommitment);
+                    destinationKeys[i] = prevDestinationKey;
                 }
                 else
                 {
                     bool found = false;
                     do
                     {
-                        int randomPos = random.Next(commitmentsPool.Length);
+                        int randomPos = random.Next(destinationKeysPool.Length);
                         if (pickedPositions.Contains(randomPos))
                         {
                             continue;
                         }
 
-                        if (commitmentsPool[randomPos].Equals(prevCommitment))
+                        if (destinationKeysPool[randomPos].Equals(prevDestinationKey))
                         {
                             continue;
                         }
 
-                        commitments[i] = commitmentsPool[randomPos];
+                        destinationKeys[i] = destinationKeysPool[randomPos];
                         pickedPositions.Add(randomPos);
                         found = true;
                     } while (!found);

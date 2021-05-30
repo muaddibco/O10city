@@ -13,54 +13,54 @@ using O10.Client.DataLayer.AttributesScheme;
 
 namespace O10.Client.Common.Identities
 {
-	[RegisterDefaultImplementation(typeof(IIdentityAttributesService), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterDefaultImplementation(typeof(IIdentityAttributesService), Lifetime = LifetimeManagement.Singleton)]
     public class IdentityAttributesService : IIdentityAttributesService
     {
         private readonly IHashCalculation _hashCalculation;
-		private readonly ISchemeResolverService _schemeResolverService;
+        private readonly ISchemeResolverService _schemeResolverService;
 
-		public IdentityAttributesService(IHashCalculationsRepository hashCalculationsRepository, ISchemeResolverService schemeResolverService)
+        public IdentityAttributesService(IHashCalculationsRepository hashCalculationsRepository, ISchemeResolverService schemeResolverService)
         {
             _hashCalculation = hashCalculationsRepository.Create(Globals.ASSET_CREATION_HASH_TYPE);
-			_schemeResolverService = schemeResolverService;
-		}
+            _schemeResolverService = schemeResolverService;
+        }
 
-		public IEnumerable<(string validationType, string validationDescription)> GetAssociatedValidationTypes()
-		{
-			List<(string validationType, string validationDescription)> values = new List<(string validationType, string validationDescription)>();
+        public IEnumerable<(string validationType, string validationDescription)> GetAssociatedValidationTypes()
+        {
+            List<(string validationType, string validationDescription)> values = new List<(string validationType, string validationDescription)>();
 
-			foreach (var enumValueObj in Enum.GetValues(typeof(ValidationType)))
-			{
-				ValidationType enumValue = (ValidationType)enumValueObj;
+            foreach (var enumValueObj in Enum.GetValues(typeof(ValidationType)))
+            {
+                ValidationType enumValue = (ValidationType)enumValueObj;
 
-				values.Add((enumValue.ToString(), enumValue.GetDescription()));
-			}
+                values.Add((enumValue.ToString(), enumValue.GetDescription()));
+            }
 
-			return values;
-		}
+            return values;
+        }
 
-		public async Task<List<IdentityAttributeValidationDescriptor>> GetIdentityAttributeValidationDescriptors(string issuer, bool activeOnly)
-		{
-			IEnumerable<Entities.AttributeDefinition> attributeSchemes = await _schemeResolverService.ResolveAttributeSchemes(issuer, activeOnly).ConfigureAwait(false);
-			List<IdentityAttributeValidationDescriptor> identityAttributeValidationDescriptors = new List<IdentityAttributeValidationDescriptor>();
-			foreach (var item in attributeSchemes)
-			{
-				IdentityAttributeValidationDescriptor identityAttributeValidationDescriptor =
-					new IdentityAttributeValidationDescriptor
-					{
-						SchemeName = item.SchemeName,
-						SchemeAlias = item.Alias,
-						ValidationType = GetValidationType(item.SchemeName),
-						ValidationTypeName = GetValidationType(item.SchemeName).GetDescription()
-					};
-			}
+        public async Task<List<IdentityAttributeValidationDescriptor>> GetIdentityAttributeValidationDescriptors(string issuer, bool activeOnly)
+        {
+            IEnumerable<Entities.AttributeDefinition> attributeSchemes = await _schemeResolverService.ResolveAttributeSchemes(issuer, activeOnly).ConfigureAwait(false);
+            List<IdentityAttributeValidationDescriptor> identityAttributeValidationDescriptors = new List<IdentityAttributeValidationDescriptor>();
+            foreach (var item in attributeSchemes)
+            {
+                IdentityAttributeValidationDescriptor identityAttributeValidationDescriptor =
+                    new IdentityAttributeValidationDescriptor
+                    {
+                        SchemeName = item.SchemeName,
+                        SchemeAlias = item.Alias,
+                        ValidationType = GetValidationType(item.SchemeName),
+                        ValidationTypeName = GetValidationType(item.SchemeName).GetDescription()
+                    };
+            }
 
-			return identityAttributeValidationDescriptors;
-		}
+            return identityAttributeValidationDescriptors;
+        }
 
-		private ValidationType GetValidationType(string schemeName)
-		{
-			return AttributesSchemes.ATTR_SCHEME_NAME_DATEOFBIRTH.Equals(schemeName) ? ValidationType.AgeInYears : ValidationType.MatchValue;
-		}
-	}
+        private ValidationType GetValidationType(string schemeName)
+        {
+            return AttributesSchemes.ATTR_SCHEME_NAME_DATEOFBIRTH.Equals(schemeName) ? ValidationType.AgeInYears : ValidationType.MatchValue;
+        }
+    }
 }

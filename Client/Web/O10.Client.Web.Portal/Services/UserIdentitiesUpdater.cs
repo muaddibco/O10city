@@ -59,7 +59,7 @@ namespace O10.Client.Web.Portal.Services
                         UserRootAttribute userRootAttribute = _dataAccessService.GetRootAttributeByOriginalCommitment(_accountId, transaction.TransferredAsset.AssetCommitment);
                         if (userRootAttribute != null)
                         {
-                            _clientCryptoService.DecodeEcdhTuple(transaction.TransferredAsset.EcdhTuple, transaction.TransactionPublicKey.ToByteArray(), out byte[] blindingFactor, out byte[] assetId);
+                            _clientCryptoService.DecodeEcdhTuple(transaction.TransferredAsset.EcdhTuple, transaction.TransactionPublicKey, out byte[] blindingFactor, out byte[] assetId);
                             await _assetsService.GetAttributeSchemeName(assetId, transaction.Source.ToString()).ContinueWith(t =>
                             {
                                 if (t.IsCompleted && !t.IsFaulted)
@@ -190,10 +190,10 @@ namespace O10.Client.Web.Portal.Services
                     .SendAsync("PushUnauthorizedUse",
                     new UnauthorizedUseDto
                     {
-                        KeyImage = compromisedKeyImage.KeyImage.ToHexString(),
-                        TransactionKey = compromisedKeyImage.TransactionKey.ToHexString(),
-                        DestinationKey = compromisedKeyImage.DestinationKey.ToHexString(),
-                        Target = compromisedKeyImage.Target.ToHexString()
+                        KeyImage = compromisedKeyImage.KeyImage,
+                        TransactionKey = compromisedKeyImage.TransactionKey,
+                        DestinationKey = compromisedKeyImage.DestinationKey,
+                        Target = compromisedKeyImage.Target
                     });
             }
         }
@@ -207,10 +207,9 @@ namespace O10.Client.Web.Portal.Services
                     {
                         Issuer = userAttributeStateUpdate.Issuer.ToHexString(),
                         AssetId = userAttributeStateUpdate.AssetId.ToHexString(),
-                        LastBlindingFactor = userAttributeStateUpdate.BlindingFactor.ToHexString(),
-                        LastCommitment = userAttributeStateUpdate.AssetCommitment.ToHexString(),
-                        LastTransactionKey = userAttributeStateUpdate.TransactionKey.ToHexString(),
-                        LastDestinationKey = userAttributeStateUpdate.DestinationKey.ToHexString()
+                        LastCommitment = userAttributeStateUpdate.AssetCommitment,
+                        LastTransactionKey = userAttributeStateUpdate.TransactionKey,
+                        LastDestinationKey = userAttributeStateUpdate.DestinationKey
                     });
             }
         }

@@ -70,7 +70,7 @@ namespace O10.Client.Common.Tests
                 Array.Empty<byte>(),
                 Array.Empty<byte>(),
                 Array.Empty<byte>(),
-                Array.Empty<OutputModel>(),
+                Array.Empty<OutputSources>(),
                 Array.Empty<byte[]>())
                     .ContinueWith(t =>
                     {

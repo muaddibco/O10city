@@ -66,7 +66,7 @@ namespace O10.Crypto.Services
             }
 
             int index = signatureInput.KeyPosition;
-            byte[] otsk = CryptoHelper.GetOTSK(signatureInput.SourceTransactionKey, _secretViewKey, _secretSpendKey);
+            byte[] otsk = CryptoHelper.GetOTSK(signatureInput.SourceTransactionKey.Value, _secretViewKey, _secretSpendKey);
 
             byte[] keyImage = CryptoHelper.GenerateKeyImage(otsk);
 
@@ -94,7 +94,7 @@ namespace O10.Crypto.Services
                 throw new ArgumentNullException(nameof(payload));
             }
 
-            if (!(payload.Transaction is StealthTransactionBase stealthBody))
+            if (!(payload.Transaction is StealthTransactionBase transaction))
             {
                 throw new ArgumentOutOfRangeException(nameof(payload));
             }
@@ -105,19 +105,18 @@ namespace O10.Crypto.Services
             }
 
             int index = signatureInput.KeyPosition;
-            byte[] otsk = CryptoHelper.GetOTSK(signatureInput.SourceTransactionKey, _secretViewKey, _secretSpendKey);
+            byte[] otsk = CryptoHelper.GetOTSK(signatureInput.SourceTransactionKey.Value, _secretViewKey, _secretSpendKey);
 
             byte[] keyImage = CryptoHelper.GenerateKeyImage(otsk);
-            stealthBody.KeyImage = _identityKeyProvider.GetKey(keyImage);
+            transaction.KeyImage = _identityKeyProvider.GetKey(keyImage);
 
-            signatureInput.UpdatePacketAction?.Invoke(stealthBody);
+            signatureInput.PreSigningAction?.Invoke(transaction);
 
             RingSignature[] ringSignatures = CryptoHelper.GenerateRingSignature(payload.ToByteArray(), keyImage, signatureInput.PublicKeys, otsk, index);
 
-            stealthBody.Sources = signatureInput.PublicKeys;
-
             return new StealthSignature
             {
+                Sources = signatureInput.PublicKeys,
                 Signature = ringSignatures
             };
         }
@@ -129,25 +128,25 @@ namespace O10.Crypto.Services
                 throw new ArgumentNullException(nameof(payload));
             }
 
-            if (!(payload.Transaction is StealthTransactionBase stealthBody))
+            if (!(payload.Transaction is StealthTransactionBase transaction))
             {
                 throw new ArgumentOutOfRangeException(nameof(payload), string.Format(Resources.ERR_WRONG_BODY_TYPE, nameof(StealthSigningService), typeof(StealthTransactionBase).FullName));
             }
 
             if (!(signatureBase is StealthSignature stealthSignature))
             {
-                throw new ArgumentOutOfRangeException(nameof(payload), string.Format(Resources.ERR_WRONG_SIGNATURE_TYPE, nameof(StealthSigningService), typeof(StealthSignature).FullName));
+                throw new ArgumentOutOfRangeException(nameof(signatureBase), string.Format(Resources.ERR_WRONG_SIGNATURE_TYPE, nameof(StealthSigningService), typeof(StealthSignature).FullName));
             }
 
-            if(stealthBody.KeyImage == null)
+            if(transaction.KeyImage == null)
             {
-                throw new ArgumentException($"payload's {nameof(stealthBody.KeyImage)} is null");
+                throw new ArgumentException($"payload's {nameof(transaction.KeyImage)} is null");
             }
 
-            byte[] msg = stealthBody.ToByteArray();
-            byte[] keyImage = stealthBody.KeyImage.ToByteArray();
+            byte[] msg = transaction.ToByteArray();
+            byte[] keyImage = transaction.KeyImage.ToByteArray();
 
-            return CryptoHelper.VerifyRingSignature(msg, keyImage, stealthBody.Sources.Select(p => p.Value.ToArray()).ToArray(), stealthSignature.Signature.ToArray());
+            return CryptoHelper.VerifyRingSignature(msg, keyImage, stealthSignature.Sources.Select(p => p.Value.ToArray()).ToArray(), stealthSignature.Signature.ToArray());
         }
 
         public bool CheckTarget(params IKey[] targetValues)

@@ -83,7 +83,7 @@ namespace O10.Client.Mobile.Base.Services
             byte[] issuer = rootAttribute.Source.HexStringToByteArray();
             byte[] assetId = rootAttribute.AssetId;
             byte[] originalBlindingFactor = rootAttribute.OriginalBlindingFactor;
-            byte[] originalCommitment = rootAttribute.OriginalCommitment;
+            byte[] originalCommitment = rootAttribute.IssuanceCommitment;
             byte[] lastTransactionKey = rootAttribute.LastTransactionKey;
             byte[] lastBlindingFactor = rootAttribute.LastBlindingFactor;
             byte[] lastCommitment = rootAttribute.LastCommitment;
@@ -102,7 +102,7 @@ namespace O10.Client.Mobile.Base.Services
                 PublicSpendKey = target
             };
 
-            OutputModel[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
+            OutputSources[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
             byte[][] issuanceCommitments = await _gatewayService.GetIssuanceCommitments(issuer, _restApiConfiguration.RingSize + 1).ConfigureAwait(false);
             RequestResult requestResult = await _executionContext.TransactionsService.SendCompromisedProofs(requestInput, keyImage, transactionKey, destinationKey, outputModels, issuanceCommitments).ConfigureAwait(false);
 
@@ -146,7 +146,7 @@ namespace O10.Client.Mobile.Base.Services
             byte[] issuer = rootAttribute.Source.HexStringToByteArray();
             byte[] assetId = rootAttribute.AssetId;
             byte[] originalBlindingFactor = rootAttribute.OriginalBlindingFactor;
-            byte[] originalCommitment = rootAttribute.OriginalCommitment;
+            byte[] originalCommitment = rootAttribute.IssuanceCommitment;
             byte[] lastTransactionKey = rootAttribute.LastTransactionKey;
             byte[] lastBlindingFactor = rootAttribute.LastBlindingFactor;
             byte[] lastCommitment = rootAttribute.LastCommitment;
@@ -165,8 +165,8 @@ namespace O10.Client.Mobile.Base.Services
                 PublicSpendKey = target
             };
 
-            OutputModel[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
-            RequestResult requestResult = await _executionContext.TransactionsService.SendRevokeIdentity(requestInput, outputModels, new byte[][] { rootAttribute.IssuanceCommitment }).ConfigureAwait(false);
+            OutputSources[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
+            RequestResult requestResult = await _executionContext.TransactionsService.SendRevokeIdentity(requestInput, outputModels, new byte[][] { rootAttribute.AnchoringOriginationCommitment }).ConfigureAwait(false);
         }
     }
 }

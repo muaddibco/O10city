@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 using O10.Client.Common.Dtos.UniversalProofs;
 using O10.Client.Common.Entities;
@@ -12,7 +13,7 @@ namespace O10.Client.Mobile.Base.Interfaces
     public interface IO10LogicService
     {
         Task SendIdentityProofs(RequestInput requestInput);
-        Task SendUniversalTransport(RequestInput requestInput, UniversalProofs universalProofs, string serviceProviderInfo, bool storeRegistration = false);
+        Task SendUniversalTransport([NotNull] RequestInput requestInput, [NotNull] UniversalProofs universalProofs, [NotNull] string serviceProviderInfo, bool storeRegistration = false);
 
         Task<bool> StoreRegistration(byte[] targetPublicSpendKey, string spInfo, Memory<byte> issuer, params Memory<byte>[] assetIds);
 

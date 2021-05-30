@@ -16,19 +16,19 @@ using O10.Crypto.ConfidentialAssets;
 namespace O10.Client.Common.Identities
 {
     [RegisterDefaultImplementation(typeof(IAssetsService), Lifetime = LifetimeManagement.Singleton)]
-	public class AssetsService : IAssetsService
-	{
-		private readonly IHashCalculation _hashCalculation;
-		private readonly ISchemeResolverService _schemeResolverService;
+    public class AssetsService : IAssetsService
+    {
+        private readonly IHashCalculation _hashCalculation;
+        private readonly ISchemeResolverService _schemeResolverService;
 
         public AssetsService(IHashCalculationsRepository hashCalculationsRepository,
                              ISchemeResolverService schemeResolverService)
-		{
-			_hashCalculation = hashCalculationsRepository.Create(Globals.ASSET_CREATION_HASH_TYPE);
-			_schemeResolverService = schemeResolverService;
+        {
+            _hashCalculation = hashCalculationsRepository.Create(Globals.ASSET_CREATION_HASH_TYPE);
+            _schemeResolverService = schemeResolverService;
         }
 
-		public async Task<byte[]> GenerateAssetId(string schemeName, string attributeContent, string issuer, string miscName = null)
+        public async Task<byte[]> GenerateAssetId(string schemeName, string attributeContent, string issuer, string miscName = null)
         {
             byte[] assetId = new byte[32];
 
@@ -41,16 +41,16 @@ namespace O10.Client.Common.Identities
             return assetId;
         }
 
-		public byte[] GenerateAssetId(long schemeId, string attributeContent)
-		{
-			byte[] assetId = new byte[32];
+        public byte[] GenerateAssetId(long schemeId, string attributeContent)
+        {
+            byte[] assetId = new byte[32];
 
-			byte[] hash = _hashCalculation.CalculateHash(Encoding.ASCII.GetBytes(attributeContent));
-			Array.Copy(hash, 0, assetId, 0, hash.Length);
-			Array.Copy(BitConverter.GetBytes(schemeId), 0, assetId, hash.Length, sizeof(long));
+            byte[] hash = _hashCalculation.CalculateHash(Encoding.ASCII.GetBytes(attributeContent));
+            Array.Copy(hash, 0, assetId, 0, hash.Length);
+            Array.Copy(BitConverter.GetBytes(schemeId), 0, assetId, hash.Length, sizeof(long));
 
-			return assetId;
-		}
+            return assetId;
+        }
 
         public byte[] GenerateAssetCommitment(long schemeId, string attributeContent)
         {
@@ -70,7 +70,7 @@ namespace O10.Client.Common.Identities
                     return -2;
                 default:
                     AttributeDefinition attributeScheme = await _schemeResolverService.ResolveAttributeScheme(issuer, schemeName).ConfigureAwait(false);
-                    if(attributeScheme == null)
+                    if (attributeScheme == null)
                     {
                         throw new NoSchemeDefinedException(schemeName, issuer);
                     }
@@ -80,13 +80,13 @@ namespace O10.Client.Common.Identities
         }
 
         public async Task<string> GetAttributeSchemeName(byte[] assetId, string issuer)
-		{
-			long schemeId = BitConverter.ToInt64(assetId, 24);
+        {
+            long schemeId = BitConverter.ToInt64(assetId, 24);
 
             AttributeDefinition attributeScheme = await _schemeResolverService.ResolveAttributeScheme(issuer, schemeId).ConfigureAwait(false);
 
-			return attributeScheme.SchemeName;
-		}
+            return attributeScheme.SchemeName;
+        }
 
         public async Task<AttributeDefinition> GetAttributeDefinition(byte[] assetId, string issuer)
         {

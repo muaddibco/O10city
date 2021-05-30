@@ -35,7 +35,7 @@ namespace O10.Transactions.Core.Ledgers
         SignatureBase? IPacketBase.Signature { get => Signature; }
     }
 
-    public interface IPacketBase: ISerializableEntity<IPacketBase>
+    public interface IPacketBase : ISerializableEntity<IPacketBase>
     {
         LedgerType LedgerType { get; }
 
@@ -43,6 +43,6 @@ namespace O10.Transactions.Core.Ledgers
 
         SignatureBase? Signature { get; }
 
-        T? AsPacket<T>() where T: class, IPacketBase;
+        T? AsPacket<T>() where T : class, IPacketBase;
     }
 }

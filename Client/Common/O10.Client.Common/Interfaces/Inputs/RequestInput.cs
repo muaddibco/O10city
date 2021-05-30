@@ -20,5 +20,5 @@ namespace O10.Client.Common.Interfaces.Inputs
         public Memory<byte> BlindingFactor { get; set; }
 
         public BiometricProof BiometricProof { get; set; }
-	}
+    }
 }

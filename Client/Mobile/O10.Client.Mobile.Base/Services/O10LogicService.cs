@@ -55,7 +55,7 @@ namespace O10.Client.Mobile.Base.Services
                 throw new ArgumentNullException(nameof(requestInput));
             }
 
-            OutputModel[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
+            OutputSources[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
 
             RequestResult requestResult = await _executionContext.TransactionsService.SendIdentityProofs(requestInput, null, outputModels, requestInput.Issuer).ConfigureAwait(false);
         }
@@ -145,7 +145,22 @@ namespace O10.Client.Mobile.Base.Services
 
         public async Task SendUniversalTransport(RequestInput requestInput, UniversalProofs universalProofs, string serviceProviderInfo, bool storeRegistration = false)
         {
-            OutputModel[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
+            if (requestInput is null)
+            {
+                throw new ArgumentNullException(nameof(requestInput));
+            }
+
+            if (universalProofs is null)
+            {
+                throw new ArgumentNullException(nameof(universalProofs));
+            }
+
+            if (string.IsNullOrEmpty(serviceProviderInfo))
+            {
+                throw new ArgumentException($"'{nameof(serviceProviderInfo)}' cannot be null or empty.", nameof(serviceProviderInfo));
+            }
+
+            OutputSources[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
             await _executionContext.TransactionsService.SendUniversalTransport(requestInput, outputModels, universalProofs)
                 .ContinueWith(t =>
                 {

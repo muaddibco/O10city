@@ -179,7 +179,7 @@ namespace O10.Client.Mobile.Base.ViewModels
                 byte[] issuer = _rootAttribute.Source.HexStringToByteArray();
                 Random random = new Random(BitConverter.ToInt32(bf, 0));
                 byte[][] issuanceCommitments = await _gatewayService.GetIssuanceCommitments(issuer, _restApiConfiguration.RingSize + 1).ConfigureAwait(false);
-                SurjectionProof eligibilityProof = StealthTransactionsService.CreateEligibilityProof(_rootAttribute.OriginalCommitment, _rootAttribute.OriginalBlindingFactor, issuanceCommitments, bf, commitmentToRoot, random);
+                SurjectionProof eligibilityProof = StealthTransactionsService.CreateEligibilityProof(_rootAttribute.IssuanceCommitment, _rootAttribute.OriginalBlindingFactor, issuanceCommitments, bf, commitmentToRoot, random);
 
                 RequestInput requestInput = new RequestInput
                 {

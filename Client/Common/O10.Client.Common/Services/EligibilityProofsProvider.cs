@@ -37,7 +37,7 @@ namespace O10.Client.Common.Services
         {
             byte[][] issuanceCommitments = await _gatewayService.GetIssuanceCommitments(issuer, _restApiConfiguration.RingSize + 1).ConfigureAwait(false);
 
-            
+
             GetEligibilityCommitmentAndProofs(originalCommitment, issuanceCommitments, out int actualAssetPos, out byte[][] commitments);
             byte[] blindingFactorToEligibility = CryptoHelper.GetDifferentialBlindingFactor(newBlindingFactor, originalBlindingFactor);
             SurjectionProof eligibilityProof = CryptoHelper.CreateSurjectionProof(assetCommitment, commitments, actualAssetPos, blindingFactorToEligibility);

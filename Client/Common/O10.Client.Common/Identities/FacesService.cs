@@ -41,14 +41,14 @@ namespace O10.Client.Common.Identities
 
         public bool Initialize()
         {
-            if(_isInitialized)
+            if (_isInitialized)
             {
                 return false;
             }
 
-            lock(_sync)
+            lock (_sync)
             {
-                if(_isInitialized)
+                if (_isInitialized)
                 {
                     return false;
                 }
@@ -76,7 +76,7 @@ namespace O10.Client.Common.Identities
                         foreach (var person in peopleSource)
                         {
                             string key = person.UserData ?? person.Name;
-                            if(!string.IsNullOrEmpty(key))
+                            if (!string.IsNullOrEmpty(key))
                             {
                                 people.AddOrUpdate(person.UserData ?? person.Name, person, (g, p) => p);
                             }
@@ -176,7 +176,7 @@ namespace O10.Client.Common.Identities
 
             if (personGroup != null)
             {
-                if(!_personsByGroup[personGroup.PersonGroupId].TryGetValue(facesData.UserData, out Person person))
+                if (!_personsByGroup[personGroup.PersonGroupId].TryGetValue(facesData.UserData, out Person person))
                 {
                     _logger.LogIfDebug(() => $"No Person found with {nameof(facesData.UserData)}={facesData.UserData}. New Person will be created.");
                     person = await _faceClient.PersonGroupPerson.CreateAsync(facesData.PersonGroupId, facesData.Name, facesData.UserData).ConfigureAwait(false);
@@ -207,7 +207,7 @@ namespace O10.Client.Common.Identities
 
         public async Task<bool> RemovePerson(PersonFaceData facesData)
         {
-            if(_personGroups.TryGetValue(facesData.PersonGroupId, out PersonGroup personGroup))
+            if (_personGroups.TryGetValue(facesData.PersonGroupId, out PersonGroup personGroup))
             {
                 if (_personsByGroup.TryGetValue(personGroup.PersonGroupId, out ConcurrentDictionary<string, Person> dict))
                 {
@@ -230,7 +230,7 @@ namespace O10.Client.Common.Identities
                         catch (Exception ex)
                         {
                             _logger.Error($"Failed to remove person with personGroupId={facesData.PersonGroupId} and userData={facesData.UserData}", ex);
-                        }                  
+                        }
                     }
                 }
             }
@@ -245,7 +245,7 @@ namespace O10.Client.Common.Identities
 
             if (personGroup != null)
             {
-                if(_personsByGroup[personGroup.PersonGroupId].TryGetValue(facesData.UserData, out Person person))
+                if (_personsByGroup[personGroup.PersonGroupId].TryGetValue(facesData.UserData, out Person person))
                 {
                     _logger.LogIfDebug(() => $"{nameof(ReplacePersonFace)}, Person found for {nameof(facesData.PersonGroupId)}={facesData.PersonGroupId} and {nameof(facesData.UserData)}={facesData.UserData}, {nameof(person.PersonId)}={person.PersonId}");
                     if (person.PersistedFaceIds?.Count > 0)
@@ -261,7 +261,7 @@ namespace O10.Client.Common.Identities
                         _logger.LogIfDebug(() => $"{nameof(ReplacePersonFace)}, no persisted faces found for person {person.PersonId}");
                     }
 
-                        _logger.LogIfDebug(() => $"{nameof(ReplacePersonFace)}, adding persisted face for person {person.PersonId}");
+                    _logger.LogIfDebug(() => $"{nameof(ReplacePersonFace)}, adding persisted face for person {person.PersonId}");
                     using MemoryStream ms = new MemoryStream(facesData.ImageContent);
 
                     PersistedFace persistedFace = await _faceClient.PersonGroupPerson.AddFaceFromStreamAsync(facesData.PersonGroupId, person.PersonId, ms, facesData.UserData).ConfigureAwait(false);
@@ -321,7 +321,7 @@ namespace O10.Client.Common.Identities
             try
             {
                 using MemoryStream imageStream = new MemoryStream(imageBytes);
-                
+
                 IList<DetectedFace> detectedFaces = await _faceClient.Face.DetectWithStreamAsync(imageStream).ConfigureAwait(false);
 
                 if (detectedFaces.Count > 0)
@@ -426,7 +426,7 @@ namespace O10.Client.Common.Identities
         {
             IList<Person> people = await _faceClient.PersonGroupPerson.ListAsync(personGroupId).ConfigureAwait(false);
 
-            
+
         }
 
         #region IDisposable Support

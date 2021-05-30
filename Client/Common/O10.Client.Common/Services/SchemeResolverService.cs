@@ -16,15 +16,15 @@ using Newtonsoft.Json;
 namespace O10.Client.Common.Services
 {
     [RegisterDefaultImplementation(typeof(ISchemeResolverService), Lifetime = LifetimeManagement.Singleton)]
-	public class SchemeResolverService : ISchemeResolverService
-	{
-		private readonly IRestApiConfiguration _restApiConfiguration;
+    public class SchemeResolverService : ISchemeResolverService
+    {
+        private readonly IRestApiConfiguration _restApiConfiguration;
         private readonly ILogger _logger;
         private readonly IRestClientService _restClientService;
 
         public SchemeResolverService(IRestClientService restClientService, IConfigurationService configurationService, ILoggerService loggerService)
-		{
-			_restApiConfiguration = configurationService.Get<IRestApiConfiguration>();
+        {
+            _restApiConfiguration = configurationService.Get<IRestApiConfiguration>();
             _logger = loggerService.GetLogger(nameof(SchemeResolverService));
             _restClientService = restClientService;
         }
@@ -111,14 +111,14 @@ namespace O10.Client.Common.Services
             }
         }
 
-		public async Task<AttributeDefinition> ResolveAttributeScheme(string issuer, string schemeName)
-		{
-			if (!Uri.IsWellFormedUriString(_restApiConfiguration.SchemaResolutionUri, UriKind.Absolute))
-			{
-				throw new SchemeResolverServiceNotInitializedException();
-			}
+        public async Task<AttributeDefinition> ResolveAttributeScheme(string issuer, string schemeName)
+        {
+            if (!Uri.IsWellFormedUriString(_restApiConfiguration.SchemaResolutionUri, UriKind.Absolute))
+            {
+                throw new SchemeResolverServiceNotInitializedException();
+            }
 
-			AttributeDefinition attributeScheme = null;
+            AttributeDefinition attributeScheme = null;
 
             Url url = _restApiConfiguration.SchemaResolutionUri
                 .AppendPathSegment("AttributeDefinition2")
@@ -126,17 +126,17 @@ namespace O10.Client.Common.Services
                 .SetQueryParam("schemeName", schemeName);
 
             await _restClientService.Request(url)
-				.GetJsonAsync<AttributeDefinition>()
-				.ContinueWith(t =>
-				{
-					if (t.IsCompleted && !t.IsFaulted)
-					{
-						attributeScheme = t.Result;
-					}
-				}, TaskScheduler.Current).ConfigureAwait(false);
+                .GetJsonAsync<AttributeDefinition>()
+                .ContinueWith(t =>
+                {
+                    if (t.IsCompleted && !t.IsFaulted)
+                    {
+                        attributeScheme = t.Result;
+                    }
+                }, TaskScheduler.Current).ConfigureAwait(false);
 
-			return attributeScheme;
-		}
+            return attributeScheme;
+        }
 
         public async Task<IEnumerable<AttributeDefinition>> ResolveAttributeSchemes(string issuer, bool activeOnly = false)
         {
@@ -181,14 +181,14 @@ namespace O10.Client.Common.Services
             }
         }
 
-		public async Task<AttributeDefinition> GetRootAttributeScheme(string issuer)
-		{
-			if (!Uri.IsWellFormedUriString(_restApiConfiguration.SchemaResolutionUri, UriKind.Absolute))
-			{
-				throw new SchemeResolverServiceNotInitializedException();
-			}
+        public async Task<AttributeDefinition> GetRootAttributeScheme(string issuer)
+        {
+            if (!Uri.IsWellFormedUriString(_restApiConfiguration.SchemaResolutionUri, UriKind.Absolute))
+            {
+                throw new SchemeResolverServiceNotInitializedException();
+            }
 
-			AttributeDefinition attributeScheme = null;
+            AttributeDefinition attributeScheme = null;
 
             try
             {
@@ -219,7 +219,7 @@ namespace O10.Client.Common.Services
                 _logger.Error($"Failed {nameof(GetRootAttributeScheme)}({issuer})", ex);
                 throw;
             }
-		}
+        }
 
         public async Task StoreGroupRelation(string issuer, string assetId, string groupOwnerKey, string groupName)
         {
@@ -228,10 +228,10 @@ namespace O10.Client.Common.Services
                 _logger.Debug($"{nameof(StoreGroupRelation)}({issuer}, {assetId}, {groupOwnerKey}, {groupName})");
 
                 Url url = _restApiConfiguration.SchemaResolutionUri.AppendPathSegment("GroupRelation");
-                
+
                 await _restClientService.Request(url)
                     .PostJsonAsync(new RegistrationKeyDescriptionStore { Issuer = issuer, AssetId = assetId, Key = groupOwnerKey, Description = groupName })
-                    .ContinueWith(t => 
+                    .ContinueWith(t =>
                     {
                         if (!t.IsCompletedSuccessfully)
                         {
@@ -282,8 +282,8 @@ namespace O10.Client.Common.Services
             }
         }
 
-		public async Task<bool> StoreRegistrationCommitment(string issuer, string assetId, string commtiment, string description)
-		{
+        public async Task<bool> StoreRegistrationCommitment(string issuer, string assetId, string commtiment, string description)
+        {
             bool res = false;
             _logger.Debug($"{nameof(StoreRegistrationCommitment)}({issuer}, {assetId}, {commtiment}, {description})");
             Url url = _restApiConfiguration.SchemaResolutionUri.AppendPathSegment("RegistrationCommitment");
@@ -292,53 +292,53 @@ namespace O10.Client.Common.Services
             try
             {
                 await url
-					.PostJsonAsync(new RegistrationKeyDescriptionStore { Issuer = issuer, AssetId = assetId, Key = commtiment, Description = description})
-					.ConfigureAwait(false);
+                    .PostJsonAsync(new RegistrationKeyDescriptionStore { Issuer = issuer, AssetId = assetId, Key = commtiment, Description = description })
+                    .ConfigureAwait(false);
 
                 res = true;
-			}
-			catch (Exception ex)
-			{
-				_logger.Error($"Request failed to uri {url} with body {JsonConvert.SerializeObject(body)}", ex);
-			}
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Request failed to uri {url} with body {JsonConvert.SerializeObject(body)}", ex);
+            }
 
             return res;
-		}
+        }
 
-		public async Task<IEnumerable<RegistrationKeyDescriptionStore>> GetRegistrationCommitments(string issuer, string assetId)
-		{
-			IEnumerable<RegistrationKeyDescriptionStore> result = null;
-			try
-			{
-				_logger.Debug($"{nameof(GetRegistrationCommitments)}({issuer}, {assetId})");
+        public async Task<IEnumerable<RegistrationKeyDescriptionStore>> GetRegistrationCommitments(string issuer, string assetId)
+        {
+            IEnumerable<RegistrationKeyDescriptionStore> result = null;
+            try
+            {
+                _logger.Debug($"{nameof(GetRegistrationCommitments)}({issuer}, {assetId})");
 
                 Url url = _restApiConfiguration.SchemaResolutionUri
                         .AppendPathSegment("RegistrationCommitments")
                         .SetQueryParams(new { issuer, assetId });
 
                 await _restClientService.Request(url)
-						.GetJsonAsync<IEnumerable<RegistrationKeyDescriptionStore>>()
-						.ContinueWith(t =>
-						{
-							if (t.IsCompletedSuccessfully)
-							{
-								result = t.Result;
-							}
-							else
-							{
-								_logger.Error($"Failed {nameof(GetRegistrationCommitments)}({issuer}, {assetId}) from {_restApiConfiguration.SchemaResolutionUri}", t.Exception);
-							}
-						}, TaskScheduler.Current)
-						.ConfigureAwait(false);
+                        .GetJsonAsync<IEnumerable<RegistrationKeyDescriptionStore>>()
+                        .ContinueWith(t =>
+                        {
+                            if (t.IsCompletedSuccessfully)
+                            {
+                                result = t.Result;
+                            }
+                            else
+                            {
+                                _logger.Error($"Failed {nameof(GetRegistrationCommitments)}({issuer}, {assetId}) from {_restApiConfiguration.SchemaResolutionUri}", t.Exception);
+                            }
+                        }, TaskScheduler.Current)
+                        .ConfigureAwait(false);
 
-				return result;
-			}
-			catch (Exception ex)
-			{
-				_logger.Error($"Failed {nameof(GetRegistrationCommitments)}({issuer}, {assetId})", ex);
-				throw;
-			}
-		}
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Failed {nameof(GetRegistrationCommitments)}({issuer}, {assetId})", ex);
+                throw;
+            }
+        }
 
         public async Task BackupAssociatedAttributes(string rootIsser, string rootAssetId, AssociatedAttributeBackupDTO[] associatedAttributeBackups)
         {

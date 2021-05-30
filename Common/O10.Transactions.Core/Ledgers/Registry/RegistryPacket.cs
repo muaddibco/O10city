@@ -16,6 +16,6 @@ namespace O10.Transactions.Core.Ledgers.Registry
             Payload = new RegistryPayload { Transaction = transaction };
         }
 
-        public override LedgerType LedgerType => LedgerType.Registry; 
+        public override LedgerType LedgerType => LedgerType.Registry;
     }
 }

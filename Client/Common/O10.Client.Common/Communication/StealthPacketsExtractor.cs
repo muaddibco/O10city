@@ -9,49 +9,49 @@ using O10.Core.Serialization;
 
 namespace O10.Client.Common.Communication
 {
-	[RegisterExtension(typeof(IPacketsExtractor), Lifetime = LifetimeManagement.Scoped)]
-	public class StealthPacketsExtractor : PacketsExtractorBase
-	{
+    [RegisterExtension(typeof(IPacketsExtractor), Lifetime = LifetimeManagement.Scoped)]
+    public class StealthPacketsExtractor : PacketsExtractorBase
+    {
 
-		public StealthPacketsExtractor(
+        public StealthPacketsExtractor(
             IGatewayService syncStateProvider,
-			IStealthClientCryptoService clientCryptoService,
-			IDataAccessService dataAccessService,
-            ILoggerService loggerService) 
+            IStealthClientCryptoService clientCryptoService,
+            IDataAccessService dataAccessService,
+            ILoggerService loggerService)
             : base(syncStateProvider, clientCryptoService, dataAccessService, loggerService)
-		{
-		}
+        {
+        }
 
         public override string Name => "Stealth";
 
         protected override bool CheckPacketWitness(PacketWitness packetWitness)
-		{
-			_logger.LogIfDebug(() => $"[{AccountId}]: {nameof(CheckPacketWitness)} {JsonConvert.SerializeObject(packetWitness, new ByteArrayJsonConverter())}");
+        {
+            _logger.LogIfDebug(() => $"[{AccountId}]: {nameof(CheckPacketWitness)} {JsonConvert.SerializeObject(packetWitness, new ByteArrayJsonConverter())}");
 
-			if (packetWitness.IsIdentityIssuing)
-			{
-				return true;
-			}
+            if (packetWitness.IsIdentityIssuing)
+            {
+                return true;
+            }
 
-			bool isToMe1 = packetWitness.DestinationKey?.Length == Globals.NODE_PUBLIC_KEY_SIZE
+            bool isToMe1 = packetWitness.DestinationKey?.Length == Globals.NODE_PUBLIC_KEY_SIZE
                   && packetWitness.TransactionKey?.Length == Globals.NODE_PUBLIC_KEY_SIZE
                   && _clientCryptoService.CheckTarget(packetWitness.DestinationKey, packetWitness.TransactionKey);
 
-			bool isToMe2 = packetWitness.DestinationKey2?.Length == Globals.NODE_PUBLIC_KEY_SIZE
+            bool isToMe2 = packetWitness.DestinationKey2?.Length == Globals.NODE_PUBLIC_KEY_SIZE
                   && packetWitness.TransactionKey?.Length == Globals.NODE_PUBLIC_KEY_SIZE
                   && _clientCryptoService.CheckTarget(packetWitness.DestinationKey2, packetWitness.TransactionKey);
 
-			if(isToMe1)
-			{
-				_logger.Debug($"[{AccountId}]: It was detected packet sent by myself");
-			}
+            if (isToMe1)
+            {
+                _logger.Debug($"[{AccountId}]: It was detected packet sent by myself");
+            }
 
-			if (isToMe2)
-			{
-				_logger.Debug($"[{AccountId}]: It was detected packet sent to me by other");
-			}
+            if (isToMe2)
+            {
+                _logger.Debug($"[{AccountId}]: It was detected packet sent to me by other");
+            }
 
-			return isToMe1 || isToMe2;
-		}
-	}
+            return isToMe1 || isToMe2;
+        }
+    }
 }

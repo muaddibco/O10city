@@ -12,12 +12,13 @@ using O10.Transactions.Core.DTOs;
 using O10.Transactions.Core.Ledgers;
 using O10.Crypto.Models;
 using O10.Core.Identity;
+using System.Diagnostics.CodeAnalysis;
 
 namespace O10.Client.Common.Interfaces
 {
     [ServiceContract]
     public interface IGatewayService : ISyncStateProvider
-	{
+    {
         /// <summary>
         /// Pipeline for sending transactions to gateways
         /// </summary>
@@ -36,7 +37,7 @@ namespace O10.Client.Common.Interfaces
         /// <returns></returns>
         Task<ulong> GetCombinedBlockByTransactionHash(byte[] accountPublicKey, byte[] transactionHash);
 
-        Task<OutputModel[]> GetOutputs(int amount);
+        [NotNull] Task<OutputSources[]> GetOutputs(int amount);
         Task<byte[][]> GetIssuanceCommitments(Memory<byte> issuer, int amount);
 
         Task<bool> IsRootAttributeValid(Memory<byte> issuer, Memory<byte> commitment);
@@ -50,13 +51,13 @@ namespace O10.Client.Common.Interfaces
 
         string GetNotificationsHubUri();
 
-		Task<TransactionBase> GetTransaction(string source, byte[] transactionHash);
+        Task<TransactionBase> GetTransaction(string source, byte[] transactionHash);
 
         Task<string> PushRelationProofSession(RelationProofsData relationProofSession);
 
         Task<RelationProofsData> PopRelationProofSession(string sessionKey);
 
-		Task<byte[]> GetHashByKeyImage(byte[] keyImage);
+        Task<byte[]> GetHashByKeyImage(byte[] keyImage);
 
         Task<bool> IsKeyImageCompromised(IKey keyImage);
         Task<IEnumerable<InfoMessage>> GetInfo();

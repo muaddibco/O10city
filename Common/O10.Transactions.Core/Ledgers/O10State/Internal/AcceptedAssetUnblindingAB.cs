@@ -3,7 +3,7 @@
     public class AcceptedAssetUnblindingAB
     {
         public AcceptedAssetUnblinding AcceptedAssetsUnblinding { get; set; }
-        
+
         /// <summary>
         /// Contains a hash of a sender's Public Key
         /// </summary>

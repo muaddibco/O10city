@@ -33,7 +33,7 @@ namespace O10.Transactions.Core.Accessors
             }
 
             var packet = await GetTransactionInner(accessDescriptor).ConfigureAwait(false);
-        
+
             if (packet is T resultPacket)
             {
                 return resultPacket;

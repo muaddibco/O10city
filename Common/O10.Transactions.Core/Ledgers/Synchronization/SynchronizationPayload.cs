@@ -8,7 +8,7 @@ namespace O10.Transactions.Core.Ledgers.Synchronization
     public class SynchronizationPayload : PayloadBase<SynchronizationTransactionBase>
     {
         public long Height { get; set; }
-    
+
         public IKey? HashPrev { get; set; }
 
         public DateTime ReportedTime { get; set; }

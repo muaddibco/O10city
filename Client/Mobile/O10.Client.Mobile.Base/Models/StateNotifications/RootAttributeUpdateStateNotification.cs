@@ -15,7 +15,6 @@
                 new UserAttributeLastUpdateModel
                 {
                     AssetId = UserAttributeLastUpdate.AssetId,
-                    LastBlindingFactor = UserAttributeLastUpdate.LastBlindingFactor,
                     LastCommitment = UserAttributeLastUpdate.LastCommitment,
                     LastDestinationKey = UserAttributeLastUpdate.LastDestinationKey,
                     LastTransactionKey = UserAttributeLastUpdate.LastTransactionKey

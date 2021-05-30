@@ -1,14 +1,15 @@
-﻿using O10.Core.Notifications;
+﻿using O10.Core.Identity;
+using O10.Core.Notifications;
 
 namespace O10.Client.Common.Communication.Notifications
 {
     public class CompromisedKeyImage : NotificationBase
     {
-        public byte[] KeyImage { get; set; }
+        public IKey? KeyImage { get; set; }
 
-        public byte[] TransactionKey { get; set; }
+        public IKey? TransactionKey { get; set; }
 
-        public byte[] DestinationKey { get; set; }
-        public byte[] Target { get; set; }
+        public IKey? DestinationKey { get; set; }
+        public IKey? Target { get; set; }
     }
 }

@@ -11,10 +11,10 @@ namespace O10.Client.DataLayer.Services
     {
         private readonly IDataAccessService _dataAccessService;
 
-		public DataAccessServiceInitializer(IDataAccessService dataAccessService)
+        public DataAccessServiceInitializer(IDataAccessService dataAccessService)
         {
             _dataAccessService = dataAccessService;
-		}
+        }
         public ExtensionOrderPriorities Priority => ExtensionOrderPriorities.AboveNormal;
 
         public bool Initialized { get; private set; }

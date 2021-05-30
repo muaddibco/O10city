@@ -11,49 +11,49 @@ using O10.Crypto.Services;
 namespace O10.Client.Common.Crypto
 {
     [RegisterDefaultImplementation(typeof(IStateClientCryptoService), Lifetime = LifetimeManagement.Scoped)]
-	public class StateClientCryptoService : Ed25519SigningService, IStateClientCryptoService
-	{
+    public class StateClientCryptoService : Ed25519SigningService, IStateClientCryptoService
+    {
         private byte[] _blindingSecretKey;
         private IKey _publicKey;
 
-		public StateClientCryptoService(IHashCalculationsRepository hashCalculationRepository, IIdentityKeyProvidersRegistry identityKeyProvidersRegistry) 
-			: base(hashCalculationRepository, identityKeyProvidersRegistry)
-		{
-		}
+        public StateClientCryptoService(IHashCalculationsRepository hashCalculationRepository, IIdentityKeyProvidersRegistry identityKeyProvidersRegistry)
+            : base(hashCalculationRepository, identityKeyProvidersRegistry)
+        {
+        }
 
-		public byte[] DecodeCommitment(byte[] encodedCommitment, byte[] transactionKey)
-		{
-			return CryptoHelper.DecodeCommitment(encodedCommitment, transactionKey, _secretKey);
-		}
+        public byte[] DecodeCommitment(byte[] encodedCommitment, byte[] transactionKey)
+        {
+            return CryptoHelper.DecodeCommitment(encodedCommitment, transactionKey, _secretKey);
+        }
 
-		public void DecodeEcdhTuple(EcdhTupleCA ecdhTupleCA, IKey transactionKey, out byte[] blindingFactor, out byte[] assetId)
+        public void DecodeEcdhTuple(EcdhTupleCA ecdhTupleCA, IKey transactionKey, out byte[] blindingFactor, out byte[] assetId)
         {
             CryptoHelper.DecodeEcdhTuple(ecdhTupleCA, (transactionKey ?? PublicKeys[0]).ToByteArray(), _secretKey, out blindingFactor, out assetId);
         }
 
-		public void DecodeEcdhTuple(EcdhTupleIP ecdhTupleCA, byte[] transactionKey, out byte[] issuer, out byte[] payload)
-		{
+        public void DecodeEcdhTuple(EcdhTupleIP ecdhTupleCA, byte[] transactionKey, out byte[] issuer, out byte[] payload)
+        {
             //ConfidentialAssetsHelper.DecodeEcdhTuple(ecdhTupleCA, transactionKey, _secretKey, out blindingFactor, out assetId);
 
             issuer = ecdhTupleCA.Issuer;
             payload = ecdhTupleCA.Payload;
-		}
+        }
 
-		public void DecodeEcdhTuple(EcdhTupleProofs ecdhTuple, byte[] transactionKey, out byte[] blindingFactor, out byte[] assetId, out byte[] issuer, out byte[] payload)
-		{
+        public void DecodeEcdhTuple(EcdhTupleProofs ecdhTuple, byte[] transactionKey, out byte[] blindingFactor, out byte[] assetId, out byte[] issuer, out byte[] payload)
+        {
             //ConfidentialAssetsHelper.DecodeEcdhTuple(ecdhTuple, transactionKey, _secretKey, out blindingFactor, out assetId, out issuer, out payload);
             blindingFactor = ecdhTuple.Mask;
             assetId = ecdhTuple.AssetId;
             issuer = ecdhTuple.AssetIssuer;
             payload = ecdhTuple.Payload;
-		}
+        }
 
-		public EcdhTupleCA EncodeEcdhTuple(byte[] blindingFactor, byte[] assetId)
-		{
+        public EcdhTupleCA EncodeEcdhTuple(byte[] blindingFactor, byte[] assetId)
+        {
             EcdhTupleCA ecdhTupleCA = CryptoHelper.CreateEcdhTupleCA(blindingFactor, assetId, _secretKey, PublicKeys[0].ArraySegment.Array);
 
-			return ecdhTupleCA;
-		}
+            return ecdhTupleCA;
+        }
 
         /// <summary>
         /// TODO - need to rename to update while this function retuns nothing and just updates out params
@@ -68,7 +68,7 @@ namespace O10.Client.Common.Crypto
             byte[] nonBlindedCommitment = CryptoHelper.GetNonblindedAssetCommitment(assetId);
             assetCommitment = CryptoHelper.GetAssetCommitment(_blindingSecretKey, assetId);
             byte[] pk = CryptoHelper.SubCommitments(assetCommitment, nonBlindedCommitment);
-			ringSignature = CryptoHelper.GenerateRingSignature(assetCommitment, keyImage, new byte[][] { pk }, _blindingSecretKey, 0)[0];
+            ringSignature = CryptoHelper.GenerateRingSignature(assetCommitment, keyImage, new byte[][] { pk }, _blindingSecretKey, 0)[0];
         }
 
         public IKey GetPublicKey()

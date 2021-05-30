@@ -4,9 +4,9 @@ using O10.Core.Architecture;
 
 namespace O10.Client.Common.Interfaces
 {
-	[ServiceContract]
-	public interface IDocumentSignatureVerifier
-	{
-		Task<DocumentSignatureVerification> Verify(byte[] documentCreator, byte[] documentHash, byte[] documentRecordTransactionHash, byte[] signatureTransactionHash);
-	}
+    [ServiceContract]
+    public interface IDocumentSignatureVerifier
+    {
+        Task<DocumentSignatureVerification> Verify(byte[] documentCreator, byte[] documentHash, byte[] documentRecordTransactionHash, byte[] signatureTransactionHash);
+    }
 }

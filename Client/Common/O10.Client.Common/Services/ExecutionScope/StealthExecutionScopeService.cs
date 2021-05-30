@@ -2,10 +2,13 @@
 using O10.Client.Common.Communication.Notifications;
 using O10.Client.Common.Configuration;
 using O10.Client.Common.Interfaces;
+using O10.Client.Web.Common.Services;
 using O10.Core.Architecture;
 using O10.Core.Configuration;
+using O10.Core.Identity;
 using O10.Core.Models;
 using O10.Core.Notifications;
+using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Ledgers;
 using System;
 using System.Threading;
@@ -15,12 +18,13 @@ using System.Threading.Tasks.Dataflow;
 namespace O10.Client.Common.Services
 {
     [RegisterDefaultImplementation(typeof(IExecutionScopeService), Lifetime = LifetimeManagement.Scoped)]
-    public class UtxoExecutionScopeService : IExecutionScopeService
+    public class StealthExecutionScopeService : IExecutionScopeService
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly IWitnessPackagesProviderRepository _witnessPackagesProviderRepository;
         private readonly IStealthTransactionsService _transactionsService;
         private readonly IStealthClientCryptoService _clientCryptoService;
+        private readonly ILedgerWriterRepository _ledgerWriterRepository;
         private readonly IBoundedAssetsService _relationsBindingService;
         private readonly IWalletSynchronizersRepository _walletSynchronizersRepository;
         private readonly IPacketsExtractorsRepository _packetsExtractorsRepository;
@@ -28,12 +32,13 @@ namespace O10.Client.Common.Services
         private readonly IGatewayService _gatewayService;
         private readonly IRestApiConfiguration _restApiConfiguration;
 
-        public UtxoExecutionScopeService(
+        public StealthExecutionScopeService(
             IServiceProvider serviceProvider,
             IConfigurationService configurationService,
             IWitnessPackagesProviderRepository witnessPackagesProviderRepository,
             IStealthTransactionsService transactionsService,
             IStealthClientCryptoService clientCryptoService,
+            ILedgerWriterRepository ledgerWriterRepository,
             IBoundedAssetsService relationsBindingService,
             IWalletSynchronizersRepository walletSynchronizersRepository,
             IPacketsExtractorsRepository packetsExtractorsRepository,
@@ -44,6 +49,7 @@ namespace O10.Client.Common.Services
             _witnessPackagesProviderRepository = witnessPackagesProviderRepository;
             _transactionsService = transactionsService;
             _clientCryptoService = clientCryptoService;
+            _ledgerWriterRepository = ledgerWriterRepository;
             _relationsBindingService = relationsBindingService;
             _walletSynchronizersRepository = walletSynchronizersRepository;
             _packetsExtractorsRepository = packetsExtractorsRepository;
@@ -54,9 +60,9 @@ namespace O10.Client.Common.Services
 
         public string Name => "Stealth";
 
-        public T GetScopeInitializationParams<T>() where T: ScopeInitializationParams
+        public T GetScopeInitializationParams<T>() where T : ScopeInitializationParams
         {
-            if(typeof(T) != typeof(UtxoScopeInitializationParams))
+            if (typeof(T) != typeof(UtxoScopeInitializationParams))
             {
                 throw new InvalidOperationException($"Only {typeof(UtxoScopeInitializationParams).FullName} can be requested");
             }
@@ -65,9 +71,9 @@ namespace O10.Client.Common.Services
             return p as T;
         }
 
-        public void Initiliaze(ScopeInitializationParams initializationParams)
+        public async Task Initiliaze(ScopeInitializationParams initializationParams)
         {
-            if(!(initializationParams is UtxoScopeInitializationParams scopeInitializationParams))
+            if (!(initializationParams is UtxoScopeInitializationParams scopeInitializationParams))
             {
                 throw new ArgumentException($"It is expected argument of type {nameof(UtxoScopeInitializationParams)}");
             }
@@ -89,8 +95,11 @@ namespace O10.Client.Common.Services
 
             _transactionsService.Initialize(scopeInitializationParams.AccountId);
             utxoWalletPacketsExtractor.Initialize(scopeInitializationParams.AccountId);
-            _transactionsService.GetSourcePipe<TaskCompletionWrapper<IPacketBase>>().LinkTo(_gatewayService.PipeInTransactions);
-            _transactionsService.GetSourcePipe<byte[]>().LinkTo(utxoWalletPacketsExtractor.GetTargetPipe<byte[]>());
+
+            var ledgerWriter = _ledgerWriterRepository.GetInstance(LedgerType.Stealth);
+            await ledgerWriter.Initialize(scopeInitializationParams.AccountId).ConfigureAwait(false);
+            _transactionsService.PipeOutTransactions.LinkTo(ledgerWriter.PipeIn);
+            _transactionsService.PipeOutKeyImages.LinkTo(utxoWalletPacketsExtractor.GetTargetPipe<IKey>());
 
             IUpdater userIdentitiesUpdater = _updaterRegistry.GetInstance();
 

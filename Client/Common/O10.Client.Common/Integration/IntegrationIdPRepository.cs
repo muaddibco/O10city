@@ -27,7 +27,7 @@ namespace O10.Client.Common.Integration
 
             var integrationIdP = _integrationIdPs.FirstOrDefault(i => i.Key == key);
 
-            if(integrationIdP == null)
+            if (integrationIdP == null)
             {
                 throw new ArgumentOutOfRangeException(nameof(key));
             }

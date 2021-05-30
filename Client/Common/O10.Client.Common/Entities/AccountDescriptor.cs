@@ -10,8 +10,8 @@ namespace O10.Client.Common.Entities
         public byte[] PublicViewKey { get; set; }
         public AccountType AccountType { get; set; }
         public string AccountInfo { get; set; }
-		public byte[] PwdHash { get; set; }
-		public long AccountId { get; set; }
+        public byte[] PwdHash { get; set; }
+        public long AccountId { get; set; }
         public bool IsCompromised { get; set; }
         public ulong LastAggregatedRegistrations { get; set; }
         public bool IsPrivate { get; set; }

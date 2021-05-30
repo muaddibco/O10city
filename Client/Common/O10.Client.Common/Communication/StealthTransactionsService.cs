@@ -1,8 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Diagnostics.Contracts;
 using System.Text;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
@@ -13,7 +11,6 @@ using O10.Client.Common.Interfaces;
 using O10.Client.Common.Interfaces.Inputs;
 using O10.Core.Architecture;
 using O10.Core.Cryptography;
-using O10.Core.ExtensionMethods;
 using O10.Core.HashCalculations;
 using O10.Core.Identity;
 using O10.Core.Logging;
@@ -22,10 +19,11 @@ using O10.Core.Notifications;
 using O10.Transactions.Core.DTOs;
 using O10.Crypto.Models;
 using System.Linq;
-using O10.Core.Models;
-using O10.Transactions.Core.Ledgers;
 using O10.Transactions.Core.Ledgers.Stealth.Transactions;
-using O10.Transactions.Core.Ledgers.Stealth;
+using O10.Client.Common.Communication.LedgerWriters;
+using O10.Client.DataLayer.Model;
+using O10.Client.DataLayer.Services;
+using O10.Core.ExtensionMethods;
 
 namespace O10.Client.Common.Communication
 {
@@ -35,51 +33,42 @@ namespace O10.Client.Common.Communication
         private IStealthClientCryptoService _clientCryptoService;
         private IBoundedAssetsService _relationsBindingService;
         private readonly IEligibilityProofsProvider _eligibilityProofsProvider;
-        private readonly IPropagatorBlock<byte[], byte[]> _pipeOutKeyImages;
+        private readonly IDataAccessService _dataAccessService;
 
         public StealthTransactionsService(IHashCalculationsRepository hashCalculationsRepository,
-                                       IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
-                                       IStealthClientCryptoService clientCryptoService,
-                                       IBoundedAssetsService relationsBindingService,
-                                       IEligibilityProofsProvider eligibilityProofsProvider,
-                                       IGatewayService gatewayService,
-                                       ILoggerService loggerService)
+                                          IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
+                                          IStealthClientCryptoService clientCryptoService,
+                                          IBoundedAssetsService relationsBindingService,
+                                          IEligibilityProofsProvider eligibilityProofsProvider,
+                                          IDataAccessService dataAccessService,
+                                          IGatewayService gatewayService,
+                                          ILoggerService loggerService)
             : base(hashCalculationsRepository,
                    identityKeyProvidersRegistry,
                    clientCryptoService,
                    gatewayService,
                    loggerService)
         {
-            _pipeOutKeyImages = new TransformBlock<byte[], byte[]>(w => w);
             _clientCryptoService = clientCryptoService;
             _relationsBindingService = relationsBindingService;
             _eligibilityProofsProvider = eligibilityProofsProvider;
+            _dataAccessService = dataAccessService;
         }
 
-        public ISourceBlock<byte[]> PipeOutKeyImages => _pipeOutKeyImages;
+        public IKey NextKeyImage { get; private set; }
 
         #region Public Functions
-
-        public override ISourceBlock<T> GetSourcePipe<T>(string name = null)
-        {
-            if(typeof(T) == typeof(byte[]))
-            {
-                return (ISourceBlock<T>)_pipeOutKeyImages;
-            }
-
-            return base.GetSourcePipe<T>(name);
-        }
 
         public void Initialize(long accountId)
         {
             _accountId = accountId;
         }
 
-        public async Task<RequestResult> SendRelationsProofs(RelationsProofsInput relationsProofsInput, AssociatedProofPreparation[] associatedProofPreparations, OutputModel[] outputModels, byte[][] issuanceCommitments)
+        public async Task<RequestResult> SendRelationsProofs(RelationsProofsInput relationsProofsInput, AssociatedProofPreparation[] associatedProofPreparations, OutputSources[] outputModels, byte[][] issuanceCommitments)
         {
             var packet = CreateRelationsProofs(relationsProofsInput, associatedProofPreparations, outputModels, issuanceCommitments);
 
-            await _pipeOutKeyImages.SendAsync(packet.KeyImage.Value.ToArray()).ConfigureAwait(false);
+            NextKeyImage = packet.KeyImage;
 
             var completionResult = PropagateTransaction(packet);
 
@@ -95,11 +84,11 @@ namespace O10.Client.Common.Communication
         }
 
 
-        public async Task<RequestResult> SendDocumentSignRequest(DocumentSignRequestInput requestInput, AssociatedProofPreparation[] associatedProofPreparations, OutputModel[] outputModels, byte[][] issuanceCommitments)
+        public async Task<RequestResult> SendDocumentSignRequest(DocumentSignRequestInput requestInput, AssociatedProofPreparation[] associatedProofPreparations, OutputSources[] outputModels, byte[][] issuanceCommitments)
         {
             var packet = CreateDocumentSignRequest(requestInput, associatedProofPreparations, outputModels, issuanceCommitments);
 
-			await _pipeOutKeyImages.SendAsync(packet.KeyImage.Value.ToArray()).ConfigureAwait(false);
+            NextKeyImage = packet.KeyImage;
 
             var completionResult = PropagateTransaction(packet);
 
@@ -114,11 +103,11 @@ namespace O10.Client.Common.Communication
             return requestResult;
         }
 
-        public async Task<RequestResult> SendEmployeeRegistrationRequest(EmployeeRequestInput requestInput, AssociatedProofPreparation[] associatedProofPreparations, OutputModel[] outputModels, byte[][] issuanceCommitments)
+        public async Task<RequestResult> SendEmployeeRegistrationRequest(EmployeeRequestInput requestInput, AssociatedProofPreparation[] associatedProofPreparations, OutputSources[] outputModels, byte[][] issuanceCommitments)
         {
             var packet = CreateEmployeeRegistrationRequest(requestInput, associatedProofPreparations, outputModels, issuanceCommitments);
 
-			await _pipeOutKeyImages.SendAsync(packet.KeyImage.Value.ToArray()).ConfigureAwait(false);
+            NextKeyImage = packet.KeyImage;
 
             var completionResult = PropagateTransaction(packet);
 
@@ -133,11 +122,11 @@ namespace O10.Client.Common.Communication
             return requestResult;
         }
 
-        public async Task<RequestResult> SendIdentityProofs(RequestInput requestInput, AssociatedProofPreparation[] associatedProofPreparations, OutputModel[] outputModels, byte[] issuer)
+        public async Task<RequestResult> SendIdentityProofs(RequestInput requestInput, AssociatedProofPreparation[] associatedProofPreparations, OutputSources[] outputModels, byte[] issuer)
         {
             var packet = await CreateIdentityProofsPacket(requestInput, associatedProofPreparations, outputModels, issuer).ConfigureAwait(false);
 
-			await _pipeOutKeyImages.SendAsync(packet.KeyImage.Value.ToArray()).ConfigureAwait(false);
+            NextKeyImage = packet.KeyImage;
 
             var completionResult = PropagateTransaction(packet);
 
@@ -152,31 +141,12 @@ namespace O10.Client.Common.Communication
             return requestResult;
         }
 
-		public async Task<RequestResult> SendRevokeIdentity(RequestInput requestInput, OutputModel[] outputModels, byte[][] issuanceCommitments)
-		{
-			RevokeIdentity packet = CreateRevokeIdentityPacket(requestInput, outputModels, issuanceCommitments);
-
-			await _pipeOutKeyImages.SendAsync(packet.KeyImage.Value.ToArray()).ConfigureAwait(false);
-
-            var completionResult = PropagateTransaction(packet);
-
-            RequestResult requestResult = new RequestResult
-			{
-				NewCommitment = packet.AssetCommitment,
-				NewTransactionKey = packet.TransactionPublicKey,
-				NewDestinationKey = packet.DestinationKey,
-                Result = await completionResult.Task.ConfigureAwait(false) is SucceededNotification
-            };
-
-			return requestResult;
-		}
-
-		public async Task<RequestResult> SendCompromisedProofs(RequestInput requestInput, byte[] compromisedKeyImage, byte[] compromisedTransactionKey, byte[] destinationKey, OutputModel[] outputModels, byte[][] issuanceCommitments)
+        public async Task<RequestResult> SendRevokeIdentity(RequestInput requestInput, OutputSources[] outputModels, byte[][] issuanceCommitments)
         {
-            var packet = CreateTransitionCompromisedProofs(requestInput, compromisedKeyImage, compromisedTransactionKey, destinationKey, outputModels, issuanceCommitments);
+            RevokeIdentity packet = CreateRevokeIdentityPacket(requestInput, outputModels, issuanceCommitments);
 
-			await _pipeOutKeyImages.SendAsync(packet.KeyImage.Value.ToArray()).ConfigureAwait(false);
-            
+            NextKeyImage = packet.KeyImage;
+
             var completionResult = PropagateTransaction(packet);
 
             RequestResult requestResult = new RequestResult
@@ -190,35 +160,92 @@ namespace O10.Client.Common.Communication
             return requestResult;
         }
 
-        public async Task<RequestResult> SendUniversalTransport([NotNull] RequestInput requestInput, [NotNull] OutputModel[] outputModels, UniversalProofs universalProofs)
+        public async Task<RequestResult> SendCompromisedProofs(RequestInput requestInput, byte[] compromisedKeyImage, byte[] compromisedTransactionKey, byte[] destinationKey, OutputSources[] outputModels, byte[][] issuanceCommitments)
         {
-            Contract.Requires(requestInput != null);
-            Contract.Requires(outputModels != null);
-            Contract.Requires(universalProofs != null);
+            var packet = CreateTransitionCompromisedProofs(requestInput, compromisedKeyImage, compromisedTransactionKey, destinationKey, outputModels, issuanceCommitments);
 
-            var packet = CreateUniversalTransportPacket(requestInput, outputModels, universalProofs);
+            NextKeyImage = packet.KeyImage;
 
-            await _pipeOutKeyImages.SendAsync(packet.KeyImage.Value.ToArray()).ConfigureAwait(false);
-            
-            var completionSource = PropagateTransaction(packet);
+            var completionResult = PropagateTransaction(packet);
 
             RequestResult requestResult = new RequestResult
             {
-                NewBlindingFactor = requestInput.BlindingFactor.ToArraySegment().Array,
                 NewCommitment = packet.AssetCommitment,
                 NewTransactionKey = packet.TransactionPublicKey,
                 NewDestinationKey = packet.DestinationKey,
-                Result = await completionSource.Task.ConfigureAwait(false) is SucceededNotification
+                Result = await completionResult.Task.ConfigureAwait(false) is SucceededNotification
             };
 
             return requestResult;
+        }
+
+        public async Task<RequestResult> SendUniversalTransport([NotNull] RequestInput requestInput, [NotNull] OutputSources[] outputModels, UniversalProofs universalProofs)
+        {
+            if (requestInput is null)
+            {
+                throw new ArgumentNullException(nameof(requestInput));
+            }
+
+            if (outputModels is null)
+            {
+                throw new ArgumentNullException(nameof(outputModels));
+            }
+
+            if (universalProofs is null)
+            {
+                throw new ArgumentNullException(nameof(universalProofs));
+            }
+
+            var transaction = CreateUniversalTransportPacket(requestInput, outputModels, universalProofs);
+
+            var completionSource = PropagateTransaction(
+                transaction,
+                new StealthPropagationArgument(
+                    _identityKeyProvider.GetKey(requestInput.PrevDestinationKey),
+                    _identityKeyProvider.GetKey(requestInput.PrevTransactionKey),
+                    p =>
+                    {
+                        if (p is O10StealthTransactionBase o10StealthTransaction)
+                        {
+                            universalProofs.KeyImage = o10StealthTransaction.KeyImage;
+                            string proofs = JsonConvert.SerializeObject(universalProofs);
+                            byte[] proofsBytes = Encoding.UTF8.GetBytes(proofs);
+                            o10StealthTransaction.ProofsHash = _hashCalculation.CalculateHash(proofsBytes);
+                        }
+                    }));
+
+            var result = await completionSource.Task.ConfigureAwait(false);
+            if(result is SucceededNotification)
+            {
+                NextKeyImage = transaction.KeyImage;
+                _dataAccessService.AddUserTransactionSecret(_accountId, transaction.KeyImage.ToString(), universalProofs.MainIssuer.ToString(), requestInput.AssetId.ToHexString());
+            }
+
+            RequestResult requestResult = new RequestResult
+            {
+                KeyImage = transaction.KeyImage.Value,
+                NewBlindingFactor = requestInput.BlindingFactor,
+                NewCommitment = transaction.AssetCommitment.Value,
+                NewTransactionKey = transaction.TransactionPublicKey.Value,
+                NewDestinationKey = transaction.DestinationKey.Value,
+                Result = result is SucceededNotification
+            };
+
+            return requestResult;
+        }
+
+        public UserTransactionSecrets PopLastTransactionSecrets()
+        {
+            var secrets = _dataAccessService.GetUserTransactionSecrets(_accountId, NextKeyImage.ToString());
+            _dataAccessService.RemoveUserTransactionSecret(_accountId, NextKeyImage.ToString());
+            return secrets;
         }
 
         #endregion Public Functions
 
         #region Private Functions
 
-        private GroupsRelationsProofs CreateRelationsProofs(RelationsProofsInput requestInput, AssociatedProofPreparation[] associatedProofPreparations, OutputModel[] outputModels, byte[][] issuanceCommitments)
+        private GroupsRelationsProofs CreateRelationsProofs(RelationsProofsInput requestInput, AssociatedProofPreparation[] associatedProofPreparations, OutputSources[] outputModels, byte[][] issuanceCommitments)
         {
             byte[] secretKey = CryptoHelper.GetRandomSeed();
             byte[] transactionKey = CryptoHelper.GetPublicKey(secretKey);
@@ -230,7 +257,6 @@ namespace O10.Client.Common.Communication
 
             byte[] onboardingToOwnershipBlindingFactor = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.PrevBlindingFactor);
             GetAssetCommitmentsRing(requestInput.PrevAssetCommitment, outputModels, out int pos, out IKey[] assetCommitments);
-            SurjectionProof ownershipProof = CryptoHelper.CreateSurjectionProof(assetCommitment, assetCommitments.Select(s => s.ToByteArray()).ToArray(), pos, onboardingToOwnershipBlindingFactor);
 
             byte[] onboardingToEligibilityBlindingFactor = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.EligibilityBlindingFactor);
             _eligibilityProofsProvider.GetEligibilityCommitmentAndProofs(requestInput.EligibilityCommitment, issuanceCommitments, out int actualAssetPos, out byte[][] commitments);
@@ -264,7 +290,6 @@ namespace O10.Client.Common.Communication
                 DestinationKey2 = destinationKey2,
                 TransactionPublicKey = transactionKey,
                 AssetCommitment = assetCommitment,
-                OwnershipProof = ownershipProof,
                 EligibilityProof = eligibilityProof,
                 RelationProofs = groupRelationProofs,
                 AssociatedProofs = associatedProofs,
@@ -278,58 +303,58 @@ namespace O10.Client.Common.Communication
             return block;
         }
 
-        private DocumentSignRequest CreateDocumentSignRequest(DocumentSignRequestInput requestInput, AssociatedProofPreparation[] associatedProofPreparations, OutputModel[] outputModels, byte[][] issuanceCommitments)
-		{
-			byte[] secretKey = CryptoHelper.GetRandomSeed();
-			byte[] transactionKey = CryptoHelper.GetPublicKey(secretKey);
-			byte[] destinationKey = CryptoHelper.GetDestinationKey(secretKey, _clientCryptoService.PublicKeys[0].ArraySegment.Array, _clientCryptoService.PublicKeys[1].ArraySegment.Array);
+        private DocumentSignRequest CreateDocumentSignRequest(DocumentSignRequestInput requestInput, AssociatedProofPreparation[] associatedProofPreparations, OutputSources[] outputModels, byte[][] issuanceCommitments)
+        {
+            byte[] secretKey = CryptoHelper.GetRandomSeed();
+            byte[] transactionKey = CryptoHelper.GetPublicKey(secretKey);
+            byte[] destinationKey = CryptoHelper.GetDestinationKey(secretKey, _clientCryptoService.PublicKeys[0].ArraySegment.Array, _clientCryptoService.PublicKeys[1].ArraySegment.Array);
             _relationsBindingService.GetBoundedCommitment(requestInput.AssetId, requestInput.PublicSpendKey, out byte[] blindingFactor, out byte[] assetCommitment, requestInput.DocumentHash);
 
-			byte[] onboardingToOwnershipBlindingFactor = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.PrevBlindingFactor);
-			GetAssetCommitmentsRing(requestInput.PrevAssetCommitment, outputModels, out int pos, out IKey[] assetCommitments);
+            byte[] onboardingToOwnershipBlindingFactor = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.PrevBlindingFactor);
+            GetAssetCommitmentsRing(requestInput.PrevAssetCommitment, outputModels, out int pos, out IKey[] assetCommitments);
             SurjectionProof ownershipProof = CryptoHelper.CreateSurjectionProof(assetCommitment, assetCommitments.Select(s => s.Value).ToArray(), pos, onboardingToOwnershipBlindingFactor);
 
-			byte[] onboardingToEligibilityBlindingFactor = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.EligibilityBlindingFactor);
-			_eligibilityProofsProvider.GetEligibilityCommitmentAndProofs(requestInput.EligibilityCommitment, issuanceCommitments, out int actualAssetPos, out byte[][] commitments);
+            byte[] onboardingToEligibilityBlindingFactor = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.EligibilityBlindingFactor);
+            _eligibilityProofsProvider.GetEligibilityCommitmentAndProofs(requestInput.EligibilityCommitment, issuanceCommitments, out int actualAssetPos, out byte[][] commitments);
             SurjectionProof eligibilityProof = CryptoHelper.CreateSurjectionProof(assetCommitment, commitments, actualAssetPos, onboardingToEligibilityBlindingFactor);
 
-			AssociatedProofs[] associatedProofs = GetAssociatedProofs(associatedProofPreparations, blindingFactor, assetCommitment);
+            AssociatedProofs[] associatedProofs = GetAssociatedProofs(associatedProofPreparations, blindingFactor, assetCommitment);
 
             _relationsBindingService.GetBoundedCommitment(requestInput.AssetId, requestInput.GroupIssuer, out byte[] groupBlindingFactor, out byte[] groupEntryAssetCommitment, requestInput.GroupAssetId);
-			byte[] signToGroupEntryBlindingFactor = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, groupBlindingFactor);
+            byte[] signToGroupEntryBlindingFactor = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, groupBlindingFactor);
 
             SurjectionProof groupEntrySurjectionProof = CryptoHelper.CreateSurjectionProof(assetCommitment, new byte[][] { groupEntryAssetCommitment }, 0, signToGroupEntryBlindingFactor, requestInput.DocumentHash, BitConverter.GetBytes(requestInput.DocumentRecordHeight));
 
             _relationsBindingService.GetBoundedCommitment(requestInput.GroupAssetId, requestInput.GroupIssuer, out byte[] groupNameBlindingFactor, out byte[] groupNameCommitment, requestInput.GroupAssetId);
 
-			byte[] allowedGroupNameBlindingFactor = CryptoHelper.GetRandomSeed();
-			byte[] allowedGroupNameCommitment = CryptoHelper.GetAssetCommitment(allowedGroupNameBlindingFactor, requestInput.GroupAssetId);
-			byte[] diffAllowedGroupNameBlindingFactor = CryptoHelper.GetDifferentialBlindingFactor(allowedGroupNameBlindingFactor, groupNameBlindingFactor);
+            byte[] allowedGroupNameBlindingFactor = CryptoHelper.GetRandomSeed();
+            byte[] allowedGroupNameCommitment = CryptoHelper.GetAssetCommitment(allowedGroupNameBlindingFactor, requestInput.GroupAssetId);
+            byte[] diffAllowedGroupNameBlindingFactor = CryptoHelper.GetDifferentialBlindingFactor(allowedGroupNameBlindingFactor, groupNameBlindingFactor);
             SurjectionProof allowedGroupNameSurjectionProof = CryptoHelper.CreateSurjectionProof(allowedGroupNameCommitment, new byte[][] { groupNameCommitment }, 0, diffAllowedGroupNameBlindingFactor);
 
-			DocumentSignRequest block = new DocumentSignRequest
-			{
-				DestinationKey = destinationKey,
-				DestinationKey2 = requestInput.PublicSpendKey,
-				TransactionPublicKey = transactionKey,
-				AssetCommitment = assetCommitment,
-				OwnershipProof = ownershipProof,
-				EligibilityProof = eligibilityProof,
-				SignerGroupRelationProof = groupEntrySurjectionProof,
-				AllowedGroupCommitment = allowedGroupNameCommitment,
-				AllowedGroupNameSurjectionProof = allowedGroupNameSurjectionProof,
-				BiometricProof = requestInput.BiometricProof,
+            DocumentSignRequest block = new DocumentSignRequest
+            {
+                DestinationKey = destinationKey,
+                DestinationKey2 = requestInput.PublicSpendKey,
+                TransactionPublicKey = transactionKey,
+                AssetCommitment = assetCommitment,
+                OwnershipProof = ownershipProof,
+                EligibilityProof = eligibilityProof,
+                SignerGroupRelationProof = groupEntrySurjectionProof,
+                AllowedGroupCommitment = allowedGroupNameCommitment,
+                AllowedGroupNameSurjectionProof = allowedGroupNameSurjectionProof,
+                BiometricProof = requestInput.BiometricProof,
 
-				EcdhTuple = new EcdhTupleProofs { Mask = allowedGroupNameBlindingFactor, AssetId = requestInput.DocumentHash, AssetIssuer = requestInput.Issuer, Payload = requestInput.Payload } // ConfidentialAssetsHelper.CreateEcdhTupleProofs(blindingFactor, assetId, issuer, payload, secretKey, target)
-			};
+                EcdhTuple = new EcdhTupleProofs { Mask = allowedGroupNameBlindingFactor, AssetId = requestInput.DocumentHash, AssetIssuer = requestInput.Issuer, Payload = requestInput.Payload } // ConfidentialAssetsHelper.CreateEcdhTupleProofs(blindingFactor, assetId, issuer, payload, secretKey, target)
+            };
 
-			FillSyncData(block);
-			FillAndSign(block, new StealthSignatureInput(requestInput.PrevTransactionKey, assetPubs, pos));
+            FillSyncData(block);
+            FillAndSign(block, new StealthSignatureInput(requestInput.PrevTransactionKey, assetPubs, pos));
 
-			return block;
-		}
+            return block;
+        }
 
-		private EmployeeRegistrationRequest CreateEmployeeRegistrationRequest(EmployeeRequestInput requestInput, AssociatedProofPreparation[] associatedProofPreparations, OutputModel[] outputModels, byte[][] issuanceCommitments)
+        private EmployeeRegistrationRequest CreateEmployeeRegistrationRequest(EmployeeRequestInput requestInput, AssociatedProofPreparation[] associatedProofPreparations, OutputSources[] outputModels, byte[][] issuanceCommitments)
         {
             byte[] secretKey = CryptoHelper.GetRandomSeed();
             byte[] transactionKey = CryptoHelper.GetPublicKey(secretKey);
@@ -361,8 +386,8 @@ namespace O10.Client.Common.Communication
                 AssociatedProofs = associatedProofs,
                 GroupCommitment = groupCommitment,
                 GroupSurjectionProof = groupSurjectionProof,
-				BiometricProof = requestInput.BiometricProof,
-				EcdhTuple = new EcdhTupleProofs { Mask = blindingFactor, AssetId = requestInput.AssetId, AssetIssuer = requestInput.Issuer, Payload = requestInput.Payload } // ConfidentialAssetsHelper.CreateEcdhTupleProofs(blindingFactor, assetId, issuer, payload, secretKey, target)
+                BiometricProof = requestInput.BiometricProof,
+                EcdhTuple = new EcdhTupleProofs { Mask = blindingFactor, AssetId = requestInput.AssetId, AssetIssuer = requestInput.Issuer, Payload = requestInput.Payload } // ConfidentialAssetsHelper.CreateEcdhTupleProofs(blindingFactor, assetId, issuer, payload, secretKey, target)
             };
 
             FillSyncData(block);
@@ -371,41 +396,41 @@ namespace O10.Client.Common.Communication
             return block;
         }
 
-		private RevokeIdentity CreateRevokeIdentityPacket(RequestInput requestInput, OutputModel[] outputModels, byte[][] issuanceCommitments)
-		{
-			byte[] secretKey = CryptoHelper.GetRandomSeed();
-			byte[] transactionKey = CryptoHelper.GetPublicKey(secretKey);
-			byte[] destinationKey = CryptoHelper.GetDestinationKey(secretKey, _clientCryptoService.PublicKeys[0].ArraySegment.Array, _clientCryptoService.PublicKeys[1].ArraySegment.Array);
-			byte[] destinationKey2 = requestInput.PublicViewKey != null ? CryptoHelper.GetDestinationKey(secretKey, requestInput.PublicSpendKey, requestInput.PublicViewKey) : requestInput.PublicSpendKey;
-			byte[] blindingFactor = CryptoHelper.GetRandomSeed();
-			byte[] blindingFactorToOwnership = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.PrevBlindingFactor);
-			byte[] blindingFactorToEligibility = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.EligibilityBlindingFactor);
-			byte[] assetCommitment = CryptoHelper.GetAssetCommitment(blindingFactor, requestInput.AssetId);
+        private RevokeIdentity CreateRevokeIdentityPacket(RequestInput requestInput, OutputSources[] outputModels, byte[][] issuanceCommitments)
+        {
+            byte[] secretKey = CryptoHelper.GetRandomSeed();
+            byte[] transactionKey = CryptoHelper.GetPublicKey(secretKey);
+            byte[] destinationKey = CryptoHelper.GetDestinationKey(secretKey, _clientCryptoService.PublicKeys[0].ArraySegment.Array, _clientCryptoService.PublicKeys[1].ArraySegment.Array);
+            byte[] destinationKey2 = requestInput.PublicViewKey != null ? CryptoHelper.GetDestinationKey(secretKey, requestInput.PublicSpendKey, requestInput.PublicViewKey) : requestInput.PublicSpendKey;
+            byte[] blindingFactor = CryptoHelper.GetRandomSeed();
+            byte[] blindingFactorToOwnership = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.PrevBlindingFactor);
+            byte[] blindingFactorToEligibility = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.EligibilityBlindingFactor);
+            byte[] assetCommitment = CryptoHelper.GetAssetCommitment(blindingFactor, requestInput.AssetId);
 
-			GetAssetCommitmentsRing(requestInput.PrevAssetCommitment, outputModels, out int pos, out IKey[] assetCommitments);
+            GetAssetCommitmentsRing(requestInput.PrevAssetCommitment, outputModels, out int pos, out IKey[] assetCommitments);
             SurjectionProof ownershipProof = CryptoHelper.CreateSurjectionProof(assetCommitment, assetCommitments.Select(s => s.Value).ToArray(), pos, blindingFactorToOwnership);
 
-			_eligibilityProofsProvider.GetEligibilityCommitmentAndProofs(requestInput.EligibilityCommitment, issuanceCommitments, out int actualAssetPos, out byte[][] commitments);
+            _eligibilityProofsProvider.GetEligibilityCommitmentAndProofs(requestInput.EligibilityCommitment, issuanceCommitments, out int actualAssetPos, out byte[][] commitments);
             SurjectionProof eligibilityProof = CryptoHelper.CreateSurjectionProof(assetCommitment, commitments, actualAssetPos, blindingFactorToEligibility);
 
-			RevokeIdentity block = new RevokeIdentity
-			{
-				DestinationKey = destinationKey,
-				DestinationKey2 = destinationKey2,
-				TransactionPublicKey = transactionKey,
-				AssetCommitment = assetCommitment,
-				OwnershipProof = ownershipProof,
-				EligibilityProof = eligibilityProof,
-				BiometricProof = requestInput.BiometricProof
-			};
+            RevokeIdentity block = new RevokeIdentity
+            {
+                DestinationKey = destinationKey,
+                DestinationKey2 = destinationKey2,
+                TransactionPublicKey = transactionKey,
+                AssetCommitment = assetCommitment,
+                OwnershipProof = ownershipProof,
+                EligibilityProof = eligibilityProof,
+                BiometricProof = requestInput.BiometricProof
+            };
 
-			FillSyncData(block);
-			FillAndSign(block, new StealthSignatureInput(requestInput.PrevTransactionKey, assetCommitments, pos));
+            FillSyncData(block);
+            FillAndSign(block, new StealthSignatureInput(requestInput.PrevTransactionKey, assetCommitments, pos));
 
-			return block;
-		}
+            return block;
+        }
 
-		private async Task<IdentityProofs> CreateIdentityProofsPacket(RequestInput requestInput, AssociatedProofPreparation[] associatedProofPreparations, OutputModel[] outputModels, byte[] issuer)
+        private async Task<IdentityProofs> CreateIdentityProofsPacket(RequestInput requestInput, AssociatedProofPreparation[] associatedProofPreparations, OutputSources[] outputModels, byte[] issuer)
         {
             byte[] secretKey = CryptoHelper.GetRandomSeed();
             byte[] transactionKey = CryptoHelper.GetPublicKey(secretKey);
@@ -491,7 +516,7 @@ namespace O10.Client.Common.Communication
             return associatedProof;
         }
 
-        private TransitionCompromisedProofs CreateTransitionCompromisedProofs(RequestInput requestInput, byte[] compromisedKeyImage, byte[] compromisedTransactionKey, byte[] destinationKey, OutputModel[] outputModels, byte[][] issuanceCommitments)
+        private TransitionCompromisedProofs CreateTransitionCompromisedProofs(RequestInput requestInput, byte[] compromisedKeyImage, byte[] compromisedTransactionKey, byte[] destinationKey, OutputSources[] outputModels, byte[][] issuanceCommitments)
         {
             byte[] blindingFactor = CryptoHelper.GetRandomSeed();
             byte[] blindingFactorToOwnership = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.PrevBlindingFactor);
@@ -527,29 +552,27 @@ namespace O10.Client.Common.Communication
             return block;
         }
 
-        private UniversalTransport CreateUniversalTransportPacket(RequestInput requestInput, OutputModel[] outputModels, UniversalProofs universalProofs)
+        private UniversalStealthTransaction CreateUniversalTransportPacket(RequestInput requestInput, OutputSources[] outputModels, UniversalProofs universalProofs)
         {
             byte[] secretKey = CryptoHelper.GetRandomSeed();
             byte[] transactionKey = CryptoHelper.GetPublicKey(secretKey);
             byte[] destinationKey = CryptoHelper.GetDestinationKey(secretKey, _clientCryptoService.PublicKeys[0].ArraySegment.Array, _clientCryptoService.PublicKeys[1].ArraySegment.Array);
             byte[] destinationKey2 = requestInput.PublicViewKey != null ? CryptoHelper.GetDestinationKey(secretKey, requestInput.PublicSpendKey, requestInput.PublicViewKey) : requestInput.PublicSpendKey;
-            byte[] blindingFactorToOwnership = CryptoHelper.GetDifferentialBlindingFactor(requestInput.BlindingFactor.Span, requestInput.PrevBlindingFactor);
 
             GetAssetCommitmentsRing(requestInput.PrevAssetCommitment, outputModels, out int pos, out IKey[] assetCommitments);
-            SurjectionProof ownershipProof = CryptoHelper.CreateSurjectionProof(requestInput.AssetCommitment.Span, assetCommitments.Select(s => s.Value).ToArray(), pos, blindingFactorToOwnership);
 
-            UniversalTransport block = new UniversalTransport
+
+            var transaction = new UniversalStealthTransaction
             {
-                DestinationKey = destinationKey,
-                DestinationKey2 = destinationKey2,
-                TransactionPublicKey = transactionKey,
+                DestinationKey = _identityKeyProvider.GetKey(destinationKey),
+                DestinationKey2 = _identityKeyProvider.GetKey(destinationKey2),
+                TransactionPublicKey = _identityKeyProvider.GetKey(transactionKey),
                 AssetCommitment = requestInput.AssetCommitment.ToArray(),
-                OwnershipProof = ownershipProof
             };
 
             FillSyncData(block);
 
-            FillAndSign(block, 
+            FillAndSign(block,
                 new StealthSignatureInput(
                     requestInput.PrevTransactionKey,
                     assetCommitments,
@@ -569,53 +592,7 @@ namespace O10.Client.Common.Communication
                         }
                     }));
 
-            return block;
-        }
-
-        /// <summary>
-        /// Returns existing Asset Commitments
-        /// </summary>
-        /// <param name="prevCommitment"></param>
-        /// <param name="outputModels"></param>
-        /// <param name="actualAssetPos"></param>
-        /// <param name="commitments"></param>
-        private void GetAssetCommitmentsRing(byte[] prevCommitment, OutputModel[] outputModels, out int actualAssetPos, out IKey[] commitments)
-        {
-            Random random = new Random(BitConverter.ToInt32(prevCommitment, 0));
-            int totalItems = outputModels.Length;
-            actualAssetPos = random.Next(totalItems);
-            commitments = new IKey[totalItems];
-            List<int> pickedPositions = new List<int>();
-
-            for (int i = 0; i < totalItems; i++)
-            {
-                if (i == actualAssetPos)
-                {
-                    commitments[i] = _identityKeyProvider.GetKey(prevCommitment);
-                }
-                else
-                {
-                    bool found = false;
-                    do
-                    {
-                        int randomPos = random.Next(totalItems);
-                        if (pickedPositions.Contains(randomPos))
-                        {
-                            continue;
-                        }
-
-                        OutputModel outputModel = outputModels[randomPos];
-                        if (outputModel.Commitment.Equals(prevCommitment))
-                        {
-                            continue;
-                        }
-
-                        commitments[i] = outputModel.Commitment;
-                        pickedPositions.Add(randomPos);
-                        found = true;
-                    } while (!found);
-                }
-            }
+            return transaction;
         }
 
         #endregion Private Functions

@@ -15,24 +15,20 @@ namespace O10.Client.Common.Communication
     public class StealthWalletPacketsExtractor : StealthPacketsExtractor
     {
         private readonly IDataAccessService _dataAccessService;
-        private byte[] _nextKeyImage;
+        private readonly IStealthTransactionsService _stealthTransactionsService;
         private readonly IPropagatorBlock<NotificationBase, NotificationBase> _propagatorBlockNotifications;
-        private readonly ITargetBlock<byte[]> _pipeInKeyImages;
 
         public StealthWalletPacketsExtractor(
             IDataAccessService dataAccessService,
             IStealthClientCryptoService clientCryptoService,
+            IStealthTransactionsService stealthTransactionsService,
             IGatewayService syncStateProvider,
             ILoggerService loggerService)
             : base(syncStateProvider, clientCryptoService, dataAccessService, loggerService)
         {
             _dataAccessService = dataAccessService;
+            _stealthTransactionsService = stealthTransactionsService;
             _propagatorBlockNotifications = new TransformBlock<NotificationBase, NotificationBase>(p => p);
-
-            _pipeInKeyImages = new ActionBlock<byte[]>(k =>
-            {
-                _nextKeyImage = k;
-            });
         }
 
         public override string Name => "StealthWallet";
@@ -47,16 +43,6 @@ namespace O10.Client.Common.Communication
             return base.GetSourcePipe<T>();
         }
 
-        public override ITargetBlock<T> GetTargetPipe<T>(string name = null)
-        {
-            if (typeof(T) == typeof(byte[]))
-            {
-                return (ITargetBlock<T>)_pipeInKeyImages;
-            }
-
-            return base.GetTargetPipe<T>();
-        }
-
         protected override bool CheckPacketWitness(PacketWitness packetWitness)
         {
             foreach (var item in _dataAccessService.GetUserAttributes(AccountId).Where(u => !u.IsOverriden && !u.LastCommitment.Equals32(new byte[32])))
@@ -65,7 +51,7 @@ namespace O10.Client.Common.Communication
 
                 _logger.LogIfDebug(() => $"[{AccountId}]: Checking KeyImage {nextKeyImage?.ToHexString() ?? "NULL"} compromised");
 
-                if (!nextKeyImage.Equals32(_nextKeyImage) && (packetWitness.KeyImage?.Equals(nextKeyImage) ?? false))
+                if (!_stealthTransactionsService.NextKeyImage.Equals(nextKeyImage) && (packetWitness.KeyImage?.Equals(nextKeyImage) ?? false))
                 {
                     _logger.LogIfDebug(() => $"[{AccountId}]: KeyImage {nextKeyImage?.ToHexString() ?? "NULL"} is compromised");
                     _propagatorBlockNotifications.SendAsync(new CompromisedKeyImage { KeyImage = packetWitness.KeyImage, TransactionKey = packetWitness.TransactionKey, DestinationKey = packetWitness.DestinationKey, Target = packetWitness.DestinationKey2 });

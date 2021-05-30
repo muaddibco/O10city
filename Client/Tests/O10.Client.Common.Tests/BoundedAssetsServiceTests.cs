@@ -98,19 +98,18 @@ namespace O10.Client.Common.Tests
 
             string associatedAttributeValue = "associatedAttribute";
             byte[] associatedAttributeAssetId = _assetsService.GenerateAssetId(2, associatedAttributeValue);
-            byte[] bf = CryptoHelper.GetRandomSeed();
 
             UserRootAttribute userRootAttribute = new UserRootAttribute
             {
                 AssetId = rootAttributeAssetId,
                 Content = "rootAttribute",
                 SchemeName = AttributesSchemes.ATTR_SCHEME_NAME_IDCARD,
-                OriginalCommitment = issuanceCommitment,
+                IssuanceCommitment = issuanceCommitment,
                 OriginalBlindingFactor = issuanceBf,
                 Source = issuer.ToHexString()
             };
 
-            var attributeProofs = await boundedAssetsService.GetRootAttributeProofs(bf, userRootAttribute).ConfigureAwait(false);
+            var attributeProofs = await boundedAssetsService.GetRootAttributeProofs(userRootAttribute).ConfigureAwait(false);
 
             await proofsValidationService.CheckEligibilityProofs(attributeProofs.Commitment.Value, attributeProofs.BindingProof, null).ConfigureAwait(false);
         }
@@ -138,12 +137,12 @@ namespace O10.Client.Common.Tests
                 AssetId = rootAssetInput.AssetId,
                 Content = "rootAttribute",
                 SchemeName = AttributesSchemes.ATTR_SCHEME_NAME_IDCARD,
-                OriginalCommitment = issuanceCommitment,
+                IssuanceCommitment = issuanceCommitment,
                 OriginalBlindingFactor = issuanceBf,
                 Source = issuer.ToString()
             };
 
-            var attributeIdCardProofs = await boundedAssetsService.GetRootAttributeProofs(rootAssetInput.BlindingFactor, userRootAttribute).ConfigureAwait(false);
+            var attributeIdCardProofs = await boundedAssetsService.GetRootAttributeProofs(userRootAttribute).ConfigureAwait(false);
             
             string associatedAttributeValue = "associatedAttribute";
 
@@ -183,7 +182,7 @@ namespace O10.Client.Common.Tests
         [Fact]
         public async void CreateAndValidateValidTwoLayerAttributeProofs()
         {
-            var boundedAssetsService = new BoundedAssetsService(_assetsService, _identityKeyProvidersRegistry, _eligibilityProofsProvider);
+            var boundedAssetsService = new BoundedAssetsService(_assetsService, , _identityKeyProvidersRegistry, _eligibilityProofsProvider);
             var proofsValidationService = new ProofsValidationService(_gatewayService, _assetsService, CoreFixture.LoggerService, null);
 
             await boundedAssetsService.Initialize("pwd").ConfigureAwait(false);
@@ -203,12 +202,12 @@ namespace O10.Client.Common.Tests
                 AssetId = rootAssetInput.AssetId,
                 Content = "rootAttribute",
                 SchemeName = AttributesSchemes.ATTR_SCHEME_NAME_IDCARD,
-                OriginalCommitment = issuanceCommitment,
+                IssuanceCommitment = issuanceCommitment,
                 OriginalBlindingFactor = issuanceBf,
                 Source = issuer1.ToString()
             };
 
-            var attributeIdCardProofs = await boundedAssetsService.GetRootAttributeProofs(rootAssetInput.BlindingFactor, userRootAttribute).ConfigureAwait(false);
+            var attributeIdCardProofs = await boundedAssetsService.GetRootAttributeProofs(userRootAttribute).ConfigureAwait(false);
 
             string rootAttributeChildValue = "rootAttributeChild";
 

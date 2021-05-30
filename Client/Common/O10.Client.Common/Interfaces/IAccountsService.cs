@@ -8,15 +8,15 @@ namespace O10.Client.Common.Interfaces
 {
     [ServiceContract]
     public interface IAccountsService
-	{
-		AccountDescriptor Authenticate(long accountId, string password);
-		List<AccountDescriptor> GetAll();
-		AccountDescriptor GetById(long id);
-		long Create(AccountType accountType, string accountInfo = null, string password = null, bool isPrivate = false);
-		void Update(long accountId, string accountInfo = null, string password = null);
-		void Override(AccountType accountType, long accountId, byte[] secretSpendKey, byte[] secretViewKey, string password, ulong lastRegistryCombinedBlockHeight);
-		void Update(AccountDescriptor user, string password = null);
-		void Delete(long id);
-		void ResetAccount(long accountId, string password);
-	}
+    {
+        AccountDescriptor Authenticate(long accountId, string password);
+        List<AccountDescriptor> GetAll();
+        AccountDescriptor GetById(long id);
+        long Create(AccountType accountType, string accountInfo = null, string password = null, bool isPrivate = false);
+        void Update(long accountId, string accountInfo = null, string password = null);
+        void Override(AccountType accountType, long accountId, byte[] secretSpendKey, byte[] secretViewKey, string password, ulong lastRegistryCombinedBlockHeight);
+        void Update(AccountDescriptor user, string password = null);
+        void Delete(long id);
+        void ResetAccount(long accountId, string password);
+    }
 }

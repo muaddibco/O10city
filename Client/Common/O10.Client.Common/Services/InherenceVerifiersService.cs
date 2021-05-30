@@ -10,26 +10,26 @@ using System.Threading.Tasks;
 
 namespace O10.Client.Common.Services
 {
-	[RegisterDefaultImplementation(typeof(IInherenceVerifiersService), Lifetime = LifetimeManagement.Singleton)]
-	public class InherenceVerifiersService : IInherenceVerifiersService
-	{
-		private readonly IRestApiConfiguration _restApiConfiguration;
-		private readonly IRestClientService _restClientService;
+    [RegisterDefaultImplementation(typeof(IInherenceVerifiersService), Lifetime = LifetimeManagement.Singleton)]
+    public class InherenceVerifiersService : IInherenceVerifiersService
+    {
+        private readonly IRestApiConfiguration _restApiConfiguration;
+        private readonly IRestClientService _restClientService;
 
-		public InherenceVerifiersService(IRestClientService restClientService, IConfigurationService configurationService)
-		{
-			_restApiConfiguration = configurationService.Get<IRestApiConfiguration>();
-			_restClientService = restClientService;
-		}
+        public InherenceVerifiersService(IRestClientService restClientService, IConfigurationService configurationService)
+        {
+            _restApiConfiguration = configurationService.Get<IRestApiConfiguration>();
+            _restClientService = restClientService;
+        }
 
-		public async Task<IEnumerable<InherenceServiceInfo>> GetInherenceServices()
-		{
-			var res = await _restClientService
-				.Request(_restApiConfiguration.InherenceUri)
-				.GetJsonAsync<IEnumerable<InherenceServiceInfo>>()
-				.ConfigureAwait(false);
+        public async Task<IEnumerable<InherenceServiceInfo>> GetInherenceServices()
+        {
+            var res = await _restClientService
+                .Request(_restApiConfiguration.InherenceUri)
+                .GetJsonAsync<IEnumerable<InherenceServiceInfo>>()
+                .ConfigureAwait(false);
 
-			return res;
-		}
-	}
+            return res;
+        }
+    }
 }

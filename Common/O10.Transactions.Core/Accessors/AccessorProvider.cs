@@ -20,7 +20,7 @@ namespace O10.Transactions.Core.Accessors
         {
             var accessor = _accessors.FirstOrDefault(a => a.LedgerType == key);
 
-            if(accessor == null)
+            if (accessor == null)
             {
                 throw new ArgumentOutOfRangeException($"No Accessor found for the key {key}");
             }

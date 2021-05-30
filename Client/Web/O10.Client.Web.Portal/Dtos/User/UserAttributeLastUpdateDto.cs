@@ -1,4 +1,8 @@
-﻿namespace O10.Client.Web.Portal.Dtos.User
+﻿using Newtonsoft.Json;
+using O10.Core.Identity;
+using O10.Core.Serialization;
+
+namespace O10.Client.Web.Portal.Dtos.User
 {
     public class UserAttributeLastUpdateDto
     {
@@ -6,12 +10,13 @@
 
         public string AssetId { get; set; }
 
-        public string LastBlindingFactor { get; set; }
+        [JsonConverter(typeof(KeyJsonConverter))]
+        public IKey LastCommitment { get; set; }
 
-        public string LastCommitment { get; set; }
+        [JsonConverter(typeof(KeyJsonConverter))]
+        public IKey LastTransactionKey { get; set; }
 
-        public string LastTransactionKey { get; set; }
-
-        public string LastDestinationKey { get; set; }
+        [JsonConverter(typeof(KeyJsonConverter))]
+        public IKey LastDestinationKey { get; set; }
     }
 }

@@ -11,9 +11,9 @@ namespace O10.Client.Common.Interfaces
     {
         string Name { get; }
 
-		ISourceBlock<WitnessPackageWrapper> PipeOut { get; }
+        ISourceBlock<WitnessPackageWrapper> PipeOut { get; }
 
-		bool Initialize(long accountId, CancellationToken cancellationToken);
-		Task Start();
+        bool Initialize(long accountId, CancellationToken cancellationToken);
+        Task Start();
     }
 }

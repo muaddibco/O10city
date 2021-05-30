@@ -248,7 +248,6 @@ namespace O10.Client.Mobile.Base.Services
                 UserAttributeLastUpdateModel lastUpdateModel = new UserAttributeLastUpdateModel
                 {
                     AssetId = userAttributeStateUpdate.AssetId.ToHexString(),
-                    LastBlindingFactor = userAttributeStateUpdate.BlindingFactor.ToHexString(),
                     LastCommitment = userAttributeStateUpdate.AssetCommitment.ToString(),
                     LastTransactionKey = userAttributeStateUpdate.TransactionKey.ToString(),
                     LastDestinationKey = userAttributeStateUpdate.DestinationKey.ToString()

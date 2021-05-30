@@ -30,7 +30,7 @@ namespace O10.Client.Common.Communication
             IStateClientCryptoService clientCryptoService,
             IGatewayService gatewayService,
             ILoggerService loggerService)
-			: base(
+            : base(
                   hashCalculationsRepository,
                   identityKeyProvidersRegistry,
                   clientCryptoService,
@@ -50,18 +50,18 @@ namespace O10.Client.Common.Communication
             _lastHeight = lastBlockHeight + 1;
         }
 
-		public async Task<DocumentSignRecord> IssueDocumentSignRecord(byte[] documentHash, ulong recordHeight, byte[] keyImage, byte[] signerCommitment, SurjectionProof eligibilityProof, byte[] issuer, SurjectionProof signerGroupRelationProof, byte[] signerGroupCommitment, byte[] groupIssuer, SurjectionProof signerGroupProof, SurjectionProof signerAllowedGroupsProof)
-		{
-			DocumentSignRecord packet = CreateDocumentSignRecord(documentHash, recordHeight, keyImage, signerCommitment, eligibilityProof, issuer, signerGroupRelationProof, signerGroupCommitment, groupIssuer, signerGroupProof, signerAllowedGroupsProof);
-            
+        public async Task<DocumentSignRecord> IssueDocumentSignRecord(byte[] documentHash, ulong recordHeight, byte[] keyImage, byte[] signerCommitment, SurjectionProof eligibilityProof, byte[] issuer, SurjectionProof signerGroupRelationProof, byte[] signerGroupCommitment, byte[] groupIssuer, SurjectionProof signerGroupProof, SurjectionProof signerAllowedGroupsProof)
+        {
+            DocumentSignRecord packet = CreateDocumentSignRecord(documentHash, recordHeight, keyImage, signerCommitment, eligibilityProof, issuer, signerGroupRelationProof, signerGroupCommitment, groupIssuer, signerGroupProof, signerAllowedGroupsProof);
+
             var completionResult = PropagateTransaction(packet);
 
             return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
-		}
+        }
 
-		public async Task<DocumentRecord> IssueDocumentRecord(byte[] documentHash, byte[][] allowedSignerCommitments)
-		{
-			DocumentRecord packet = CreateDocumentRecord(documentHash, allowedSignerCommitments);
+        public async Task<DocumentRecord> IssueDocumentRecord(byte[] documentHash, byte[][] allowedSignerCommitments)
+        {
+            DocumentRecord packet = CreateDocumentRecord(documentHash, allowedSignerCommitments);
 
             var completionResult = PropagateTransaction(packet);
 
@@ -115,8 +115,8 @@ namespace O10.Client.Common.Communication
         public async Task<IssueAssociatedBlindedAsset> IssueAssociatedAsset(byte[] assetId,
                                          byte[] blindingPointValue,
                                          byte[] blindingPointRoot)
-		{
-			IssueAssociatedBlindedAsset packet = CreateIssueAssociatedBlindedAsset(assetId, blindingPointValue, blindingPointRoot);
+        {
+            IssueAssociatedBlindedAsset packet = CreateIssueAssociatedBlindedAsset(assetId, blindingPointValue, blindingPointRoot);
 
             var completionResult = PropagateTransaction(packet);
 
@@ -151,7 +151,7 @@ namespace O10.Client.Common.Communication
         #region ============ PRIVATE FUNCTIONS ============ 
 
         private DocumentSignRecord CreateDocumentSignRecord(byte[] documentHash, ulong recordHeight, byte[] keyImage, byte[] signerCommitment, SurjectionProof eligibilityProof, byte[] issuer, SurjectionProof signerGroupRelationProof, byte[] signerGroupCommitment, byte[] groupIssuer, SurjectionProof signerGroupProof, SurjectionProof signerAllowedGroupsProof)
-		{
+        {
             DocumentSignRecord issueEmployeeRecord = new DocumentSignRecord
             {
                 DocumentHash = documentHash,
@@ -169,25 +169,25 @@ namespace O10.Client.Common.Communication
 
             FillHeightInfo(issueEmployeeRecord);
             FillSyncData(issueEmployeeRecord);
-			FillAndSign(issueEmployeeRecord);
+            FillAndSign(issueEmployeeRecord);
 
-			return issueEmployeeRecord;
-		}
+            return issueEmployeeRecord;
+        }
 
-		private DocumentRecord CreateDocumentRecord(byte[] documentHash, byte[][] allowedSignerCommitments)
-		{
-			DocumentRecord issueEmployeeRecord = new DocumentRecord
-			{
-				DocumentHash = documentHash,
-				AllowedSignerGroupCommitments = allowedSignerCommitments?? Array.Empty<byte[]>()
+        private DocumentRecord CreateDocumentRecord(byte[] documentHash, byte[][] allowedSignerCommitments)
+        {
+            DocumentRecord issueEmployeeRecord = new DocumentRecord
+            {
+                DocumentHash = documentHash,
+                AllowedSignerGroupCommitments = allowedSignerCommitments ?? Array.Empty<byte[]>()
             };
 
-			FillHeightInfo(issueEmployeeRecord);
-			FillSyncData(issueEmployeeRecord);
-			FillAndSign(issueEmployeeRecord);
+            FillHeightInfo(issueEmployeeRecord);
+            FillSyncData(issueEmployeeRecord);
+            FillAndSign(issueEmployeeRecord);
 
-			return issueEmployeeRecord;
-		}
+            return issueEmployeeRecord;
+        }
 
         private CancelEmployeeRecord CreateCancelEmployeeRecord(byte[] registrationCommitment)
         {
@@ -209,7 +209,7 @@ namespace O10.Client.Common.Communication
             {
                 GroupCommitment = groupCommitment,
                 RegistrationCommitment = registrationCommitment
-			};
+            };
 
             FillHeightInfo(issueEmployeeRecord);
             FillSyncData(issueEmployeeRecord);
@@ -221,28 +221,28 @@ namespace O10.Client.Common.Communication
         private IssueAssociatedBlindedAsset CreateIssueAssociatedBlindedAsset(byte[] assetId,
                                                                               byte[] blindingPointValue,
                                                                               byte[] blindingPointRoot)
-		{
-			byte[] nonBlindedAssociatedCommitment = CryptoHelper.GetNonblindedAssetCommitment(assetId);
-			byte[] commitmentToValue = CryptoHelper.SumCommitments(blindingPointValue, nonBlindedAssociatedCommitment);
-			byte[] commitmentToBinding = CryptoHelper.SumCommitments(blindingPointRoot, nonBlindedAssociatedCommitment);
+        {
+            byte[] nonBlindedAssociatedCommitment = CryptoHelper.GetNonblindedAssetCommitment(assetId);
+            byte[] commitmentToValue = CryptoHelper.SumCommitments(blindingPointValue, nonBlindedAssociatedCommitment);
+            byte[] commitmentToBinding = CryptoHelper.SumCommitments(blindingPointRoot, nonBlindedAssociatedCommitment);
 
-			IssueAssociatedBlindedAsset issueAssociatedBlindedAsset = new IssueAssociatedBlindedAsset
-			{
-				AssetCommitment = commitmentToValue,
-				RootAssetCommitment = commitmentToBinding
-			};
+            IssueAssociatedBlindedAsset issueAssociatedBlindedAsset = new IssueAssociatedBlindedAsset
+            {
+                AssetCommitment = commitmentToValue,
+                RootAssetCommitment = commitmentToBinding
+            };
 
-			FillHeightInfo(issueAssociatedBlindedAsset);
-			FillSyncData(issueAssociatedBlindedAsset);
-			FillAndSign(issueAssociatedBlindedAsset);
+            FillHeightInfo(issueAssociatedBlindedAsset);
+            FillSyncData(issueAssociatedBlindedAsset);
+            FillAndSign(issueAssociatedBlindedAsset);
 
-			return issueAssociatedBlindedAsset;
-		}
+            return issueAssociatedBlindedAsset;
+        }
 
-		private IssueBlindedAsset CreateIssueBlindedAsset(byte[] assetId)
-		{
-			//TODO: must be replaced with usage of constant secret key of issuing
-			_clientCryptoService.GetBoundedCommitment(assetId, out byte[] assetCommitment, out byte[] keyImage, out RingSignature ringSignature);
+        private IssueBlindedAsset CreateIssueBlindedAsset(byte[] assetId)
+        {
+            //TODO: must be replaced with usage of constant secret key of issuing
+            _clientCryptoService.GetBoundedCommitment(assetId, out byte[] assetCommitment, out byte[] keyImage, out RingSignature ringSignature);
 
             IssueBlindedAsset issueBlindedAsset = new IssueBlindedAsset
             {
@@ -251,12 +251,12 @@ namespace O10.Client.Common.Communication
                 UniquencessProof = ringSignature
             };
 
-			FillHeightInfo(issueBlindedAsset);
-			FillSyncData(issueBlindedAsset);
-			FillAndSign(issueBlindedAsset);
+            FillHeightInfo(issueBlindedAsset);
+            FillSyncData(issueBlindedAsset);
+            FillAndSign(issueBlindedAsset);
 
-			return issueBlindedAsset;
-		}
+            return issueBlindedAsset;
+        }
 
         private IssueBlindedAsset CreateIssueBlindedAsset2(byte[] assetId, byte[] blindingFactor)
         {
@@ -347,7 +347,7 @@ namespace O10.Client.Common.Communication
             transactionalBlockBase.Height = _lastHeight++;
         }
 
-		#endregion
+        #endregion
 
-	}
+    }
 }

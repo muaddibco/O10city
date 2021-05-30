@@ -6,5 +6,5 @@ namespace O10.Client.DataLayer.Configuration
     {
         string ConnectionString { get; set; }
         string ConnectionType { get; set; }
-	}
+    }
 }

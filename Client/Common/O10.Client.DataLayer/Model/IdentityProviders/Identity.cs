@@ -4,12 +4,12 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Client.DataLayer.Model
 {
-	[Table("identity")]
-	public class Identity
-	{
-		[Key]
-		[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-		public long IdentityId { get; set; }
+    [Table("identity")]
+    public class Identity
+    {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public long IdentityId { get; set; }
 
         public long AccountId { get; set; }
 

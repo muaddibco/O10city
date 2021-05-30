@@ -18,10 +18,10 @@ namespace O10.Client.DataLayer.Model
         [EnumDataType(typeof(AccountType))]
         public AccountType AccountType { get; set; }
         public string AccountInfo { get; set; }
-		public bool IsCompromised { get; set; }
+        public bool IsCompromised { get; set; }
 
-		public long LastAggregatedRegistrations { get; set; }
+        public long LastAggregatedRegistrations { get; set; }
 
-		public bool IsPrivate { get; set; }
-	}
+        public bool IsPrivate { get; set; }
+    }
 }

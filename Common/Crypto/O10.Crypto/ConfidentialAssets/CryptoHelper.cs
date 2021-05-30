@@ -646,7 +646,7 @@ namespace O10.Crypto.ConfidentialAssets
             return Ed25519.Sign(msg, expandedPrivateKey);
         }
 
-        public static byte[] GetOTSK(Memory<byte> transactionKey, byte[] secretViewKey, byte[] secretSpendKey)
+        public static byte[] GetOTSK(Memory<byte> transactionKey, byte[] secretViewKey, byte[]? secretSpendKey = null)
         {
             GroupOperations.ge_frombytes(out GroupElementP3 transactionKeyP3, transactionKey.Span, 0);
             GroupOperations.ge_scalarmult_p3(out GroupElementP3 p3, secretViewKey, ref transactionKeyP3);
@@ -655,6 +655,11 @@ namespace O10.Crypto.ConfidentialAssets
             GroupOperations.ge_p3_tobytes(p3Bytes, 0, ref p3);
             byte[] p3hash = FastHash256(p3Bytes);
             ScalarOperations.sc_reduce32(p3hash);
+
+            if(secretSpendKey == null)
+            {
+                return p3hash;
+            }
 
             byte[] otsk = new byte[32];
             ScalarOperations.sc_add(otsk, p3hash, secretSpendKey);

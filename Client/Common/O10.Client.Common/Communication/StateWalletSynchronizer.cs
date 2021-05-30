@@ -10,7 +10,7 @@ namespace O10.Client.Common.Communication
     {
         public StateWalletSynchronizer(IDataAccessService dataAccessService,
                                        IStateClientCryptoService clientCryptoService,
-                                       ILoggerService loggerService) 
+                                       ILoggerService loggerService)
             : base(dataAccessService, clientCryptoService, loggerService)
         {
         }

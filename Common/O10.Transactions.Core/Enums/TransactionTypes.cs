@@ -2,10 +2,10 @@
 {
     public static class TransactionTypes
     {
-		/// <summary>
-		/// This flag means that transaction is intended for transferring from State based account to UTXO one
-		/// </summary>
-		public const ushort TransitionalFlag = 0xF000;
+        /// <summary>
+        /// This flag means that transaction is intended for transferring from State based account to UTXO one
+        /// </summary>
+        public const ushort TransitionalFlag = 0xF000;
 
         public const ushort Unknown = 0;
         public const ushort Registry_Register = 1;
@@ -14,14 +14,14 @@
         public const ushort Registry_ConfidenceBlock = 4;
         public const ushort Registry_ConfirmationBlock = 5;
         public const ushort Registry_RegisterStealth = 6;
-		public const ushort Registry_RegisterTransfer = 7;
+        public const ushort Registry_RegisterTransfer = 7;
         public const ushort Registry_RegisterEx = 8;
 
         public const ushort Transaction_UniversalTransport = 1;
         public const ushort Transaction_IssueAssociatedAsset = 6;
         public const ushort Transaction_IssueAsset = 7;
-		public const ushort Transaction_TransferAsset = 8;
-		public const ushort Transaction_TransferAssetToStealth = 8 + TransitionalFlag;
+        public const ushort Transaction_TransferAsset = 8;
+        public const ushort Transaction_TransferAssetToStealth = 8 + TransitionalFlag;
         public const ushort Transaction_BlindAsset = 9;
         public const ushort Transaction_RetransferAssetToStealth = 10 + TransitionalFlag;
         public const ushort Transaction_IssueBlindedAsset = 11;
@@ -41,7 +41,7 @@
         public const ushort Stealth_UniversalTransport = 11;
         public const ushort Stealth_TransitionCompromisedProofs = ushort.MaxValue;
 
-		public const ushort Consensus_GenericConsensus = ushort.MaxValue;
+        public const ushort Consensus_GenericConsensus = ushort.MaxValue;
 
         public const ushort Synchronization_RegistryCombinationBlock = 5;
         public const ushort Synchronization_ConfirmedBlock = ushort.MaxValue;

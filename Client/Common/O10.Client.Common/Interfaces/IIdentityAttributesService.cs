@@ -11,6 +11,6 @@ namespace O10.Client.Common.Interfaces
     {
         IEnumerable<(string validationType, string validationDescription)> GetAssociatedValidationTypes();
 
-		Task<List<IdentityAttributeValidationDescriptor>> GetIdentityAttributeValidationDescriptors(string issuer, bool activeOnly);
-	}
+        Task<List<IdentityAttributeValidationDescriptor>> GetIdentityAttributeValidationDescriptors(string issuer, bool activeOnly);
+    }
 }

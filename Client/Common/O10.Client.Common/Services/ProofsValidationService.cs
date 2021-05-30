@@ -278,7 +278,7 @@ namespace O10.Client.Common.Services
             catch (NullReferenceException)
             {
                 throw new ValidationProofsWereNotCompleteException(schemeName);
-            }        
+            }
         }
 
         private async Task VerifyValueProof(AttributeProofs attributeForCheck, IKey issuer)

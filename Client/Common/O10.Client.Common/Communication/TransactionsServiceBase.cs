@@ -20,97 +20,84 @@ using O10.Crypto.Models;
 namespace O10.Client.Common.Communication
 {
     public abstract class TransactionsServiceBase : ITransactionsService
-	{
-		protected readonly IGatewayService _gatewayService;
-		protected readonly IHashCalculation _hashCalculation;
-		protected readonly IHashCalculation _proofOfWorkCalculation;
-		protected readonly IIdentityKeyProvider _identityKeyProvider;
-		private readonly IPropagatorBlock<TaskCompletionWrapper<TransactionBase>, TaskCompletionWrapper<TransactionBase>> _pipeOutTransactions;
-		protected ISigningService _signingService;
-		protected readonly List<IObserver<NotificationBase>> _observers;
-		protected readonly ILogger _logger;
-		protected long _accountId;
+    {
+        protected readonly IGatewayService _gatewayService;
+        protected readonly IHashCalculation _hashCalculation;
+        protected readonly IHashCalculation _proofOfWorkCalculation;
+        protected readonly IIdentityKeyProvider _identityKeyProvider;
+        private readonly IPropagatorBlock<TaskCompletionWrapper<TransactionBase>, TaskCompletionWrapper<TransactionBase>> _pipeOutTransactions;
+        protected ISigningService _signingService;
+        protected readonly List<IObserver<NotificationBase>> _observers;
+        protected readonly ILogger _logger;
+        protected long _accountId;
 
-		protected TransactionsServiceBase(
+        protected TransactionsServiceBase(
             IHashCalculationsRepository hashCalculationsRepository,
             IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
-			ISigningService signingService,
-			IGatewayService gatewayService,
+            ISigningService signingService,
+            IGatewayService gatewayService,
             ILoggerService loggerService)
-		{
-			_hashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
-			_proofOfWorkCalculation = hashCalculationsRepository.Create(Globals.POW_TYPE);
-			_identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
-			_observers = new List<IObserver<NotificationBase>>();
-			_pipeOutTransactions = new TransformBlock<TaskCompletionWrapper<TransactionBase>, TaskCompletionWrapper<TransactionBase>>(w => w);
-			_signingService = signingService;
-			_gatewayService = gatewayService;
-			_logger = loggerService.GetLogger(GetType().Name);
-		}
-
-		protected TaskCompletionSource<NotificationBase> PropagateTransaction(TransactionBase transaction)
         {
-			var transactionWrapper = new TaskCompletionWrapper<TransactionBase>(transaction);
+            _hashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
+            _proofOfWorkCalculation = hashCalculationsRepository.Create(Globals.POW_TYPE);
+            _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
+            _observers = new List<IObserver<NotificationBase>>();
+            _pipeOutTransactions = new TransformBlock<TaskCompletionWrapper<TransactionBase>, TaskCompletionWrapper<TransactionBase>>(w => w);
+            _signingService = signingService;
+            _gatewayService = gatewayService;
+            _logger = loggerService.GetLogger(GetType().Name);
+        }
 
-			_pipeOutTransactions.SendAsync(transactionWrapper);
-			
-			return transactionWrapper.TaskCompletion;
-		}
+        public ISourceBlock<TaskCompletionWrapper<TransactionBase>> PipeOutTransactions => _pipeOutTransactions;
 
-		protected virtual void FillAndSign(PacketBase packet, object signingArgs = null)
-		{
-			ISerializer serializer = _serializersFactory.Create(packet);
-			serializer.SerializeBody();
-			_signingService.Sign(packet, signingArgs);
-			serializer.SerializeFully();
+        protected TaskCompletionSource<NotificationBase> PropagateTransaction(TransactionBase transaction, object? propagationArgument = null)
+        {
+            var transactionWrapper = new TaskCompletionWrapper<TransactionBase>(transaction, propagationArgument);
 
-			_logger.LogIfDebug(() => $"[{_accountId}]: Sending packet {packet.GetType().Name}: {JsonConvert.SerializeObject(packet, new ByteArrayJsonConverter())}");
-		}
+            _pipeOutTransactions.SendAsync(transactionWrapper);
 
-		protected void FillSyncData(IPacketBase packet)
-		{
-			SyncInfoDTO lastSyncBlock = AsyncUtil.RunSync(() => _gatewayService.GetLastSyncBlock());
-			packet.SyncHeight = lastSyncBlock?.Height ?? 0;
-		}
+            return transactionWrapper.TaskCompletion;
+        }
 
-		public virtual ISourceBlock<T> GetSourcePipe<T>(string name = null)
-		{
-			if (typeof(T) == typeof(TaskCompletionWrapper<PacketBase>))
-			{
-				return (ISourceBlock<T>)_pipeOutTransactions;
-			}
+        protected virtual void FillAndSign(PacketBase packet, object signingArgs = null)
+        {
+            ISerializer serializer = _serializersFactory.Create(packet);
+            serializer.SerializeBody();
+            _signingService.Sign(packet, signingArgs);
+            serializer.SerializeFully();
 
-			throw new InvalidOperationException($"No source blocks are available for type {typeof(T).FullName}");
-		}
+            _logger.LogIfDebug(() => $"[{_accountId}]: Sending packet {packet.GetType().Name}: {JsonConvert.SerializeObject(packet, new ByteArrayJsonConverter())}");
+        }
 
-		public virtual ITargetBlock<T> GetTargetPipe<T>(string name = null)
-		{
-			throw new InvalidOperationException($"No target blocks are available for type {typeof(T).FullName}");
-		}
+        protected void FillSyncData(IPacketBase packet)
+        {
+            SyncInfoDTO lastSyncBlock = AsyncUtil.RunSync(() => _gatewayService.GetLastSyncBlock());
+            packet.SyncHeight = lastSyncBlock?.Height ?? 0;
+        }
 
-		private sealed class Subscription : IDisposable
-		{
-			private readonly TransactionsServiceBase _service;
-			private IObserver<NotificationBase> _observer;
+        private sealed class Subscription : IDisposable
+        {
+            private readonly TransactionsServiceBase _service;
+            private IObserver<NotificationBase> _observer;
 
-			public Subscription(TransactionsServiceBase service, IObserver<NotificationBase> observer)
-			{
-				_service = service;
-				_observer = observer;
-			}
+            public Subscription(TransactionsServiceBase service, IObserver<NotificationBase> observer)
+            {
+                _service = service;
+                _observer = observer;
+            }
 
-			public void Dispose()
-			{
-				IObserver<NotificationBase> observer = _observer;
-				if (null != observer)
-				{
-					lock (_service._observers)
-					{
-						_service._observers.Remove(observer);
-					}
-					_observer = null;
-				}
-			}
-		}
-	}
+            public void Dispose()
+            {
+                IObserver<NotificationBase> observer = _observer;
+                if (null != observer)
+                {
+                    lock (_service._observers)
+                    {
+                        _service._observers.Remove(observer);
+                    }
+                    _observer = null;
+                }
+            }
+        }
+    }
 }

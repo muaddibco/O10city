@@ -9,6 +9,7 @@
     <Authors>O10</Authors>
     <Version>1.2.1</Version>
     <PackageReleaseNotes>Breake change of the IAssetsService - return value types of GetRootAttributeSchemeName and GetAssociatedAttributeSchemeNames were changed</PackageReleaseNotes>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

@@ -267,7 +267,7 @@ namespace O10.Client.Web.Portal.Controllers
 
             GetRequestInput(rootAttribute, target, out byte[] issuer, out RequestInput requestInput);
 
-            OutputModel[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
+            OutputSources[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
             byte[][] issuanceCommitments = await _gatewayService.GetIssuanceCommitments(issuer, _restApiConfiguration.RingSize + 1).ConfigureAwait(false);
             RequestResult requestResult = transactionsService.SendCompromisedProofs(requestInput, keyImageCompromized, transactionKeyCompromized, destinationKeyCompromized, outputModels, issuanceCommitments).Result;
 
@@ -288,7 +288,7 @@ namespace O10.Client.Web.Portal.Controllers
             issuer = rootAttribute.Source.HexStringToByteArray();
             byte[] assetId = rootAttribute.AssetId;
             byte[] originalBlindingFactor = rootAttribute.OriginalBlindingFactor;
-            byte[] originalCommitment = rootAttribute.OriginalCommitment;
+            byte[] originalCommitment = rootAttribute.IssuanceCommitment;
             byte[] lastTransactionKey = rootAttribute.LastTransactionKey;
             byte[] lastBlindingFactor = rootAttribute.LastBlindingFactor;
             byte[] lastCommitment = rootAttribute.LastCommitment;
@@ -333,7 +333,7 @@ namespace O10.Client.Web.Portal.Controllers
             do
             {
                 Thread.Sleep(500);
-                rootAttribute = _dataAccessService.GetUserAttributes(accountId).FirstOrDefault(u => !u.IsOverriden && u.OriginalCommitment.Equals32(originalCommitment) && !u.LastTransactionKey.Equals32(transactionKey));
+                rootAttribute = _dataAccessService.GetUserAttributes(accountId).FirstOrDefault(u => !u.IsOverriden && u.IssuanceCommitment.Equals32(originalCommitment) && !u.LastTransactionKey.Equals32(transactionKey));
             } while (rootAttribute == null && counter <= 10);
             return rootAttribute;
         }
@@ -344,7 +344,7 @@ namespace O10.Client.Web.Portal.Controllers
             byte[] issuer = rootAttribute.Source.HexStringToByteArray();
             byte[] assetId = rootAttribute.AssetId;
             byte[] originalBlindingFactor = rootAttribute.OriginalBlindingFactor;
-            byte[] originalCommitment = rootAttribute.OriginalCommitment;
+            byte[] originalCommitment = rootAttribute.IssuanceCommitment;
             byte[] lastTransactionKey = rootAttribute.LastTransactionKey;
             byte[] lastBlindingFactor = rootAttribute.LastBlindingFactor;
             byte[] lastCommitment = rootAttribute.LastCommitment;
@@ -363,8 +363,8 @@ namespace O10.Client.Web.Portal.Controllers
                 PublicSpendKey = target
             };
 
-            OutputModel[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
-            RequestResult requestResult = await transactionsService.SendRevokeIdentity(requestInput, outputModels, new byte[][] { rootAttribute.IssuanceCommitment }).ConfigureAwait(false);
+            OutputSources[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
+            RequestResult requestResult = await transactionsService.SendRevokeIdentity(requestInput, outputModels, new byte[][] { rootAttribute.AnchoringOriginationCommitment }).ConfigureAwait(false);
         }
 
         [HttpPost("SendDocumentSignRequest")]
@@ -573,17 +573,8 @@ namespace O10.Client.Web.Portal.Controllers
         private async Task SendUniversalTransport(long accountId, IServiceProvider serviceProvider, RequestInput requestInput, UniversalProofs universalProofs, string serviceProviderInfo, bool storeRegistration = false)
         {
             var transactionsService = serviceProvider.GetService<IStealthTransactionsService>();
-            OutputModel[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
-            await transactionsService.SendUniversalTransport(requestInput, outputModels, universalProofs)
-                .ContinueWith(t =>
-                {
-                    _dataAccessService.AddUserTransactionSecret(accountId,
-                                                                universalProofs.KeyImage.ToString(),
-                                                                universalProofs.MainIssuer.ToString(),
-                                                                requestInput.AssetId.ToHexString(),
-                                                                t.Result.NewBlindingFactor.ToHexString());
-                }, TaskScheduler.Current)
-                .ConfigureAwait(false);
+            OutputSources[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
+            await transactionsService.SendUniversalTransport(requestInput, outputModels, universalProofs).ConfigureAwait(false);
 
             string universalProofsStringify = JsonConvert.SerializeObject(universalProofs);
 
@@ -722,7 +713,7 @@ namespace O10.Client.Web.Portal.Controllers
         {
             (byte[] issuer, RequestInput requestInput) = GetRequestInput<RequestInput>(userAttributeTransfer, biometricProof);
 
-            OutputModel[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
+            OutputSources[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
             RequestResult requestResult = await transactionsService.SendIdentityProofs(requestInput, associatedProofPreparations, outputModels, issuer).ConfigureAwait(false);
             boundedAssetsService.GetBoundedCommitment(requestInput.AssetId, requestInput.PublicSpendKey, out byte[] registrationBlindingFactor, out byte[] registrationCommitment);
             if (_dataAccessService.AddUserRegistration(accountId, registrationCommitment.ToHexString(), string.Empty, requestInput.AssetId.ToHexString(), issuer.ToHexString()) > 0)
@@ -748,7 +739,7 @@ namespace O10.Client.Web.Portal.Controllers
             requestInput.DocumentRecordHeight = documentRecordHeight;
 
 
-            OutputModel[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
+            OutputSources[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
             byte[][] issuanceCommitments = await _gatewayService.GetIssuanceCommitments(issuer, _restApiConfiguration.RingSize + 1).ConfigureAwait(false);
             RequestResult requestResult = await transactionsService.SendDocumentSignRequest(requestInput, associatedProofPreparations, outputModels, issuanceCommitments).ConfigureAwait(false);
         }
@@ -770,7 +761,7 @@ namespace O10.Client.Web.Portal.Controllers
                     byte[] groupAssetId = await assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_EMPLOYEEGROUP, userAttributeTransfer.Target + groupName, userAttributeTransfer.Target).ConfigureAwait(false);
                     requestInput.GroupAssetId = groupAssetId;
 
-                    OutputModel[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
+                    OutputSources[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
                     byte[][] issuanceCommitments = await _gatewayService.GetIssuanceCommitments(issuer, _restApiConfiguration.RingSize + 1).ConfigureAwait(false);
                     RequestResult requestResult = await transactionsService.SendEmployeeRegistrationRequest(requestInput, associatedProofPreparations, outputModels, issuanceCommitments).ConfigureAwait(false);
                 }
@@ -832,7 +823,7 @@ namespace O10.Client.Web.Portal.Controllers
             byte[] issuer = userRootAttribute.Source.HexStringToByteArray();
             byte[] assetId = userRootAttribute.AssetId;
             byte[] originalBlindingFactor = userRootAttribute.OriginalBlindingFactor;
-            byte[] originalCommitment = userRootAttribute.OriginalCommitment;
+            byte[] originalCommitment = userRootAttribute.IssuanceCommitment;
             byte[] lastTransactionKey = userRootAttribute.LastTransactionKey;
             byte[] lastBlindingFactor = userRootAttribute.LastBlindingFactor;
             byte[] lastCommitment = userRootAttribute.LastCommitment;
@@ -1584,7 +1575,7 @@ namespace O10.Client.Web.Portal.Controllers
                                 })).ToArray();
 
 
-                    OutputModel[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
+                    OutputSources[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
                     byte[][] issuanceCommitments = await _gatewayService.GetIssuanceCommitments(issuer, _restApiConfiguration.RingSize + 1).ConfigureAwait(false);
 
                     await transactionsService.SendRelationsProofs(requestInput, associatedProofPreparations, outputModels, issuanceCommitments).ConfigureAwait(false);

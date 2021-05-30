@@ -10,7 +10,7 @@ namespace O10.Client.DataLayer.Model
         [Key]
         public long SpAttributeId { get; set; }
 
-		[Required]
+        [Required]
         public long AccountId { get; set; }
 
         public string AttributeSchemeName { get; set; }

@@ -6,20 +6,20 @@ namespace O10.Crypto.Models
 {
     public class StealthSignatureInput
     {
-        public StealthSignatureInput(byte[] sourceTransactionKey, IEnumerable<IKey> publicKeys, int keyPosition, Action<StealthTransactionBase> updatePacketAction = null)
+        public StealthSignatureInput(IKey sourceTransactionKey, IEnumerable<IKey> publicKeys, int keyPosition, Action<StealthTransactionBase>? preSigningAction = null)
         {
             SourceTransactionKey = sourceTransactionKey;
             PublicKeys = publicKeys;
             KeyPosition = keyPosition;
-            UpdatePacketAction = updatePacketAction;
+            PreSigningAction = preSigningAction;
         }
 
         public IEnumerable<IKey> PublicKeys { get; }
 
         public int KeyPosition { get; }
         
-        public byte[] SourceTransactionKey { get; }
+        public IKey SourceTransactionKey { get; }
 
-        public Action<StealthTransactionBase> UpdatePacketAction { get; }
+        public Action<StealthTransactionBase>? PreSigningAction { get; }
     }
 }
