@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using O10.Client.Common.Dtos.UniversalProofs;
+using System.Collections.Generic;
 
 namespace O10.Client.Web.Portal.Dtos.User
 {
@@ -7,6 +8,7 @@ namespace O10.Client.Web.Portal.Dtos.User
         public long RootAttributeId { get; set; }
         public string Target { get; set; }
         public string SessionKey { get; set; }
+        public UniversalProofsMission? Mission { get; set; }
         public string ServiceProviderInfo { get; set; }
         public List<IdentityPool> IdentityPools { get; set; }
 

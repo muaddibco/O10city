@@ -26,7 +26,7 @@ namespace O10.Client.Common.Interfaces
         Task<RequestResult> SendRevokeIdentity(RequestInput requestInput, OutputSources[] outputModels, byte[][] issuanceCommitments);
 
         Task<RequestResult> SendCompromisedProofs(RequestInput requestInput, byte[] compromisedKeyImage, byte[] compromisedTransactionKey, byte[] destinationKey, OutputSources[] outputModels, byte[][] issuanceCommitments);
-        Task<RequestResult> SendUniversalTransport([NotNull] RequestInput requestInput, [NotNull] OutputSources[] outputModels, [NotNull] UniversalProofs universalProofs);
+        Task<RequestResult> SendUniversalTransport([NotNull] RequestInput requestInput, [NotNull] UniversalProofs universalProofs);
 
         IKey NextKeyImage { get; }
 

@@ -4,6 +4,7 @@
     {
         Authentication,
         TransactionConfirmation,
+        RevokeIdentity,
         Vote
     }
 }

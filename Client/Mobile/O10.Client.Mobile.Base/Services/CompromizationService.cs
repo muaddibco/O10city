@@ -166,7 +166,9 @@ namespace O10.Client.Mobile.Base.Services
             };
 
             OutputSources[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
-            RequestResult requestResult = await _executionContext.TransactionsService.SendRevokeIdentity(requestInput, outputModels, new byte[][] { rootAttribute.AnchoringOriginationCommitment }).ConfigureAwait(false);
+
+            // TODO: need to send Universal Proofs with the Mission of RevokeIdentity
+            //RequestResult requestResult = await _executionContext.TransactionsService.SendRevokeIdentity(requestInput, outputModels, new byte[][] { rootAttribute.AnchoringOriginationCommitment }).ConfigureAwait(false);
         }
     }
 }

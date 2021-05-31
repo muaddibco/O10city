@@ -110,9 +110,9 @@ namespace O10.Node.Core.Centralized
 
             completionWrapper.TaskCompletion.Task.ContinueWith((t, o) => 
             {
-                if(t.IsCompletedSuccessfully)
+                var packet = (IPacketBase)o;
+                if (t.IsCompletedSuccessfully)
                 {
-                    var packet = (IPacketBase)o;
                     if(t.Result is ItemAddedNotification notification && notification.DataKey is HashAndIdKey hashAndIdKey)
                     {
                         _logger.LogIfDebug(() => $"Continue with a packet {packet.GetType().Name} with hash {hashAndIdKey.HashKey}");
@@ -122,12 +122,12 @@ namespace O10.Node.Core.Centralized
                     }
                     else
                     {
-                        _logger.Error($"Failed to continue with a packet {packet.GetType().Name} due to an error", t.Exception.InnerException);
+                        _logger.Error($"Failed to proceed with a packet {packet.GetType().Name} due to an error", t.Exception.InnerException);
                     }
                 }
                 else
                 {
-
+                    _logger.Error($"Failed to proceed with registration of the packet {packet.GetType().Name} due to the error {t.Exception.InnerException.Message}", t.Exception.InnerException);
                 }
             }, completionWrapper.State, TaskScheduler.Default);
 		}

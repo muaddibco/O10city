@@ -1,7 +1,5 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Numerics;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using O10.Client.Common.Interfaces;
@@ -11,10 +9,7 @@ using O10.Core.HashCalculations;
 using O10.Core.Identity;
 using O10.Core.Logging;
 using O10.Core.Models;
-using O10.Core.Serialization;
 using O10.Core.Notifications;
-using O10.Transactions.Core.DTOs;
-using O10.Transactions.Core.Ledgers;
 using O10.Crypto.Models;
 
 namespace O10.Client.Common.Communication
@@ -57,22 +52,6 @@ namespace O10.Client.Common.Communication
             _pipeOutTransactions.SendAsync(transactionWrapper);
 
             return transactionWrapper.TaskCompletion;
-        }
-
-        protected virtual void FillAndSign(PacketBase packet, object signingArgs = null)
-        {
-            ISerializer serializer = _serializersFactory.Create(packet);
-            serializer.SerializeBody();
-            _signingService.Sign(packet, signingArgs);
-            serializer.SerializeFully();
-
-            _logger.LogIfDebug(() => $"[{_accountId}]: Sending packet {packet.GetType().Name}: {JsonConvert.SerializeObject(packet, new ByteArrayJsonConverter())}");
-        }
-
-        protected void FillSyncData(IPacketBase packet)
-        {
-            SyncInfoDTO lastSyncBlock = AsyncUtil.RunSync(() => _gatewayService.GetLastSyncBlock());
-            packet.SyncHeight = lastSyncBlock?.Height ?? 0;
         }
 
         private sealed class Subscription : IDisposable

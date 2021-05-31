@@ -106,6 +106,15 @@ namespace O10.Transactions.Core.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Key Image &apos;{0}&apos; already witnessed.
+        /// </summary>
+        internal static string ERR_DUPLICATED_KEY_IMAGE {
+            get {
+                return ResourceManager.GetString("ERR_DUPLICATED_KEY_IMAGE", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Failed to find block for identity key {0}..
         /// </summary>
         internal static string ERR_FAILED_TO_FIND_BLOCK_BY_IDENTITY_KEY {

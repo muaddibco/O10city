@@ -63,6 +63,10 @@ namespace O10.Node.DataLayer.Specific.Stealth
                     {
                         w.TaskCompletion.SetResult(new ItemAddedNotification(new HashAndIdKey(h, t.Result.StealthTransactionId)));
                     }
+                    else
+                    {
+                        w.TaskCompletion.SetException(t.Exception.InnerException);
+                    }
                 }, new Tuple<TaskCompletionWrapper<IPacketBase>, IKey>(addCompletionWrapper, hashKey), TaskScheduler.Default);
 
                 Logger?.LogIfDebug(() => $"Storing of {packet.GetType().Name} completed");

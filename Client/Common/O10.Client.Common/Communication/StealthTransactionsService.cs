@@ -179,16 +179,11 @@ namespace O10.Client.Common.Communication
             return requestResult;
         }
 
-        public async Task<RequestResult> SendUniversalTransport([NotNull] RequestInput requestInput, [NotNull] OutputSources[] outputModels, UniversalProofs universalProofs)
+        public async Task<RequestResult> SendUniversalTransport([NotNull] RequestInput requestInput, UniversalProofs universalProofs)
         {
             if (requestInput is null)
             {
                 throw new ArgumentNullException(nameof(requestInput));
-            }
-
-            if (outputModels is null)
-            {
-                throw new ArgumentNullException(nameof(outputModels));
             }
 
             if (universalProofs is null)
@@ -196,7 +191,7 @@ namespace O10.Client.Common.Communication
                 throw new ArgumentNullException(nameof(universalProofs));
             }
 
-            var transaction = CreateUniversalTransportPacket(requestInput, outputModels, universalProofs);
+            var transaction = CreateUniversalTransportPacket(requestInput);
 
             var completionSource = PropagateTransaction(
                 transaction,
@@ -224,7 +219,6 @@ namespace O10.Client.Common.Communication
             RequestResult requestResult = new RequestResult
             {
                 KeyImage = transaction.KeyImage.Value,
-                NewBlindingFactor = requestInput.BlindingFactor,
                 NewCommitment = transaction.AssetCommitment.Value,
                 NewTransactionKey = transaction.TransactionPublicKey.Value,
                 NewDestinationKey = transaction.DestinationKey.Value,
@@ -396,40 +390,6 @@ namespace O10.Client.Common.Communication
             return block;
         }
 
-        private RevokeIdentity CreateRevokeIdentityPacket(RequestInput requestInput, OutputSources[] outputModels, byte[][] issuanceCommitments)
-        {
-            byte[] secretKey = CryptoHelper.GetRandomSeed();
-            byte[] transactionKey = CryptoHelper.GetPublicKey(secretKey);
-            byte[] destinationKey = CryptoHelper.GetDestinationKey(secretKey, _clientCryptoService.PublicKeys[0].ArraySegment.Array, _clientCryptoService.PublicKeys[1].ArraySegment.Array);
-            byte[] destinationKey2 = requestInput.PublicViewKey != null ? CryptoHelper.GetDestinationKey(secretKey, requestInput.PublicSpendKey, requestInput.PublicViewKey) : requestInput.PublicSpendKey;
-            byte[] blindingFactor = CryptoHelper.GetRandomSeed();
-            byte[] blindingFactorToOwnership = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.PrevBlindingFactor);
-            byte[] blindingFactorToEligibility = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, requestInput.EligibilityBlindingFactor);
-            byte[] assetCommitment = CryptoHelper.GetAssetCommitment(blindingFactor, requestInput.AssetId);
-
-            GetAssetCommitmentsRing(requestInput.PrevAssetCommitment, outputModels, out int pos, out IKey[] assetCommitments);
-            SurjectionProof ownershipProof = CryptoHelper.CreateSurjectionProof(assetCommitment, assetCommitments.Select(s => s.Value).ToArray(), pos, blindingFactorToOwnership);
-
-            _eligibilityProofsProvider.GetEligibilityCommitmentAndProofs(requestInput.EligibilityCommitment, issuanceCommitments, out int actualAssetPos, out byte[][] commitments);
-            SurjectionProof eligibilityProof = CryptoHelper.CreateSurjectionProof(assetCommitment, commitments, actualAssetPos, blindingFactorToEligibility);
-
-            RevokeIdentity block = new RevokeIdentity
-            {
-                DestinationKey = destinationKey,
-                DestinationKey2 = destinationKey2,
-                TransactionPublicKey = transactionKey,
-                AssetCommitment = assetCommitment,
-                OwnershipProof = ownershipProof,
-                EligibilityProof = eligibilityProof,
-                BiometricProof = requestInput.BiometricProof
-            };
-
-            FillSyncData(block);
-            FillAndSign(block, new StealthSignatureInput(requestInput.PrevTransactionKey, assetCommitments, pos));
-
-            return block;
-        }
-
         private async Task<IdentityProofs> CreateIdentityProofsPacket(RequestInput requestInput, AssociatedProofPreparation[] associatedProofPreparations, OutputSources[] outputModels, byte[] issuer)
         {
             byte[] secretKey = CryptoHelper.GetRandomSeed();
@@ -552,14 +512,12 @@ namespace O10.Client.Common.Communication
             return block;
         }
 
-        private UniversalStealthTransaction CreateUniversalTransportPacket(RequestInput requestInput, OutputSources[] outputModels, UniversalProofs universalProofs)
+        private UniversalStealthTransaction CreateUniversalTransportPacket(RequestInput requestInput)
         {
             byte[] secretKey = CryptoHelper.GetRandomSeed();
             byte[] transactionKey = CryptoHelper.GetPublicKey(secretKey);
             byte[] destinationKey = CryptoHelper.GetDestinationKey(secretKey, _clientCryptoService.PublicKeys[0].ArraySegment.Array, _clientCryptoService.PublicKeys[1].ArraySegment.Array);
             byte[] destinationKey2 = requestInput.PublicViewKey != null ? CryptoHelper.GetDestinationKey(secretKey, requestInput.PublicSpendKey, requestInput.PublicViewKey) : requestInput.PublicSpendKey;
-
-            GetAssetCommitmentsRing(requestInput.PrevAssetCommitment, outputModels, out int pos, out IKey[] assetCommitments);
 
 
             var transaction = new UniversalStealthTransaction
@@ -567,30 +525,8 @@ namespace O10.Client.Common.Communication
                 DestinationKey = _identityKeyProvider.GetKey(destinationKey),
                 DestinationKey2 = _identityKeyProvider.GetKey(destinationKey2),
                 TransactionPublicKey = _identityKeyProvider.GetKey(transactionKey),
-                AssetCommitment = requestInput.AssetCommitment.ToArray(),
+                AssetCommitment = requestInput.AssetCommitment
             };
-
-            FillSyncData(block);
-
-            FillAndSign(block,
-                new StealthSignatureInput(
-                    requestInput.PrevTransactionKey,
-                    assetCommitments,
-                    pos,
-                    p =>
-                    {
-                        if (p is UniversalTransport universalTransport)
-                        {
-                            universalProofs.KeyImage = universalTransport.KeyImage;
-                            string proofs = JsonConvert.SerializeObject(universalProofs);
-                            byte[] proofsBytes = Encoding.UTF8.GetBytes(proofs);
-                            byte[] hash = _hashCalculation.CalculateHash(proofsBytes);
-                            universalTransport.MessageHash = hash;
-
-                            using ISerializer serializer = _serializersFactory.Create(p);
-                            serializer.SerializeBody();
-                        }
-                    }));
 
             return transaction;
         }

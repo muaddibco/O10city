@@ -67,6 +67,7 @@ namespace O10.Client.Web.Portal.Controllers
         private readonly IGatewayService _gatewayService;
         private readonly ISchemeResolverService _schemeResolverService;
         private readonly IEligibilityProofsProvider _eligibilityProofsProvider;
+        private readonly IStealthClientCryptoService _stealthClientCryptoService;
         private readonly IIdentityKeyProvider _identityKeyProvider;
         private readonly IHubContext<IdentitiesHub> _idenitiesHubContext;
         private readonly IRestApiConfiguration _restApiConfiguration;
@@ -84,6 +85,7 @@ namespace O10.Client.Web.Portal.Controllers
                               ISchemeResolverService schemeResolverService,
                               IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
                               IEligibilityProofsProvider eligibilityProofsProvider,
+                              IStealthClientCryptoService stealthClientCryptoService,
                               IConfigurationService configurationService,
                               IHubContext<IdentitiesHub> idenitiesHubContext,
                               ILoggerService loggerService,
@@ -98,6 +100,7 @@ namespace O10.Client.Web.Portal.Controllers
             _gatewayService = gatewayService;
             _schemeResolverService = schemeResolverService;
             _eligibilityProofsProvider = eligibilityProofsProvider;
+            _stealthClientCryptoService = stealthClientCryptoService;
             _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
             _idenitiesHubContext = idenitiesHubContext;
             _restApiConfiguration = configurationService.Get<IRestApiConfiguration>();
@@ -518,17 +521,21 @@ namespace O10.Client.Web.Portal.Controllers
                 throw new ArgumentException($"{nameof(request.IdentityPools)} cannot be empty", nameof(request.IdentityPools));
             }
 
+            if(request.Mission == null)
+            {
+                return BadRequest("Mission is missing");
+            }
+
             UniversalProofs universalProofs = new UniversalProofs
             {
                 SessionKey = request.SessionKey,
-                Mission = UniversalProofsMission.Authentication
+                Mission = (UniversalProofsMission)request.Mission
             };
             
             RequestInput requestInput = null;
             foreach (var pool in request.IdentityPools)
             {
-                byte[] bf = CryptoHelper.GetRandomSeed();
-                var rootIssuer = await GenerateFromIdentityPool(accountId, bf, pool).ConfigureAwait(false);
+                var rootIssuer = await GenerateFromIdentityPool(accountId, pool).ConfigureAwait(false);
                 universalProofs.RootIssuers.Add(rootIssuer);
 
                 if(request.RootAttributeId == pool.RootAttributeId)
@@ -543,8 +550,7 @@ namespace O10.Client.Web.Portal.Controllers
                         PrevDestinationKey = rootAttribute.LastDestinationKey,
                         PrevTransactionKey = rootAttribute.LastTransactionKey,
                         PublicSpendKey = request.Target.HexStringToByteArray(),
-                        AssetCommitment = rootIssuer.IssuersAttributes.Find(i => i.Issuer.Equals(rootIssuer.Issuer)).RootAttribute.Commitment.ToByteArray(),
-                        BlindingFactor = bf
+                        AssetCommitment = rootIssuer.IssuersAttributes.Find(i => i.Issuer.Equals(rootIssuer.Issuer)).RootAttribute.Commitment,
                     };
 
                     universalProofs.MainIssuer = rootIssuer.Issuer;
@@ -557,7 +563,7 @@ namespace O10.Client.Web.Portal.Controllers
             return Ok();
         }
 
-        private async Task<RootIssuer> GenerateFromIdentityPool(long accountId, byte[] bf, UniversalProofsSendingRequest.IdentityPool identityPool)
+        private async Task<RootIssuer> GenerateFromIdentityPool(long accountId, UniversalProofsSendingRequest.IdentityPool identityPool)
         {
             var persistency = _executionContextManager.ResolveExecutionServices(accountId);
 
@@ -565,7 +571,7 @@ namespace O10.Client.Web.Portal.Controllers
             var rootAttribute = _dataAccessService.GetUserRootAttribute(identityPool.RootAttributeId);
             var associatedAttributes = _dataAccessService.GetUserAssociatedAttributes(accountId).Where(a => identityPool.AssociatedAttributes?.Contains(a.UserAssociatedAttributeId) ?? false);
 
-            var rootIssuer = await boundedAssetsService.GetAttributeProofs(bf, rootAttribute, associatedAttributes, true).ConfigureAwait(false);
+            var rootIssuer = await boundedAssetsService.GetAttributeProofs(_stealthClientCryptoService.GetBlindingFactor(rootAttribute.LastTransactionKey), rootAttribute, associatedAttributes, true).ConfigureAwait(false);
             
             return rootIssuer;
         }
@@ -573,8 +579,7 @@ namespace O10.Client.Web.Portal.Controllers
         private async Task SendUniversalTransport(long accountId, IServiceProvider serviceProvider, RequestInput requestInput, UniversalProofs universalProofs, string serviceProviderInfo, bool storeRegistration = false)
         {
             var transactionsService = serviceProvider.GetService<IStealthTransactionsService>();
-            OutputSources[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
-            await transactionsService.SendUniversalTransport(requestInput, outputModels, universalProofs).ConfigureAwait(false);
+            await transactionsService.SendUniversalTransport(requestInput, universalProofs).ConfigureAwait(false);
 
             string universalProofsStringify = JsonConvert.SerializeObject(universalProofs);
 
@@ -1732,10 +1737,10 @@ namespace O10.Client.Web.Portal.Controllers
                 EcCommitment = _identityKeyProvider.GetKey(ecCommitment.EcCommitment)
             };
 
-            var bfBase = CryptoHelper.GetRandomSeed();
+            var bfBase = _stealthClientCryptoService.GetBlindingFactor(rootAttributePoll.LastTransactionKey); // TODO: bfBase prevoiusly had a different generated value from the `bf`
             var rootIssuerBase = await boundedAssetsService.GetAttributeProofs(bfBase, rootAttribute, withProtectionAttribute: true).ConfigureAwait(false);
             
-            var bf = CryptoHelper.GetRandomSeed();
+            var bf = _stealthClientCryptoService.GetBlindingFactor(rootAttributePoll.LastTransactionKey);
             var rootIssuerPoll = await boundedAssetsService.GetAttributeProofs(bf, rootAttributePoll).ConfigureAwait(false);
 
             UniversalProofs universalProofs = new UniversalProofs
@@ -1756,8 +1761,7 @@ namespace O10.Client.Web.Portal.Controllers
                 PrevDestinationKey = rootAttributePoll.LastDestinationKey,
                 PrevTransactionKey = rootAttributePoll.LastTransactionKey,
                 PublicSpendKey = rootIssuerPoll.Issuer.ToByteArray(),
-                AssetCommitment = rootIssuerPoll.IssuersAttributes[0].RootAttribute.Commitment.ToByteArray(),
-                BlindingFactor = bf
+                AssetCommitment = rootIssuerPoll.IssuersAttributes[0].RootAttribute.Commitment,
             };
 
             await SendUniversalTransport(accountId, persistency.Scope.ServiceProvider, requestInput, universalProofs, poll.Name).ConfigureAwait(false);

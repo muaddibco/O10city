@@ -16,6 +16,7 @@ using O10.Core.Logging;
 using O10.Core.Tracking;
 using O10.Core.DataLayer;
 using System.Threading.Tasks;
+using O10.Transactions.Core.Exceptions;
 
 namespace O10.Node.DataLayer.Specific.Stealth
 {
@@ -81,8 +82,10 @@ namespace O10.Node.DataLayer.Specific.Stealth
             {
                 throw new ArgumentNullException(nameof(keyImage));
             }
+            
+            var addCompletion = new TaskCompletionSource<StealthTransaction>();
 
-            //TODO: seems this peace of code is completely unneeded since check for KeyImage duplication is done in another place
+            // TODO: need to make sure that Key Image is checked where it is required to be checked!
             bool isService = blockType == TransactionTypes.Stealth_TransitionCompromisedProofs || blockType == TransactionTypes.Stealth_RevokeIdentity;
             bool keyImageExist = _keyImages.Contains(keyImage);
             if (keyImageExist)
@@ -94,7 +97,8 @@ namespace O10.Node.DataLayer.Specific.Stealth
                 }
                 else
                 {
-                    return null;
+                    addCompletion.SetException(new WitnessedKeyImageException(keyImage));
+                    return addCompletion;
                 }
             }
             else
@@ -119,7 +123,6 @@ namespace O10.Node.DataLayer.Specific.Stealth
                 Content = content
             };
 
-            var addCompletion = new TaskCompletionSource<StealthTransaction>();
             _addCompletions.Add(stealthBlock, new TaskCompletionSource<StealthTransaction>());
 
             lock (Sync)
