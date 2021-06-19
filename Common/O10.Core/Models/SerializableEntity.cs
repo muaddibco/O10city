@@ -5,7 +5,7 @@ using System.Text;
 
 namespace O10.Core.Models
 {
-    public abstract class SerializableEntity<T>: ISerializableEntity<T> where T: ISerializableEntity<T>
+    public abstract class SerializableEntity: ISerializableEntity
     {
         public override string ToString()
         {
@@ -17,7 +17,7 @@ namespace O10.Core.Models
             return Encoding.UTF8.GetBytes(ToString());
         }
 
-        public static T Create(string content)
+        public static T? Create<T>(string content) where T: class, ISerializableEntity
         {
             if (string.IsNullOrEmpty(content))
             {

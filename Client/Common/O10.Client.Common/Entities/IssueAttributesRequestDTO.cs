@@ -13,7 +13,7 @@ namespace O10.Client.Common.Entities
         {
             public string Value { get; set; }
             public byte[] BlindingPointValue { get; set; }
-            public byte[] BlindingPointRoot { get; set; }
+            public byte[]? BlindingPointRoot { get; set; }
         }
     }
 }

@@ -40,7 +40,7 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
             }
 
             var transaction = _dataAccessService.GetStateTransaction(witnessPacket.WitnessPacketId);
-            return SerializableEntity<TransactionBase>.Create(transaction.Content);
+            return SerializableEntity.Create<TransactionBase>(transaction.Content);
         }
 
         protected override void StoreTransaction(WitnessPacket wp, TransactionBase transaction)

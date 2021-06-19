@@ -172,7 +172,7 @@ namespace O10.Client.Web.Portal.Services
                     {
                         if (aex.InnerException is FlurlHttpException fex)
                         {
-                            _logger.Error($"[{_accountId}]: Failed request '{fex.Call.Request.RequestUri}' with body '{fex.Call.RequestBody}'");
+                            _logger.Error($"[{_accountId}]: Failed request '{fex.Call.Request.Url}' with body '{fex.Call.RequestBody}'");
                         }
                         msg = aex.InnerException.Message;
 

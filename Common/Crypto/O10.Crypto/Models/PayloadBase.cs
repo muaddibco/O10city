@@ -2,7 +2,7 @@
 
 namespace O10.Crypto.Models
 {
-    public abstract class PayloadBase<T> : SerializableEntity<PayloadBase<T>> where T: TransactionBase
+    public abstract class PayloadBase<T> : SerializableEntity where T: TransactionBase
     {
         public PayloadBase()
         {

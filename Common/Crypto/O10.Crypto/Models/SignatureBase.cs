@@ -2,7 +2,7 @@
 
 namespace O10.Crypto.Models
 {
-    public abstract class SignatureBase : SerializableEntity<SignatureBase>
+    public abstract class SignatureBase : SerializableEntity
     {
     }
 }

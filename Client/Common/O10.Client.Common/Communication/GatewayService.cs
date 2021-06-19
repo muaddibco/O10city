@@ -167,7 +167,7 @@ namespace O10.Client.Common.Communication
                 catch (FlurlHttpException ex)
                 {
                     p.TaskCompletion.SetException(ex);
-                    _logger.Error($"Failure during invoking {ex.Call.FlurlRequest.Url}, HTTP status: {ex.Call.HttpStatus}, duration: {ex.Call.Duration?.TotalMilliseconds ?? 0} msec", ex);
+                    _logger.Error($"Failure during invoking {ex.Call.Request.Url}, HTTP status: {ex.Call.Response.ResponseMessage.StatusCode}, duration: {ex.Call.Duration?.TotalMilliseconds ?? 0} msec", ex);
                 }
                 catch (Exception ex)
                 {
@@ -200,7 +200,7 @@ namespace O10.Client.Common.Communication
                         }
                         else
                         {
-                            _logger.Error($"Failed request {t.Result.RequestMessage.RequestUri} with content {await t.Result.RequestMessage.Content.ReadAsStringAsync().ConfigureAwait(false)}", t.Exception);
+                            _logger.Error($"Failed request {t.Result.ResponseMessage.RequestMessage.RequestUri} with content {await t.Result.ResponseMessage.RequestMessage.Content.ReadAsStringAsync().ConfigureAwait(false)}", t.Exception);
                         }
                     }, TaskScheduler.Current).ConfigureAwait(false)).ConfigureAwait(false);
 
@@ -234,7 +234,7 @@ namespace O10.Client.Common.Communication
                     }
                     else
                     {
-                        string response = AsyncUtil.RunSync(async () => await t.Result.Content.ReadAsStringAsync().ConfigureAwait(false));
+                        string response = AsyncUtil.RunSync(async () => await t.Result.ResponseMessage.Content.ReadAsStringAsync().ConfigureAwait(false));
                         _logger.Error($"Request {url} failed with response {response}");
                     }
                 }, TaskScheduler.Current)
@@ -257,7 +257,7 @@ namespace O10.Client.Common.Communication
                     }
                     else
                     {
-                        string response = AsyncUtil.RunSync(async () => await t.Result.Content.ReadAsStringAsync().ConfigureAwait(false));
+                        string response = AsyncUtil.RunSync(async () => await t.Result.ResponseMessage.Content.ReadAsStringAsync().ConfigureAwait(false));
                         _logger.Error($"Request {url} failed with response {response}");
                     }
                 }, TaskScheduler.Current)
@@ -280,7 +280,7 @@ namespace O10.Client.Common.Communication
                     }
                     else
                     {
-                        string response = AsyncUtil.RunSync(async () => await t.Result.Content.ReadAsStringAsync().ConfigureAwait(false));
+                        string response = AsyncUtil.RunSync(async () => await t.Result.ResponseMessage.Content.ReadAsStringAsync().ConfigureAwait(false));
                         _logger.Error($"Request {url} failed with response {response}");
                     }
                 }, TaskScheduler.Current)
@@ -337,7 +337,7 @@ namespace O10.Client.Common.Communication
 
         public string GetNotificationsHubUri()
         {
-            return _gatewayUri.AppendPathSegments("notificationsHub");
+            return _gatewayUri.AppendPathSegments("notificationsHub").ToString();
         }
 
         public async Task<byte[]> GetEmployeeRecordGroup(byte[] issuer, byte[] registrationCommitment)

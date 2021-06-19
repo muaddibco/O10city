@@ -2,11 +2,10 @@
 using System.Threading;
 using O10.Node.DataLayer.DataServices.Keys;
 using O10.Core.Models;
-using O10.Core.Identity;
 
 namespace O10.Node.DataLayer.DataServices
 {
-    public interface IDataService<T> where T : ISerializableEntity<T>
+    public interface IDataService<T> where T : class, ISerializableEntity
     {
         void Initialize(CancellationToken cancellationToken);
 

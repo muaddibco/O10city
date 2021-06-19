@@ -16,7 +16,7 @@ namespace O10.Node.DataLayer.Specific.Synchronization.Mappers
                 return null;
             }
 
-            return SerializableEntity<IPacketBase>.Create(registryCombinedBlock.Content);
+            return SerializableEntity.Create<IPacketBase>(registryCombinedBlock.Content);
         }
     }
 }

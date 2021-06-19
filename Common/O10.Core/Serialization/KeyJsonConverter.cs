@@ -13,7 +13,7 @@ namespace O10.Core.Serialization
     {
         public override bool CanConvert(Type objectType)
         {
-            return true;
+            return typeof(IKey).IsAssignableFrom(objectType);
         }
 
         public override object? ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)

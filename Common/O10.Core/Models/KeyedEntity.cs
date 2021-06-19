@@ -2,7 +2,7 @@
 
 namespace O10.Core.Models
 {
-    public class KeyedEntity<T> where T : class, ISerializableEntity<T>
+    public class KeyedEntity<T> where T : class, ISerializableEntity
     {
         public KeyedEntity(T entity)
         {

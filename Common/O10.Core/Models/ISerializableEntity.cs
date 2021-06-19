@@ -1,6 +1,6 @@
 ﻿namespace O10.Core.Models
 {
-    public interface ISerializableEntity<T> where T: ISerializableEntity<T>
+    public interface ISerializableEntity
     {
         byte[] ToByteArray();
 

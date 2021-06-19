@@ -10,6 +10,7 @@ using O10.Core.Identity;
 using O10.Core.Logging;
 using O10.Core.Models;
 using O10.Crypto.Models;
+using O10.Crypto.Services;
 using O10.Transactions.Core.DTOs;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Ledgers;
@@ -28,13 +29,11 @@ namespace O10.Client.Common.Communication.LedgerWriters
     {
         private readonly IPropagatorBlock<TaskCompletionWrapper<TransactionBase>, DependingTaskCompletionWrapper<IPacketBase, TransactionBase>> _pipeIn;
         private readonly IStealthClientCryptoService _clientCryptoService;
-        private readonly ISigningService _signingService;
         private readonly IGatewayService _gatewayService;
         private readonly IIdentityKeyProvider _identityKeyProvider;
         private readonly IRestApiConfiguration _restApiConfiguration;
 
         public O10StealthLedgerWriter(IStealthClientCryptoService clientCryptoService,
-                                      ISigningService signingService,
                                       IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
                                       IGatewayService gatewayService,
                                       IConfigurationService configurationService,
@@ -42,7 +41,6 @@ namespace O10.Client.Common.Communication.LedgerWriters
             : base(loggerService)
         {
             _clientCryptoService = clientCryptoService;
-            _signingService = signingService;
             _gatewayService = gatewayService;
             _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
             _restApiConfiguration = configurationService.Get<IRestApiConfiguration>();
@@ -75,7 +73,7 @@ namespace O10.Client.Common.Communication.LedgerWriters
             OutputSources[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
             GetDestinationKeysRing(arg.PrevDestinationKey, outputModels.Select(m => m.DestinationKey).ToArray(), out int pos, out IKey[] destinationKeys);
 
-            var signature = _signingService.Sign(payload, new StealthSignatureInput(arg.PrevTransactionKey, destinationKeys, pos, arg.PreSigningAction)) as StealthSignature;
+            var signature = _clientCryptoService.Sign(payload, new StealthSignatureInput(arg.PrevTransactionKey, destinationKeys, pos, arg.PreSigningAction)) as StealthSignature;
 
             var packet = new StealthPacket
             {

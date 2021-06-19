@@ -16,7 +16,7 @@ namespace O10.Node.DataLayer.Mappers.Registry
                 return null;
             }
 
-            return SerializableEntity<IPacketBase>.Create(obj.Content);
+            return SerializableEntity.Create<IPacketBase>(obj.Content);
         }
     }
 }

@@ -16,7 +16,7 @@ namespace O10.Node.DataLayer.Specific.Synchronization.Mappers
                 throw new System.ArgumentNullException(nameof(synchronizationBlock));
             }
 
-            return SerializableEntity<IPacketBase>.Create(synchronizationBlock.Content);
+            return SerializableEntity.Create<IPacketBase>(synchronizationBlock.Content);
         }
     }
 }

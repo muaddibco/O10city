@@ -16,7 +16,7 @@ namespace O10.Node.DataLayer.Specific.Stealth.Mappers
                 throw new System.ArgumentNullException(nameof(block));
             }
 
-            return SerializableEntity<IPacketBase>.Create(block.Content);
+            return SerializableEntity.Create<IPacketBase>(block.Content);
 		}
 	}
 }

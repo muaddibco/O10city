@@ -80,17 +80,17 @@ namespace O10.Node.Worker.Services
                                 {
                                     if (t.IsCompletedSuccessfully)
                                     {
-										_logger.Debug($"Posting PackageUpdate to {t.Result.RequestMessage.RequestUri} succeeded");
+										_logger.Debug($"Posting PackageUpdate to {t.Result.ResponseMessage.RequestMessage.RequestUri} succeeded");
 									}
 									else
                                     {
-										_logger.Error($"Posting PackageUpdate ended with HttpStatus {t.Result.StatusCode}, reason phrase \"{t.Result.ReasonPhrase}\" and content \"{t.Result.Content.ReadAsStringAsync().Result}\"", t.Exception);
+										_logger.Error($"Posting PackageUpdate ended with HttpStatus {t.Result.ResponseMessage.StatusCode}, reason phrase \"{t.Result.ResponseMessage.ReasonPhrase}\" and content \"{t.Result.ResponseMessage.Content.ReadAsStringAsync().Result}\"", t.Exception);
 
 										if(t.Exception?.InnerExceptions != null)
 										{
 											foreach (var ex in t.Exception.InnerExceptions)
 											{
-												_logger.Error($"Failure during posting package to {t.Result.RequestMessage.RequestUri}", ex);
+												_logger.Error($"Failure during posting package to {t.Result.ResponseMessage.RequestMessage.RequestUri}", ex);
 											}
 										}
 									}

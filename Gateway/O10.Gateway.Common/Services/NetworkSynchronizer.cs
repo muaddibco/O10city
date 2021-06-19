@@ -105,11 +105,12 @@ namespace O10.Gateway.Common.Services
 				_synchronizerConfiguration.NodeApiUri
 					.AppendPathSegment("Packet")
 					.PostJsonAsync(wrapper.State)
-					.ContinueWith(async (t, o) => 
+					.ContinueWith((t, o) => 
 					{
 						var w = o as TaskCompletionWrapper<IPacketBase>;
-						var response = await t.ConfigureAwait(false);
-						if (response.IsSuccessStatusCode)
+						
+						var response = t.Result;
+						if (response.ResponseMessage.IsSuccessStatusCode)
 						{
 							_logger.Debug($"Transaction packet posted to Node successful");
 							w.TaskCompletion.SetResult(new SucceededNotification());
@@ -117,7 +118,7 @@ namespace O10.Gateway.Common.Services
 						else
 						{
 							w.TaskCompletion.SetResult(new FailedNotification());
-							_logger.Error($"Transaction packet posted to Node with HttpStatusCode: {response.StatusCode}, reason: \"{response.ReasonPhrase}\", content: \"{response.Content.ReadAsStringAsync().Result}\"");
+							_logger.Error($"Transaction packet posted to Node with HttpStatusCode: {response.ResponseMessage.StatusCode}, reason: \"{response.ResponseMessage.ReasonPhrase}\", content: \"{response.ResponseMessage.Content.ReadAsStringAsync().Result}\"");
 						}
 					}, wrapper, TaskScheduler.Default);
 			}
@@ -137,27 +138,27 @@ namespace O10.Gateway.Common.Services
 				byte[] esapedTransaction = escapeHelper.GetEscapedBodyBytes(packetProviderTransaction.GetBytes());
 				byte[] esapedWitness = escapeHelper.GetEscapedBodyBytes(packetProviderWitness.GetBytes());
 
-				HttpResponseMessage response1 = await _synchronizerConfiguration.NodeApiUri.PostStringAsync(esapedTransaction.ToHexString()).ConfigureAwait(false);
-				if (response1.IsSuccessStatusCode)
+				var response1 = await _synchronizerConfiguration.NodeApiUri.PostStringAsync(esapedTransaction.ToHexString()).ConfigureAwait(false);
+				if (response1.ResponseMessage.IsSuccessStatusCode)
 				{
 					_logger.Debug($"Transaction packet posted to Node");
 				}
 				else
 				{
-					_logger.Error($"Transaction packet posted to Node with HttpStatusCode: {response1.StatusCode}, reason: \"{response1.ReasonPhrase}\", content: \"{response1.Content.ReadAsStringAsync().Result}\"");
+					_logger.Error($"Transaction packet posted to Node with HttpStatusCode: {response1.StatusCode}, reason: \"{response1.ResponseMessage.ReasonPhrase}\", content: \"{response1.ResponseMessage.Content.ReadAsStringAsync().Result}\"");
 				}
 
-				HttpResponseMessage response2 = await _synchronizerConfiguration.NodeApiUri.PostStringAsync(esapedWitness.ToHexString()).ConfigureAwait(false);
-				if (response2.IsSuccessStatusCode)
+				var response2 = await _synchronizerConfiguration.NodeApiUri.PostStringAsync(esapedWitness.ToHexString()).ConfigureAwait(false);
+				if (response2.ResponseMessage.IsSuccessStatusCode)
 				{
 					_logger.Debug($"Witness packet posted to Node");
 				}
 				else
 				{
-					_logger.Error($"Witness packet posted to Node with HttpStatusCode: {response2.StatusCode}, reason: \"{response2.ReasonPhrase}\", content: \"{response2.Content.ReadAsStringAsync().Result}\"");
+					_logger.Error($"Witness packet posted to Node with HttpStatusCode: {response2.StatusCode}, reason: \"{response2.ResponseMessage.ReasonPhrase}\", content: \"{response2.ResponseMessage.Content.ReadAsStringAsync().Result}\"");
 				}
 
-				return response1.IsSuccessStatusCode && response2.IsSuccessStatusCode;
+				return response1.ResponseMessage.IsSuccessStatusCode && response2.ResponseMessage.IsSuccessStatusCode;
 			}
 			catch (Exception ex)
 			{

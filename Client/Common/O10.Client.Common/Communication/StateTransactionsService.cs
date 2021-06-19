@@ -161,10 +161,12 @@ namespace O10.Client.Common.Communication
                 AssetCommitment = _identityKeyProvider.GetKey(assetCommitment)
             };
 
-/*            FillHeightInfo(issueBlindedAsset);
-            FillSyncData(issueBlindedAsset);
-            FillAndSign(issueBlindedAsset);
-*/
+            /*            FillHeightInfo(issueBlindedAsset);
+                        FillSyncData(issueBlindedAsset);
+                        FillAndSign(issueBlindedAsset);
+            */
+
+            var cont = issueBlindedAsset.ToString();
             return issueBlindedAsset;
         }
 

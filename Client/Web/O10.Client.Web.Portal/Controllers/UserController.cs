@@ -608,7 +608,7 @@ namespace O10.Client.Web.Portal.Controllers
                 {
                     if (!t.IsCompletedSuccessfully)
                     {
-                        string response = AsyncUtil.RunSync(async () => await ((FlurlHttpException)t.Exception.InnerException).Call.Response.Content.ReadAsStringAsync().ConfigureAwait(false));
+                        string response = AsyncUtil.RunSync(async () => await ((FlurlHttpException)t.Exception.InnerException).Call.Response.GetStringAsync().ConfigureAwait(false));
                         _logger.Error($"Failure during posting Universal Proofs", t.Exception.InnerException);
                         throw new UniversalProofsSendingFailedException(t.Exception.InnerException.Message, t.Exception.InnerException);
 
@@ -872,7 +872,7 @@ namespace O10.Client.Web.Portal.Controllers
                     PublicViewKey = account.PublicViewKey.ToHexString()
                 }).ContinueWith(t =>
                 {
-                    if (t.IsCompleted && !t.IsFaulted && t.Result.IsSuccessStatusCode)
+                    if (t.IsCompleted && !t.IsFaulted && t.Result.ResponseMessage.IsSuccessStatusCode)
                     {
                         _dataAccessService.AddNonConfirmedRootAttribute(accountId, requestForIdentity.IdCardContent, registrationDetails.Issuer, AttributesSchemes.ATTR_SCHEME_NAME_EMAIL, assetId);
 
@@ -880,7 +880,7 @@ namespace O10.Client.Web.Portal.Controllers
                     }
                     else
                     {
-                        error = t.Result.Content.ReadAsStringAsync().Result;
+                        error = t.Result.ResponseMessage.Content.ReadAsStringAsync().Result;
                     }
                 }, TaskScheduler.Current).ConfigureAwait(false);
 
@@ -1578,12 +1578,12 @@ namespace O10.Client.Web.Portal.Controllers
         [HttpPost("ChallengeProofs")]
         public async Task<IActionResult> ChallengeProofs(string key, [FromBody] ProofsRequest proofsRequest)
         {
-            HttpResponseMessage httpResponse = await _restApiConfiguration.ConsentManagementUri
+            var httpResponse = await _restApiConfiguration.ConsentManagementUri
                 .AppendPathSegments("ConsentManagement", "ChallengeProofs")
                 .SetQueryParam("key", key)
                 .PostJsonAsync(proofsRequest).ConfigureAwait(false);
 
-            string response = await httpResponse.Content.ReadAsStringAsync().ConfigureAwait(false);
+            string response = await httpResponse.GetStringAsync().ConfigureAwait(false);
             return Ok(response);
         }
 

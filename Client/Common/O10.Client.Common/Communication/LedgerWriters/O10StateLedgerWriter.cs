@@ -4,6 +4,7 @@ using O10.Core.Cryptography;
 using O10.Core.Logging;
 using O10.Core.Models;
 using O10.Crypto.Models;
+using O10.Crypto.Services;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Ledgers;
 using O10.Transactions.Core.Ledgers.O10State;
@@ -19,18 +20,15 @@ namespace O10.Client.Common.Communication.LedgerWriters
     {
         private readonly IPropagatorBlock<TaskCompletionWrapper<TransactionBase>, DependingTaskCompletionWrapper<IPacketBase, TransactionBase>> _pipeIn;
         private readonly IStateClientCryptoService _clientCryptoService;
-        private readonly ISigningService _signingService;
         private readonly IGatewayService _gatewayService;
         private long _lastHeight;
 
         public O10StateLedgerWriter(IStateClientCryptoService clientCryptoService,
-                                    ISigningService signingService,
                                     IGatewayService gatewayService,
                                     ILoggerService loggerService)
             : base(loggerService)
         {
             _clientCryptoService = clientCryptoService;
-            _signingService = signingService;
             _gatewayService = gatewayService;
 
             _pipeIn = new TransformBlock<TaskCompletionWrapper<TransactionBase>, DependingTaskCompletionWrapper<IPacketBase, TransactionBase>>(t => ProducePacket(t));
@@ -59,7 +57,7 @@ namespace O10.Client.Common.Communication.LedgerWriters
 
             O10StatePayload payload = new O10StatePayload(o10StateTransaction, _lastHeight++);
 
-            var signature = _signingService.Sign(payload) as SingleSourceSignature;
+            var signature = _clientCryptoService.Sign(payload) as SingleSourceSignature;
 
             var packet = new O10StatePacket()
             {

@@ -16,7 +16,7 @@ namespace O10.Node.DataLayer.Specific.O10Id.Mappers
                 throw new System.ArgumentNullException(nameof(transactionalBlock));
             }
 
-            return SerializableEntity<IPacketBase>.Create(transactionalBlock.Content);
+            return SerializableEntity.Create<IPacketBase>(transactionalBlock.Content);
         }
     }
 }
