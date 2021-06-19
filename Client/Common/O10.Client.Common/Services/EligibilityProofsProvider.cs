@@ -33,15 +33,19 @@ namespace O10.Client.Common.Services
             _restApiConfiguration = configurationService.Get<IRestApiConfiguration>();
         }
 
-        public async Task<SurjectionProof> CreateEligibilityProof(byte[] originalCommitment, byte[] originalBlindingFactor, byte[] assetCommitment, byte[] newBlindingFactor, Memory<byte> issuer)
+        public async Task<SurjectionProof> CreateEligibilityProof(byte[] originalCommitment,
+                                                                  byte[] originalBlindingFactor,
+                                                                  Memory<byte> assetCommitment,
+                                                                  Memory<byte> newBlindingFactor,
+                                                                  Memory<byte> issuer)
         {
             byte[][] issuanceCommitments = await _gatewayService.GetIssuanceCommitments(issuer, _restApiConfiguration.RingSize + 1).ConfigureAwait(false);
 
 
             GetEligibilityCommitmentAndProofs(originalCommitment, issuanceCommitments, out int actualAssetPos, out byte[][] commitments);
-            byte[] blindingFactorToEligibility = CryptoHelper.GetDifferentialBlindingFactor(newBlindingFactor, originalBlindingFactor);
-            SurjectionProof eligibilityProof = CryptoHelper.CreateSurjectionProof(assetCommitment, commitments, actualAssetPos, blindingFactorToEligibility);
-            bool res = CryptoHelper.VerifySurjectionProof(eligibilityProof, assetCommitment);
+            byte[] blindingFactorToEligibility = CryptoHelper.GetDifferentialBlindingFactor(newBlindingFactor.Span, originalBlindingFactor);
+            SurjectionProof eligibilityProof = CryptoHelper.CreateSurjectionProof(assetCommitment.Span, commitments, actualAssetPos, blindingFactorToEligibility);
+            bool res = CryptoHelper.VerifySurjectionProof(eligibilityProof, assetCommitment.Span);
             return eligibilityProof;
         }
 

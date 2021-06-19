@@ -14,6 +14,7 @@ using O10.Crypto.ConfidentialAssets;
 using O10.Core;
 using System.Threading.Tasks;
 using O10.Core.Notifications;
+using O10.Transactions.Core.Ledgers.O10State.Transactions;
 
 namespace O10.Client.Common.Communication
 {
@@ -50,59 +51,32 @@ namespace O10.Client.Common.Communication
             _lastHeight = lastBlockHeight + 1;
         }
 
-        public async Task<DocumentSignRecord> IssueDocumentSignRecord(byte[] documentHash, ulong recordHeight, byte[] keyImage, byte[] signerCommitment, SurjectionProof eligibilityProof, byte[] issuer, SurjectionProof signerGroupRelationProof, byte[] signerGroupCommitment, byte[] groupIssuer, SurjectionProof signerGroupProof, SurjectionProof signerAllowedGroupsProof)
-        {
-            DocumentSignRecord packet = CreateDocumentSignRecord(documentHash, recordHeight, keyImage, signerCommitment, eligibilityProof, issuer, signerGroupRelationProof, signerGroupCommitment, groupIssuer, signerGroupProof, signerAllowedGroupsProof);
+        /*        public async Task<DocumentSignRecord> IssueDocumentSignRecord(byte[] documentHash, ulong recordHeight, byte[] keyImage, byte[] signerCommitment, SurjectionProof eligibilityProof, byte[] issuer, SurjectionProof signerGroupRelationProof, byte[] signerGroupCommitment, byte[] groupIssuer, SurjectionProof signerGroupProof, SurjectionProof signerAllowedGroupsProof)
+                {
+                    DocumentSignRecord packet = CreateDocumentSignRecord(documentHash, recordHeight, keyImage, signerCommitment, eligibilityProof, issuer, signerGroupRelationProof, signerGroupCommitment, groupIssuer, signerGroupProof, signerAllowedGroupsProof);
 
-            var completionResult = PropagateTransaction(packet);
+                    var completionResult = PropagateTransaction(packet);
 
-            return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
-        }
+                    return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
+                }
 
-        public async Task<DocumentRecord> IssueDocumentRecord(byte[] documentHash, byte[][] allowedSignerCommitments)
-        {
-            DocumentRecord packet = CreateDocumentRecord(documentHash, allowedSignerCommitments);
+                public async Task<DocumentRecord> IssueDocumentRecord(byte[] documentHash, byte[][] allowedSignerCommitments)
+                {
+                    DocumentRecord packet = CreateDocumentRecord(documentHash, allowedSignerCommitments);
 
-            var completionResult = PropagateTransaction(packet);
+                    var completionResult = PropagateTransaction(packet);
 
-            return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
-        }
+                    return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
+                }
 
-        public async Task<CancelEmployeeRecord> IssueCancelEmployeeRecord(byte[] registrationCommitment)
-        {
-            CancelEmployeeRecord packet = CreateCancelEmployeeRecord(registrationCommitment);
+                public async Task<CancelEmployeeRecord> IssueCancelEmployeeRecord(byte[] registrationCommitment)
+                {
+                    CancelEmployeeRecord packet = CreateCancelEmployeeRecord(registrationCommitment);
 
-            var completionResult = PropagateTransaction(packet);
+                    var completionResult = PropagateTransaction(packet);
 
-            return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
-        }
-
-        public async Task<EmployeeRecord> IssueEmployeeRecord(byte[] registrationCommitment, byte[] groupCommitment)
-        {
-            EmployeeRecord packet = CreateEmployeeRecord(registrationCommitment, groupCommitment);
-
-            var completionResult = PropagateTransaction(packet);
-
-            return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
-        }
-
-        public async Task<IssueBlindedAsset> IssueBlindedAsset(byte[] assetId)
-        {
-            IssueBlindedAsset packet = CreateIssueBlindedAsset(assetId);
-
-            var completionResult = PropagateTransaction(packet);
-
-            return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
-        }
-
-        public async Task<IssueBlindedAsset> IssueBlindedAsset2(byte[] assetId, byte[] blindingFactor)
-        {
-            IssueBlindedAsset packet = CreateIssueBlindedAsset2(assetId, blindingFactor);
-
-            var completionResult = PropagateTransaction(packet);
-
-            return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
-        }
+                    return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
+                }*/
 
         /// <summary>
         /// originatingCommitment = blindingPointValue + assetId * G
@@ -112,34 +86,61 @@ namespace O10.Client.Common.Communication
         /// <param name="blindingPointRoot"></param>
         /// <param name="originatingCommitment"></param>
         /// <returns></returns>
-        public async Task<IssueAssociatedBlindedAsset> IssueAssociatedAsset(byte[] assetId,
-                                         byte[] blindingPointValue,
-                                         byte[] blindingPointRoot)
+        public async Task<IssueAssociatedBlindedAssetTransaction> IssueAssociatedAsset(byte[] assetId, byte[] blindingPointValue, byte[] blindingPointRoot)
         {
-            IssueAssociatedBlindedAsset packet = CreateIssueAssociatedBlindedAsset(assetId, blindingPointValue, blindingPointRoot);
+            var packet = CreateIssueAssociatedBlindedAsset(assetId, blindingPointValue, blindingPointRoot);
 
             var completionResult = PropagateTransaction(packet);
 
             return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
         }
 
-        public async Task<TransferAssetToStealth> TransferAssetToStealth(byte[] assetId, ConfidentialAccount receiver)
+        public async Task<RelationTransaction> IssueRelationRecordTransaction(IKey registrationCommitment)
+        {
+            var packet = CreateEmployeeRecord(registrationCommitment);
+
+            var completionResult = PropagateTransaction(packet);
+
+            return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
+        }
+
+        public async Task<IssueBlindedAssetTransaction> IssueBlindedAsset(byte[] assetId)
+        {
+            var packet = CreateIssueBlindedAsset(assetId);
+
+            var completionResult = PropagateTransaction(packet);
+
+            return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
+        }
+
+        
+
+        public async Task<IssueBlindedAssetTransaction> IssueBlindedAsset2(byte[] assetId, byte[] blindingFactor)
+        {
+            var packet = CreateIssueBlindedAsset2(assetId, blindingFactor);
+
+            var completionResult = PropagateTransaction(packet);
+
+            return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
+        }
+
+        public async Task<TransferAssetToStealthTransaction> TransferAssetToStealth(byte[] assetId, ConfidentialAccount receiver)
         {
             if (receiver is null)
             {
                 throw new ArgumentNullException(nameof(receiver));
             }
 
-            TransferAssetToStealth packet = CreateTransferAssetToStealth(assetId, receiver);
+            var packet = CreateTransferAssetToStealth(assetId, receiver);
 
             var completionResult = PropagateTransaction(packet);
 
             return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
         }
 
-        public async Task<TransferAssetToStealth> TransferAssetToStealth2(byte[] assetId, byte[] issuanceCommitment, ConfidentialAccount receiver)
+        public async Task<TransferAssetToStealthTransaction> TransferAssetToStealth2(byte[] assetId, byte[] issuanceCommitment, ConfidentialAccount receiver)
         {
-            TransferAssetToStealth packet = CreateTransferAssetToStealth2(assetId, issuanceCommitment, receiver);
+            var packet = CreateTransferAssetToStealth2(assetId, issuanceCommitment, receiver);
 
             var completionResult = PropagateTransaction(packet);
 
@@ -150,138 +151,123 @@ namespace O10.Client.Common.Communication
 
         #region ============ PRIVATE FUNCTIONS ============ 
 
-        private DocumentSignRecord CreateDocumentSignRecord(byte[] documentHash, ulong recordHeight, byte[] keyImage, byte[] signerCommitment, SurjectionProof eligibilityProof, byte[] issuer, SurjectionProof signerGroupRelationProof, byte[] signerGroupCommitment, byte[] groupIssuer, SurjectionProof signerGroupProof, SurjectionProof signerAllowedGroupsProof)
+        private IssueBlindedAssetTransaction CreateIssueBlindedAsset(byte[] assetId)
         {
-            DocumentSignRecord issueEmployeeRecord = new DocumentSignRecord
+            //TODO: must be replaced with usage of constant secret key of issuing
+            _clientCryptoService.GetBoundedCommitment(assetId, out byte[] assetCommitment, out byte[] keyImage, out RingSignature ringSignature);
+
+            var issueBlindedAsset = new IssueBlindedAssetTransaction
             {
-                DocumentHash = documentHash,
-                RecordHeight = recordHeight,
-                KeyImage = keyImage,
-                SignerCommitment = signerCommitment,
-                EligibilityProof = eligibilityProof,
-                Issuer = issuer,
-                SignerGroupRelationProof = signerGroupRelationProof,
-                SignerGroupCommitment = signerGroupCommitment,
-                GroupIssuer = groupIssuer,
-                SignerGroupProof = signerGroupProof,
-                SignerAllowedGroupsProof = signerAllowedGroupsProof
+                AssetCommitment = _identityKeyProvider.GetKey(assetCommitment)
             };
 
-            FillHeightInfo(issueEmployeeRecord);
-            FillSyncData(issueEmployeeRecord);
-            FillAndSign(issueEmployeeRecord);
-
-            return issueEmployeeRecord;
+/*            FillHeightInfo(issueBlindedAsset);
+            FillSyncData(issueBlindedAsset);
+            FillAndSign(issueBlindedAsset);
+*/
+            return issueBlindedAsset;
         }
 
-        private DocumentRecord CreateDocumentRecord(byte[] documentHash, byte[][] allowedSignerCommitments)
+        /* private DocumentSignRecord CreateDocumentSignRecord(byte[] documentHash, ulong recordHeight, byte[] keyImage, byte[] signerCommitment, SurjectionProof eligibilityProof, byte[] issuer, SurjectionProof signerGroupRelationProof, byte[] signerGroupCommitment, byte[] groupIssuer, SurjectionProof signerGroupProof, SurjectionProof signerAllowedGroupsProof)
+         {
+             DocumentSignRecord issueEmployeeRecord = new DocumentSignRecord
+             {
+                 DocumentHash = documentHash,
+                 RecordHeight = recordHeight,
+                 KeyImage = keyImage,
+                 SignerCommitment = signerCommitment,
+                 EligibilityProof = eligibilityProof,
+                 Issuer = issuer,
+                 SignerGroupRelationProof = signerGroupRelationProof,
+                 SignerGroupCommitment = signerGroupCommitment,
+                 GroupIssuer = groupIssuer,
+                 SignerGroupProof = signerGroupProof,
+                 SignerAllowedGroupsProof = signerAllowedGroupsProof
+             };
+
+             FillHeightInfo(issueEmployeeRecord);
+             FillSyncData(issueEmployeeRecord);
+             FillAndSign(issueEmployeeRecord);
+
+             return issueEmployeeRecord;
+         }
+
+         private DocumentRecord CreateDocumentRecord(byte[] documentHash, byte[][] allowedSignerCommitments)
+         {
+             DocumentRecord issueEmployeeRecord = new DocumentRecord
+             {
+                 DocumentHash = documentHash,
+                 AllowedSignerGroupCommitments = allowedSignerCommitments ?? Array.Empty<byte[]>()
+             };
+
+             FillHeightInfo(issueEmployeeRecord);
+             FillSyncData(issueEmployeeRecord);
+             FillAndSign(issueEmployeeRecord);
+
+             return issueEmployeeRecord;
+         }
+
+         private CancelEmployeeRecord CreateCancelEmployeeRecord(byte[] registrationCommitment)
+         {
+             CancelEmployeeRecord issueEmployeeRecord = new CancelEmployeeRecord
+             {
+                 RegistrationCommitment = registrationCommitment
+             };
+
+             FillHeightInfo(issueEmployeeRecord);
+             FillSyncData(issueEmployeeRecord);
+             FillAndSign(issueEmployeeRecord);
+
+             return issueEmployeeRecord;
+         }*/
+
+        private RelationTransaction CreateEmployeeRecord(IKey registrationCommitment)
         {
-            DocumentRecord issueEmployeeRecord = new DocumentRecord
-            {
-                DocumentHash = documentHash,
-                AllowedSignerGroupCommitments = allowedSignerCommitments ?? Array.Empty<byte[]>()
-            };
-
-            FillHeightInfo(issueEmployeeRecord);
-            FillSyncData(issueEmployeeRecord);
-            FillAndSign(issueEmployeeRecord);
-
-            return issueEmployeeRecord;
-        }
-
-        private CancelEmployeeRecord CreateCancelEmployeeRecord(byte[] registrationCommitment)
-        {
-            CancelEmployeeRecord issueEmployeeRecord = new CancelEmployeeRecord
+            var issueEmployeeRecord = new RelationTransaction
             {
                 RegistrationCommitment = registrationCommitment
             };
 
-            FillHeightInfo(issueEmployeeRecord);
+/*            FillHeightInfo(issueEmployeeRecord);
             FillSyncData(issueEmployeeRecord);
             FillAndSign(issueEmployeeRecord);
-
+*/
             return issueEmployeeRecord;
         }
 
-        private EmployeeRecord CreateEmployeeRecord(byte[] registrationCommitment, byte[] groupCommitment)
-        {
-            EmployeeRecord issueEmployeeRecord = new EmployeeRecord
-            {
-                GroupCommitment = groupCommitment,
-                RegistrationCommitment = registrationCommitment
-            };
-
-            FillHeightInfo(issueEmployeeRecord);
-            FillSyncData(issueEmployeeRecord);
-            FillAndSign(issueEmployeeRecord);
-
-            return issueEmployeeRecord;
-        }
-
-        private IssueAssociatedBlindedAsset CreateIssueAssociatedBlindedAsset(byte[] assetId,
-                                                                              byte[] blindingPointValue,
-                                                                              byte[] blindingPointRoot)
+        private IssueAssociatedBlindedAssetTransaction CreateIssueAssociatedBlindedAsset(byte[] assetId, byte[] blindingPointValue, byte[] blindingPointRoot)
         {
             byte[] nonBlindedAssociatedCommitment = CryptoHelper.GetNonblindedAssetCommitment(assetId);
             byte[] commitmentToValue = CryptoHelper.SumCommitments(blindingPointValue, nonBlindedAssociatedCommitment);
             byte[] commitmentToBinding = CryptoHelper.SumCommitments(blindingPointRoot, nonBlindedAssociatedCommitment);
 
-            IssueAssociatedBlindedAsset issueAssociatedBlindedAsset = new IssueAssociatedBlindedAsset
+            var issueAssociatedBlindedAsset = new IssueAssociatedBlindedAssetTransaction
             {
-                AssetCommitment = commitmentToValue,
-                RootAssetCommitment = commitmentToBinding
+                AssetCommitment = _identityKeyProvider.GetKey(commitmentToValue),
+                RootAssetCommitment = _identityKeyProvider.GetKey(commitmentToBinding)
             };
-
-            FillHeightInfo(issueAssociatedBlindedAsset);
-            FillSyncData(issueAssociatedBlindedAsset);
-            FillAndSign(issueAssociatedBlindedAsset);
 
             return issueAssociatedBlindedAsset;
         }
 
-        private IssueBlindedAsset CreateIssueBlindedAsset(byte[] assetId)
-        {
-            //TODO: must be replaced with usage of constant secret key of issuing
-            _clientCryptoService.GetBoundedCommitment(assetId, out byte[] assetCommitment, out byte[] keyImage, out RingSignature ringSignature);
-
-            IssueBlindedAsset issueBlindedAsset = new IssueBlindedAsset
-            {
-                AssetCommitment = assetCommitment,
-                KeyImage = keyImage,
-                UniquencessProof = ringSignature
-            };
-
-            FillHeightInfo(issueBlindedAsset);
-            FillSyncData(issueBlindedAsset);
-            FillAndSign(issueBlindedAsset);
-
-            return issueBlindedAsset;
-        }
-
-        private IssueBlindedAsset CreateIssueBlindedAsset2(byte[] assetId, byte[] blindingFactor)
+        private IssueBlindedAssetTransaction CreateIssueBlindedAsset2(byte[] assetId, byte[] blindingFactor)
         {
             //TODO: must be replaced with usage of constant secret key of issuing
             byte[] issuanceNonBlindedCommitment = CryptoHelper.GetNonblindedAssetCommitment(assetId);
             byte[] issuanceCommitment = CryptoHelper.BlindAssetCommitment(issuanceNonBlindedCommitment, blindingFactor);
             byte[] keyImage = CryptoHelper.GenerateKeyImage(blindingFactor);
             byte[] pk = CryptoHelper.SubCommitments(issuanceCommitment, issuanceNonBlindedCommitment);
-            RingSignature ringSignature = CryptoHelper.GenerateRingSignature(issuanceCommitment, keyImage, new byte[][] { pk }, blindingFactor, 0)[0];
+            RingSignature ringSignature = CryptoHelper.GenerateRingSignature(issuanceCommitment, keyImage, new List<IKey> { _identityKeyProvider.GetKey(pk) }, blindingFactor, 0)[0];
 
-            IssueBlindedAsset issueBlindedAsset = new IssueBlindedAsset
+            var issueBlindedAsset = new IssueBlindedAssetTransaction
             {
-                AssetCommitment = issuanceCommitment,
-                KeyImage = keyImage,
-                UniquencessProof = ringSignature
+                AssetCommitment = _identityKeyProvider.GetKey(issuanceCommitment),
             };
-
-            FillHeightInfo(issueBlindedAsset);
-            FillSyncData(issueBlindedAsset);
-            FillAndSign(issueBlindedAsset);
 
             return issueBlindedAsset;
         }
 
-        private TransferAssetToStealth CreateTransferAssetToStealth(byte[] assetId, ConfidentialAccount receiver)
+        private TransferAssetToStealthTransaction CreateTransferAssetToStealth(byte[] assetId, ConfidentialAccount receiver)
         {
             _clientCryptoService.GetBoundedCommitment(assetId, out byte[] issuedAssetCommitment, out byte[] keyImage, out RingSignature ringSignature);
             byte[] secretKey = CryptoHelper.GetRandomSeed();
@@ -294,26 +280,22 @@ namespace O10.Client.Common.Communication
 
             _logger.LogIfDebug(() => $"{nameof(TransferAssetToStealth)} with secretKey={secretKey.ToHexString()}, transactionKey={transactionKey.ToHexString()}, destinationKey={destinationKey.ToHexString()}");
 
-            TransferAssetToStealth transferAssetToStealth = new TransferAssetToStealth
+            var transferAssetToStealth = new TransferAssetToStealthTransaction
             {
-                TransactionPublicKey = transactionKey,
-                DestinationKey = destinationKey,
+                TransactionPublicKey = _identityKeyProvider.GetKey(transactionKey),
+                DestinationKey = _identityKeyProvider.GetKey(destinationKey),
                 TransferredAsset = new EncryptedAsset
                 {
-                    AssetCommitment = assetCommitment,
+                    AssetCommitment = _identityKeyProvider.GetKey(assetCommitment),
                     EcdhTuple = CryptoHelper.CreateEcdhTupleCA(blindingFactor, assetId, secretKey, receiver.PublicViewKey)
                 },
                 SurjectionProof = surjectionProof
             };
 
-            FillHeightInfo(transferAssetToStealth);
-            FillSyncData(transferAssetToStealth);
-            FillAndSign(transferAssetToStealth);
-
             return transferAssetToStealth;
         }
 
-        private TransferAssetToStealth CreateTransferAssetToStealth2(byte[] assetId, byte[] issuanceAssetCommitment, ConfidentialAccount receiver)
+        private TransferAssetToStealthTransaction CreateTransferAssetToStealth2(byte[] assetId, byte[] issuanceAssetCommitment, ConfidentialAccount receiver)
         {
             byte[] secretKey = CryptoHelper.GetRandomSeed();
             byte[] transactionKey = CryptoHelper.GetPublicKey(secretKey);
@@ -323,28 +305,19 @@ namespace O10.Client.Common.Communication
 
             SurjectionProof surjectionProof = CryptoHelper.CreateSurjectionProof(assetCommitment, new byte[][] { issuanceAssetCommitment }, 0, blindingFactor);
 
-            TransferAssetToStealth transferAssetToStealth = new TransferAssetToStealth
+            var transferAssetToStealth = new TransferAssetToStealthTransaction
             {
-                TransactionPublicKey = transactionKey,
-                DestinationKey = destinationKey,
+                TransactionPublicKey = _identityKeyProvider.GetKey(transactionKey),
+                DestinationKey = _identityKeyProvider.GetKey(destinationKey),
                 TransferredAsset = new EncryptedAsset
                 {
-                    AssetCommitment = assetCommitment,
+                    AssetCommitment = _identityKeyProvider.GetKey(assetCommitment),
                     EcdhTuple = CryptoHelper.CreateEcdhTupleCA(blindingFactor, assetId, secretKey, receiver.PublicViewKey)
                 },
                 SurjectionProof = surjectionProof
             };
 
-            FillHeightInfo(transferAssetToStealth);
-            FillSyncData(transferAssetToStealth);
-            FillAndSign(transferAssetToStealth);
-
             return transferAssetToStealth;
-        }
-
-        private void FillHeightInfo(O10StatePacket transactionalBlockBase)
-        {
-            transactionalBlockBase.Height = _lastHeight++;
         }
 
         #endregion

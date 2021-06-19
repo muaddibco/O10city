@@ -21,6 +21,7 @@ using O10.Client.Common.Entities;
 using O10.Client.Common.Dtos.UniversalProofs;
 using O10.Client.Web.Portal.Dtos.User;
 using Microsoft.Extensions.DependencyInjection;
+using O10.Client.DataLayer.Model.ServiceProviders;
 
 namespace O10.Client.Web.Portal.Controllers
 {
@@ -154,7 +155,7 @@ namespace O10.Client.Web.Portal.Controllers
         [HttpPost("AddAllowedSigner/{spId}/{documentId}")]
         public async Task<IActionResult> AddAllowedSigner(long spId, long documentId, [FromBody] AllowedSignerDto allowedSigner)
         {
-            byte[] groupAssetId = await _assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_EMPLOYEEGROUP, allowedSigner.GroupOwner + allowedSigner.GroupName, allowedSigner.GroupOwner).ConfigureAwait(false);
+            byte[] groupAssetId = await _assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_RELATIONGROUP, allowedSigner.GroupOwner + allowedSigner.GroupName, allowedSigner.GroupOwner).ConfigureAwait(false);
             byte[] blindingFactor = CryptoHelper.GetRandomSeed();
             byte[] groupCommitment = CryptoHelper.GetAssetCommitment(blindingFactor, groupAssetId);
 
@@ -203,16 +204,16 @@ namespace O10.Client.Web.Portal.Controllers
             //else 
             if (actionType == 1)
             {
-                List<SpEmployee> spEmployees = _dataAccessService.GetSpEmployees(spAccount.AccountId, registrationKey.DecodeFromString64());
+                List<RelationRecord> spEmployees = _dataAccessService.GetRelationRecords(spAccount.AccountId, registrationKey.DecodeFromString64());
                 extraInfo = "";
 
-                foreach (SpEmployee spEmployee in spEmployees)
+                foreach (RelationRecord spEmployee in spEmployees)
                 {
                     if (!string.IsNullOrEmpty(extraInfo))
                     {
                         extraInfo += "/";
                     }
-                    extraInfo += $"{spAccount.AccountInfo}|{spEmployee?.SpEmployeeGroup?.GroupName}|{!string.IsNullOrEmpty(spEmployee.RegistrationCommitment)}";
+                    extraInfo += $"{spAccount.AccountInfo}|{spEmployee?.RelationGroup?.GroupName}|{!string.IsNullOrEmpty(spEmployee.RegistrationCommitment)}";
                 }
 
                 isRegistered = spEmployees.Count > 0;

@@ -40,12 +40,28 @@ namespace O10.Client.Common.Crypto
             _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
         }
 
-        public async Task<SurjectionProof> CreateProofToRegistration(byte[] receiverPublicKey, byte[] blindingFactor, byte[] assetCommitment, params Memory<byte>[] assetIds)
+        // TODO: need to add the capability of obtaining set of registration commitments already existing at the receiver
+        // TODO: this function must able to calculate Cr = Pb + Ir + Ig
+        public async Task<SurjectionProof> CreateProofToRegistration(Memory<byte> receiverPublicKey, Memory<byte> blindingFactor, Memory<byte> assetCommitment, Memory<byte> rootAssetId, IEnumerable<Memory<byte>>? assetIds = null)
         {
-            (byte[] registrationBlindingFactor, byte[] registrationCommitment) = await GetBoundedCommitment(receiverPublicKey, assetIds).ConfigureAwait(false);
-            byte[] blindingFactorToRegistration = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor, registrationBlindingFactor);
+            if (assetIds is null)
+            {
+                throw new ArgumentNullException(nameof(assetIds));
+            }
 
-            return CryptoHelper.CreateSurjectionProof(assetCommitment, new byte[][] { registrationCommitment }, 0, blindingFactorToRegistration);
+            if(!assetIds.Any())
+            {
+                throw new ArgumentException("There must be at least one assetId for proof of registration creation", nameof(assetIds));
+            }
+
+            (byte[] registrationBlindingFactor, byte[] registrationCommitment) = await GetBoundedCommitment(receiverPublicKey, rootAssetId, assetIds).ConfigureAwait(false);
+            byte[] blindingFactorToRegistration = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor.Span, registrationBlindingFactor);
+
+            var sp = CryptoHelper.CreateSurjectionProof(assetCommitment.Span, new byte[][] { registrationCommitment }, 0, blindingFactorToRegistration);
+
+            sp.AssetCommitments[0] = CryptoHelper.AddAssetIds(registrationCommitment, assetIds.Skip(1));
+
+            return sp;
         }
 
         public void GetBoundedCommitment(Memory<byte> assetId, Memory<byte> receiverPublicKey, out byte[] blindingFactor, out byte[] assetCommitment, params byte[][] scalars)
@@ -55,6 +71,7 @@ namespace O10.Client.Common.Crypto
                 throw new BindingKeyNotInitializedException();
             }
 
+            // TODO: change to async invocation
             byte[] bindingKey = AsyncUtil.RunSync(async () => await _bindingKeySource.Task.ConfigureAwait(false));
 
             byte[] sk;
@@ -73,11 +90,11 @@ namespace O10.Client.Common.Crypto
             assetCommitment = CryptoHelper.GetAssetCommitment(blindingFactor, assetId);
         }
 
-        public async Task<(byte[] blindingFactor, byte[] boundedCommitment)> GetBoundedCommitment(Memory<byte> receiverPublicKey, params Memory<byte>[] assetIds)
+        public async Task<(byte[] blindingFactor, byte[] boundedCommitment)> GetBoundedCommitment(Memory<byte> receiverPublicKey, Memory<byte> rootAssetId, IEnumerable<Memory<byte>>? assetIds = null)
         {
             byte[] bindingKey = await _bindingKeySource.Task.ConfigureAwait(false);
             byte[] blindingFactor = CryptoHelper.GetReducedSharedSecret(bindingKey, receiverPublicKey.Span);
-            byte[] boundedCommitment = CryptoHelper.GetAssetCommitment(blindingFactor, assetIds);
+            byte[] boundedCommitment = CryptoHelper.GetAssetCommitment(blindingFactor.AsMemory().Join(assetIds), rootAssetId);
 
             return (blindingFactor, boundedCommitment);
         }
@@ -120,7 +137,7 @@ namespace O10.Client.Common.Crypto
             return await _bindingKeySource.Task.ConfigureAwait(false);
         }
 
-        public async Task<AttributeProofs> GetRootAttributeProofs(byte[] bf, UserRootAttribute rootAttribute)
+        public async Task<AttributeProofs> GetRootAttributeProofs(Memory<byte> bf, UserRootAttribute rootAttribute, IKey? target = null, IEnumerable<Memory<byte>>? assetIds = null)
         {
             if (rootAttribute is null)
             {
@@ -128,26 +145,27 @@ namespace O10.Client.Common.Crypto
             }
 
             byte[] commitment = CryptoHelper.GetNonblindedAssetCommitment(rootAttribute.AssetId);
-            byte[] commitmentToRoot = CryptoHelper.BlindAssetCommitment(commitment, bf);
+            var commitmentToRoot = _identityKeyProvider.GetKey(CryptoHelper.BlindAssetCommitment(commitment, bf));
             byte[] issuer = rootAttribute.Source.HexStringToByteArray();
-            SurjectionProof eligibilityProof = await _eligibilityProofsProvider.CreateEligibilityProof(rootAttribute.IssuanceCommitment, rootAttribute.OriginalBlindingFactor, commitmentToRoot, bf, issuer).ConfigureAwait(false);
-
-            SurjectionProof proofToRegistration = await CreateProofToRegistration(issuer, bf, commitmentToRoot, rootAttribute.AssetId).ConfigureAwait(false);
+            SurjectionProof eligibilityProof = await _eligibilityProofsProvider.CreateEligibilityProof(rootAttribute.IssuanceCommitment, rootAttribute.OriginalBlindingFactor, commitmentToRoot.Value, bf, issuer).ConfigureAwait(false);
 
             var attributeProofs = new AttributeProofs
             {
                 SchemeName = rootAttribute.SchemeName,
-                Commitment = _identityKeyProvider.GetKey(commitmentToRoot),
+                Commitment = commitmentToRoot,
                 BindingProof = eligibilityProof,
-                CommitmentProof = new CommitmentProof
-                {
-                    SurjectionProof = proofToRegistration
-                }
+                CommitmentProof = await GetCommitmentProof(bf, rootAttribute, target, assetIds, commitmentToRoot).ConfigureAwait(false)
             };
 
             bool res = CryptoHelper.VerifySurjectionProof(attributeProofs.BindingProof, attributeProofs.Commitment.Value.Span);
 
             return attributeProofs;
+
+            async Task<CommitmentProof?> GetCommitmentProof(Memory<byte> bf, UserRootAttribute rootAttribute, IKey? target, IEnumerable<Memory<byte>>? assetIds, IKey commitmentToRoot) => 
+                target != null ? new CommitmentProof
+                {
+                    SurjectionProof = await CreateProofToRegistration(target.Value, bf, commitmentToRoot.Value, rootAttribute.AssetId, assetIds).ConfigureAwait(false)
+                } : null;
         }
 
         public async Task<AttributeProofs> GetAssociatedAttributeProofs(BlindingAssetInput assetInput, BlindingAssetInput parentAssetInput, string attributeSchemeName)
@@ -251,7 +269,7 @@ namespace O10.Client.Common.Crypto
             return surjectionProofRoot;
         }
 
-        public async Task<RootIssuer> GetAttributeProofs(byte[] bf, UserRootAttribute rootAttribute, IEnumerable<UserAssociatedAttribute> associatedAttributes = null, bool withProtectionAttribute = false)
+        public async Task<RootIssuer> GetAttributeProofs(byte[] bf, UserRootAttribute rootAttribute, IKey? target = null, IEnumerable<UserAssociatedAttribute>? associatedAttributes = null, bool withProtectionAttribute = false)
         {
             if (rootAttribute is null)
             {
@@ -262,7 +280,7 @@ namespace O10.Client.Common.Crypto
             AttributesByIssuer rootAttributeByIssuer = new AttributesByIssuer
             {
                 Issuer = issuerKeyRoot,
-                RootAttribute = await GetRootAttributeProofs(bf, rootAttribute).ConfigureAwait(false)
+                RootAttribute = await GetRootAttributeProofs(bf, rootAttribute, target).ConfigureAwait(false)
             };
 
             // ================================================================================

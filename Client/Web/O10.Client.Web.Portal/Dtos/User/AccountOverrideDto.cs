@@ -5,6 +5,6 @@
         public string Password { get; set; }
         public string SecretSpendKey { get; set; }
         public string SecretViewKey { get; set; }
-        public ulong LastCombinedBlockHeight { get; set; }
+        public long LastCombinedBlockHeight { get; set; }
     }
 }

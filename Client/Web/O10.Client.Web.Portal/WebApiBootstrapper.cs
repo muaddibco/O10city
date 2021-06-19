@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using O10.Client.Common;
 using O10.Client.Common.Configuration;
 using O10.Client.Common.Interfaces;
@@ -23,13 +24,13 @@ namespace O10.Client.Web.Portal
                 .Concat(Directory.EnumerateFiles(rootFolder, "O10.Integrations.*.dll").Select(f => new FileInfo(f).Name));
         }
 
-        public override void RunInitializers(IServiceProvider serviceProvider, CancellationToken cancellationToken, ILogger logger)
+        public override async Task RunInitializers(IServiceProvider serviceProvider, CancellationToken cancellationToken, ILogger logger)
         {
             IGatewayService gatewayService = (IGatewayService)serviceProvider.GetService(typeof(IGatewayService));
             IRestApiConfiguration configuration = ((IConfigurationService)serviceProvider.GetService(typeof(IConfigurationService))).Get<IRestApiConfiguration>();
             gatewayService.Initialize(configuration.GatewayUri, cancellationToken);
 
-            base.RunInitializers(serviceProvider, cancellationToken, logger);
+            await base.RunInitializers(serviceProvider, cancellationToken, logger);
         }
     }
 }

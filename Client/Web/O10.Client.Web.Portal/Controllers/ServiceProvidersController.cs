@@ -29,6 +29,7 @@ using O10.Client.Common.Interfaces.Inputs;
 using Newtonsoft.Json;
 using O10.Client.Common.Entities;
 using Microsoft.Extensions.DependencyInjection;
+using O10.Client.DataLayer.Model.ServiceProviders;
 
 namespace O10.Client.Web.Portal.Controllers
 {
@@ -177,7 +178,7 @@ namespace O10.Client.Web.Portal.Controllers
         {
             List<EmployeeGroupDto> employeeGroups = new List<EmployeeGroupDto>();
 
-            employeeGroups = _dataAccessService.GetSpEmployeeGroups(accountId).Select(g => new EmployeeGroupDto { GroupId = g.SpEmployeeGroupId, GroupName = g.GroupName }).ToList();
+            employeeGroups = _dataAccessService.GetRelationGroups(accountId).Select(g => new EmployeeGroupDto { GroupId = g.RelationGroupId, GroupName = g.GroupName }).ToList();
 
             return Ok(employeeGroups);
         }
@@ -185,7 +186,7 @@ namespace O10.Client.Web.Portal.Controllers
         [HttpPost("EmployeeGroup")]
         public IActionResult AddEmployeeGroup(long accountId, [FromBody] EmployeeGroupDto employeeGroup)
         {
-            employeeGroup.GroupId = _dataAccessService.AddSpEmployeeGroup(accountId, employeeGroup.GroupName);
+            employeeGroup.GroupId = _dataAccessService.AddRelationGroup(accountId, employeeGroup.GroupName);
 
             return Ok(employeeGroup);
         }
@@ -193,7 +194,7 @@ namespace O10.Client.Web.Portal.Controllers
         [HttpDelete("EmployeeGroup")]
         public IActionResult DeleteEmployeeGroup(long accountId, long groupId)
         {
-            _dataAccessService.RemoveSpEmployeeGroup(accountId, groupId);
+            _dataAccessService.RemoveRelationGroup(accountId, groupId);
 
             return Ok();
         }
@@ -203,18 +204,18 @@ namespace O10.Client.Web.Portal.Controllers
         {
             return Ok(_dataAccessService.GetAllSpEmployees(accountId).Select(e => new EmployeeDto
             {
-                EmployeeId = e.SpEmployeeId,
+                EmployeeId = e.RelationRecordId,
                 Description = e.Description,
-                RawRootAttribute = e.RootAttributeRaw,
+                RawRootAttribute = e.RootAttributeValue,
                 RegistrationCommitment = e.RegistrationCommitment,
-                GroupId = e.SpEmployeeGroup?.SpEmployeeGroupId ?? 0
+                GroupId = e.RelationGroup?.RelationGroupId ?? 0
             }));
         }
 
         [HttpPut("Employee")]
         public IActionResult AddEmployee(long accountId, [FromBody] EmployeeDto employee)
         {
-            employee.EmployeeId = _dataAccessService.AddSpEmployee(accountId, employee.Description, employee.RawRootAttribute, employee.GroupId);
+            employee.EmployeeId = _dataAccessService.AddRelationToGroup(accountId, employee.Description, employee.RawRootAttribute, employee.GroupId);
 
             return Ok(employee);
         }
@@ -222,7 +223,7 @@ namespace O10.Client.Web.Portal.Controllers
         [HttpPost("Employee")]
         public IActionResult UpdateEmployee(long accountId, [FromBody] EmployeeDto employee)
         {
-            _dataAccessService.UpdateSpEmployeeCategory(accountId, employee.EmployeeId, employee.GroupId);
+            _dataAccessService.ChangeRelationGroup(accountId, employee.EmployeeId, employee.GroupId);
             var persistency = _executionContextManager.ResolveExecutionServices(accountId);
             var transactionsService = persistency.Scope.ServiceProvider.GetService<IStateTransactionsService>();
             transactionsService.IssueCancelEmployeeRecord(employee.RegistrationCommitment.HexStringToByteArray());
@@ -233,7 +234,7 @@ namespace O10.Client.Web.Portal.Controllers
         [HttpDelete("Employee")]
         public IActionResult DeleteEmployee(long accountId, long employeeId)
         {
-            SpEmployee spEmployee = _dataAccessService.RemoveSpEmployee(accountId, employeeId);
+            RelationRecord spEmployee = _dataAccessService.RemoveRelation(accountId, employeeId);
             var persistency = _executionContextManager.ResolveExecutionServices(accountId);
             var transactionsService = persistency.Scope.ServiceProvider.GetService<IStateTransactionsService>();
 
@@ -296,7 +297,7 @@ namespace O10.Client.Web.Portal.Controllers
         [HttpPost("AllowedSigner")]
         public async Task<IActionResult> AddAllowedSigner(long accountId, long documentId, [FromBody] AllowedSignerDto allowedSigner)
         {
-            byte[] groupAssetId = await _assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_EMPLOYEEGROUP, allowedSigner.GroupOwner + allowedSigner.GroupName, allowedSigner.GroupOwner).ConfigureAwait(false);
+            byte[] groupAssetId = await _assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_RELATIONGROUP, allowedSigner.GroupOwner + allowedSigner.GroupName, allowedSigner.GroupOwner).ConfigureAwait(false);
             byte[] blindingFactor = CryptoHelper.GetRandomSeed();
             byte[] groupCommitment = CryptoHelper.GetAssetCommitment(blindingFactor, groupAssetId);
 

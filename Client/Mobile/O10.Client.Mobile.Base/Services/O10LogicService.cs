@@ -48,18 +48,6 @@ namespace O10.Client.Mobile.Base.Services
             _restApiConfiguration = configurationService.Get<IRestApiConfiguration>();
         }
 
-        public async Task SendIdentityProofs(RequestInput requestInput)
-        {
-            if (requestInput is null)
-            {
-                throw new ArgumentNullException(nameof(requestInput));
-            }
-
-            OutputSources[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
-
-            RequestResult requestResult = await _executionContext.TransactionsService.SendIdentityProofs(requestInput, null, outputModels, requestInput.Issuer).ConfigureAwait(false);
-        }
-
         public async Task<bool> StoreRegistration(byte[] target, string spInfo, Memory<byte> issuer, params Memory<byte>[] assetIds)
         {
             string issuerStr = issuer.ToHexString();

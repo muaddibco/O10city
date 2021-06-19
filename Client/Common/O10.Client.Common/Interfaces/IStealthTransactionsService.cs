@@ -16,17 +16,14 @@ namespace O10.Client.Common.Interfaces
     {
         void Initialize(long accountId);
 
-        Task<RequestResult> SendRelationsProofs(RelationsProofsInput relationsProofsInput, AssociatedProofPreparation[] associatedProofPreparations, OutputSources[] outputModels, byte[][] issuanceCommitments);
+        /*Task<RequestResult> SendRelationsProofs(RelationsProofsInput relationsProofsInput, AssociatedProofPreparation[] associatedProofPreparations, OutputSources[] outputModels, byte[][] issuanceCommitments);*/
 
-        Task<RequestResult> SendDocumentSignRequest(DocumentSignRequestInput requestInput, AssociatedProofPreparation[] associatedProofPreparations, OutputSources[] outputModels, byte[][] issuanceCommitments);
+        //Task<RequestResult> SendDocumentSignRequest(DocumentSignRequestInput requestInput, AssociatedProofPreparation[] associatedProofPreparations, OutputSources[] outputModels, byte[][] issuanceCommitments);
 
-        Task<RequestResult> SendEmployeeRegistrationRequest(EmployeeRequestInput requestInput, AssociatedProofPreparation[] associatedProofPreparations, OutputSources[] outputModels, byte[][] issuanceCommitments);
-
-        Task<RequestResult> SendIdentityProofs(RequestInput requestInput, AssociatedProofPreparation[] associatedProofPreparations, OutputSources[] outputModels, byte[] issuer);
-        Task<RequestResult> SendRevokeIdentity(RequestInput requestInput, OutputSources[] outputModels, byte[][] issuanceCommitments);
+        Task<RequestResult> SendRevokeIdentity(RequestInput requestInput, byte[][] issuanceCommitments);
 
         Task<RequestResult> SendCompromisedProofs(RequestInput requestInput, byte[] compromisedKeyImage, byte[] compromisedTransactionKey, byte[] destinationKey, OutputSources[] outputModels, byte[][] issuanceCommitments);
-        Task<RequestResult> SendUniversalTransport([NotNull] RequestInput requestInput, [NotNull] UniversalProofs universalProofs);
+        Task<RequestResult> SendUniversalTransaction([NotNull] RequestInput requestInput, [NotNull] UniversalProofs universalProofs);
 
         IKey NextKeyImage { get; }
 

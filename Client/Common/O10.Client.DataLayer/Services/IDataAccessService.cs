@@ -14,7 +14,7 @@ using O10.Core.Identity;
 
 namespace O10.Client.DataLayer.Services
 {
-	[ServiceContract]
+    [ServiceContract]
 	public interface IDataAccessService
 	{
 		bool Initialize();
@@ -27,7 +27,7 @@ namespace O10.Client.DataLayer.Services
 
 		void DuplicateAssociatedAttributes(long oldAccountId, long newAccountId);
 
-		void UpdateIdentityAttributeCommitment(long identityAttributeId, byte[] commitment);
+		void UpdateIdentityAttributeCommitment(long identityAttributeId, IKey commitment);
 
 		Identity GetIdentityByAttribute(long accountId, string attributeName, string attributeValue);
 
@@ -157,25 +157,30 @@ namespace O10.Client.DataLayer.Services
 
 		void AdjustSpIdenitityValidations(long accountId, IEnumerable<SpIdenitityValidation> spIdenitityValidations);
 
-		long AddSpEmployeeGroup(long accountId, string groupName);
-		void RemoveSpEmployeeGroup(long accountId, long groupId);
-		IEnumerable<SpEmployeeGroup> GetSpEmployeeGroups(long accountId);
+        #region Relations
 
-		long AddSpEmployee(long accountId, string description, string rootAttributeRaw, long groupId);
+        long AddRelationGroup(long accountId, string groupName);
+		void RemoveRelationGroup(long accountId, long groupId);
+		IEnumerable<RelationGroup> GetRelationGroups(long accountId);
+		string[] GetRelationGroupNames(long accountId);
 
-		void UpdateSpEmployeeCategory(long accountId, long spEmployeeId, long groupId);
+		long AddRelationToGroup(long accountId, string description, string rootAttributeRaw, long groupId);
 
-		SpEmployee SetSpEmployeeRegistrationCommitment(long accountId, long relationId, string registrationCommitment);
+		void ChangeRelationGroup(long accountId, long relationId, long groupId);
 
-		SpEmployee RemoveSpEmployee(long accountId, long spEmployeeId);
-		List<SpEmployee> GetSpEmployees(long accountId, string attributeContent);
-		List<SpEmployee> GetSpEmployees(long accountId);
-		IEnumerable<SpEmployee> GetSpEmployeesByGroup(long accountId, long groupId);
-		IEnumerable<SpEmployee> GetAllSpEmployees(long accountId);
-		IEnumerable<SpEmployee> GetSpEmployeesUngrouped(long accountId);
-		bool IsSpEmployeeExist(long accountId, string registrationCommitment);
+		RelationRecord SetRelationRegistrationCommitment(long accountId, long relationId, string registrationCommitment);
 
-		IEnumerable<SpDocument> GetSpDocuments(long accountId);
+		RelationRecord RemoveRelation(long accountId, long relationId);
+		List<RelationRecord> GetRelationRecords(long accountId, string attributeContent);
+		List<RelationRecord> GetRelationRecords(long accountId);
+		IEnumerable<RelationRecord> GetSpEmployeesByGroup(long accountId, long groupId);
+		IEnumerable<RelationRecord> GetAllSpEmployees(long accountId);
+		IEnumerable<RelationRecord> GetNotAssiginedRelations(long accountId);
+		bool IsRelationExist(long accountId, string registrationCommitment);
+        
+		#endregion Relations
+
+        IEnumerable<SpDocument> GetSpDocuments(long accountId);
 
 		SignedDocumentEntity GetSpDocument(long accountId, string hash);
 		SpDocument GetSpDocument(long accountId, long spDocumentId);
@@ -194,8 +199,6 @@ namespace O10.Client.DataLayer.Services
 		bool UpdateSpDocumentSignature(long accountId, string documentHash, ulong documentRecordHeight, ulong signatureRecordHeight, byte[] documentSignRecord);
 
 		IEnumerable<SpDocumentSignature> GetSpDocumentSignatures(long accountId, long spDocumentId);
-
-		string[] GetServiceProviderRelationGroups(long accountId);
 
 		IEnumerable<SpUserTransaction> GetSpUserTransactions(long accountId);
 
@@ -266,7 +269,7 @@ namespace O10.Client.DataLayer.Services
 
 		#endregion ConsentManagementSettings
 
-		bool CheckAttributeSchemeToCommitmentMatching(string schemeName, byte[] commitment);
+		bool CheckAttributeSchemeToCommitmentMatching(string schemeName, string commitment);
 
 		#region Scenarios
 

@@ -21,7 +21,7 @@ namespace O10.Client.DataLayer.Model
 
         public ClaimSubject Subject { get; set; }
 
-        public byte[] Commitment { get; set; }
+        public string Commitment { get; set; }
 
     }
 }

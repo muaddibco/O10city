@@ -130,7 +130,7 @@ namespace O10.Client.Common.Services
             _dataAccessService.ResetAccount(accountId, secretSpendKey, secretViewKey, publicSpendKey, publicViewKey, combinedBlock.Height);
         }
 
-        public void Override(AccountType accountType, long accountId, byte[] secretSpendKey, byte[] secretViewKey, string password, ulong lastRegistryCombinedBlockHeight) =>
+        public void Override(AccountType accountType, long accountId, byte[] secretSpendKey, byte[] secretViewKey, string password, long lastRegistryCombinedBlockHeight) =>
             OverrideEncryptedAccount(accountType, accountId, password, secretSpendKey, secretViewKey, lastRegistryCombinedBlockHeight);
 
         public void Delete(long accountId) =>
@@ -202,7 +202,7 @@ namespace O10.Client.Common.Services
             publicViewKey = (accountType == AccountType.User) ? CryptoHelper.GetPublicKey(secretViewKeyPwd) : null;
         }
 
-        private void OverrideEncryptedAccount(AccountType accountType, long accountId, string passphrase, byte[] secretSpendKey, byte[] secretViewKey, ulong lastRegistryCombinedBlockHeight)
+        private void OverrideEncryptedAccount(AccountType accountType, long accountId, string passphrase, byte[] secretSpendKey, byte[] secretViewKey, long lastRegistryCombinedBlockHeight)
         {
             byte[] pwdHash = _hashCalculation.CalculateHash(Encoding.UTF8.GetBytes(passphrase));
             byte[] secretSpendKeyPwd = CryptoHelper.SumScalars(secretSpendKey, pwdHash);

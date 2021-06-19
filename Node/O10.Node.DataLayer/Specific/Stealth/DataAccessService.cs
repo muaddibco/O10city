@@ -86,7 +86,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
             var addCompletion = new TaskCompletionSource<StealthTransaction>();
 
             // TODO: need to make sure that Key Image is checked where it is required to be checked!
-            bool isService = blockType == TransactionTypes.Stealth_TransitionCompromisedProofs || blockType == TransactionTypes.Stealth_RevokeIdentity;
+            bool isService = blockType == TransactionTypes.Stealth_KeyImageCompromised || blockType == TransactionTypes.Stealth_RevokeIdentity;
             bool keyImageExist = _keyImages.Contains(keyImage);
             if (keyImageExist)
             {

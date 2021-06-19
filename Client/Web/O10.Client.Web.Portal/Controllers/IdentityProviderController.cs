@@ -36,6 +36,7 @@ using O10.Client.Common.Exceptions;
 using O10.Client.Common.Integration;
 using O10.Client.Web.Portal.Services.Idps;
 using Microsoft.Extensions.DependencyInjection;
+using O10.Transactions.Core.Ledgers.O10State.Transactions;
 
 namespace O10.Client.Web.Portal.Controllers
 {
@@ -578,14 +579,14 @@ namespace O10.Client.Web.Portal.Controllers
                 IEnumerable<IdentitiesScheme> identitiesSchemes = _dataAccessService.GetAttributesSchemeByIssuer(issuer, true);
                 var rootAttributeDetails = attributeIssuanceDetails.First(a => a.Definition.IsRoot);
 
-                var packet = await IssueAssociatedAttribute(
+                var transaction = await IssueAssociatedAttribute(
                                         rootScheme.AttributeSchemeName,
                                         rootAttributeDetails.Value.Value,
                                         rootAttributeDetails.Value.BlindingPointValue,
                                         rootAttributeDetails.Value.BlindingPointRoot,
                                         issuer,
                                         transactionsService).ConfigureAwait(false);
-                _dataAccessService.UpdateIdentityAttributeCommitment(identity.Attributes.FirstOrDefault(a => a.AttributeName == rootScheme.AttributeName).AttributeId, packet.AssetCommitment);
+                _dataAccessService.UpdateIdentityAttributeCommitment(identity.Attributes.FirstOrDefault(a => a.AttributeName == rootScheme.AttributeName).AttributeId, transaction.AssetCommitment);
 
                 byte[] rootAssetId = _assetsService.GenerateAssetId(rootScheme.IdentitiesSchemeId, rootAttributeDetails.Value.Value);
                 issuanceDetails.AssociatedAttributes = await IssueAssociatedAttributes(
@@ -729,7 +730,7 @@ namespace O10.Client.Web.Portal.Controllers
         {
             if (protectionAttribute != null)
             {
-                byte[] protectionCommitment = protectionAttribute.Commitment;
+                byte[] protectionCommitment = protectionAttribute.Commitment.HexStringToByteArray();
 
                 SurjectionProof surjectionProof = new SurjectionProof
                 {
@@ -775,8 +776,8 @@ namespace O10.Client.Web.Portal.Controllers
                 issuanceDetails.Add(new IssuanceDetailsDto.IssuanceDetailsAssociated
                 {
                     AttributeName = rootKv.Value.Definition.AttributeName,
-                    AssetCommitment = packet.AssetCommitment.ToHexString(),
-                    BindingToRootCommitment = packet.RootAssetCommitment.ToHexString()
+                    AssetCommitment = packet.AssetCommitment.ToString(),
+                    BindingToRootCommitment = packet.RootAssetCommitment.ToString()
                 });
                 rootAssetId = _assetsService.GenerateAssetId(rootKv.Value.Definition.SchemeId, rootKv.Value.Value.Value);
             }
@@ -794,8 +795,8 @@ namespace O10.Client.Web.Portal.Controllers
                 issuanceDetails.Add(new IssuanceDetailsDto.IssuanceDetailsAssociated
                 {
                     AttributeName = kv.Value.Definition.AttributeName,
-                    AssetCommitment = packet.AssetCommitment.ToHexString(),
-                    BindingToRootCommitment = packet.RootAssetCommitment.ToHexString()
+                    AssetCommitment = packet.AssetCommitment.ToString(),
+                    BindingToRootCommitment = packet.RootAssetCommitment.ToString()
                 });
                 _dataAccessService.UpdateIdentityAttributeCommitment(kv.Key, packet.AssetCommitment);
             }
@@ -803,7 +804,7 @@ namespace O10.Client.Web.Portal.Controllers
             return issuanceDetails;
         }
 
-        private async Task<IssueAssociatedBlindedAsset> IssueAssociatedAttribute(string schemeName,
+        private async Task<IssueAssociatedBlindedAssetTransaction> IssueAssociatedAttribute(string schemeName,
                                                       string content,
                                                       byte[] blindingPointValue,
                                                       byte[] blindingPointRoot,

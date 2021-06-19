@@ -39,7 +39,7 @@
         public const ushort Stealth_DocumentSignRequest = 9;
         public const ushort Stealth_GroupsRelationsProofs = 10;
         public const ushort Stealth_UniversalTransport = 11;
-        public const ushort Stealth_TransitionCompromisedProofs = ushort.MaxValue;
+        public const ushort Stealth_KeyImageCompromised = ushort.MaxValue;
 
         public const ushort Consensus_GenericConsensus = ushort.MaxValue;
 

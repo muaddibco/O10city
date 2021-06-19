@@ -74,10 +74,20 @@ namespace O10.Crypto.ConfidentialAssets
             return spendKey;
         }
 
+        public static byte[] GetAssetCommitment(IEnumerable<Memory<byte>> blindingFactors, Memory<byte> assetId)
+        {
+            GroupElementP3 nonBlindedAssetCommitment = CreateNonblindedAssetCommitment(new List<Memory<byte>> { assetId });
+            GroupElementP3 blindedAssetCommitment = BlindAssetCommitment(nonBlindedAssetCommitment, blindingFactors.ToArray());
+            byte[] assetCommitment = new byte[32];
+            GroupOperations.ge_p3_tobytes(assetCommitment, 0, ref blindedAssetCommitment);
+
+            return assetCommitment;
+        }
+
         public static byte[] GetAssetCommitment(Memory<byte> blindingFactor, params Memory<byte>[] assetIds)
         {
             GroupElementP3 nonBlindedAssetCommitment = CreateNonblindedAssetCommitment(assetIds);
-            GroupElementP3 blindedAssetCommitment = BlindAssetCommitment(nonBlindedAssetCommitment, blindingFactor.Span);
+            GroupElementP3 blindedAssetCommitment = BlindAssetCommitment(nonBlindedAssetCommitment, blindingFactor);
             byte[] assetCommitment = new byte[32];
             GroupOperations.ge_p3_tobytes(assetCommitment, 0, ref blindedAssetCommitment);
 
@@ -95,7 +105,7 @@ namespace O10.Crypto.ConfidentialAssets
         public static byte[] BlindAssetCommitment(Memory<byte> assetCommitment, Memory<byte> newBlindingFactor)
         {
             GroupOperations.ge_frombytes(out GroupElementP3 p3, assetCommitment.Span, 0);
-            GroupElementP3 p3Blinded = BlindAssetCommitment(p3, newBlindingFactor.Span);
+            GroupElementP3 p3Blinded = BlindAssetCommitment(p3, newBlindingFactor);
 
             byte[] blindedBytes = new byte[32];
             GroupOperations.ge_p3_tobytes(blindedBytes, 0, ref p3Blinded);
@@ -169,6 +179,24 @@ namespace O10.Crypto.ConfidentialAssets
             return res;
         }
 
+        public static byte[] AddAssetIds(Span<byte> commitmentA, IEnumerable<Memory<byte>> assetIds)
+        {
+            if(assetIds == null)
+            {
+                return commitmentA.ToArray();
+            }
+
+            GroupOperations.ge_frombytes(out GroupElementP3 geCommitmentA, commitmentA, 0);
+            var nb = CreateNonblindedAssetCommitment(assetIds);
+            GroupOperations.ge_p3_to_cached(out GroupElementCached c1, ref nb);
+            GroupOperations.ge_add(out GroupElementP1P1 dSumP1, ref geCommitmentA, ref c1);
+            GroupOperations.ge_p1p1_to_p3(out GroupElementP3 dSum, ref dSumP1);
+            byte[] sum = new byte[32];
+            GroupOperations.ge_p3_tobytes(sum, 0, ref dSum);
+
+            return sum;
+        }
+
         public static byte[] GetReducedSharedSecret(Span<byte> sk, Span<byte> pk)
         {
             GroupOperations.ge_frombytes(out GroupElementP3 p3, pk, 0);
@@ -230,7 +258,7 @@ namespace O10.Crypto.ConfidentialAssets
             GroupElementP3[] nonBlindedAssetCommitments = new GroupElementP3[n];
             for (int i = 0; i < n; i++)
             {
-                nonBlindedAssetCommitments[i] = CreateNonblindedAssetCommitment(assetIds[i]);
+                nonBlindedAssetCommitments[i] = CreateNonblindedAssetCommitment(new List<Memory<byte>> { assetIds[i].AsMemory() });
             }
 
             IHash hasher = HashFactory.Crypto.SHA3.CreateKeccak512();
@@ -985,7 +1013,7 @@ namespace O10.Crypto.ConfidentialAssets
             GroupElementP3[] nonBlindedAssetCommitments = new GroupElementP3[n];
             for (int i = 0; i < n; i++)
             {
-                nonBlindedAssetCommitments[i] = CreateNonblindedAssetCommitment(assetIds[i]);
+                nonBlindedAssetCommitments[i] = CreateNonblindedAssetCommitment(new List<Memory<byte>> { assetIds[i].AsMemory() });
             }
 
             IHash hasher = HashFactory.Crypto.SHA3.CreateKeccak512();
@@ -1639,7 +1667,7 @@ namespace O10.Crypto.ConfidentialAssets
         /// </summary>
         /// <param name="assetId">32-byte code of asset</param>
         /// <returns></returns>
-        private static GroupElementP3 CreateNonblindedAssetCommitment(params Memory<byte>[] assetIds)
+        private static GroupElementP3 CreateNonblindedAssetCommitment(IEnumerable<Memory<byte>> assetIds)
         {
             if (assetIds == null)
                 throw new ArgumentNullException(nameof(assetIds));
@@ -1656,7 +1684,7 @@ namespace O10.Crypto.ConfidentialAssets
 
                 if (assetId.Length != 32)
                 {
-                    throw new ArgumentException(nameof(assetIds));
+                    throw new ArgumentException("assetId must be of length 32 bytes", nameof(assetIds));
                 }
 
                 GroupElementP3 assetIdCommitment = new GroupElementP3();
@@ -1704,13 +1732,28 @@ namespace O10.Crypto.ConfidentialAssets
             return assetIdCommitmentTotal;
         }
 
-        private static GroupElementP3 BlindAssetCommitment(GroupElementP3 assetCommitment, Span<byte> blindingFactor)
+        private static GroupElementP3 BlindAssetCommitment(GroupElementP3 assetCommitment, params Memory<byte>[] blindingFactors)
         {
-            GroupOperations.ge_scalarmult_base(out GroupElementP3 p3, blindingFactor, 0);
+            GroupElementP3 p3 = GetBlindingPoint(blindingFactors);
             GroupOperations.ge_p3_to_cached(out GroupElementCached assetCommitmentCached, ref assetCommitment);
             GroupOperations.ge_add(out GroupElementP1P1 assetCommitmentP1P1, ref p3, ref assetCommitmentCached);
             GroupOperations.ge_p1p1_to_p3(out GroupElementP3 assetCommitmentP3, ref assetCommitmentP1P1);
             return assetCommitmentP3;
+        }
+
+        private static GroupElementP3 GetBlindingPoint(params Memory<byte>[] blindingFactors)
+        {
+            if(blindingFactors.Length == 1)
+            {
+                GroupOperations.ge_scalarmult_base(out GroupElementP3 p3, blindingFactors[0].Span, 0);
+                return p3;
+            }
+            else
+            {
+                var hash = ReduceScalar32(FastHash256(blindingFactors));
+                GroupOperations.ge_scalarmult_base(out GroupElementP3 p3, hash, 0);
+                return p3;
+            }
         }
 
         /// <summary>

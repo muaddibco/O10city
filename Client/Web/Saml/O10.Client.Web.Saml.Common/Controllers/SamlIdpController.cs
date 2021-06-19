@@ -18,7 +18,7 @@ using System;
 
 namespace O10.Client.Web.Saml.Common.Controllers
 {
-    [ApiController]
+    /*[ApiController]
 	[AllowAnonymous]
     [Route("[controller]")]
     public class SamlIdpController : ControllerBase
@@ -150,5 +150,5 @@ namespace O10.Client.Web.Saml.Common.Controllers
 
             return Ok();
         }
-    }
+    }*/
 }

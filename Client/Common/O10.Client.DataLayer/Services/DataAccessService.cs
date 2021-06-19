@@ -139,7 +139,7 @@ namespace O10.Client.DataLayer.Services
             }
         }
 
-        public void UpdateIdentityAttributeCommitment(long identityAttributeId, byte[] commitment)
+        public void UpdateIdentityAttributeCommitment(long identityAttributeId, IKey commitment)
         {
             lock (_sync)
             {
@@ -147,7 +147,7 @@ namespace O10.Client.DataLayer.Services
 
                 if (identityAttribute != null)
                 {
-                    identityAttribute.Commitment = commitment;
+                    identityAttribute.Commitment = commitment.ToString();
                     _dataContext.SaveChanges();
                 }
             }
@@ -1144,16 +1144,16 @@ namespace O10.Client.DataLayer.Services
                         _dataContext.SpDocuments.Remove(item);
                     }
 
-                    var spEmployeeGroups = _dataContext.SpEmployeeGroups.Include(g => g.Account).Where(g => g.Account.AccountId == accountId).ToList();
+                    var spEmployeeGroups = _dataContext.RelationGroups.Include(g => g.Account).Where(g => g.Account.AccountId == accountId).ToList();
                     foreach (var item in spEmployeeGroups)
                     {
-                        var spEmployees = _dataContext.SpEmployees.Include(e => e.SpEmployeeGroup).Where(e => e.SpEmployeeGroup.SpEmployeeGroupId == item.SpEmployeeGroupId).ToList();
+                        var spEmployees = _dataContext.Relations.Include(e => e.RelationGroup).Where(e => e.RelationGroup.RelationGroupId == item.RelationGroupId).ToList();
                         foreach (var employee in spEmployees)
                         {
-                            _dataContext.SpEmployees.Remove(employee);
+                            _dataContext.Relations.Remove(employee);
                         }
 
-                        _dataContext.SpEmployeeGroups.Remove(item);
+                        _dataContext.RelationGroups.Remove(item);
                     }
 
                     var spDocumentAllowedSigners = _dataContext.SpDocumentAllowedSigners.Include(s => s.Account).Where(s => s.Account.AccountId == accountId).ToList();
@@ -1389,16 +1389,16 @@ namespace O10.Client.DataLayer.Services
                         _dataContext.SpDocuments.Remove(item);
                     }
 
-                    var spEmployeeGroups = _dataContext.SpEmployeeGroups.Include(g => g.Account).Where(g => g.Account.AccountId == accountId).ToList();
+                    var spEmployeeGroups = _dataContext.RelationGroups.Include(g => g.Account).Where(g => g.Account.AccountId == accountId).ToList();
                     foreach (var item in spEmployeeGroups)
                     {
-                        var spEmployees = _dataContext.SpEmployees.Include(e => e.SpEmployeeGroup).Where(e => e.SpEmployeeGroup.SpEmployeeGroupId == item.SpEmployeeGroupId).ToList();
+                        var spEmployees = _dataContext.Relations.Include(e => e.RelationGroup).Where(e => e.RelationGroup.RelationGroupId == item.RelationGroupId).ToList();
                         foreach (var employee in spEmployees)
                         {
-                            _dataContext.SpEmployees.Remove(employee);
+                            _dataContext.Relations.Remove(employee);
                         }
 
-                        _dataContext.SpEmployeeGroups.Remove(item);
+                        _dataContext.RelationGroups.Remove(item);
                     }
 
                     var spDocumentAllowedSigners = _dataContext.SpDocumentAllowedSigners.Include(s => s.Account).Where(s => s.Account.AccountId == accountId).ToList();
@@ -1439,108 +1439,108 @@ namespace O10.Client.DataLayer.Services
             }
         }
 
-        public long AddSpEmployeeGroup(long accountId, string groupName)
+        public long AddRelationGroup(long accountId, string groupName)
         {
             lock (_sync)
             {
                 Account account = _dataContext.Accounts.FirstOrDefault(a => a.AccountId == accountId);
 
-                if (account != null && !_dataContext.SpEmployeeGroups.Include(g => g.Account).Any(g => g.Account == account && g.GroupName.Equals(groupName, StringComparison.InvariantCultureIgnoreCase)))
+                if (account != null && !_dataContext.RelationGroups.Include(g => g.Account).Any(g => g.Account == account && g.GroupName.Equals(groupName, StringComparison.InvariantCultureIgnoreCase)))
                 {
-                    SpEmployeeGroup spEmployeeGroup = new SpEmployeeGroup
+                    RelationGroup spEmployeeGroup = new RelationGroup
                     {
                         Account = account,
                         GroupName = groupName
                     };
 
-                    _dataContext.SpEmployeeGroups.Add(spEmployeeGroup);
+                    _dataContext.RelationGroups.Add(spEmployeeGroup);
                     _dataContext.SaveChanges();
 
-                    return spEmployeeGroup.SpEmployeeGroupId;
+                    return spEmployeeGroup.RelationGroupId;
                 }
             }
 
             return 0;
         }
 
-        public void RemoveSpEmployeeGroup(long accountId, long groupId)
+        public void RemoveRelationGroup(long accountId, long groupId)
         {
             lock (_sync)
             {
                 Account account = _dataContext.Accounts.FirstOrDefault(a => a.AccountId == accountId);
                 if (account != null)
                 {
-                    SpEmployeeGroup spEmployeeGroup = _dataContext.SpEmployeeGroups.FirstOrDefault(g => g.Account == account && g.SpEmployeeGroupId == groupId);
+                    RelationGroup spEmployeeGroup = _dataContext.RelationGroups.FirstOrDefault(g => g.Account == account && g.RelationGroupId == groupId);
 
                     if (spEmployeeGroup != null)
                     {
-                        _dataContext.SpEmployeeGroups.Remove(spEmployeeGroup);
+                        _dataContext.RelationGroups.Remove(spEmployeeGroup);
                         _dataContext.SaveChanges();
                     }
                 }
             }
         }
 
-        public IEnumerable<SpEmployeeGroup> GetSpEmployeeGroups(long accountId)
+        public IEnumerable<RelationGroup> GetRelationGroups(long accountId)
         {
             lock (_sync)
             {
                 Account account = _dataContext.Accounts.FirstOrDefault(a => a.AccountId == accountId);
                 if (account != null)
                 {
-                    return _dataContext.SpEmployeeGroups.Where(g => g.Account == account).ToList();
+                    return _dataContext.RelationGroups.Where(g => g.Account == account).ToList();
                 }
             }
 
             return null;
         }
 
-        public long AddSpEmployee(long accountId, string description, string rootAttributeRaw, long groupId)
+        public long AddRelationToGroup(long accountId, string description, string rootAttributeRaw, long groupId)
         {
             lock (_sync)
             {
                 Account account = _dataContext.Accounts.FirstOrDefault(a => a.AccountId == accountId);
                 if (account != null)
                 {
-                    SpEmployeeGroup spEmployeeGroup = _dataContext.SpEmployeeGroups.FirstOrDefault(g => g.Account == account && g.SpEmployeeGroupId == groupId);
+                    RelationGroup spEmployeeGroup = _dataContext.RelationGroups.FirstOrDefault(g => g.Account == account && g.RelationGroupId == groupId);
 
-                    SpEmployee spEmployee = new SpEmployee
+                    RelationRecord spEmployee = new RelationRecord
                     {
                         Account = account
                     };
 
-                    spEmployee.RootAttributeRaw = rootAttributeRaw;
-                    spEmployee.SpEmployeeGroup = spEmployeeGroup;
+                    spEmployee.RootAttributeValue = rootAttributeRaw;
+                    spEmployee.RelationGroup = spEmployeeGroup;
                     spEmployee.Description = description;
-                    _dataContext.SpEmployees.Add(spEmployee);
+                    _dataContext.Relations.Add(spEmployee);
 
                     _dataContext.SaveChanges();
 
-                    return spEmployee.SpEmployeeId;
+                    return spEmployee.RelationRecordId;
                 }
             }
 
             return 0;
         }
 
-        public List<SpEmployee> GetSpEmployees(long accountId, string attributeContent)
+        public List<RelationRecord> GetRelationRecords(long accountId, string attributeContent)
         {
             lock (_sync)
             {
-                List<SpEmployee> spEmployees = _dataContext.SpEmployees.Include(s => s.Account).Include(s => s.SpEmployeeGroup).Where(e => e.Account.AccountId == accountId && e.RootAttributeRaw == attributeContent).ToList();
+                List<RelationRecord> relationRecords = _dataContext.Relations.Include(s => s.Account).Include(s => s.RelationGroup).Where(e => e.Account.AccountId == accountId && e.RootAttributeValue == attributeContent).ToList();
 
-                return spEmployees;
+                return relationRecords;
             }
         }
 
-        public List<SpEmployee> GetSpEmployees(long accountId)
+        public List<RelationRecord> GetRelationRecords(long accountId)
         {
             lock (_sync)
             {
                 Account account = _dataContext.Accounts.FirstOrDefault(a => a.AccountId == accountId);
                 if (account != null)
                 {
-                    List<SpEmployee> spEmployees = _dataContext.SpEmployees.Where(e => e.Account == account).ToList();
+                    List<RelationRecord> spEmployees = _dataContext.Relations.Where(e => e.Account == account).ToList();
 
                     return spEmployees;
                 }
@@ -1549,22 +1549,31 @@ namespace O10.Client.DataLayer.Services
             }
         }
 
-        public SpEmployee SetSpEmployeeRegistrationCommitment(long accountId, long relationId, string registrationCommitment)
+        public RelationRecord SetRelationRegistrationCommitment(long accountId, long relationId, string registrationCommitment)
         {
             lock (_sync)
             {
                 Account account = _dataContext.Accounts.FirstOrDefault(a => a.AccountId == accountId);
                 if (account != null)
                 {
-                    SpEmployee spEmployee = _dataContext.SpEmployees.FirstOrDefault(e => e.SpEmployeeId == relationId);
+                    RelationRecord relationRecord = _dataContext.Relations.FirstOrDefault(e => e.RelationRecordId == relationId);
 
-                    if (spEmployee != null)
+                    if (relationRecord != null)
                     {
-                        spEmployee.RegistrationCommitment = registrationCommitment;
+                        RegistrationCommitment registrationCommitmentRec = _dataContext.RegistrationCommitments.FirstOrDefault(r => r.Commitment == registrationCommitment);
+                        if(registrationCommitment == null)
+                        {
+                            registrationCommitmentRec = new RegistrationCommitment
+                            {
+                                Commitment = registrationCommitment
+                            };
+                        }
+
+                        relationRecord.RegistrationCommitment = registrationCommitmentRec;
 
                         _dataContext.SaveChanges();
 
-                        return spEmployee;
+                        return relationRecord;
                     }
                 }
             }
@@ -1572,20 +1581,20 @@ namespace O10.Client.DataLayer.Services
             return null;
         }
 
-        public void UpdateSpEmployeeCategory(long accountId, long spEmployeeId, long groupId)
+        public void ChangeRelationGroup(long accountId, long spEmployeeId, long groupId)
         {
             lock (_sync)
             {
                 Account account = _dataContext.Accounts.FirstOrDefault(a => a.AccountId == accountId);
                 if (account != null)
                 {
-                    SpEmployee spEmployee = _dataContext.SpEmployees.Include(g => g.Account).FirstOrDefault(e => e.Account.AccountId == accountId && e.SpEmployeeId == spEmployeeId);
+                    RelationRecord spEmployee = _dataContext.Relations.Include(g => g.Account).FirstOrDefault(e => e.Account.AccountId == accountId && e.RelationRecordId == spEmployeeId);
 
                     if (spEmployee != null)
                     {
-                        SpEmployeeGroup spEmployeeGroup = _dataContext.SpEmployeeGroups.Include(g => g.Account).FirstOrDefault(g => g.Account.AccountId == accountId && g.SpEmployeeGroupId == groupId);
+                        RelationGroup spEmployeeGroup = _dataContext.RelationGroups.Include(g => g.Account).FirstOrDefault(g => g.Account.AccountId == accountId && g.RelationGroupId == groupId);
 
-                        spEmployee.SpEmployeeGroup = spEmployeeGroup;
+                        spEmployee.RelationGroup = spEmployeeGroup;
                         spEmployee.RegistrationCommitment = null;
 
                         _dataContext.SaveChanges();
@@ -1594,17 +1603,17 @@ namespace O10.Client.DataLayer.Services
             }
         }
 
-        public SpEmployee RemoveSpEmployee(long accountId, long spEmployeeId)
+        public RelationRecord RemoveRelation(long accountId, long spEmployeeId)
         {
             lock (_sync)
             {
                 Account account = _dataContext.Accounts.FirstOrDefault(a => a.AccountId == accountId);
                 if (account != null)
                 {
-                    SpEmployee spEmployee = _dataContext.SpEmployees.FirstOrDefault(e => e.Account == account && e.SpEmployeeId == spEmployeeId);
+                    RelationRecord spEmployee = _dataContext.Relations.FirstOrDefault(e => e.Account == account && e.RelationRecordId == spEmployeeId);
                     if (spEmployee != null)
                     {
-                        _dataContext.SpEmployees.Remove(spEmployee);
+                        _dataContext.Relations.Remove(spEmployee);
 
                         _dataContext.SaveChanges();
                     }
@@ -1616,23 +1625,23 @@ namespace O10.Client.DataLayer.Services
             }
         }
 
-        public IEnumerable<SpEmployee> GetSpEmployeesByGroup(long accountId, long groupId)
+        public IEnumerable<RelationRecord> GetSpEmployeesByGroup(long accountId, long groupId)
         {
             lock (_sync)
             {
                 Account account = _dataContext.Accounts.FirstOrDefault(a => a.AccountId == accountId);
                 if (account != null)
                 {
-                    SpEmployeeGroup spEmployeeGroup = _dataContext.SpEmployeeGroups.Include(g => g.Account).FirstOrDefault(g => g.Account == account && g.SpEmployeeGroupId == groupId);
+                    RelationGroup spEmployeeGroup = _dataContext.RelationGroups.Include(g => g.Account).FirstOrDefault(g => g.Account == account && g.RelationGroupId == groupId);
 
-                    return _dataContext.SpEmployees.Include(e => e.Account).Include(e => e.SpEmployeeGroup).Where(e => e.Account == account && e.SpEmployeeGroup == spEmployeeGroup).ToList();
+                    return _dataContext.Relations.Include(e => e.Account).Include(e => e.RelationGroup).Where(e => e.Account == account && e.RelationGroup == spEmployeeGroup).ToList();
                 }
             }
 
             return null;
         }
 
-        public IEnumerable<SpEmployee> GetAllSpEmployees(long accountId)
+        public IEnumerable<RelationRecord> GetAllSpEmployees(long accountId)
         {
             lock (_sync)
             {
@@ -1640,14 +1649,14 @@ namespace O10.Client.DataLayer.Services
 
                 if (account != null)
                 {
-                    return _dataContext.SpEmployees.Include(e => e.Account).Where(e => e.Account == account).ToList();
+                    return _dataContext.Relations.Include(e => e.Account).Where(e => e.Account == account).ToList();
                 }
             }
 
             return null;
         }
 
-        public IEnumerable<SpEmployee> GetSpEmployeesUngrouped(long accountId)
+        public IEnumerable<RelationRecord> GetNotAssiginedRelations(long accountId)
         {
             lock (_sync)
             {
@@ -1655,14 +1664,14 @@ namespace O10.Client.DataLayer.Services
 
                 if (account != null)
                 {
-                    return _dataContext.SpEmployees.Include(e => e.Account).Include(e => e.SpEmployeeGroup).Where(e => e.Account == account && e.SpEmployeeGroup == null).ToList();
+                    return _dataContext.Relations.Include(e => e.Account).Include(e => e.RelationGroup).Where(e => e.Account == account && e.RelationGroup == null).ToList();
                 }
             }
 
             return null;
         }
 
-        public bool IsSpEmployeeExist(long accountId, string registrationCommitment)
+        public bool IsRelationExist(long accountId, string registrationCommitment)
         {
             lock (_sync)
             {
@@ -1670,7 +1679,7 @@ namespace O10.Client.DataLayer.Services
 
                 if (account != null)
                 {
-                    return _dataContext.SpEmployees.Include(e => e.Account).Include(e => e.SpEmployeeGroup).Any(e => e.Account == account && e.SpEmployeeGroup != null && e.RegistrationCommitment == registrationCommitment);
+                    return _dataContext.Relations.Include(e => e.Account).Include(e => e.RelationGroup).Include(e => e.RegistrationCommitment).Any(e => e.Account == account && e.RelationGroup != null && e.RegistrationCommitment.Commitment == registrationCommitment);
                 }
             }
 
@@ -2095,11 +2104,11 @@ namespace O10.Client.DataLayer.Services
             }
         }
 
-        public string[] GetServiceProviderRelationGroups(long accountId)
+        public string[] GetRelationGroupNames(long accountId)
         {
             lock (_sync)
             {
-                return _dataContext.SpEmployeeGroups.Include(r => r.Account).Where(r => r.Account.AccountId == accountId)?.Select(r => r.GroupName).ToArray();
+                return _dataContext.RelationGroups.Include(r => r.Account).Where(r => r.Account.AccountId == accountId)?.Select(r => r.GroupName).ToArray();
             }
         }
 
@@ -2630,11 +2639,11 @@ namespace O10.Client.DataLayer.Services
 
         #endregion ConsentManagementSettings
 
-        public bool CheckAttributeSchemeToCommitmentMatching(string schemeName, byte[] commitment)
+        public bool CheckAttributeSchemeToCommitmentMatching(string schemeName, string commitment)
         {
             lock (_sync)
             {
-                return _dataContext.Attributes.AsEnumerable().Any(a => a.AttributeName == schemeName && a.Commitment != null && a.Commitment.Equals32(commitment));
+                return _dataContext.Attributes.Any(a => a.AttributeName == schemeName && a.Commitment == commitment);
             }
         }
         #region Scenarios

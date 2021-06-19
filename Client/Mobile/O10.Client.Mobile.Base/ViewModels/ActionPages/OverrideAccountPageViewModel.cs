@@ -24,7 +24,7 @@ namespace O10.Client.Mobile.Base.ViewModels
         private string _password;
         private byte[] _secretSpendKey;
         private byte[] _secretViewKey;
-        private ulong _lastCombinedBlockHeight;
+        private long _lastCombinedBlockHeight;
 
         public OverrideAccountPageViewModel(INavigationService navigationService, IAccountsService accountsService,
             IExecutionContext executionContext, IStateNotificationService stateNotificationService, ICompromizationService compromizationService,

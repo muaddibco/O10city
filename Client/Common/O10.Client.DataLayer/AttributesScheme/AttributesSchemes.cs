@@ -10,7 +10,7 @@
         public const string ATTR_SCHEME_NAME_PLACEOFBIRTH = "PlaceOfBirth";
         public const string ATTR_SCHEME_NAME_DATEOFBIRTH = "DateOfBirth";
         public const string ATTR_SCHEME_NAME_PASSPORTPHOTO = "PassportPhoto";
-        public const string ATTR_SCHEME_NAME_EMPLOYEEGROUP = "EmployeeGroup";
+        public const string ATTR_SCHEME_NAME_RELATIONGROUP = "RelationGroup";
         public const string ATTR_SCHEME_NAME_EMAIL = "Email";
         public const string ATTR_SCHEME_NAME_ISSUER = "Issuer";
         public const string ATTR_SCHEME_NAME_NATIONALITY = "Nationality";
@@ -97,7 +97,7 @@
             },
             new AttributeScheme
             {
-                Name = ATTR_SCHEME_NAME_EMPLOYEEGROUP,
+                Name = ATTR_SCHEME_NAME_RELATIONGROUP,
                 Description = ATTR_SCHEME_NAME_EMPLOYEEGROUP_DESC,
                 ValueType = AttributeValueType.Any
             },

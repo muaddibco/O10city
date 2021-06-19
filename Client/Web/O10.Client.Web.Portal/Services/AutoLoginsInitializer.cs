@@ -28,7 +28,7 @@ namespace O10.Client.Web.Portal.Services
 
         public override ExtensionOrderPriorities Priority => ExtensionOrderPriorities.Lowest;
 
-        protected override void InitializeInner(CancellationToken cancellationToken)
+        protected override async Task InitializeInner(CancellationToken cancellationToken)
         {
             foreach (var autoLogin in _dataAccessService.GetAutoLogins().Where(a => a.Account != null))
             {
@@ -48,7 +48,7 @@ namespace O10.Client.Web.Portal.Services
                     catch (Exception ex)
                     {
                         _logger.Error($"Failure during {nameof(AutoLoginsInitializer)} for {JsonConvert.SerializeObject(autoLogin, new ByteArrayJsonConverter())}", ex);
-                        Task.Delay(1000).Wait();
+                        await Task.Delay(1000);
                     }
                 } while (!succeeded && --attempts > 0);
             }

@@ -8,8 +8,6 @@ namespace O10.Core
         Type FactoryType => typeof(T);
 
         T Create();
-
-        void Utilize(T obj);
     }
 
     public interface IFactory<T, Key>

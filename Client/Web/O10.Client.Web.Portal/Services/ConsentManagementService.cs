@@ -71,7 +71,7 @@ namespace O10.Client.Web.Portal.Services
             {
                 try
                 {
-                    if (p is GroupsRelationsProofs relationsProofs)
+                    /*if (p is GroupsRelationsProofs relationsProofs)
                     {
                         _logger.LogIfDebug(() => $"[{_accountId}]: checking relation proofs {JsonConvert.SerializeObject(relationsProofs, new ByteArrayJsonConverter())}");
 
@@ -90,14 +90,14 @@ namespace O10.Client.Web.Portal.Services
                             = await _relationsProofsValidationService.VerifyRelationProofs(relationsProofs, _clientCryptoService, relationProofsSession).ConfigureAwait(false);
 
                         await _hubContext.Clients.Group(sessionKey.ToHexString()).SendAsync("ValidationResults", validationResults).ConfigureAwait(false);
-                    }
-                    else if (p is TransitionCompromisedProofs compromisedProofs)
+                    }*/
+                    /*else if (p is TransitionCompromisedProofs compromisedProofs)
                     {
                         if (_proofsSessions.TryGetValue(compromisedProofs.CompromisedKeyImage.ToHexString(), out ProofsSession proofsSession))
                         {
                             await _hubContext.Clients.Group(proofsSession.SessionKey).SendAsync("ProofsCompromised", proofsSession).ConfigureAwait(false);
                         }
-                    }
+                    }*/
                 }
                 catch (Exception ex)
                 {

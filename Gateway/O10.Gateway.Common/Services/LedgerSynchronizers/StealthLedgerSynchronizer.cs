@@ -59,7 +59,7 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
 
 			switch (transaction)
 			{
-                case CompromizationProofsTransaction compromizationProofsTransaction:
+                case KeyImageCompromisedTransaction compromizationProofsTransaction:
                     ProcessCompromizedProofs(compromizationProofsTransaction);
                     break;
                 case RevokeIdentityTransaction revokeIdentityTransaction:
@@ -69,7 +69,7 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
 			StoreUtxoPacket(wp.WitnessPacketId, registryCombinedBlockHeight, transaction as O10StealthTransactionBase);
 		}
 
-        private void ProcessCompromizedProofs(CompromizationProofsTransaction transaction)
+        private void ProcessCompromizedProofs(KeyImageCompromisedTransaction transaction)
         {
 			_dataAccessService.AddCompromisedKeyImage(transaction.KeyImage);
         }
@@ -101,7 +101,7 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
 		{
 			_dataAccessService.SetRootAttributesOverriden(
 				transaction.DestinationKey2,
-				_identityKeyProvider.GetKey(transaction.OwnershipProof.AssetCommitments[0]),
+				_identityKeyProvider.GetKey(transaction.EligibilityProof.AssetCommitments[0]),
                 registryCombinedBlockHeight);
 		}
 	}

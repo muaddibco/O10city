@@ -23,6 +23,7 @@ using O10.Crypto.ConfidentialAssets;
 using O10.Core.Cryptography;
 using System.Collections.Concurrent;
 using Microsoft.Extensions.DependencyInjection;
+using O10.Transactions.Core.Ledgers.O10State.Transactions;
 
 namespace O10.Client.Web.Portal.ElectionCommittee
 {
@@ -401,7 +402,7 @@ namespace O10.Client.Web.Portal.ElectionCommittee
             {
                 AttributeName = rootAttribute.AttributeName,
                 OriginatingCommitment = transferAsset.SurjectionProof.AssetCommitments[0].ToHexString(),
-                AssetCommitment = transferAsset.TransferredAsset.AssetCommitment.ToHexString(),
+                AssetCommitment = transferAsset.TransferredAsset.AssetCommitment.ToString(),
                 SurjectionProof = $"{transferAsset.SurjectionProof.Rs.E.ToHexString()}{transferAsset.SurjectionProof.Rs.S[0].ToHexString()}"
             };
 
@@ -419,8 +420,8 @@ namespace O10.Client.Web.Portal.ElectionCommittee
                 issuanceDetails.Add(new IssuanceDetailsDto.IssuanceDetailsAssociated
                 {
                     AttributeName = rootKv.Value.Definition.AttributeName,
-                    AssetCommitment = packet.AssetCommitment.ToHexString(),
-                    BindingToRootCommitment = packet.RootAssetCommitment.ToHexString()
+                    AssetCommitment = packet.AssetCommitment.ToString(),
+                    BindingToRootCommitment = packet.RootAssetCommitment.ToString()
                 });
                 rootAssetId = _assetsService.GenerateAssetId(rootKv.Value.Definition.SchemeId, rootKv.Value.Value.Value);
             }
@@ -438,15 +439,16 @@ namespace O10.Client.Web.Portal.ElectionCommittee
                 issuanceDetails.Add(new IssuanceDetailsDto.IssuanceDetailsAssociated
                 {
                     AttributeName = kv.Value.Definition.AttributeName,
-                    AssetCommitment = packet.AssetCommitment.ToHexString(),
-                    BindingToRootCommitment = packet.RootAssetCommitment.ToHexString()
+                    AssetCommitment = packet.AssetCommitment.ToString(),
+                    BindingToRootCommitment = packet.RootAssetCommitment.ToString()
                 });
                 _dataAccessService.UpdateIdentityAttributeCommitment(kv.Key, packet.AssetCommitment);
             }
 
             return issuanceDetails;
         }
-        private async Task<IssueAssociatedBlindedAsset> IssueAssociatedAttribute(string schemeName,
+
+        private async Task<IssueAssociatedBlindedAssetTransaction> IssueAssociatedAttribute(string schemeName,
                                                       string content,
                                                       byte[] blindingPointValue,
                                                       byte[] blindingPointRoot,

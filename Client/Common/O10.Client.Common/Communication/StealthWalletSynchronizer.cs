@@ -187,7 +187,7 @@ namespace O10.Client.Common.Communication
 
         private void StoreTransitionCompromisedProofs(TransactionBase transactionBase)
         {
-            if (transactionBase is CompromizationProofsTransaction transaction)
+            if (transactionBase is KeyImageCompromisedTransaction transaction)
             {
                 //((IStealthClientCryptoService)_clientCryptoService).DecodeEcdhTuple(transaction.EcdhTuple, transaction.TransactionPublicKey, out byte[] blindingFactor, out byte[] assetId);
 
@@ -211,7 +211,7 @@ namespace O10.Client.Common.Communication
         {
             if (transactionBase is RevokeIdentityTransaction packet)
             {
-                long disabledId = _dataAccessService.MarkUserRootAttributesOverriden2(_accountId, packet.OwnershipProof.AssetCommitments[0]);
+                long disabledId = _dataAccessService.MarkUserRootAttributesOverriden2(_accountId, packet.EligibilityProof.AssetCommitments[0]);
 
                 if (disabledId > 0)
                 {

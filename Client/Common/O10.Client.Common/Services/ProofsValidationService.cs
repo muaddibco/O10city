@@ -40,24 +40,6 @@ namespace O10.Client.Common.Services
             _logger = loggerService.GetLogger(nameof(ProofsValidationService));
         }
 
-        public async Task<bool> CheckSpIdentityValidations(Memory<byte> commitment, AssociatedProofs[] associatedProofsList, IEnumerable<ValidationCriteria> validationCriterias, string issuer)
-        {
-            if (validationCriterias?.Any(v => v.SchemeName != AttributesSchemes.ATTR_SCHEME_NAME_PASSPORTPHOTO) ?? false)
-            {
-                if (associatedProofsList == null)
-                {
-                    throw new NoValidationProofsException();
-                }
-
-                foreach (var validationCriteria in validationCriterias)
-                {
-                    await CheckSpIdentityValidation(commitment, associatedProofsList, validationCriteria, issuer).ConfigureAwait(false);
-                }
-            }
-
-            return true;
-        }
-
         public async Task CheckEligibilityProofs(Memory<byte> assetCommitment, SurjectionProof eligibilityProofs, Memory<byte> issuer)
         {
             Contract.Requires(eligibilityProofs != null);
@@ -283,10 +265,10 @@ namespace O10.Client.Common.Services
 
         private async Task VerifyValueProof(AttributeProofs attributeForCheck, IKey issuer)
         {
-            if (attributeForCheck.CommitmentProof.Values?.Any() ?? false)
+            if (attributeForCheck.CommitmentProof.DidUrls?.Any() ?? false)
             {
                 long schemeId = await _assetsService.GetSchemeId(attributeForCheck.SchemeName, issuer.ToString()).ConfigureAwait(false);
-                byte[][] assetIds = attributeForCheck.CommitmentProof.Values.Select(v => _assetsService.GenerateAssetId(schemeId, v)).ToArray();
+                byte[][] assetIds = attributeForCheck.CommitmentProof.DidUrls.Select(v => _assetsService.GenerateAssetId(schemeId, v)).ToArray();
                 bool proofOfValue = CryptoHelper.VerifyIssuanceSurjectionProof(attributeForCheck.CommitmentProof.SurjectionProof, attributeForCheck.Commitment.Value.Span, assetIds);
                 if (!proofOfValue)
                 {
@@ -324,45 +306,6 @@ namespace O10.Client.Common.Services
             {
                 _logger.Error("Proof of binding to parent failed");
                 throw new ValidationProofFailedException(attributeForCheck.SchemeName);
-            }
-        }
-
-        private async Task CheckSpIdentityValidation(Memory<byte> commitment, AssociatedProofs[] associatedProofsList, ValidationCriteria validationCriteria, string issuer)
-        {
-            var schemeId = await _assetsService.GetSchemeId(validationCriteria.SchemeName, issuer).ConfigureAwait(false);
-            byte[] groupId = new byte[32];
-            Array.Copy(BitConverter.GetBytes(schemeId), 0, groupId, Globals.DEFAULT_HASH_SIZE, sizeof(long));
-
-            AssociatedProofs associatedProofs = associatedProofsList.FirstOrDefault(p => p.SchemeName.Equals32(groupId));
-            if (associatedProofs == null)
-            {
-                throw new ValidationProofsWereNotCompleteException(validationCriteria);
-            }
-
-            bool associatedProofValid;
-
-            if (associatedProofs is AssociatedAssetProofs associatedAssetProofs)
-            {
-                associatedProofValid = CryptoHelper.VerifySurjectionProof(associatedAssetProofs.AssociationProofs, associatedAssetProofs.AssociatedAssetCommitment);
-            }
-            else
-            {
-                associatedProofValid = CryptoHelper.VerifySurjectionProof(associatedProofs.AssociationProofs, commitment.Span);
-            }
-
-            bool rootProofValid = CryptoHelper.VerifySurjectionProof(associatedProofs.RootProofs, commitment.Span);
-
-            if (!rootProofValid || !associatedProofValid)
-            {
-                throw new ValidationProofFailedException(validationCriteria);
-            }
-
-            //TODO: !!! adjust checking either against Gateway or against local database
-            bool found = true; // associatedProofs.AssociationProofs.AssetCommitments.Any(a => associatedProofs.RootProofs.AssetCommitments.Any(r => _dataAccessService.CheckAssociatedAtributeExist(null, a, r)));
-
-            if (!found)
-            {
-                throw new ValidationProofFailedException(validationCriteria);
             }
         }
 

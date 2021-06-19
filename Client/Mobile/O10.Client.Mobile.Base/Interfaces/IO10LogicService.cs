@@ -12,7 +12,6 @@ namespace O10.Client.Mobile.Base.Interfaces
     [ServiceContract]
     public interface IO10LogicService
     {
-        Task SendIdentityProofs(RequestInput requestInput);
         Task SendUniversalTransport([NotNull] RequestInput requestInput, [NotNull] UniversalProofs universalProofs, [NotNull] string serviceProviderInfo, bool storeRegistration = false);
 
         Task<bool> StoreRegistration(byte[] targetPublicSpendKey, string spInfo, Memory<byte> issuer, params Memory<byte>[] assetIds);

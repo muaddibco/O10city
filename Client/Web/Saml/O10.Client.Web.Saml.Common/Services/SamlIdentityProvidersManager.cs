@@ -4,14 +4,12 @@ using System.Threading.Tasks.Dataflow;
 using O10.Client.DataLayer.Model;
 using O10.Client.DataLayer.Services;
 using O10.Core.Architecture;
-
 using O10.Core.Models;
 using O10.Core.ExtensionMethods;
 using O10.Client.DataLayer.Enums;
 using O10.Core.Configuration;
 using System.Linq;
 using O10.Client.Common.Entities;
-using O10.Transactions.Core.Parsers;
 using O10.Client.Common.Communication;
 using O10.Client.Common.Interfaces;
 using O10.Client.Common.Crypto;
@@ -25,14 +23,13 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace O10.Client.Web.Saml.Common.Services
 {
-	[RegisterDefaultImplementation(typeof(ISamlIdentityProvidersManager), Lifetime = LifetimeManagement.Singleton)]
+    /*[RegisterDefaultImplementation(typeof(ISamlIdentityProvidersManager), Lifetime = LifetimeManagement.Singleton)]
 	public class SamlIdentityProvidersManager : ISamlIdentityProvidersManager
 	{
 		private readonly IServiceProvider _serviceProvider;
 		private readonly IDataAccessService _dataAccessService;
 		private readonly IAccountsService _accountsService;
         private readonly IGatewayService _gatewayService;
-        private readonly IBlockParsersRepositoriesRepository _blockParsersRepositoriesRepository;
         private readonly IHubContext<SamlIdpHub> _hubContext;
 		private readonly ILoggerService _loggerService;
 		private readonly Dictionary<string, SamlIdpServicePersistence> _samlIdpServices;
@@ -41,13 +38,18 @@ namespace O10.Client.Web.Saml.Common.Services
 		private SamlIdpService _samlIdpServiceDefault;
 		private long _defaultSamlIdpId;
 
-		public SamlIdentityProvidersManager(IServiceProvider serviceProvider, IDataAccessService dataAccessService, IAccountsService accountsService, IConfigurationService configurationService, IGatewayService gatewayService, IBlockParsersRepositoriesRepository blockParsersRepositoriesRepository, IHubContext<SamlIdpHub> hubContext, ILoggerService loggerService)
+		public SamlIdentityProvidersManager(IServiceProvider serviceProvider,
+                                      IDataAccessService dataAccessService,
+                                      IAccountsService accountsService,
+                                      IConfigurationService configurationService,
+                                      IGatewayService gatewayService,
+                                      IHubContext<SamlIdpHub> hubContext,
+                                      ILoggerService loggerService)
 		{
 			_serviceProvider = serviceProvider;
 			_dataAccessService = dataAccessService;
 			_accountsService = accountsService;
             _gatewayService = gatewayService;
-            _blockParsersRepositoriesRepository = blockParsersRepositoriesRepository;
             _hubContext = hubContext;
 			_loggerService = loggerService;
 			_samlIdpServices = new Dictionary<string, SamlIdpServicePersistence>();
@@ -153,5 +155,5 @@ namespace O10.Client.Web.Saml.Common.Services
             return AzureHelper.GetSecretValue(secretName, _azureConfiguration.AzureADCertThumbprint, _azureConfiguration.AzureADApplicationId, _azureConfiguration.KeyVaultName);
         }
 
-	}
+	}*/
 }

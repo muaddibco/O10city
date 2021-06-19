@@ -43,7 +43,7 @@ namespace O10.Client.Common.Services
             _logger = loggerService.GetLogger(nameof(RelationsProofsValidationService));
         }
 
-        public async Task<RelationProofsValidationResults> VerifyRelationProofs(GroupsRelationsProofs relationsProofs, IStealthClientCryptoService clientCryptoService, RelationProofsSession proofSession)
+        /*public async Task<RelationProofsValidationResults> VerifyRelationProofs(GroupsRelationsProofs relationsProofs, IStealthClientCryptoService clientCryptoService, RelationProofsSession proofSession)
         {
             RelationProofsValidationResults validationResults = new RelationProofsValidationResults();
 
@@ -87,7 +87,7 @@ namespace O10.Client.Common.Services
 
                     if (isRelationProofCorrect)
                     {
-                        byte[] relationAssetId = await _assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_EMPLOYEEGROUP, relationProof.GroupOwner.ToHexString() + relationEntry.RelatedAssetName, relationProof.GroupOwner.ToHexString()).ConfigureAwait(false);
+                        byte[] relationAssetId = await _assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_RELATIONGROUP, relationProof.GroupOwner.ToHexString() + relationEntry.RelatedAssetName, relationProof.GroupOwner.ToHexString()).ConfigureAwait(false);
                         if (CryptoHelper.VerifyIssuanceSurjectionProof(relationProof.GroupNameProof, groupNameCommitment, new byte[][] { relationAssetId }))
                         {
                             isRelationContentMatching = true;
@@ -100,7 +100,7 @@ namespace O10.Client.Common.Services
             }
 
             return validationResults;
-        }
+        }*/
 
         private async Task<bool> CheckEligibilityProofs(byte[] assetCommitment, SurjectionProof eligibilityProofs, byte[] issuer)
         {
@@ -125,7 +125,7 @@ namespace O10.Client.Common.Services
             return true;
         }
 
-        private async Task<bool> CheckKnowledgeFactor(byte[] commitment, AssociatedProofs[] associatedProofsList, string issuer)
+        /*private async Task<bool> CheckKnowledgeFactor(byte[] commitment, AssociatedProofs[] associatedProofsList, string issuer)
         {
             byte[] groupId = await _identityAttributesService.GetGroupId(AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD, issuer).ConfigureAwait(false);
             AssociatedProofs associatedProofs = Array.Find(associatedProofsList, p => p.SchemeName.Equals32(groupId));
@@ -163,6 +163,6 @@ namespace O10.Client.Common.Services
             }
 
             return true;
-        }
+        }*/
     }
 }

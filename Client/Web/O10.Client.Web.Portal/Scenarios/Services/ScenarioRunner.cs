@@ -298,11 +298,11 @@ namespace O10.Client.Web.Portal.Scenarios.Services
                 {
                     foreach (var scenarioRelationGroup in scenarioAccount.RelationGroups)
                     {
-                        long groupId = _dataAccessService.AddSpEmployeeGroup(accountId, scenarioRelationGroup.GroupName);
+                        long groupId = _dataAccessService.AddRelationGroup(accountId, scenarioRelationGroup.GroupName);
 
                         foreach (var scenarioRelation in scenarioRelationGroup.Relations)
                         {
-                            _dataAccessService.AddSpEmployee(accountId, "", scenarioRelation.RootAttribute, groupId);
+                            _dataAccessService.AddRelationToGroup(accountId, "", scenarioRelation.RootAttribute, groupId);
                         }
                     }
                 }

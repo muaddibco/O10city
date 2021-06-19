@@ -1,7 +1,9 @@
 ﻿using O10.Client.Common.Entities;
 using O10.Core.Architecture;
 using O10.Core.Cryptography;
+using O10.Core.Identity;
 using O10.Transactions.Core.Ledgers.O10State;
+using O10.Transactions.Core.Ledgers.O10State.Transactions;
 using System.Threading.Tasks;
 
 namespace O10.Client.Common.Interfaces
@@ -11,18 +13,18 @@ namespace O10.Client.Common.Interfaces
     {
         Task Initialize(long accountId);
 
-        Task<EmployeeRecord> IssueEmployeeRecord(byte[] registrationCommitment, byte[] groupCommitment);
+        Task<RelationTransaction> IssueRelationRecordTransaction(IKey registrationCommitment);
+        Task<IssueBlindedAssetTransaction> IssueBlindedAsset(byte[] assetId);
 
-        Task<CancelEmployeeRecord> IssueCancelEmployeeRecord(byte[] registrationCommitment);
+        /*        Task<CancelEmployeeRecord> IssueCancelEmployeeRecord(byte[] registrationCommitment);
 
-        Task<DocumentSignRecord> IssueDocumentSignRecord(byte[] documentHash, ulong recordHeight, byte[] keyImage, byte[] signerCommitment, SurjectionProof eligibilityProof, byte[] issuer, SurjectionProof signerGroupRelationProof, byte[] signerGroupCommitment, byte[] groupIssuer, SurjectionProof signerGroupProof, SurjectionProof signerAllowedGroupsProof);
+                Task<DocumentSignRecord> IssueDocumentSignRecord(byte[] documentHash, ulong recordHeight, byte[] keyImage, byte[] signerCommitment, SurjectionProof eligibilityProof, byte[] issuer, SurjectionProof signerGroupRelationProof, byte[] signerGroupCommitment, byte[] groupIssuer, SurjectionProof signerGroupProof, SurjectionProof signerAllowedGroupsProof);
 
-        Task<DocumentRecord> IssueDocumentRecord(byte[] documentHash, byte[][] allowedSignerCommitments);
+                Task<DocumentRecord> IssueDocumentRecord(byte[] documentHash, byte[][] allowedSignerCommitments);
 
-        Task<IssueBlindedAsset> IssueBlindedAsset(byte[] assetId);
 
-        Task<IssueBlindedAsset> IssueBlindedAsset2(byte[] assetId, byte[] blindingFactor);
-
+                Task<IssueBlindedAsset> IssueBlindedAsset2(byte[] assetId, byte[] blindingFactor);
+        */
         /// <summary>
         /// originatingCommitment = blindingPointValue + assetId * G
         /// </summary>
@@ -32,10 +34,11 @@ namespace O10.Client.Common.Interfaces
         /// <param name="blindingPointRoot"></param>
         /// <param name="originatingCommitment"></param>
         /// <returns></returns>
-        Task<IssueAssociatedBlindedAsset> IssueAssociatedAsset(byte[] assetId, byte[] blindingPointValue, byte[] blindingPointRoot);
+        Task<IssueAssociatedBlindedAssetTransaction> IssueAssociatedAsset(byte[] assetId, byte[] blindingPointValue, byte[] blindingPointRoot);
 
-        Task<TransferAssetToStealth> TransferAssetToStealth(byte[] assetId, ConfidentialAccount receiver);
+        Task<TransferAssetToStealthTransaction> TransferAssetToStealth(byte[] assetId, ConfidentialAccount receiver);
 
-        Task<TransferAssetToStealth> TransferAssetToStealth2(byte[] assetId, byte[] issuanceCommitment, ConfidentialAccount receiver);
+        Task<TransferAssetToStealthTransaction> TransferAssetToStealth2(byte[] assetId, byte[] issuanceCommitment, ConfidentialAccount receiver);
+
     }
 }

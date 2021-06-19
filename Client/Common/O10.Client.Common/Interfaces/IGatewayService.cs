@@ -37,7 +37,7 @@ namespace O10.Client.Common.Interfaces
         /// <returns></returns>
         Task<ulong> GetCombinedBlockByTransactionHash(byte[] accountPublicKey, byte[] transactionHash);
 
-        [NotNull] Task<OutputSources[]> GetOutputs(int amount);
+        Task<OutputSources[]> GetOutputs(int amount);
         Task<byte[][]> GetIssuanceCommitments(Memory<byte> issuer, int amount);
 
         Task<bool> IsRootAttributeValid(Memory<byte> issuer, Memory<byte> commitment);

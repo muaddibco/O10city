@@ -411,28 +411,43 @@ namespace O10.Client.Web.Portal.Controllers
             return (biometricPersonDataForSignature, sourceImageBlindingFactor);
         }
 
-        [HttpPost("SendEmployeeRequest")]
-        public async Task<IActionResult> SendEmployeeRequest(long accountId, [FromBody] UserAttributeTransferDto userAttributeTransfer)
+        [HttpPost("Relation")]
+        public async Task<IActionResult> SendRelationCreationRequest(long accountId, [FromBody] RelationsCreationRequestDTO relationsCreation)
         {
-            UserRootAttribute userRootAttribute = _dataAccessService.GetUserRootAttribute(userAttributeTransfer.UserAttributeId);
+            UserRootAttribute userRootAttribute = _dataAccessService.GetUserRootAttribute(relationsCreation.UserAttributeId);
             string assetId = userRootAttribute.AssetId.ToHexString();
             var persistency = _executionContextManager.ResolveExecutionServices(accountId);
             var transactionsService = persistency.Scope.ServiceProvider.GetService<IStealthTransactionsService>();
 
-            (bool proceed, BiometricProof biometricProof) = await CheckBiometrics(userAttributeTransfer, accountId).ConfigureAwait(false);
+            (bool proceed, BiometricProof biometricProof) = await CheckBiometrics(relationsCreation, accountId).ConfigureAwait(false);
 
             if (proceed)
             {
-                await SendEmployeeRequest(accountId, userAttributeTransfer, transactionsService, biometricProof).ConfigureAwait(false);
+                var boundedAssetsService = persistency.Scope.ServiceProvider.GetService<IBoundedAssetsService>();
 
-                string[] categoryEntries = userAttributeTransfer.ExtraInfo.Split("/");
+                var bf = _stealthClientCryptoService.GetBlindingFactor(userRootAttribute.LastTransactionKey);
+                var rootIssuer = await boundedAssetsService.GetAttributeProofs(bf, userRootAttribute, _identityKeyProvider.GetKey(userRootAttribute.Source.HexStringToByteArray())).ConfigureAwait(false);
+
+                var universalProofs = new UniversalProofs
+                {
+                    SessionKey = string.Empty,
+                    Mission = UniversalProofsMission.RelationCreation,
+                    MainIssuer = rootIssuer.Issuer,
+                    RootIssuers = new List<RootIssuer> { rootIssuer },
+                    Payload = payload
+                };
+
+                await SendRelationsCreationRequest(accountId, relationsCreation, transactionsService, biometricProof).ConfigureAwait(false);
+
+                // TODO: it will be create a DID Resolver Service that will receive DID and will return a DID document with all required information
+                string[] categoryEntries = relationsCreation.ExtraInfo.Split("/");
 
                 foreach (string categoryEntry in categoryEntries)
                 {
                     string groupOwnerName = categoryEntry.Split("|")[0];
                     string groupName = categoryEntry.Split("|")[1];
 
-                    long groupRelationId = _dataAccessService.AddUserGroupRelation(accountId, groupOwnerName, userAttributeTransfer.Target, groupName, assetId, userAttributeTransfer.Source);
+                    long groupRelationId = _dataAccessService.AddUserGroupRelation(accountId, groupOwnerName, relationsCreation.Target, groupName, assetId, relationsCreation.Source);
 
                     if (groupRelationId > 0)
                     {
@@ -440,15 +455,15 @@ namespace O10.Client.Web.Portal.Controllers
                         {
                             GroupRelationId = groupRelationId,
                             GroupOwnerName = groupOwnerName,
-                            GroupOwnerKey = userAttributeTransfer.Target,
+                            GroupOwnerKey = relationsCreation.Target,
                             GroupName = groupName,
-                            Issuer = userAttributeTransfer.Source,
+                            Issuer = relationsCreation.Source,
                             AssetId = assetId
                         };
 
                         await _idenitiesHubContext.Clients.Group(accountId.ToString(CultureInfo.InvariantCulture)).SendAsync("PushGroupRelation", groupRelationDto).ConfigureAwait(false);
 
-                        await _schemeResolverService.StoreGroupRelation(userAttributeTransfer.Source, assetId, userAttributeTransfer.Target, groupName).ConfigureAwait(false);
+                        await _schemeResolverService.StoreGroupRelation(relationsCreation.Source, assetId, relationsCreation.Target, groupName).ConfigureAwait(false);
                     }
                 }
 
@@ -535,7 +550,7 @@ namespace O10.Client.Web.Portal.Controllers
             RequestInput requestInput = null;
             foreach (var pool in request.IdentityPools)
             {
-                var rootIssuer = await GenerateFromIdentityPool(accountId, pool).ConfigureAwait(false);
+                var rootIssuer = await GenerateFromIdentityPool(accountId, pool, request.Target).ConfigureAwait(false);
                 universalProofs.RootIssuers.Add(rootIssuer);
 
                 if(request.RootAttributeId == pool.RootAttributeId)
@@ -549,7 +564,7 @@ namespace O10.Client.Web.Portal.Controllers
                         PrevBlindingFactor = rootAttribute.LastBlindingFactor,
                         PrevDestinationKey = rootAttribute.LastDestinationKey,
                         PrevTransactionKey = rootAttribute.LastTransactionKey,
-                        PublicSpendKey = request.Target.HexStringToByteArray(),
+                        PublicSpendKey = request.Target.ToByteArray(),
                         AssetCommitment = rootIssuer.IssuersAttributes.Find(i => i.Issuer.Equals(rootIssuer.Issuer)).RootAttribute.Commitment,
                     };
 
@@ -563,7 +578,7 @@ namespace O10.Client.Web.Portal.Controllers
             return Ok();
         }
 
-        private async Task<RootIssuer> GenerateFromIdentityPool(long accountId, UniversalProofsSendingRequest.IdentityPool identityPool)
+        private async Task<RootIssuer> GenerateFromIdentityPool(long accountId, UniversalProofsSendingRequest.IdentityPool identityPool, IKey target)
         {
             var persistency = _executionContextManager.ResolveExecutionServices(accountId);
 
@@ -571,7 +586,11 @@ namespace O10.Client.Web.Portal.Controllers
             var rootAttribute = _dataAccessService.GetUserRootAttribute(identityPool.RootAttributeId);
             var associatedAttributes = _dataAccessService.GetUserAssociatedAttributes(accountId).Where(a => identityPool.AssociatedAttributes?.Contains(a.UserAssociatedAttributeId) ?? false);
 
-            var rootIssuer = await boundedAssetsService.GetAttributeProofs(_stealthClientCryptoService.GetBlindingFactor(rootAttribute.LastTransactionKey), rootAttribute, associatedAttributes, true).ConfigureAwait(false);
+            var rootIssuer = await boundedAssetsService.GetAttributeProofs(_stealthClientCryptoService.GetBlindingFactor(rootAttribute.LastTransactionKey),
+                                                                           rootAttribute,
+                                                                           target,
+                                                                           associatedAttributes,
+                                                                           true).ConfigureAwait(false);
             
             return rootIssuer;
         }
@@ -579,7 +598,7 @@ namespace O10.Client.Web.Portal.Controllers
         private async Task SendUniversalTransport(long accountId, IServiceProvider serviceProvider, RequestInput requestInput, UniversalProofs universalProofs, string serviceProviderInfo, bool storeRegistration = false)
         {
             var transactionsService = serviceProvider.GetService<IStealthTransactionsService>();
-            await transactionsService.SendUniversalTransport(requestInput, universalProofs).ConfigureAwait(false);
+            await transactionsService.SendUniversalTransaction(requestInput, universalProofs).ConfigureAwait(false);
 
             string universalProofsStringify = JsonConvert.SerializeObject(universalProofs);
 
@@ -608,15 +627,15 @@ namespace O10.Client.Web.Portal.Controllers
             }
         }
 
-        private async Task<bool> StoreRegistration(long accountId, IServiceProvider serviceProvider, byte[] target, string spInfo, Memory<byte> issuer, params Memory<byte>[] assetIds)
+        private async Task<bool> StoreRegistration(long accountId, IServiceProvider serviceProvider, byte[] target, string spInfo, Memory<byte> issuer, Memory<byte> assetId)
         {
             string issuerStr = issuer.ToHexString();
-            string assetIdStr = string.Join(',', assetIds.Select(a => a.ToString()));
+            string assetIdStr = assetId.ToHexString();
 
             _logger.LogIfDebug(() => $"Storing user registration at {spInfo}, assetId: {assetIdStr}, issuer: {issuerStr}");
 
             var boundedAssetsService = serviceProvider.GetService<IBoundedAssetsService>();
-            (_, byte[] registrationCommitment) = await boundedAssetsService.GetBoundedCommitment(target, assetIds).ConfigureAwait(false);
+            (_, byte[] registrationCommitment) = await boundedAssetsService.GetBoundedCommitment(target, assetId).ConfigureAwait(false);
             long registrationId = _dataAccessService.AddUserRegistration(accountId, registrationCommitment.ToHexString(), spInfo, assetIdStr, issuerStr);
             if (registrationId > 0)
             {
@@ -649,85 +668,6 @@ namespace O10.Client.Web.Portal.Controllers
             return true;
         }
 
-
-        [HttpPost("SendIdentityProofs")]
-        public async Task<IActionResult> SendIdentityProofs(long accountId, [FromBody] UserAttributeTransferWithValidationsDto userAttributeTransfer)
-        {
-            bool res = false;
-
-            var persistency = _executionContextManager.ResolveExecutionServices(accountId);
-
-            string sessionInfo = userAttributeTransfer.UserAttributeTransfer.ExtraInfo;
-
-            if (!string.IsNullOrEmpty(sessionInfo))
-            {
-                UriBuilder uriBuilder = new UriBuilder(_restApiConfiguration.SamlIdpUri);
-                NameValueCollection queryParams = HttpUtility.ParseQueryString(uriBuilder.Query);
-                queryParams["sessionInfo"] = sessionInfo;
-                uriBuilder.Query = queryParams.ToString();
-
-                SamlIdpSessionInfo samlIdpSessionInfo = uriBuilder.Uri.ToString().AppendPathSegments("SamlIdp", "GetSessionInfo").GetJsonAsync<SamlIdpSessionInfo>().Result;
-                userAttributeTransfer.UserAttributeTransfer.Target = samlIdpSessionInfo.TargetPublicSpendKey;
-                userAttributeTransfer.UserAttributeTransfer.Target2 = samlIdpSessionInfo.TargetPublicViewKey;
-            }
-
-            AssociatedProofPreparation[] associatedProofPreparations = null;
-
-            //if (samlIdpSessionInfo.IdentityAttributeValidationDefinitions != null && samlIdpSessionInfo.IdentityAttributeValidationDefinitions.IdentityAttributeValidationDefinitions.Count > 0)
-            //{
-            //    var rootAttribute = _dataAccessService.GetUserAttributes(accountId).FirstOrDefault(u => !u.IsOverriden && u.AttributeType == _identityAttributesService.GetRootAttributeType().Item1);
-            //    _assetsService.GetBlindingPoint(rootAttribute.Content, userAttributeTransfer.Password, out byte[] blindingPoint, out byte[] blindingFactor);
-            //    byte[] rootOriginatingCommitment = _assetsService.GetCommitmentBlindedByPoint(rootAttribute.AssetId, blindingPoint);
-
-            //    associatedProofPreparations = new AssociatedProofPreparation[samlIdpSessionInfo.IdentityAttributeValidationDefinitions.IdentityAttributeValidationDefinitions.Count];
-
-            //    var associatedAttributes = _dataAccessService.GetUserAssociatedAttributes(accountId);
-
-            //    int index = 0;
-            //    foreach (var validation in samlIdpSessionInfo.IdentityAttributeValidationDefinitions.IdentityAttributeValidationDefinitions)
-            //    {
-            //        AttributeType attributeType = (AttributeType)uint.Parse(validation.AttributeType);
-            //        ValidationType validationType = (ValidationType)uint.Parse(validation.ValidationType);
-
-            //        string attrContent = associatedAttributes.FirstOrDefault(a => a.Item1 == attributeType)?.Item2 ?? string.Empty;
-            //        byte[] groupId = _identityAttributesService.GetGroupId(attributeType);
-            //        byte[] assetId = attributeType != AttributeType.DateOfBirth ? _assetsService.GenerateAssetId(attributeType, attrContent) : rootAttribute.AssetId;
-            //        byte[] associatedBlindingFactor = attributeType != AttributeType.DateOfBirth ? ConfidentialAssetsHelper.GetRandomSeed() : null;
-            //        byte[] associatedCommitment = attributeType != AttributeType.DateOfBirth ? ConfidentialAssetsHelper.GetAssetCommitment(assetId, associatedBlindingFactor) : null;
-            //        byte[] associatedOriginatingCommitment = _assetsService.GetCommitmentBlindedByPoint(assetId, blindingPoint);
-
-            //        AssociatedProofPreparation associatedProofPreparation = new AssociatedProofPreparation { GroupId = groupId, Commitment = associatedCommitment, CommitmentBlindingFactor = associatedBlindingFactor, OriginatingAssociatedCommitment = associatedOriginatingCommitment, OriginatingBlindingFactor = blindingFactor, OriginatingRootCommitment = rootOriginatingCommitment };
-
-            //        associatedProofPreparations[index++] = associatedProofPreparation;
-            //    }
-            //}
-
-            (bool proceed, BiometricProof biometricProof) = await CheckBiometrics(userAttributeTransfer.UserAttributeTransfer, accountId).ConfigureAwait(false);
-
-            if (proceed)
-            {
-                var transactionsService = persistency.Scope.ServiceProvider.GetService<IStealthTransactionsService>();
-                var boundedAssetsService = persistency.Scope.ServiceProvider.GetService<IBoundedAssetsService>();
-                await SendIdentityProofs(accountId, userAttributeTransfer.UserAttributeTransfer, transactionsService, boundedAssetsService, biometricProof, associatedProofPreparations).ConfigureAwait(false);
-            }
-
-            return Ok(res);
-        }
-
-        private async Task SendIdentityProofs(long accountId, UserAttributeTransferDto userAttributeTransfer, IStealthTransactionsService transactionsService, IBoundedAssetsService boundedAssetsService, BiometricProof biometricProof, AssociatedProofPreparation[] associatedProofPreparations = null)
-        {
-            (byte[] issuer, RequestInput requestInput) = GetRequestInput<RequestInput>(userAttributeTransfer, biometricProof);
-
-            OutputSources[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
-            RequestResult requestResult = await transactionsService.SendIdentityProofs(requestInput, associatedProofPreparations, outputModels, issuer).ConfigureAwait(false);
-            boundedAssetsService.GetBoundedCommitment(requestInput.AssetId, requestInput.PublicSpendKey, out byte[] registrationBlindingFactor, out byte[] registrationCommitment);
-            if (_dataAccessService.AddUserRegistration(accountId, registrationCommitment.ToHexString(), string.Empty, requestInput.AssetId.ToHexString(), issuer.ToHexString()) > 0)
-            {
-                await _schemeResolverService.StoreRegistrationCommitment(issuer.ToHexString(), requestInput.AssetId.ToHexString(), registrationCommitment.ToHexString(), string.Empty).ConfigureAwait(false);
-            }
-        }
-
-
         private async Task SendDocumentSignRequest(long accountId, UserAttributeTransferDto userAttributeTransfer, IStealthTransactionsService transactionsService, BiometricProof biometricProof, AssociatedProofPreparation[] associatedProofPreparations = null)
         {
             var scope = _executionContextManager.ResolveExecutionServices(accountId).Scope;
@@ -735,7 +675,7 @@ namespace O10.Client.Web.Portal.Controllers
             (byte[] issuer, DocumentSignRequestInput requestInput) = GetRequestInput<DocumentSignRequestInput>(userAttributeTransfer, biometricProof);
             string[] extraInfo = userAttributeTransfer.ExtraInfo.Split('|');
             byte[] groupIssuer = extraInfo[0].HexStringToByteArray();
-            byte[] groupAssetId = await assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_EMPLOYEEGROUP, extraInfo[0] + extraInfo[1], userAttributeTransfer.Target).ConfigureAwait(false);
+            byte[] groupAssetId = await assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_RELATIONGROUP, extraInfo[0] + extraInfo[1], userAttributeTransfer.Target).ConfigureAwait(false);
             byte[] documentHash = extraInfo[2].HexStringToByteArray();
             ulong documentRecordHeight = ulong.Parse(extraInfo[3]);
             requestInput.GroupIssuer = groupIssuer;
@@ -749,13 +689,13 @@ namespace O10.Client.Web.Portal.Controllers
             RequestResult requestResult = await transactionsService.SendDocumentSignRequest(requestInput, associatedProofPreparations, outputModels, issuanceCommitments).ConfigureAwait(false);
         }
 
-        private async Task SendEmployeeRequest(long accountId, UserAttributeTransferDto userAttributeTransfer, IStealthTransactionsService transactionsService, BiometricProof biometricProof, AssociatedProofPreparation[] associatedProofPreparations = null)
+        private async Task SendRelationsCreationRequest(long accountId, RelationsCreationRequestDTO relationsCreation, IStealthTransactionsService transactionsService, BiometricProof biometricProof, AssociatedProofPreparation[] associatedProofPreparations = null)
         {
             var scope = _executionContextManager.ResolveExecutionServices(accountId).Scope;
             var assetsService = scope.ServiceProvider.GetService<IAssetsService>();
-            (byte[] issuer, EmployeeRequestInput requestInput) = GetRequestInput<EmployeeRequestInput>(userAttributeTransfer, biometricProof);
+            (byte[] issuer, EmployeeRequestInput requestInput) = GetRequestInput<EmployeeRequestInput>(relationsCreation, biometricProof);
 
-            string[] categoryEntries = userAttributeTransfer.ExtraInfo.Split("/");
+            string[] categoryEntries = relationsCreation.ExtraInfo.Split("/");
             foreach (string categoryEntry in categoryEntries)
             {
                 string groupName = categoryEntry.Split("|")[1];
@@ -763,12 +703,15 @@ namespace O10.Client.Web.Portal.Controllers
 
                 //if (!isRegistered)
                 {
-                    byte[] groupAssetId = await assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_EMPLOYEEGROUP, userAttributeTransfer.Target + groupName, userAttributeTransfer.Target).ConfigureAwait(false);
+                    // TODO: groupAssetId will be generated from a group id rather than from group name
+                    byte[] groupAssetId = await assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_RELATIONGROUP, relationsCreation.Target + groupName, relationsCreation.Target).ConfigureAwait(false);
                     requestInput.GroupAssetId = groupAssetId;
 
                     OutputSources[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
                     byte[][] issuanceCommitments = await _gatewayService.GetIssuanceCommitments(issuer, _restApiConfiguration.RingSize + 1).ConfigureAwait(false);
-                    RequestResult requestResult = await transactionsService.SendEmployeeRegistrationRequest(requestInput, associatedProofPreparations, outputModels, issuanceCommitments).ConfigureAwait(false);
+
+                    // TODO: need to use Universal Proofs
+                    RequestResult requestResult = await transactionsService.SendUniversalTransaction(requestInput, associatedProofPreparations, outputModels, issuanceCommitments).ConfigureAwait(false);
                 }
             }
         }
@@ -1576,7 +1519,7 @@ namespace O10.Client.Web.Portal.Controllers
                                 new Relation
                                 {
                                     RelatedAssetOwner = r.GroupOwnerKey.HexStringToByteArray(),
-                                    RelatedAssetId = assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_EMPLOYEEGROUP, r.GroupOwnerKey + r.GroupName, relationsProofs.Source).Result
+                                    RelatedAssetId = assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_RELATIONGROUP, r.GroupOwnerKey + r.GroupName, relationsProofs.Source).Result
                                 })).ToArray();
 
 

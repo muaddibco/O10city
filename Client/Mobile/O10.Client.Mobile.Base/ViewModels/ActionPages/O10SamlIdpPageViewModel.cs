@@ -287,29 +287,29 @@ namespace O10.Client.Mobile.Base.ViewModels
         //    SendIdentityProofs(biometricProof, associatedProofPreparations);
         //}
 
-        private async Task SendIdentityProofs(BiometricProof biometricProof, AssociatedProofPreparation[] associatedProofPreparations = null)
-        {
-            var rootAttribute = _dataAccessService.GetUserAttributes(_executionContext.AccountId).FirstOrDefault(u => u.UserAttributeId == _selectedAttribute.AttributeId);
+        //private async Task SendIdentityProofs(BiometricProof biometricProof, AssociatedProofPreparation[] associatedProofPreparations = null)
+        //{
+        //    var rootAttribute = _dataAccessService.GetUserAttributes(_executionContext.AccountId).FirstOrDefault(u => u.UserAttributeId == _selectedAttribute.AttributeId);
 
-            RequestInput requestInput = new RequestInput
-            {
-                AssetId = rootAttribute.AssetId,
-                EligibilityBlindingFactor = rootAttribute.OriginalBlindingFactor,
-                EligibilityCommitment = rootAttribute.IssuanceCommitment,
-                Issuer = rootAttribute.Source.HexStringToByteArray(),
-                PrevAssetCommitment = rootAttribute.LastCommitment,
-                PrevBlindingFactor = rootAttribute.LastBlindingFactor,
-                PrevDestinationKey = rootAttribute.LastDestinationKey,
-                PrevTransactionKey = rootAttribute.LastTransactionKey,
-                PublicSpendKey = _targetPublicSpendKey.HexStringToByteArray(),
-                PublicViewKey = _targetPublicViewKey?.HexStringToByteArray(),
-                Payload = _sessionKey.HexStringToByteArray(),
-                BiometricProof = biometricProof
-            };
+        //    RequestInput requestInput = new RequestInput
+        //    {
+        //        AssetId = rootAttribute.AssetId,
+        //        EligibilityBlindingFactor = rootAttribute.OriginalBlindingFactor,
+        //        EligibilityCommitment = rootAttribute.IssuanceCommitment,
+        //        Issuer = rootAttribute.Source.HexStringToByteArray(),
+        //        PrevAssetCommitment = rootAttribute.LastCommitment,
+        //        PrevBlindingFactor = rootAttribute.LastBlindingFactor,
+        //        PrevDestinationKey = rootAttribute.LastDestinationKey,
+        //        PrevTransactionKey = rootAttribute.LastTransactionKey,
+        //        PublicSpendKey = _targetPublicSpendKey.HexStringToByteArray(),
+        //        PublicViewKey = _targetPublicViewKey?.HexStringToByteArray(),
+        //        Payload = _sessionKey.HexStringToByteArray(),
+        //        BiometricProof = biometricProof
+        //    };
 
-            OutputSources[] outputModels = await _gatewayService.GetOutputs(_walletSettings.RingSize + 1).ConfigureAwait(false);
-            RequestResult requestResult = await _executionContext.TransactionsService.SendIdentityProofs(requestInput, associatedProofPreparations, outputModels, rootAttribute.Source.HexStringToByteArray()).ConfigureAwait(false);
-        }
+        //    OutputSources[] outputModels = await _gatewayService.GetOutputs(_walletSettings.RingSize + 1).ConfigureAwait(false);
+        //    RequestResult requestResult = await _executionContext.TransactionsService.SendIdentityProofs(requestInput, associatedProofPreparations, outputModels, rootAttribute.Source.HexStringToByteArray()).ConfigureAwait(false);
+        //}
 
         private async Task InitializeActionInfo(string action)
         {

@@ -13,6 +13,7 @@ using O10.Client.Web.Common.Services;
 using O10.Client.Common.Integration;
 using O10.Client.Web.Portal.Dtos.SchemeResolution;
 using System.Threading.Tasks;
+using O10.Client.DataLayer.Model.ServiceProviders;
 
 namespace O10.Client.Web.Portal.Controllers
 {
@@ -252,7 +253,7 @@ namespace O10.Client.Web.Portal.Controllers
             List<Account> accounts = _dataAccessService.GetAccountsByType(AccountType.ServiceProvider);
             foreach (var account in accounts)
             {
-                RelationGroup[] relationGroupNames = _dataAccessService.GetServiceProviderRelationGroups(account.AccountId).Select(g => new RelationGroup { Name = g }).ToArray();
+                var relationGroupNames = _dataAccessService.GetRelationGroups(account.AccountId).Select(g => new RelationGroupDTO { Name = g.GroupName }).ToArray();
 
                 if (relationGroupNames != null && relationGroupNames.Length > 0)
                 {

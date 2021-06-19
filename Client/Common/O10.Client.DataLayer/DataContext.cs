@@ -26,8 +26,8 @@ namespace O10.Client.DataLayer
         public DbSet<SynchronizationStatus> SynchronizationStatuses { get; set; }
         public DbSet<IdentitiesScheme> IdentitiesSchemes { get; set; }
         public DbSet<BiometricRecord> BiometricRecords { get; set; }
-        public DbSet<SpEmployee> SpEmployees { get; set; }
-        public DbSet<SpEmployeeGroup> SpEmployeeGroups { get; set; }
+        public DbSet<RelationRecord> Relations { get; set; }
+        public DbSet<RelationGroup> RelationGroups { get; set; }
         public DbSet<SpDocument> SpDocuments { get; set; }
         public DbSet<SpDocumentAllowedSigner> SpDocumentAllowedSigners { get; set; }
         public DbSet<SpDocumentSignature> SpDocumentSignatures { get; set; }
@@ -65,7 +65,7 @@ namespace O10.Client.DataLayer
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<BiometricRecord>().HasIndex(p => p.UserData).IsUnique();
-            modelBuilder.Entity<SpEmployee>().HasIndex(p => p.RegistrationCommitment).IsUnique();
+            modelBuilder.Entity<RelationRecord>().HasIndex(p => p.RegistrationCommitment).IsUnique();
             modelBuilder.Entity<SpDocument>().HasIndex(p => p.DocumentName);
             modelBuilder.Entity<SpDocumentSignature>().HasIndex(p => p.DocumentRecordHeight);
             modelBuilder.Entity<SpDocumentSignature>().HasIndex(p => p.SignatureRecordHeight);
@@ -98,6 +98,8 @@ namespace O10.Client.DataLayer
             modelBuilder.Entity<EcCandidateRecord>().HasIndex(p => p.Name);
             modelBuilder.Entity<EcPollSelection>().HasIndex(p => p.EcCommitment);
             modelBuilder.Entity<IdentityTarget>().HasIndex(p => p.IdentityId);
+            modelBuilder.Entity<RegistrationCommitment>().HasIndex(p => p.Commitment);
+            modelBuilder.Entity<IdentityAttribute>().HasIndex(p => p.Commitment);
             base.OnModelCreating(modelBuilder);
         }
     }

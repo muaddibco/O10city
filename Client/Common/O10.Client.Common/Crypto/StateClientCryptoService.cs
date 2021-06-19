@@ -7,6 +7,7 @@ using O10.Core.HashCalculations;
 using O10.Core.Identity;
 using O10.Crypto.ConfidentialAssets;
 using O10.Crypto.Services;
+using System.Collections.Generic;
 
 namespace O10.Client.Common.Crypto
 {
@@ -68,7 +69,7 @@ namespace O10.Client.Common.Crypto
             byte[] nonBlindedCommitment = CryptoHelper.GetNonblindedAssetCommitment(assetId);
             assetCommitment = CryptoHelper.GetAssetCommitment(_blindingSecretKey, assetId);
             byte[] pk = CryptoHelper.SubCommitments(assetCommitment, nonBlindedCommitment);
-            ringSignature = CryptoHelper.GenerateRingSignature(assetCommitment, keyImage, new byte[][] { pk }, _blindingSecretKey, 0)[0];
+            ringSignature = CryptoHelper.GenerateRingSignature(assetCommitment, keyImage, new List<IKey> { IdentityKeyProvider.GetKey(pk) }, _blindingSecretKey, 0)[0];
         }
 
         public IKey GetPublicKey()

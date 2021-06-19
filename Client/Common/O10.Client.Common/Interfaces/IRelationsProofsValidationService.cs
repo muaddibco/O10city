@@ -11,6 +11,6 @@ namespace O10.Client.Common.Interfaces
     [ServiceContract]
     public interface IRelationsProofsValidationService
     {
-        Task<RelationProofsValidationResults> VerifyRelationProofs(GroupsRelationsProofs relationsProofs, IStealthClientCryptoService clientCryptoService, RelationProofsSession relationProofsSession);
+        //Task<RelationProofsValidationResults> VerifyRelationProofs(GroupsRelationsProofs relationsProofs, IStealthClientCryptoService clientCryptoService, RelationProofsSession relationProofsSession);
     }
 }

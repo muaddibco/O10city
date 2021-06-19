@@ -66,7 +66,7 @@ namespace O10.Client.Common.Identities
             {
                 case AttributesSchemes.ATTR_SCHEME_NAME_PASSPORTPHOTO:
                     return -1;
-                case AttributesSchemes.ATTR_SCHEME_NAME_EMPLOYEEGROUP:
+                case AttributesSchemes.ATTR_SCHEME_NAME_RELATIONGROUP:
                     return -2;
                 default:
                     AttributeDefinition attributeScheme = await _schemeResolverService.ResolveAttributeScheme(issuer, schemeName).ConfigureAwait(false);

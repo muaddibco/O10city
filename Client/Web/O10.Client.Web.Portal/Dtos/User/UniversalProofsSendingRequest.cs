@@ -1,12 +1,18 @@
 ﻿using O10.Client.Common.Dtos.UniversalProofs;
+using O10.Core.Identity;
+using O10.Core.Serialization;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace O10.Client.Web.Portal.Dtos.User
 {
     public class UniversalProofsSendingRequest
     {
         public long RootAttributeId { get; set; }
-        public string Target { get; set; }
+        
+        [JsonConverter(typeof(KeyJsonConverter))]
+        public IKey? Target { get; set; }
+        
         public string SessionKey { get; set; }
         public UniversalProofsMission? Mission { get; set; }
         public string ServiceProviderInfo { get; set; }

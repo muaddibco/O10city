@@ -92,7 +92,7 @@ namespace O10.Client.Web.Portal
             services.AddCors();
             services.AddMvc()
                 .AddApplicationPart(typeof(IdentityProviderController).Assembly)
-                .AddApplicationPart(typeof(SamlIdpController).Assembly)
+                //.AddApplicationPart(typeof(SamlIdpController).Assembly)
                 .AddControllersAsServices()
                 .AddNewtonsoftJson(o =>
                 {

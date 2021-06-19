@@ -12,7 +12,6 @@ namespace O10.Client.Common.Interfaces
     [ServiceContract]
     public interface IProofsValidationService
     {
-        Task<bool> CheckSpIdentityValidations(Memory<byte> commitment, AssociatedProofs[] associatedProofsList, IEnumerable<ValidationCriteria> validationCriterias, string issuer);
         Task<bool> CheckAssociatedProofs(RootIssuer rootIssuer, IEnumerable<ValidationCriteria> validationCriterias);
         Task CheckEligibilityProofs(Memory<byte> assetCommitment, SurjectionProof eligibilityProofs, Memory<byte> issuer);
         Task VerifyKnowledgeFactorProofs(List<RootIssuer> rootIssuers);

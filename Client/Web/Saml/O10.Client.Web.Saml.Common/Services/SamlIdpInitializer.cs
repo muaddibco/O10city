@@ -1,4 +1,5 @@
 ﻿using System.Threading;
+using System.Threading.Tasks;
 using O10.Core;
 using O10.Core.Architecture;
 
@@ -17,9 +18,11 @@ namespace O10.Client.Web.Saml.Common.Services
 
         public override ExtensionOrderPriorities Priority => ExtensionOrderPriorities.Normal;
 
-        protected override void InitializeInner(CancellationToken cancellationToken)
+        protected override async Task InitializeInner(CancellationToken cancellationToken)
         {
             _samlIdentityProvidersManager.Initialize(cancellationToken);
+
+            await Task.CompletedTask;
         }
     }
 }

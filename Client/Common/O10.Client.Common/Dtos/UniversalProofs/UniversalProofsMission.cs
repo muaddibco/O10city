@@ -5,6 +5,7 @@
         Authentication,
         TransactionConfirmation,
         RevokeIdentity,
+        RelationCreation,
         Vote
     }
 }

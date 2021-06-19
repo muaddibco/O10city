@@ -35,7 +35,7 @@ namespace O10.Client.Web.Saml.Common.Services
 {
     public class SamlIdpService
 	{
-		private readonly ILogger _logger;
+		/*private readonly ILogger _logger;
 		private readonly StealthPacketsExtractor _utxoPacketsExtractor;
 		private readonly IHubContext<SamlIdpHub> _samlIdpHubContext;
 		private readonly ActionBlock<TaskCompletionWrapper<PacketBase>> _processPacketBlock;
@@ -405,6 +405,6 @@ namespace O10.Client.Web.Saml.Common.Services
             {
                 throw new InvalidOperationException($"Certificate with thumbprint {x509Certificate.Thumbprint} does not have a private key.");
             }
-        }
+        }*/
     }
 }

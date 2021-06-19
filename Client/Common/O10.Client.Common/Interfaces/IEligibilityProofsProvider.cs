@@ -8,7 +8,11 @@ namespace O10.Client.Common.Interfaces
     [ServiceContract]
     public interface IEligibilityProofsProvider
     {
-        Task<SurjectionProof> CreateEligibilityProof(byte[] originalCommitment, byte[] originalBlindingFactor, byte[] assetCommitment, byte[] newBlindingFactor, Memory<byte> issuer);
+        Task<SurjectionProof> CreateEligibilityProof(byte[] originalCommitment,
+                                                     byte[] originalBlindingFactor,
+                                                     Memory<byte> assetCommitment,
+                                                     Memory<byte> newBlindingFactor,
+                                                     Memory<byte> issuer);
 
         void GetEligibilityCommitmentAndProofs(byte[] ownedCommitment, byte[][] inputCommitments, out int actualAssetPos, out byte[][] outputCommitments);
     }
