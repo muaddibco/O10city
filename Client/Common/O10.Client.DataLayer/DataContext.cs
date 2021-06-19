@@ -65,7 +65,6 @@ namespace O10.Client.DataLayer
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<BiometricRecord>().HasIndex(p => p.UserData).IsUnique();
-            modelBuilder.Entity<RelationRecord>().HasIndex(p => p.RegistrationCommitment).IsUnique();
             modelBuilder.Entity<SpDocument>().HasIndex(p => p.DocumentName);
             modelBuilder.Entity<SpDocumentSignature>().HasIndex(p => p.DocumentRecordHeight);
             modelBuilder.Entity<SpDocumentSignature>().HasIndex(p => p.SignatureRecordHeight);
@@ -77,6 +76,7 @@ namespace O10.Client.DataLayer
             modelBuilder.Entity<GroupRelation>().HasIndex(p => p.AssetId);
             modelBuilder.Entity<RegistrationCommitment>().HasIndex(p => p.Issuer);
             modelBuilder.Entity<RegistrationCommitment>().HasIndex(p => p.AssetId);
+            modelBuilder.Entity<RegistrationCommitment>().HasIndex(p => p.Commitment).IsUnique();
             modelBuilder.Entity<ScenarioSession>().HasIndex(p => p.UserSubject);
             modelBuilder.Entity<SpUserTransaction>().HasIndex(p => p.AccountId);
             modelBuilder.Entity<SpUserTransaction>().HasIndex(p => p.TransactionId).IsUnique();
@@ -98,7 +98,6 @@ namespace O10.Client.DataLayer
             modelBuilder.Entity<EcCandidateRecord>().HasIndex(p => p.Name);
             modelBuilder.Entity<EcPollSelection>().HasIndex(p => p.EcCommitment);
             modelBuilder.Entity<IdentityTarget>().HasIndex(p => p.IdentityId);
-            modelBuilder.Entity<RegistrationCommitment>().HasIndex(p => p.Commitment);
             modelBuilder.Entity<IdentityAttribute>().HasIndex(p => p.Commitment);
             base.OnModelCreating(modelBuilder);
         }

@@ -354,7 +354,7 @@ namespace O10.Gateway.Common.Services
 			try
 			{
 				SyncInfoDTO syncBlockModel = await _synchronizerConfiguration.NodeApiUri.AppendPathSegment("GetLastSyncBlock").GetJsonAsync<SyncInfoDTO>().ConfigureAwait(false);
-				if (syncBlockModel != null)
+				if (syncBlockModel?.Hash != null)
 				{
 					_lastSyncDescriptor = syncBlockModel;
 					_dataAccessService.UpdateLastSyncBlock(_lastSyncDescriptor.Height, _lastSyncDescriptor.Hash);

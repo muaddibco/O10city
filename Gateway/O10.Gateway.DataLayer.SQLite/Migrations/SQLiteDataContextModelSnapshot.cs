@@ -23,6 +23,7 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Key")
+                        .IsRequired()
                         .HasColumnType("varbinary(64)");
 
                     b.HasKey("AddressId");
@@ -42,7 +43,7 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                         .IsRequired()
                         .HasColumnType("varbinary(64)");
 
-                    b.Property<long?>("IssuerAddressId")
+                    b.Property<long>("IssuerAddressId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("RootIssuanceCommitment")
@@ -67,6 +68,7 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("KeyImage")
+                        .IsRequired()
                         .HasColumnType("varbinary(64)");
 
                     b.HasKey("CompromisedKeyImageId");
@@ -77,26 +79,21 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                     b.ToTable("CompromisedKeyImages");
                 });
 
-            modelBuilder.Entity("O10.Gateway.DataLayer.Model.PacketHash", b =>
+            modelBuilder.Entity("O10.Gateway.DataLayer.Model.KeyImage", b =>
                 {
-                    b.Property<long>("PacketHashId")
+                    b.Property<long>("KeyImageId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<long>("CombinedRegistryBlockHeight")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Hash")
+                    b.Property<string>("Value")
+                        .IsRequired()
                         .HasColumnType("varbinary(64)");
 
-                    b.Property<long>("SyncBlockHeight")
-                        .HasColumnType("INTEGER");
+                    b.HasKey("KeyImageId");
 
-                    b.HasKey("PacketHashId");
+                    b.HasIndex("Value");
 
-                    b.HasIndex("SyncBlockHeight", "CombinedRegistryBlockHeight", "Hash");
-
-                    b.ToTable("PacketHashes");
+                    b.ToTable("UtxoKeyImages");
                 });
 
             modelBuilder.Entity("O10.Gateway.DataLayer.Model.RegistryCombinedBlock", b =>
@@ -104,8 +101,9 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                     b.Property<long>("RegistryCombinedBlockId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<byte[]>("Content")
-                        .HasColumnType("BLOB");
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.HasKey("RegistryCombinedBlockId");
 
@@ -122,6 +120,7 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<byte[]>("Content")
+                        .IsRequired()
                         .HasColumnType("BLOB");
 
                     b.HasKey("RegistryFullBlockDataId");
@@ -138,15 +137,18 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("GroupCommitment")
+                        .IsRequired()
                         .HasColumnType("varbinary(64)");
 
                     b.Property<bool>("IsRevoked")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Issuer")
+                        .IsRequired()
                         .HasColumnType("varbinary(64)");
 
                     b.Property<string>("RegistrationCommitment")
+                        .IsRequired()
                         .HasColumnType("varbinary(64)");
 
                     b.HasKey("RelationRecordId");
@@ -173,15 +175,17 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("IssuanceCommitment")
+                        .IsRequired()
                         .HasColumnType("varbinary(64)");
 
-                    b.Property<long?>("IssuerAddressId")
+                    b.Property<long>("IssuerAddressId")
                         .HasColumnType("INTEGER");
 
                     b.Property<long>("RevocationCombinedBlock")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("RootCommitment")
+                        .IsRequired()
                         .HasColumnType("varbinary(64)");
 
                     b.HasKey("RootAttributeIssuanceId");
@@ -197,142 +201,57 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                     b.ToTable("RootAttributes");
                 });
 
-            modelBuilder.Entity("O10.Gateway.DataLayer.Model.StealthPacket", b =>
+            modelBuilder.Entity("O10.Gateway.DataLayer.Model.StateTransaction", b =>
                 {
-                    b.Property<long>("StealthPacketId")
+                    b.Property<long>("StateTransactionId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<ushort>("BlockType")
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("HashTransactionHashId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<byte[]>("Content")
-                        .HasColumnType("BLOB");
-
-                    b.Property<long?>("KeyImageUtxoKeyImageId")
+                    b.Property<long?>("OutputStealthOutputId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<long?>("OutputUtxoOutputId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<long?>("ThisBlockHashPacketHashId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<long?>("TransactionKeyUtxoTransactionKeyId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<long>("WitnessId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("StealthPacketId");
-
-                    b.HasIndex("KeyImageUtxoKeyImageId");
-
-                    b.HasIndex("OutputUtxoOutputId");
-
-                    b.HasIndex("ThisBlockHashPacketHashId");
-
-                    b.HasIndex("TransactionKeyUtxoTransactionKeyId");
-
-                    b.HasIndex("WitnessId");
-
-                    b.ToTable("StealthPackets");
-                });
-
-            modelBuilder.Entity("O10.Gateway.DataLayer.Model.SyncBlock", b =>
-                {
-                    b.Property<long>("SyncBlockId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Hash")
-                        .HasColumnType("varbinary(64)");
-
-                    b.HasKey("SyncBlockId");
-
-                    b.ToTable("SyncBlocks");
-                });
-
-            modelBuilder.Entity("O10.Gateway.DataLayer.Model.TransactionalPacket", b =>
-                {
-                    b.Property<long>("TransactionalPacketId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<ushort>("BlockType")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<byte[]>("Content")
-                        .HasColumnType("BLOB");
-
-                    b.Property<byte[]>("GroupId")
-                        .HasColumnType("BLOB");
-
-                    b.Property<long>("Height")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsTransition")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsValid")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsVerified")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<long?>("OutputUtxoOutputId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<long?>("SourceAddressId")
+                    b.Property<long>("SourceAddressId")
                         .HasColumnType("INTEGER");
 
                     b.Property<long?>("TargetAddressId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<long?>("ThisBlockHashPacketHashId")
+                    b.Property<long?>("TransactionKeyId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<long?>("TransactionKeyUtxoTransactionKeyId")
+                    b.Property<ushort>("TransactionType")
                         .HasColumnType("INTEGER");
 
                     b.Property<long>("WitnessId")
                         .HasColumnType("INTEGER");
 
-                    b.HasKey("TransactionalPacketId");
+                    b.HasKey("StateTransactionId");
 
-                    b.HasIndex("OutputUtxoOutputId");
+                    b.HasIndex("HashTransactionHashId");
+
+                    b.HasIndex("OutputStealthOutputId");
 
                     b.HasIndex("SourceAddressId");
 
                     b.HasIndex("TargetAddressId");
 
-                    b.HasIndex("ThisBlockHashPacketHashId");
-
-                    b.HasIndex("TransactionKeyUtxoTransactionKeyId");
+                    b.HasIndex("TransactionKeyId");
 
                     b.HasIndex("WitnessId");
 
-                    b.ToTable("TransactionalPackets");
+                    b.ToTable("StateTransactions");
                 });
 
-            modelBuilder.Entity("O10.Gateway.DataLayer.Model.UtxoKeyImage", b =>
+            modelBuilder.Entity("O10.Gateway.DataLayer.Model.StealthOutput", b =>
                 {
-                    b.Property<long>("UtxoKeyImageId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("KeyImage")
-                        .HasColumnType("varbinary(64)");
-
-                    b.HasKey("UtxoKeyImageId");
-
-                    b.HasIndex("KeyImage");
-
-                    b.ToTable("UtxoKeyImages");
-                });
-
-            modelBuilder.Entity("O10.Gateway.DataLayer.Model.UtxoOutput", b =>
-                {
-                    b.Property<long>("UtxoOutputId")
+                    b.Property<long>("StealthOutputId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
@@ -347,10 +266,10 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                     b.Property<bool>("IsOverriden")
                         .HasColumnType("INTEGER");
 
-                    b.Property<byte[]>("OriginatingCommitment")
-                        .HasColumnType("BLOB");
+                    b.Property<string>("OriginatingCommitment")
+                        .HasColumnType("varbinary(64)");
 
-                    b.HasKey("UtxoOutputId");
+                    b.HasKey("StealthOutputId");
 
                     b.HasIndex("Commitment");
 
@@ -358,23 +277,101 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
 
                     b.HasIndex("IsOverriden");
 
-                    b.ToTable("UtxoOutputs");
+                    b.ToTable("StealthOutputs");
                 });
 
-            modelBuilder.Entity("O10.Gateway.DataLayer.Model.UtxoTransactionKey", b =>
+            modelBuilder.Entity("O10.Gateway.DataLayer.Model.StealthTransaction", b =>
                 {
-                    b.Property<long>("UtxoTransactionKeyId")
+                    b.Property<long>("StealthTransactionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("HashTransactionHashId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("KeyImageId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("OutputStealthOutputId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("TransactionKeyId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<ushort>("TransactionType")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("WitnessId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("StealthTransactionId");
+
+                    b.HasIndex("HashTransactionHashId");
+
+                    b.HasIndex("KeyImageId");
+
+                    b.HasIndex("OutputStealthOutputId");
+
+                    b.HasIndex("TransactionKeyId");
+
+                    b.HasIndex("WitnessId");
+
+                    b.ToTable("StealthTransactions");
+                });
+
+            modelBuilder.Entity("O10.Gateway.DataLayer.Model.SyncBlock", b =>
+                {
+                    b.Property<long>("SyncBlockId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Hash")
+                        .IsRequired()
+                        .HasColumnType("varbinary(64)");
+
+                    b.HasKey("SyncBlockId");
+
+                    b.ToTable("SyncBlocks");
+                });
+
+            modelBuilder.Entity("O10.Gateway.DataLayer.Model.TransactionHash", b =>
+                {
+                    b.Property<long>("TransactionHashId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("AggregatedTransactionsHeight")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Hash")
+                        .IsRequired()
+                        .HasColumnType("varbinary(64)");
+
+                    b.HasKey("TransactionHashId");
+
+                    b.HasIndex("AggregatedTransactionsHeight", "Hash");
+
+                    b.ToTable("TransactionHashes");
+                });
+
+            modelBuilder.Entity("O10.Gateway.DataLayer.Model.TransactionKey", b =>
+                {
+                    b.Property<long>("TransactionKeyId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Key")
+                        .IsRequired()
                         .HasColumnType("varbinary(64)");
 
-                    b.HasKey("UtxoTransactionKeyId");
+                    b.HasKey("TransactionKeyId");
 
                     b.HasIndex("Key");
 
-                    b.ToTable("UtxoTransactionKeys");
+                    b.ToTable("TransactionKeys");
                 });
 
             modelBuilder.Entity("O10.Gateway.DataLayer.Model.WitnessPacket", b =>
@@ -386,25 +383,29 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                     b.Property<long>("CombinedBlockHeight")
                         .HasColumnType("INTEGER");
 
-                    b.Property<ushort>("ReferencedBlockType")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<long?>("ReferencedBodyHashPacketHashId")
+                    b.Property<long>("ReferencedBodyHashTransactionHashId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("ReferencedDestinationKey")
+                        .IsRequired()
                         .HasColumnType("varbinary(64)");
 
                     b.Property<string>("ReferencedDestinationKey2")
+                        .IsRequired()
                         .HasColumnType("varbinary(64)");
 
                     b.Property<string>("ReferencedKeyImage")
+                        .IsRequired()
                         .HasColumnType("varbinary(64)");
+
+                    b.Property<ushort>("ReferencedLedgerType")
+                        .HasColumnType("INTEGER");
 
                     b.Property<ushort>("ReferencedPacketType")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("ReferencedTransactionKey")
+                        .IsRequired()
                         .HasColumnType("varbinary(64)");
 
                     b.Property<long>("Round")
@@ -417,7 +418,7 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
 
                     b.HasIndex("CombinedBlockHeight");
 
-                    b.HasIndex("ReferencedBodyHashPacketHashId");
+                    b.HasIndex("ReferencedBodyHashTransactionHashId");
 
                     b.HasIndex("ReferencedDestinationKey");
 
@@ -434,63 +435,79 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                 {
                     b.HasOne("O10.Gateway.DataLayer.Model.Address", "Issuer")
                         .WithMany()
-                        .HasForeignKey("IssuerAddressId");
+                        .HasForeignKey("IssuerAddressId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("O10.Gateway.DataLayer.Model.RootAttribute", b =>
                 {
                     b.HasOne("O10.Gateway.DataLayer.Model.Address", "Issuer")
                         .WithMany()
-                        .HasForeignKey("IssuerAddressId");
+                        .HasForeignKey("IssuerAddressId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
-            modelBuilder.Entity("O10.Gateway.DataLayer.Model.StealthPacket", b =>
+            modelBuilder.Entity("O10.Gateway.DataLayer.Model.StateTransaction", b =>
                 {
-                    b.HasOne("O10.Gateway.DataLayer.Model.UtxoKeyImage", "KeyImage")
+                    b.HasOne("O10.Gateway.DataLayer.Model.TransactionHash", "Hash")
                         .WithMany()
-                        .HasForeignKey("KeyImageUtxoKeyImageId");
+                        .HasForeignKey("HashTransactionHashId");
 
-                    b.HasOne("O10.Gateway.DataLayer.Model.UtxoOutput", "Output")
+                    b.HasOne("O10.Gateway.DataLayer.Model.StealthOutput", "Output")
                         .WithMany()
-                        .HasForeignKey("OutputUtxoOutputId");
-
-                    b.HasOne("O10.Gateway.DataLayer.Model.PacketHash", "ThisBlockHash")
-                        .WithMany()
-                        .HasForeignKey("ThisBlockHashPacketHashId");
-
-                    b.HasOne("O10.Gateway.DataLayer.Model.UtxoTransactionKey", "TransactionKey")
-                        .WithMany()
-                        .HasForeignKey("TransactionKeyUtxoTransactionKeyId");
-                });
-
-            modelBuilder.Entity("O10.Gateway.DataLayer.Model.TransactionalPacket", b =>
-                {
-                    b.HasOne("O10.Gateway.DataLayer.Model.UtxoOutput", "Output")
-                        .WithMany()
-                        .HasForeignKey("OutputUtxoOutputId");
+                        .HasForeignKey("OutputStealthOutputId");
 
                     b.HasOne("O10.Gateway.DataLayer.Model.Address", "Source")
                         .WithMany()
-                        .HasForeignKey("SourceAddressId");
+                        .HasForeignKey("SourceAddressId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("O10.Gateway.DataLayer.Model.Address", "Target")
                         .WithMany()
                         .HasForeignKey("TargetAddressId");
 
-                    b.HasOne("O10.Gateway.DataLayer.Model.PacketHash", "ThisBlockHash")
+                    b.HasOne("O10.Gateway.DataLayer.Model.TransactionKey", "TransactionKey")
                         .WithMany()
-                        .HasForeignKey("ThisBlockHashPacketHashId");
+                        .HasForeignKey("TransactionKeyId");
+                });
 
-                    b.HasOne("O10.Gateway.DataLayer.Model.UtxoTransactionKey", "TransactionKey")
+            modelBuilder.Entity("O10.Gateway.DataLayer.Model.StealthTransaction", b =>
+                {
+                    b.HasOne("O10.Gateway.DataLayer.Model.TransactionHash", "Hash")
                         .WithMany()
-                        .HasForeignKey("TransactionKeyUtxoTransactionKeyId");
+                        .HasForeignKey("HashTransactionHashId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("O10.Gateway.DataLayer.Model.KeyImage", "KeyImage")
+                        .WithMany()
+                        .HasForeignKey("KeyImageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("O10.Gateway.DataLayer.Model.StealthOutput", "Output")
+                        .WithMany()
+                        .HasForeignKey("OutputStealthOutputId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("O10.Gateway.DataLayer.Model.TransactionKey", "TransactionKey")
+                        .WithMany()
+                        .HasForeignKey("TransactionKeyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("O10.Gateway.DataLayer.Model.WitnessPacket", b =>
                 {
-                    b.HasOne("O10.Gateway.DataLayer.Model.PacketHash", "ReferencedBodyHash")
+                    b.HasOne("O10.Gateway.DataLayer.Model.TransactionHash", "ReferencedBodyHash")
                         .WithMany()
-                        .HasForeignKey("ReferencedBodyHashPacketHashId");
+                        .HasForeignKey("ReferencedBodyHashTransactionHashId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

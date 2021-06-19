@@ -81,7 +81,7 @@ namespace O10.Server.IdentityProvider.Common.Services
 		{
 			string secretName = "O10IdpPassword";
 
-			return AzureHelper.GetSecretValue(secretName, _azureConfiguration.AzureADCertThumbprint, _azureConfiguration.AzureADApplicationId, _azureConfiguration.KeyVaultName);
+			return "qqq"; // AzureHelper.GetSecretValue(secretName, _azureConfiguration.AzureADCertThumbprint, _azureConfiguration.AzureADApplicationId, _azureConfiguration.KeyVaultName);
 		}
 
 		private long CreateIdentityProviderAccount()

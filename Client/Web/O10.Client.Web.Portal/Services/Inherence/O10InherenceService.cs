@@ -161,7 +161,7 @@ namespace O10.Client.Web.Portal.Services.Inherence
         {
             string secretName = "ConsentManagementPassword";
 
-            return AzureHelper.GetSecretValue(secretName, _azureConfiguration.AzureADCertThumbprint, _azureConfiguration.AzureADApplicationId, _azureConfiguration.KeyVaultName);
+            return "qqq"; //AzureHelper.GetSecretValue(secretName, _azureConfiguration.AzureADCertThumbprint, _azureConfiguration.AzureADApplicationId, _azureConfiguration.KeyVaultName);
         }
 
         private async Task ProcessUniversalTransport(UniversalStealthTransaction transaction)

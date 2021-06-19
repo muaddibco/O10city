@@ -84,7 +84,7 @@ namespace O10.Node.WebApp.Common.Controllers
 		{
 			var packet = _synchronizationDataService.Single<SynchronizationPacket>(new SingleByBlockTypeKey(TransactionTypes.Synchronization_RegistryCombinationBlock));
 
-			return Ok(new AggregatedRegistrationsTransactionDTO { Height = packet.Payload.Height });
+			return Ok(new AggregatedRegistrationsTransactionDTO { Height = packet?.Payload?.Height ?? 0 });
 		}
 
 		[HttpGet("GetLastStatePacketInfo")]

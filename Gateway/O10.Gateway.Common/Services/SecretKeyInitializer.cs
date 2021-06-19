@@ -71,7 +71,7 @@ namespace O10.Gateway.Common.Services
             try
             {
                 byte[] secretKey = GetSecret(_secretConfiguration.SecretName).HexStringToByteArray();
-                ISigningService signingService = _signingServicesRepository.GetInstance("AccountSigningService");
+                ISigningService signingService = _signingServicesRepository.GetInstance("Ed25519SigningService");
                 signingService.Initialize(secretKey);
                 _gatewayContext.Initialize(signingService);
             }

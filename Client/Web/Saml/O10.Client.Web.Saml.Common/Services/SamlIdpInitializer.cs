@@ -6,7 +6,7 @@ using O10.Core.Architecture;
 
 namespace O10.Client.Web.Saml.Common.Services
 {
-    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Singleton)]
+    //[RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Singleton)]
     public class SamlIdpInitializer : InitializerBase
     {
         private readonly ISamlIdentityProvidersManager _samlIdentityProvidersManager;

@@ -13,7 +13,7 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                 {
                     AddressId = table.Column<long>(nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Key = table.Column<byte[]>(type: "varbinary(64)", nullable: true)
+                    Key = table.Column<byte[]>(type: "varbinary(64)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -26,7 +26,7 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                 {
                     CompromisedKeyImageId = table.Column<long>(nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    KeyImage = table.Column<byte[]>(type: "varbinary(64)", nullable: true)
+                    KeyImage = table.Column<byte[]>(type: "varbinary(64)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -34,26 +34,11 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "PacketHashes",
-                columns: table => new
-                {
-                    PacketHashId = table.Column<long>(nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    SyncBlockHeight = table.Column<long>(nullable: false),
-                    CombinedRegistryBlockHeight = table.Column<long>(nullable: false),
-                    Hash = table.Column<byte[]>(type: "varbinary(64)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PacketHashes", x => x.PacketHashId);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "RegistryCombinedBlocks",
                 columns: table => new
                 {
                     RegistryCombinedBlockId = table.Column<long>(nullable: false),
-                    Content = table.Column<byte[]>(nullable: true)
+                    Content = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -67,7 +52,7 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                     RegistryFullBlockDataId = table.Column<long>(nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     CombinedBlockHeight = table.Column<long>(nullable: false),
-                    Content = table.Column<byte[]>(nullable: true)
+                    Content = table.Column<byte[]>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -80,9 +65,9 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                 {
                     RelationRecordId = table.Column<long>(nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    Issuer = table.Column<byte[]>(type: "varbinary(64)", nullable: true),
-                    RegistrationCommitment = table.Column<byte[]>(type: "varbinary(64)", nullable: true),
-                    GroupCommitment = table.Column<byte[]>(type: "varbinary(64)", nullable: true),
+                    Issuer = table.Column<byte[]>(type: "varbinary(64)", nullable: false),
+                    RegistrationCommitment = table.Column<byte[]>(type: "varbinary(64)", nullable: false),
+                    GroupCommitment = table.Column<byte[]>(type: "varbinary(64)", nullable: false),
                     IsRevoked = table.Column<bool>(nullable: false)
                 },
                 constraints: table =>
@@ -91,11 +76,27 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "StealthOutputs",
+                columns: table => new
+                {
+                    StealthOutputId = table.Column<long>(nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    DestinationKey = table.Column<byte[]>(type: "varbinary(64)", nullable: false),
+                    Commitment = table.Column<byte[]>(type: "varbinary(64)", nullable: false),
+                    OriginatingCommitment = table.Column<byte[]>(type: "varbinary(64)", nullable: true),
+                    IsOverriden = table.Column<bool>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_StealthOutputs", x => x.StealthOutputId);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "SyncBlocks",
                 columns: table => new
                 {
                     SyncBlockId = table.Column<long>(nullable: false),
-                    Hash = table.Column<byte[]>(type: "varbinary(64)", nullable: true)
+                    Hash = table.Column<byte[]>(type: "varbinary(64)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -103,45 +104,43 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "TransactionHashes",
+                columns: table => new
+                {
+                    TransactionHashId = table.Column<long>(nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    AggregatedTransactionsHeight = table.Column<long>(nullable: false),
+                    Hash = table.Column<byte[]>(type: "varbinary(64)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TransactionHashes", x => x.TransactionHashId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TransactionKeys",
+                columns: table => new
+                {
+                    TransactionKeyId = table.Column<long>(nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Key = table.Column<byte[]>(type: "varbinary(64)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TransactionKeys", x => x.TransactionKeyId);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "UtxoKeyImages",
                 columns: table => new
                 {
-                    UtxoKeyImageId = table.Column<long>(nullable: false)
+                    KeyImageId = table.Column<long>(nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    KeyImage = table.Column<byte[]>(type: "varbinary(64)", nullable: true)
+                    Value = table.Column<byte[]>(type: "varbinary(64)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_UtxoKeyImages", x => x.UtxoKeyImageId);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "UtxoOutputs",
-                columns: table => new
-                {
-                    UtxoOutputId = table.Column<long>(nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    DestinationKey = table.Column<byte[]>(type: "varbinary(64)", nullable: false),
-                    Commitment = table.Column<byte[]>(type: "varbinary(64)", nullable: false),
-                    OriginatingCommitment = table.Column<byte[]>(nullable: true),
-                    IsOverriden = table.Column<bool>(nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_UtxoOutputs", x => x.UtxoOutputId);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "UtxoTransactionKeys",
-                columns: table => new
-                {
-                    UtxoTransactionKeyId = table.Column<long>(nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Key = table.Column<byte[]>(type: "varbinary(64)", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_UtxoTransactionKeys", x => x.UtxoTransactionKeyId);
+                    table.PrimaryKey("PK_UtxoKeyImages", x => x.KeyImageId);
                 });
 
             migrationBuilder.CreateTable(
@@ -150,7 +149,7 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                 {
                     AssociatedAttributeIssuanceId = table.Column<long>(nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    IssuerAddressId = table.Column<long>(nullable: true),
+                    IssuerAddressId = table.Column<long>(nullable: false),
                     IssuanceCommitment = table.Column<byte[]>(type: "varbinary(64)", nullable: false),
                     RootIssuanceCommitment = table.Column<byte[]>(type: "varbinary(64)", nullable: false)
                 },
@@ -162,7 +161,7 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                         column: x => x.IssuerAddressId,
                         principalTable: "Addresses",
                         principalColumn: "AddressId",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -171,9 +170,9 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                 {
                     RootAttributeIssuanceId = table.Column<long>(nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    IssuerAddressId = table.Column<long>(nullable: true),
-                    IssuanceCommitment = table.Column<byte[]>(type: "varbinary(64)", nullable: true),
-                    RootCommitment = table.Column<byte[]>(type: "varbinary(64)", nullable: true),
+                    IssuerAddressId = table.Column<long>(nullable: false),
+                    IssuanceCommitment = table.Column<byte[]>(type: "varbinary(64)", nullable: false),
+                    RootCommitment = table.Column<byte[]>(type: "varbinary(64)", nullable: false),
                     IsOverriden = table.Column<bool>(nullable: false),
                     IssuanceCombinedBlock = table.Column<long>(nullable: false),
                     RevocationCombinedBlock = table.Column<long>(nullable: false)
@@ -186,7 +185,7 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                         column: x => x.IssuerAddressId,
                         principalTable: "Addresses",
                         principalColumn: "AddressId",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -198,121 +197,116 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                     SyncBlockHeight = table.Column<long>(nullable: false),
                     Round = table.Column<long>(nullable: false),
                     CombinedBlockHeight = table.Column<long>(nullable: false),
+                    ReferencedLedgerType = table.Column<int>(nullable: false),
                     ReferencedPacketType = table.Column<int>(nullable: false),
-                    ReferencedBlockType = table.Column<int>(nullable: false),
-                    ReferencedBodyHashPacketHashId = table.Column<long>(nullable: true),
-                    ReferencedDestinationKey = table.Column<byte[]>(type: "varbinary(64)", nullable: true),
-                    ReferencedDestinationKey2 = table.Column<byte[]>(type: "varbinary(64)", nullable: true),
-                    ReferencedTransactionKey = table.Column<byte[]>(type: "varbinary(64)", nullable: true),
-                    ReferencedKeyImage = table.Column<byte[]>(type: "varbinary(64)", nullable: true)
+                    ReferencedBodyHashTransactionHashId = table.Column<long>(nullable: false),
+                    ReferencedDestinationKey = table.Column<byte[]>(type: "varbinary(64)", nullable: false),
+                    ReferencedDestinationKey2 = table.Column<byte[]>(type: "varbinary(64)", nullable: false),
+                    ReferencedTransactionKey = table.Column<byte[]>(type: "varbinary(64)", nullable: false),
+                    ReferencedKeyImage = table.Column<byte[]>(type: "varbinary(64)", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_WitnessPackets", x => x.WitnessPacketId);
                     table.ForeignKey(
-                        name: "FK_WitnessPackets_PacketHashes_ReferencedBodyHashPacketHashId",
-                        column: x => x.ReferencedBodyHashPacketHashId,
-                        principalTable: "PacketHashes",
-                        principalColumn: "PacketHashId",
-                        onDelete: ReferentialAction.Restrict);
+                        name: "FK_WitnessPackets_TransactionHashes_ReferencedBodyHashTransactionHashId",
+                        column: x => x.ReferencedBodyHashTransactionHashId,
+                        principalTable: "TransactionHashes",
+                        principalColumn: "TransactionHashId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "StealthPackets",
+                name: "StateTransactions",
                 columns: table => new
                 {
-                    StealthPacketId = table.Column<long>(nullable: false)
+                    StateTransactionId = table.Column<long>(nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     WitnessId = table.Column<long>(nullable: false),
-                    BlockType = table.Column<int>(nullable: false),
-                    Content = table.Column<byte[]>(nullable: true),
-                    TransactionKeyUtxoTransactionKeyId = table.Column<long>(nullable: true),
-                    KeyImageUtxoKeyImageId = table.Column<long>(nullable: true),
-                    OutputUtxoOutputId = table.Column<long>(nullable: true),
-                    ThisBlockHashPacketHashId = table.Column<long>(nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_StealthPackets", x => x.StealthPacketId);
-                    table.ForeignKey(
-                        name: "FK_StealthPackets_UtxoKeyImages_KeyImageUtxoKeyImageId",
-                        column: x => x.KeyImageUtxoKeyImageId,
-                        principalTable: "UtxoKeyImages",
-                        principalColumn: "UtxoKeyImageId",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_StealthPackets_UtxoOutputs_OutputUtxoOutputId",
-                        column: x => x.OutputUtxoOutputId,
-                        principalTable: "UtxoOutputs",
-                        principalColumn: "UtxoOutputId",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_StealthPackets_PacketHashes_ThisBlockHashPacketHashId",
-                        column: x => x.ThisBlockHashPacketHashId,
-                        principalTable: "PacketHashes",
-                        principalColumn: "PacketHashId",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_StealthPackets_UtxoTransactionKeys_TransactionKeyUtxoTransactionKeyId",
-                        column: x => x.TransactionKeyUtxoTransactionKeyId,
-                        principalTable: "UtxoTransactionKeys",
-                        principalColumn: "UtxoTransactionKeyId",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "TransactionalPackets",
-                columns: table => new
-                {
-                    TransactionalPacketId = table.Column<long>(nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    WitnessId = table.Column<long>(nullable: false),
-                    Height = table.Column<long>(nullable: false),
-                    BlockType = table.Column<int>(nullable: false),
-                    SourceAddressId = table.Column<long>(nullable: true),
+                    TransactionType = table.Column<int>(nullable: false),
+                    SourceAddressId = table.Column<long>(nullable: false),
                     TargetAddressId = table.Column<long>(nullable: true),
-                    GroupId = table.Column<byte[]>(nullable: true),
-                    Content = table.Column<byte[]>(nullable: true),
-                    IsTransition = table.Column<bool>(nullable: false),
-                    TransactionKeyUtxoTransactionKeyId = table.Column<long>(nullable: true),
-                    OutputUtxoOutputId = table.Column<long>(nullable: true),
-                    IsVerified = table.Column<bool>(nullable: false),
-                    IsValid = table.Column<bool>(nullable: false),
-                    ThisBlockHashPacketHashId = table.Column<long>(nullable: true)
+                    Content = table.Column<string>(nullable: false),
+                    HashTransactionHashId = table.Column<long>(nullable: true),
+                    TransactionKeyId = table.Column<long>(nullable: true),
+                    OutputStealthOutputId = table.Column<long>(nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TransactionalPackets", x => x.TransactionalPacketId);
+                    table.PrimaryKey("PK_StateTransactions", x => x.StateTransactionId);
                     table.ForeignKey(
-                        name: "FK_TransactionalPackets_UtxoOutputs_OutputUtxoOutputId",
-                        column: x => x.OutputUtxoOutputId,
-                        principalTable: "UtxoOutputs",
-                        principalColumn: "UtxoOutputId",
+                        name: "FK_StateTransactions_TransactionHashes_HashTransactionHashId",
+                        column: x => x.HashTransactionHashId,
+                        principalTable: "TransactionHashes",
+                        principalColumn: "TransactionHashId",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_TransactionalPackets_Addresses_SourceAddressId",
+                        name: "FK_StateTransactions_StealthOutputs_OutputStealthOutputId",
+                        column: x => x.OutputStealthOutputId,
+                        principalTable: "StealthOutputs",
+                        principalColumn: "StealthOutputId",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_StateTransactions_Addresses_SourceAddressId",
                         column: x => x.SourceAddressId,
                         principalTable: "Addresses",
                         principalColumn: "AddressId",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_TransactionalPackets_Addresses_TargetAddressId",
+                        name: "FK_StateTransactions_Addresses_TargetAddressId",
                         column: x => x.TargetAddressId,
                         principalTable: "Addresses",
                         principalColumn: "AddressId",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_TransactionalPackets_PacketHashes_ThisBlockHashPacketHashId",
-                        column: x => x.ThisBlockHashPacketHashId,
-                        principalTable: "PacketHashes",
-                        principalColumn: "PacketHashId",
+                        name: "FK_StateTransactions_TransactionKeys_TransactionKeyId",
+                        column: x => x.TransactionKeyId,
+                        principalTable: "TransactionKeys",
+                        principalColumn: "TransactionKeyId",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "StealthTransactions",
+                columns: table => new
+                {
+                    StealthTransactionId = table.Column<long>(nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    WitnessId = table.Column<long>(nullable: false),
+                    TransactionType = table.Column<int>(nullable: false),
+                    Content = table.Column<string>(nullable: false),
+                    TransactionKeyId = table.Column<long>(nullable: false),
+                    KeyImageId = table.Column<long>(nullable: false),
+                    OutputStealthOutputId = table.Column<long>(nullable: false),
+                    HashTransactionHashId = table.Column<long>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_StealthTransactions", x => x.StealthTransactionId);
                     table.ForeignKey(
-                        name: "FK_TransactionalPackets_UtxoTransactionKeys_TransactionKeyUtxoTransactionKeyId",
-                        column: x => x.TransactionKeyUtxoTransactionKeyId,
-                        principalTable: "UtxoTransactionKeys",
-                        principalColumn: "UtxoTransactionKeyId",
-                        onDelete: ReferentialAction.Restrict);
+                        name: "FK_StealthTransactions_TransactionHashes_HashTransactionHashId",
+                        column: x => x.HashTransactionHashId,
+                        principalTable: "TransactionHashes",
+                        principalColumn: "TransactionHashId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_StealthTransactions_UtxoKeyImages_KeyImageId",
+                        column: x => x.KeyImageId,
+                        principalTable: "UtxoKeyImages",
+                        principalColumn: "KeyImageId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_StealthTransactions_StealthOutputs_OutputStealthOutputId",
+                        column: x => x.OutputStealthOutputId,
+                        principalTable: "StealthOutputs",
+                        principalColumn: "StealthOutputId",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_StealthTransactions_TransactionKeys_TransactionKeyId",
+                        column: x => x.TransactionKeyId,
+                        principalTable: "TransactionKeys",
+                        principalColumn: "TransactionKeyId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
@@ -339,13 +333,7 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                 name: "IX_CompromisedKeyImages_KeyImage",
                 table: "CompromisedKeyImages",
                 column: "KeyImage",
-                unique: true,
-                filter: "[KeyImage] IS NOT NULL");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_PacketHashes_SyncBlockHeight_CombinedRegistryBlockHeight_Hash",
-                table: "PacketHashes",
-                columns: new[] { "SyncBlockHeight", "CombinedRegistryBlockHeight", "Hash" });
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_RegistryFullBlocks_CombinedBlockHeight",
@@ -388,84 +376,89 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                 column: "RootCommitment");
 
             migrationBuilder.CreateIndex(
-                name: "IX_StealthPackets_KeyImageUtxoKeyImageId",
-                table: "StealthPackets",
-                column: "KeyImageUtxoKeyImageId");
+                name: "IX_StateTransactions_HashTransactionHashId",
+                table: "StateTransactions",
+                column: "HashTransactionHashId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_StealthPackets_OutputUtxoOutputId",
-                table: "StealthPackets",
-                column: "OutputUtxoOutputId");
+                name: "IX_StateTransactions_OutputStealthOutputId",
+                table: "StateTransactions",
+                column: "OutputStealthOutputId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_StealthPackets_ThisBlockHashPacketHashId",
-                table: "StealthPackets",
-                column: "ThisBlockHashPacketHashId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_StealthPackets_TransactionKeyUtxoTransactionKeyId",
-                table: "StealthPackets",
-                column: "TransactionKeyUtxoTransactionKeyId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_StealthPackets_WitnessId",
-                table: "StealthPackets",
-                column: "WitnessId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_TransactionalPackets_OutputUtxoOutputId",
-                table: "TransactionalPackets",
-                column: "OutputUtxoOutputId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_TransactionalPackets_SourceAddressId",
-                table: "TransactionalPackets",
+                name: "IX_StateTransactions_SourceAddressId",
+                table: "StateTransactions",
                 column: "SourceAddressId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TransactionalPackets_TargetAddressId",
-                table: "TransactionalPackets",
+                name: "IX_StateTransactions_TargetAddressId",
+                table: "StateTransactions",
                 column: "TargetAddressId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TransactionalPackets_ThisBlockHashPacketHashId",
-                table: "TransactionalPackets",
-                column: "ThisBlockHashPacketHashId");
+                name: "IX_StateTransactions_TransactionKeyId",
+                table: "StateTransactions",
+                column: "TransactionKeyId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TransactionalPackets_TransactionKeyUtxoTransactionKeyId",
-                table: "TransactionalPackets",
-                column: "TransactionKeyUtxoTransactionKeyId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_TransactionalPackets_WitnessId",
-                table: "TransactionalPackets",
+                name: "IX_StateTransactions_WitnessId",
+                table: "StateTransactions",
                 column: "WitnessId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_UtxoKeyImages_KeyImage",
-                table: "UtxoKeyImages",
-                column: "KeyImage");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_UtxoOutputs_Commitment",
-                table: "UtxoOutputs",
+                name: "IX_StealthOutputs_Commitment",
+                table: "StealthOutputs",
                 column: "Commitment");
 
             migrationBuilder.CreateIndex(
-                name: "IX_UtxoOutputs_DestinationKey",
-                table: "UtxoOutputs",
+                name: "IX_StealthOutputs_DestinationKey",
+                table: "StealthOutputs",
                 column: "DestinationKey");
 
             migrationBuilder.CreateIndex(
-                name: "IX_UtxoOutputs_IsOverriden",
-                table: "UtxoOutputs",
+                name: "IX_StealthOutputs_IsOverriden",
+                table: "StealthOutputs",
                 column: "IsOverriden");
 
             migrationBuilder.CreateIndex(
-                name: "IX_UtxoTransactionKeys_Key",
-                table: "UtxoTransactionKeys",
+                name: "IX_StealthTransactions_HashTransactionHashId",
+                table: "StealthTransactions",
+                column: "HashTransactionHashId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StealthTransactions_KeyImageId",
+                table: "StealthTransactions",
+                column: "KeyImageId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StealthTransactions_OutputStealthOutputId",
+                table: "StealthTransactions",
+                column: "OutputStealthOutputId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StealthTransactions_TransactionKeyId",
+                table: "StealthTransactions",
+                column: "TransactionKeyId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StealthTransactions_WitnessId",
+                table: "StealthTransactions",
+                column: "WitnessId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransactionHashes_AggregatedTransactionsHeight_Hash",
+                table: "TransactionHashes",
+                columns: new[] { "AggregatedTransactionsHeight", "Hash" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransactionKeys_Key",
+                table: "TransactionKeys",
                 column: "Key");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UtxoKeyImages_Value",
+                table: "UtxoKeyImages",
+                column: "Value");
 
             migrationBuilder.CreateIndex(
                 name: "IX_WitnessPackets_CombinedBlockHeight",
@@ -473,9 +466,9 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                 column: "CombinedBlockHeight");
 
             migrationBuilder.CreateIndex(
-                name: "IX_WitnessPackets_ReferencedBodyHashPacketHashId",
+                name: "IX_WitnessPackets_ReferencedBodyHashTransactionHashId",
                 table: "WitnessPackets",
-                column: "ReferencedBodyHashPacketHashId");
+                column: "ReferencedBodyHashTransactionHashId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_WitnessPackets_ReferencedDestinationKey",
@@ -519,31 +512,31 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                 name: "RootAttributes");
 
             migrationBuilder.DropTable(
-                name: "StealthPackets");
+                name: "StateTransactions");
+
+            migrationBuilder.DropTable(
+                name: "StealthTransactions");
 
             migrationBuilder.DropTable(
                 name: "SyncBlocks");
 
             migrationBuilder.DropTable(
-                name: "TransactionalPackets");
-
-            migrationBuilder.DropTable(
                 name: "WitnessPackets");
-
-            migrationBuilder.DropTable(
-                name: "UtxoKeyImages");
-
-            migrationBuilder.DropTable(
-                name: "UtxoOutputs");
 
             migrationBuilder.DropTable(
                 name: "Addresses");
 
             migrationBuilder.DropTable(
-                name: "UtxoTransactionKeys");
+                name: "UtxoKeyImages");
 
             migrationBuilder.DropTable(
-                name: "PacketHashes");
+                name: "StealthOutputs");
+
+            migrationBuilder.DropTable(
+                name: "TransactionKeys");
+
+            migrationBuilder.DropTable(
+                name: "TransactionHashes");
         }
     }
 }

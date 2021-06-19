@@ -5,10 +5,8 @@ using O10.Client.Web.Common.Services;
 using O10.Core.Architecture;
 using O10.Core.Logging;
 using Microsoft.Extensions.DependencyInjection;
-using O10.Core.Models;
 using System.Threading.Tasks;
 using O10.Transactions.Core.Enums;
-using O10.Crypto.Models;
 
 namespace O10.Server.IdentityProvider.Common.Services
 {
@@ -17,13 +15,11 @@ namespace O10.Server.IdentityProvider.Common.Services
 	{
 		private Persistency _persistency;
 		private readonly IServiceProvider _serviceProvider;
-        private readonly ILedgerWriterRepository _ledgerWriterRepository;
 		private readonly ILogger _logger;
 
-		public ExecutionContext(IServiceProvider serviceProvider, ILedgerWriterRepository ledgerWriterRepository, ILoggerService loggerService)
+		public ExecutionContext(IServiceProvider serviceProvider, ILoggerService loggerService)
 		{
 			_serviceProvider = serviceProvider;
-            _ledgerWriterRepository = ledgerWriterRepository;
 			_logger = loggerService.GetLogger(nameof(ExecutionContext));
 		}
 
@@ -38,11 +34,12 @@ namespace O10.Server.IdentityProvider.Common.Services
 			{
 				IStateTransactionsService transactionsService = _persistency.Scope.ServiceProvider.GetService<IStateTransactionsService>();
 				IStateClientCryptoService clientCryptoService = _persistency.Scope.ServiceProvider.GetService<IStateClientCryptoService>();
+				ILedgerWriterRepository ledgerWriterRepository = _persistency.Scope.ServiceProvider.GetService<ILedgerWriterRepository>();
 
 				clientCryptoService.Initialize(secretKey);
 
 				await transactionsService.Initialize(accountId).ConfigureAwait(false);
-				var ledgerWriter = _ledgerWriterRepository.GetInstance(LedgerType.O10State);
+				var ledgerWriter = ledgerWriterRepository.GetInstance(LedgerType.O10State);
 				await ledgerWriter.Initialize(accountId).ConfigureAwait(false);
 				transactionsService.PipeOutTransactions.LinkTo(ledgerWriter.PipeIn);
 

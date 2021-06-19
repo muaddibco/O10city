@@ -203,7 +203,7 @@ namespace O10.Client.Web.Portal.Services
         {
             string secretName = "ConsentManagementPassword";
 
-            return AzureHelper.GetSecretValue(secretName, _azureConfiguration.AzureADCertThumbprint, _azureConfiguration.AzureADApplicationId, _azureConfiguration.KeyVaultName);
+            return "qqq"; // AzureHelper.GetSecretValue(secretName, _azureConfiguration.AzureADCertThumbprint, _azureConfiguration.AzureADApplicationId, _azureConfiguration.KeyVaultName);
         }
 
         public IEnumerable<SpUserTransactionDto> GetUserTransactions(long spAccountId)

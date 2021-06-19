@@ -270,7 +270,7 @@ namespace O10.Client.Web.Portal.Services.ExternalIdps
         {
             string secretName = $"ExtIdp-{name}-pwd";
 
-            return AzureHelper.GetSecretValue(secretName, _azureConfiguration.AzureADCertThumbprint, _azureConfiguration.AzureADApplicationId, _azureConfiguration.KeyVaultName);
+            return "qqq"; // AzureHelper.GetSecretValue(secretName, _azureConfiguration.AzureADCertThumbprint, _azureConfiguration.AzureADApplicationId, _azureConfiguration.KeyVaultName);
         }
 
         private long CreateIdentityProviderAccount(ExternalIdpDTO externalIdp)
