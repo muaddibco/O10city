@@ -89,7 +89,7 @@ namespace O10.Client.Mobile.Base.ViewModels
                 string[] decodedParts = decoded.Split(":");
                 _secretSpendKey = decodedParts[0].HexStringToByteArray();
                 _secretViewKey = decodedParts[1].HexStringToByteArray();
-                _lastCombinedBlockHeight = ulong.Parse(decodedParts[2]);
+                _lastCombinedBlockHeight = long.Parse(decodedParts[2]);
             }
 
         }

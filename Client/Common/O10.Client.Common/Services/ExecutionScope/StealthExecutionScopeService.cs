@@ -8,6 +8,7 @@ using O10.Core.Configuration;
 using O10.Core.Identity;
 using O10.Core.Models;
 using O10.Core.Notifications;
+using O10.Crypto.Models;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Ledgers;
 using System;
@@ -60,7 +61,7 @@ namespace O10.Client.Common.Services
 
         public string Name => "Stealth";
 
-        public T GetScopeInitializationParams<T>() where T : ScopeInitializationParams
+        public T? GetScopeInitializationParams<T>() where T : ScopeInitializationParams
         {
             if (typeof(T) != typeof(UtxoScopeInitializationParams))
             {
@@ -99,7 +100,6 @@ namespace O10.Client.Common.Services
             var ledgerWriter = _ledgerWriterRepository.GetInstance(LedgerType.Stealth);
             await ledgerWriter.Initialize(scopeInitializationParams.AccountId).ConfigureAwait(false);
             _transactionsService.PipeOutTransactions.LinkTo(ledgerWriter.PipeIn);
-            _transactionsService.PipeOutKeyImages.LinkTo(utxoWalletPacketsExtractor.GetTargetPipe<IKey>());
 
             IUpdater userIdentitiesUpdater = _updaterRegistry.GetInstance();
 
@@ -108,11 +108,11 @@ namespace O10.Client.Common.Services
 
             packetsProvider.PipeOut.LinkTo(utxoWalletPacketsExtractor.GetTargetPipe<WitnessPackageWrapper>());
 
-            utxoWalletPacketsExtractor.GetSourcePipe<TaskCompletionWrapper<PacketBase>>().LinkTo(walletSynchronizer.GetTargetPipe<TaskCompletionWrapper<PacketBase>>());
+            utxoWalletPacketsExtractor.GetSourcePipe<TaskCompletionWrapper<TransactionBase>>().LinkTo(walletSynchronizer.GetTargetPipe<TaskCompletionWrapper<TransactionBase>>());
             utxoWalletPacketsExtractor.GetSourcePipe<WitnessPackage>().LinkTo(walletSynchronizer.GetTargetPipe<WitnessPackage>());
             utxoWalletPacketsExtractor.GetSourcePipe<NotificationBase>().LinkTo(userIdentitiesUpdater.PipeInNotifications);
 
-            walletSynchronizer.GetSourcePipe<PacketBase>().LinkTo(userIdentitiesUpdater.PipeIn);
+            walletSynchronizer.GetSourcePipe<TransactionBase>().LinkTo(userIdentitiesUpdater.PipeIn);
             walletSynchronizer.GetSourcePipe<NotificationBase>().LinkTo(userIdentitiesUpdater.PipeInNotifications);
 
             packetsProvider.Start();

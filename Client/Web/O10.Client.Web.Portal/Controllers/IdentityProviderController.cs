@@ -201,7 +201,7 @@ namespace O10.Client.Web.Portal.Controllers
                     {
                         AttributeName = a.AttributeName,
                         Content = a.Content,
-                        OriginatingCommitment = a.Commitment?.ToHexString()
+                        OriginatingCommitment = a.Commitment?.ToString()
                     }).ToArray(),
             //NumberOfTransfers = _dataAccessService.GetOutcomingTransactionsCountByOriginatingCommitment(identity.RootAttribute.Commitment)
         };
@@ -557,7 +557,7 @@ namespace O10.Client.Web.Portal.Controllers
                 {
                     AttributeName = rootAttribute.AttributeName,
                     OriginatingCommitment = packet.SurjectionProof.AssetCommitments[0].ToHexString(),
-                    AssetCommitment = packet.TransferredAsset.AssetCommitment.ToHexString(),
+                    AssetCommitment = packet.TransferredAsset.AssetCommitment.ToString(),
                     SurjectionProof = $"{packet.SurjectionProof.Rs.E.ToHexString()}{packet.SurjectionProof.Rs.S[0].ToHexString()}"
                 };
 

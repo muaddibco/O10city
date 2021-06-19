@@ -100,7 +100,7 @@ namespace O10.Client.Web.Portal.Controllers
             return Ok(documents);
         }
 
-        [HttpGet("DocumentSignatures/{spId}")]
+        /*[HttpGet("DocumentSignatures/{spId}")]
         public async Task<IActionResult> GetDocumentSignatures(long spId)
         {
             AccountDescriptor account = _accountsService.GetById(spId);
@@ -181,7 +181,7 @@ namespace O10.Client.Web.Portal.Controllers
             transactionsService.IssueDocumentRecord(document.Hash.HexStringToByteArray(), document.AllowedSigners.Select(s => s.GroupCommitment.HexStringToByteArray()).ToArray());
 
             return Ok();
-        }
+        }*/
 
         [AllowAnonymous]
         [HttpGet("Action")]
@@ -213,7 +213,7 @@ namespace O10.Client.Web.Portal.Controllers
                     {
                         extraInfo += "/";
                     }
-                    extraInfo += $"{spAccount.AccountInfo}|{spEmployee?.RelationGroup?.GroupName}|{!string.IsNullOrEmpty(spEmployee.RegistrationCommitment)}";
+                    extraInfo += $"{spAccount.AccountInfo}|{spEmployee?.RelationGroup?.GroupName}|{spEmployee.RegistrationCommitment != null}";
                 }
 
                 isRegistered = spEmployees.Count > 0;

@@ -9,7 +9,7 @@ namespace O10.Client.Common.Interfaces
     {
         string Name { get; }
 
-        T GetScopeInitializationParams<T>() where T : ScopeInitializationParams;
+        T? GetScopeInitializationParams<T>() where T : ScopeInitializationParams;
 
         Task Initiliaze(ScopeInitializationParams initializationParams);
     }

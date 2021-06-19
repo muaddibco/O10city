@@ -207,7 +207,7 @@ namespace O10.Client.Web.Portal.Controllers
                 EmployeeId = e.RelationRecordId,
                 Description = e.Description,
                 RawRootAttribute = e.RootAttributeValue,
-                RegistrationCommitment = e.RegistrationCommitment,
+                RegistrationCommitment = e.RegistrationCommitment?.Commitment,
                 GroupId = e.RelationGroup?.RelationGroupId ?? 0
             }));
         }
@@ -220,7 +220,7 @@ namespace O10.Client.Web.Portal.Controllers
             return Ok(employee);
         }
 
-        [HttpPost("Employee")]
+        /*[HttpPost("Employee")]
         public IActionResult UpdateEmployee(long accountId, [FromBody] EmployeeDto employee)
         {
             _dataAccessService.ChangeRelationGroup(accountId, employee.EmployeeId, employee.GroupId);
@@ -343,7 +343,7 @@ namespace O10.Client.Web.Portal.Controllers
             {
                 return BadRequest();
             }
-        }
+        }*/
 
         [HttpGet("UserTransaction")]
         public IActionResult GetUserTransactions(long accountId)

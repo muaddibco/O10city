@@ -55,7 +55,8 @@ namespace O10.Client.Mobile.Base.Services
 
             _logger.LogIfDebug(() => $"Storing user registration at {spInfo}, assetId: {assetIdStr}, issuer: {issuerStr}");
 
-            (_, byte[] registrationCommitment) = await _executionContext.RelationsBindingService.GetBoundedCommitment(target, assetIds).ConfigureAwait(false);
+            // TODO: place with potential bug - assetIds should be passed as an array
+            (_, byte[] registrationCommitment) = await _executionContext.RelationsBindingService.GetBoundedCommitment(target, assetIds[0]).ConfigureAwait(false);
             long registrationId = _dataAccessService.AddUserRegistration(_executionContext.AccountId, registrationCommitment.ToHexString(), spInfo, assetIdStr, issuerStr);
             if (registrationId > 0)
             {
@@ -149,14 +150,13 @@ namespace O10.Client.Mobile.Base.Services
             }
 
             OutputSources[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
-            await _executionContext.TransactionsService.SendUniversalTransport(requestInput, outputModels, universalProofs)
+            await _executionContext.TransactionsService.SendUniversalTransaction(requestInput, universalProofs)
                 .ContinueWith(t =>
                 {
                     _dataAccessService.AddUserTransactionSecret(_executionContext.AccountId,
                                                                 universalProofs.KeyImage.ToString(),
-                                                                universalProofs.Issuer.ToString(),
-                                                                requestInput.AssetId.ToHexString(),
-                                                                t.Result.NewBlindingFactor.ToHexString());
+                                                                universalProofs.GetMainRootIssuer().Issuer.ToString(),
+                                                                requestInput.AssetId.ToHexString());
                 }, TaskScheduler.Current)
                 .ConfigureAwait(false);
 

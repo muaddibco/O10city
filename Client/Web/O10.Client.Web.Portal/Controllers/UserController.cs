@@ -255,9 +255,9 @@ namespace O10.Client.Web.Portal.Controllers
             var persistency = _executionContextManager.ResolveExecutionServices(accountId);
             var transactionsService = persistency.Scope.ServiceProvider.GetService<IStealthTransactionsService>();
             UserRootAttribute rootAttribute = null;
-            byte[] keyImageCompromized = unauthorizedUse.KeyImage.HexStringToByteArray();
-            byte[] transactionKeyCompromized = unauthorizedUse.TransactionKey.HexStringToByteArray();
-            byte[] destinationKeyCompromized = unauthorizedUse.DestinationKey.HexStringToByteArray();
+            byte[] keyImageCompromized = unauthorizedUse.KeyImage.ToByteArray();
+            byte[] transactionKeyCompromized = unauthorizedUse.TransactionKey.ToByteArray();
+            byte[] destinationKeyCompromized = unauthorizedUse.DestinationKey.ToByteArray();
 
             rootAttribute = GetRootAttributeOnTransactionKeyArriving(accountId, transactionKeyCompromized);
 
@@ -266,7 +266,7 @@ namespace O10.Client.Web.Portal.Controllers
                 return BadRequest();
             }
 
-            byte[] target = unauthorizedUse.Target.HexStringToByteArray();
+            byte[] target = unauthorizedUse.Target.ToByteArray();
 
             GetRequestInput(rootAttribute, target, out byte[] issuer, out RequestInput requestInput);
 
@@ -366,11 +366,10 @@ namespace O10.Client.Web.Portal.Controllers
                 PublicSpendKey = target
             };
 
-            OutputSources[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
-            RequestResult requestResult = await transactionsService.SendRevokeIdentity(requestInput, outputModels, new byte[][] { rootAttribute.AnchoringOriginationCommitment }).ConfigureAwait(false);
+            RequestResult requestResult = await transactionsService.SendRevokeIdentity(requestInput, new byte[][] { rootAttribute.AnchoringOriginationCommitment }).ConfigureAwait(false);
         }
 
-        [HttpPost("SendDocumentSignRequest")]
+        /*[HttpPost("SendDocumentSignRequest")]
         public async Task<IActionResult> SendDocumentSignRequest(long accountId, [FromBody] UserAttributeTransferDto userAttributeTransfer)
         {
             Persistency persistency = _executionContextManager.ResolveExecutionServices(accountId);
@@ -386,7 +385,7 @@ namespace O10.Client.Web.Portal.Controllers
             }
 
             return Ok(false);
-        }
+        }*/
 
         private async Task<(BiometricPersonDataForSignatureDto dataForSignature, byte[] sourceImageBlindingFactor)> GetInputDataForBiometricSignature(UserAttributeTransferDto userAttributeTransfer, long accountId, IAssetsService assetsService)
         {
@@ -411,7 +410,7 @@ namespace O10.Client.Web.Portal.Controllers
             return (biometricPersonDataForSignature, sourceImageBlindingFactor);
         }
 
-        [HttpPost("Relation")]
+        /*[HttpPost("Relation")]
         public async Task<IActionResult> SendRelationCreationRequest(long accountId, [FromBody] RelationsCreationRequestDTO relationsCreation)
         {
             UserRootAttribute userRootAttribute = _dataAccessService.GetUserRootAttribute(relationsCreation.UserAttributeId);
@@ -472,7 +471,7 @@ namespace O10.Client.Web.Portal.Controllers
             }
 
             return Ok(false);
-        }
+        }*/
 
 
         private async Task<(bool proceed, BiometricProof biometricProof)> CheckBiometrics(UserAttributeTransferDto userAttributeTransfer, long accountId)
@@ -668,7 +667,7 @@ namespace O10.Client.Web.Portal.Controllers
             return true;
         }
 
-        private async Task SendDocumentSignRequest(long accountId, UserAttributeTransferDto userAttributeTransfer, IStealthTransactionsService transactionsService, BiometricProof biometricProof, AssociatedProofPreparation[] associatedProofPreparations = null)
+        /*private async Task SendDocumentSignRequest(long accountId, UserAttributeTransferDto userAttributeTransfer, IStealthTransactionsService transactionsService, BiometricProof biometricProof, AssociatedProofPreparation[] associatedProofPreparations = null)
         {
             var scope = _executionContextManager.ResolveExecutionServices(accountId).Scope;
             var assetsService = scope.ServiceProvider.GetService<IAssetsService>();
@@ -687,9 +686,9 @@ namespace O10.Client.Web.Portal.Controllers
             OutputSources[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
             byte[][] issuanceCommitments = await _gatewayService.GetIssuanceCommitments(issuer, _restApiConfiguration.RingSize + 1).ConfigureAwait(false);
             RequestResult requestResult = await transactionsService.SendDocumentSignRequest(requestInput, associatedProofPreparations, outputModels, issuanceCommitments).ConfigureAwait(false);
-        }
+        }*/
 
-        private async Task SendRelationsCreationRequest(long accountId, RelationsCreationRequestDTO relationsCreation, IStealthTransactionsService transactionsService, BiometricProof biometricProof, AssociatedProofPreparation[] associatedProofPreparations = null)
+        /*private async Task SendRelationsCreationRequest(long accountId, RelationsCreationRequestDTO relationsCreation, IStealthTransactionsService transactionsService, BiometricProof biometricProof, AssociatedProofPreparation[] associatedProofPreparations = null)
         {
             var scope = _executionContextManager.ResolveExecutionServices(accountId).Scope;
             var assetsService = scope.ServiceProvider.GetService<IAssetsService>();
@@ -714,7 +713,7 @@ namespace O10.Client.Web.Portal.Controllers
                     RequestResult requestResult = await transactionsService.SendUniversalTransaction(requestInput, associatedProofPreparations, outputModels, issuanceCommitments).ConfigureAwait(false);
                 }
             }
-        }
+        }*/
 
         [HttpGet("UserAssociatedAttributes")]
         public async Task<IActionResult> GetUserAssociatedAttributes(long accountId, string issuer)
@@ -1397,13 +1396,13 @@ namespace O10.Client.Web.Portal.Controllers
             return Ok();
         }
 
-        [HttpGet("DocumentSignatureVerification")]
+        /*[HttpGet("DocumentSignatureVerification")]
         public async Task<IActionResult> GetDocumentSignatureVerification([FromQuery] string documentCreator, [FromQuery] string documentHash, [FromQuery] ulong documentRecordHeight, [FromQuery] ulong signatureRecordBlockHeight)
         {
             DocumentSignatureVerification signatureVerification = await _documentSignatureVerifier.Verify(documentCreator.HexStringToByteArray(), documentHash.HexStringToByteArray(), documentRecordHeight, signatureRecordBlockHeight).ConfigureAwait(false);
 
             return Ok(signatureVerification);
-        }
+        }*/
 
         [HttpGet("GroupRelations")]
         public IActionResult GetGroupRelations(long accountId)
@@ -1443,7 +1442,7 @@ namespace O10.Client.Web.Portal.Controllers
             return Ok();
         }
 
-        [HttpPost("RelationsProofs")]
+        /*[HttpPost("RelationsProofs")]
         public async Task<IActionResult> SendRelationsProofs(long accountId, [FromBody] RelationsProofsDto relationsProofs)
         {
             _logger.LogIfDebug(() => $"[{accountId}]: {nameof(SendRelationsProofs)} with {nameof(relationsProofs)}={JsonConvert.SerializeObject(relationsProofs, new ByteArrayJsonConverter())}");
@@ -1537,7 +1536,7 @@ namespace O10.Client.Web.Portal.Controllers
                 _logger.Error($"[{accountId}]: failure during {nameof(SendRelationsProofs)}", ex);
                 throw;
             }
-        }
+        }*/
 
         private async Task<List<string>> GetRequiredValidations(IAssetsService assetsService, List<Tuple<string, ValidationType>> validations, string issuer)
         {

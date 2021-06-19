@@ -15,6 +15,7 @@ namespace O10.Client.Common.Interfaces
 
         Task<RelationTransaction> IssueRelationRecordTransaction(IKey registrationCommitment);
         Task<IssueBlindedAssetTransaction> IssueBlindedAsset(byte[] assetId);
+        Task<IssueBlindedAssetTransaction> IssueBlindedAsset2(byte[] assetId, byte[] blindingFactor);
 
         /*        Task<CancelEmployeeRecord> IssueCancelEmployeeRecord(byte[] registrationCommitment);
 
@@ -23,7 +24,6 @@ namespace O10.Client.Common.Interfaces
                 Task<DocumentRecord> IssueDocumentRecord(byte[] documentHash, byte[][] allowedSignerCommitments);
 
 
-                Task<IssueBlindedAsset> IssueBlindedAsset2(byte[] assetId, byte[] blindingFactor);
         */
         /// <summary>
         /// originatingCommitment = blindingPointValue + assetId * G

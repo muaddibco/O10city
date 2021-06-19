@@ -1,37 +1,28 @@
 ﻿using System.Threading;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.SpaServices.AngularCli;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using O10.Client.Web.Common.Hubs;
-using O10.Client.Web.Common.Services;
 using O10.Core.Configuration;
 using O10.Core.ExtensionMethods;
 using O10.Core.Logging;
 using O10.Server.IdentityProvider.Common.Controllers;
 using O10.Server.IdentityProvider.Common.Hubs;
 using O10.Client.Web.Portal.Hubs;
-using O10.Client.Web.Portal.IdentityServer;
 using O10.Client.Web.Portal.IdentityServer.Data;
-using O10.Client.Web.Portal.IdentityServer.Data.Models;
 using O10.Client.Web.Portal.Services.Inherence;
-using O10.Client.Web.Saml.Common.Controllers;
 using O10.Client.Web.Saml.Common.Hubs;
 using Newtonsoft.Json;
 using Flurl.Http.Configuration;
 using Flurl.Http;
 using Newtonsoft.Json.Serialization;
 using O10.Core.Serialization;
-using System.Runtime.Serialization.Formatters;
 using Newtonsoft.Json.Converters;
 using Cyberboss.AspNetCore.AsyncInitializer;
-using System;
 
 namespace O10.Client.Web.Portal
 {

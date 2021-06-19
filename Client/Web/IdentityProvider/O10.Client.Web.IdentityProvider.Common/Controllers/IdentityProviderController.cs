@@ -29,6 +29,7 @@ using ICoreDataAccessService = O10.Client.DataLayer.Services.IDataAccessService;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
+using O10.Core.Identity;
 
 namespace O10.Server.IdentityProvider.Common.Controllers
 {
@@ -149,7 +150,7 @@ namespace O10.Server.IdentityProvider.Common.Controllers
 						byte[] issuanceBlindingFactor = CryptoHelper.GetRandomSeed();
 						var packet = await transactionsService.IssueBlindedAsset2(assetIdEmail, issuanceBlindingFactor).ConfigureAwait(false);
 
-						byte[] protectionCommitment = null;
+						IKey protectionCommitment = null;
 						if (requestBody.Attributes.ContainsKey(AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD))
 						{
 							var attributeValueProtection = requestBody.Attributes[AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD];
@@ -165,7 +166,7 @@ namespace O10.Server.IdentityProvider.Common.Controllers
 
                         long blindingRecordId = _dataAccessService.AddIssuanceBlindingFactors(issuanceBlindingFactor.ToHexString(), biometricBlindingfactor.ToHexString());
 
-                        long userRecordId = _dataAccessService.AddAssetRegistration(assetIdEmail.ToHexString(), packet.AssetCommitment.ToHexString(), originatingBiometricCommitment.ToHexString(), protectionCommitment.ToHexString(), blindingRecordId);
+                        long userRecordId = _dataAccessService.AddAssetRegistration(assetIdEmail.ToHexString(), packet.AssetCommitment.ToString(), originatingBiometricCommitment.ToHexString(), protectionCommitment?.ToString(), blindingRecordId);
 
                         //if (!string.IsNullOrEmpty(requestBody.ImageContent))
                         //{
@@ -173,7 +174,7 @@ namespace O10.Server.IdentityProvider.Common.Controllers
                         //    _dataAccessService.AddBiometricRecord(userRecordId, BiometricRecordType.Photo, imageContent);
                         //}
 
-                        await transactionsService.TransferAssetToStealth2(assetIdEmail, packet.AssetCommitment,
+                        await transactionsService.TransferAssetToStealth2(assetIdEmail, packet.AssetCommitment.ToByteArray(),
                             new ConfidentialAccount
                             {
                                 PublicSpendKey = requestBody.PublicSpendKey.HexStringToByteArray(),
@@ -359,7 +360,7 @@ namespace O10.Server.IdentityProvider.Common.Controllers
 		/// <param name="blindingPointRoot"></param>
 		/// <param name="transactionsService"></param>
 		/// <returns></returns>
-		private async Task<byte[]> ProcessIssuingAssociatedAttribute(string issuer,
+		private async Task<IKey> ProcessIssuingAssociatedAttribute(string issuer,
 															   string attributeSchemeName,
 															   string content,
 															   byte[] rootAssetId,

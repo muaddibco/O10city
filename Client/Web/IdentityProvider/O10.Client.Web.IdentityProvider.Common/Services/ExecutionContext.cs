@@ -44,7 +44,7 @@ namespace O10.Server.IdentityProvider.Common.Services
 				await transactionsService.Initialize(accountId).ConfigureAwait(false);
 				var ledgerWriter = _ledgerWriterRepository.GetInstance(LedgerType.O10State);
 				await ledgerWriter.Initialize(accountId).ConfigureAwait(false);
-				transactionsService.GetSourcePipe<TaskCompletionWrapper<TransactionBase>>().LinkTo(ledgerWriter.PipeIn);
+				transactionsService.PipeOutTransactions.LinkTo(ledgerWriter.PipeIn);
 
 			}
 			catch (Exception ex)
