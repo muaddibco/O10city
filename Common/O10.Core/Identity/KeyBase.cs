@@ -34,13 +34,17 @@ namespace O10.Core.Identity
             get => _value;
             set
             {
-                if (value.Length != Length)
+                if (value.Length != Length && value.Length != 0)
                 {
                     throw new ArgumentOutOfRangeException(nameof(value), $"Length must be of {Length} bytes");
                 }
 
                 _value = value;
-                ArraySegment = _value.ToArraySegment();
+
+                if (_value.Length > 0)
+                {
+                    ArraySegment = _value.ToArraySegment();
+                }
             }
         }
 

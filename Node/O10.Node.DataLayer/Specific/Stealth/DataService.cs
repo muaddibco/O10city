@@ -54,7 +54,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
                 var hash = _defaultHashCalculation.CalculateHash(packet.ToString());
                 var hashKey = IdentityKeyProvider.GetKey(hash);
                 var addCompletionWrapper = new TaskCompletionWrapper<IPacketBase>(packet);
-                var addCompletion = Service.AddStealthBlock(stealth.Payload.Transaction.KeyImage, stealth.Payload.Transaction.TransactionType, stealth.Payload.Transaction.DestinationKey, stealth.ToString(), hash.ToString());
+                var addCompletion = Service.AddStealthBlock(stealth.Payload.Transaction.KeyImage, stealth.Payload.Transaction.TransactionType, stealth.Payload.Transaction.DestinationKey, stealth.ToJson(), hash.ToString());
                 addCompletion.Task.ContinueWith((t, o) =>
                 {
                     var w = ((Tuple<TaskCompletionWrapper<IPacketBase>, IKey>)o).Item1;
@@ -105,7 +105,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
 
             if (stealth != null)
             {
-                return new List<IPacketBase> { TranslatorsRepository.GetInstance<Model.StealthTransaction, IPacketBase>().Translate(stealth) };
+                return new List<IPacketBase> { TranslatorsRepository.GetInstance<StealthTransaction, IPacketBase>().Translate(stealth) };
             }
 
             return new List<IPacketBase>();
@@ -129,7 +129,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
 
             if (stealth != null)
             {
-                return new List<IPacketBase> { TranslatorsRepository.GetInstance<Model.StealthTransaction, IPacketBase>().Translate(stealth) };
+                return new List<IPacketBase> { TranslatorsRepository.GetInstance<StealthTransaction, StealthPacket>().Translate(stealth) };
             }
 
             return new List<IPacketBase>();

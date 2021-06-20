@@ -1,6 +1,9 @@
-﻿using O10.Core.Models;
+﻿using Newtonsoft.Json;
+using O10.Core.Models;
+using O10.Core.Serialization;
 using O10.Crypto.Models;
 using O10.Transactions.Core.Enums;
+using System.Collections.Generic;
 
 namespace O10.Transactions.Core.Ledgers
 {
@@ -35,6 +38,16 @@ namespace O10.Transactions.Core.Ledgers
         SignatureBase? IPacketBase.Signature { get => Signature; }
 
         IPayload<TTransaction>? IPacketBase<TTransaction>.Payload => Payload;
+
+        public string ToJson()
+        {
+            return JsonConvert.SerializeObject(this, 
+                new JsonSerializerSettings 
+                { 
+                    Converters = new List<JsonConverter> { new ByteArrayJsonConverter(), new KeyJsonConverter(), new MemoryByteJsonConverter() } ,
+                    TypeNameHandling = TypeNameHandling.All
+                });
+        }
     }
 
     public interface IPacketBase<out TTransaction> : IPacketBase where TTransaction : TransactionBase
@@ -51,5 +64,7 @@ namespace O10.Transactions.Core.Ledgers
         SignatureBase? Signature { get; }
 
         T? AsPacket<T>() where T : class, IPacketBase;
+
+        string ToJson();
     }
 }

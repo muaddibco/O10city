@@ -18,7 +18,6 @@ using O10.Core.HashCalculations;
 using O10.Core;
 using O10.Transactions.Core.Ledgers;
 using O10.Node.DataLayer.DataServices.Notifications;
-using O10.Transactions.Core.Ledgers.O10State.Transactions;
 using O10.Core.Models;
 using O10.Core.Identity;
 
@@ -55,7 +54,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
                 var hash = _defaultHashCalculation.CalculateHash(packet.ToString());
                 var hashKey = IdentityKeyProvider.GetKey(hash);
                 var addCompletionWrapper = new TaskCompletionWrapper<IPacketBase>(packet);
-                var addCompletion = Service.AddTransaction(statePacket.Payload.Transaction.Source, statePacket.Payload.Transaction.TransactionType, statePacket.Payload.Height, packet.ToString(), hash);
+                var addCompletion = Service.AddTransaction(statePacket.Payload.Transaction.Source, statePacket.Payload.Transaction.TransactionType, statePacket.Payload.Height, packet.ToJson(), hash);
                 addCompletion.Task.ContinueWith((t, o) => 
                 {
                     var w = ((Tuple<TaskCompletionWrapper<IPacketBase>, IKey>)o).Item1;
@@ -91,7 +90,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
 
             if (transactionalBlock != null)
             {
-                ITranslator<O10Transaction, IPacketBase> mapper = TranslatorsRepository.GetInstance<O10Transaction, IPacketBase>();
+                var mapper = TranslatorsRepository.GetInstance<O10Transaction, O10StatePacket>();
 
                 var block = mapper?.Translate(transactionalBlock);
 
