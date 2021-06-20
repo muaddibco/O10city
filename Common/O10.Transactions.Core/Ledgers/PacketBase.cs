@@ -7,7 +7,7 @@ namespace O10.Transactions.Core.Ledgers
     /// <summary>
     /// All packetss in all types of ledgers must inherit from this base class
     /// </summary>
-    public abstract class PacketBase<TPayload, TTransaction, TSignature> : SerializableEntity, IPacketBase where TPayload : PayloadBase<TTransaction>, new() where TTransaction : TransactionBase where TSignature : SignatureBase
+    public abstract class PacketBase<TPayload, TTransaction, TSignature> : SerializableEntity, IPacketBase<TTransaction> where TPayload : PayloadBase<TTransaction>, new() where TTransaction : TransactionBase where TSignature : SignatureBase
     {
         public PacketBase()
         {
@@ -18,7 +18,7 @@ namespace O10.Transactions.Core.Ledgers
 
         public T? With<T>() where T : TTransaction
         {
-            return Payload as T;
+            return Payload.GetTransaction() as T;
         }
 
         public T? AsPacket<T>() where T : class, IPacketBase
@@ -30,16 +30,23 @@ namespace O10.Transactions.Core.Ledgers
 
         public abstract LedgerType LedgerType { get; }
 
-        PayloadBase<TransactionBase>? IPacketBase.Payload { get => Payload as PayloadBase<TransactionBase>; }
+        TransactionBase? IPacketBase.Transaction { get => Payload.Transaction; }
 
         SignatureBase? IPacketBase.Signature { get => Signature; }
+
+        IPayload<TTransaction>? IPacketBase<TTransaction>.Payload => Payload;
+    }
+
+    public interface IPacketBase<out TTransaction> : IPacketBase where TTransaction : TransactionBase
+    {
+        IPayload<TTransaction>? Payload { get; }
     }
 
     public interface IPacketBase : ISerializableEntity
     {
         LedgerType LedgerType { get; }
 
-        PayloadBase<TransactionBase>? Payload { get; }
+        TransactionBase? Transaction { get; }
 
         SignatureBase? Signature { get; }
 

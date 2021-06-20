@@ -20,9 +20,9 @@ using Newtonsoft.Json;
 using Flurl.Http.Configuration;
 using Flurl.Http;
 using Newtonsoft.Json.Serialization;
-using O10.Core.Serialization;
 using Newtonsoft.Json.Converters;
 using Cyberboss.AspNetCore.AsyncInitializer;
+using O10.Transactions.Core;
 
 namespace O10.Client.Web.Portal
 {
@@ -108,7 +108,7 @@ namespace O10.Client.Web.Portal
                 var jsonSettings = new JsonSerializerSettings 
                 { 
                     TypeNameHandling = TypeNameHandling.All,
-                    ContractResolver = _suppressItemTypeNameContractResolver,
+                    //ContractResolver = _suppressItemTypeNameContractResolver,
                     TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
                     NullValueHandling = NullValueHandling.Ignore,
                     Formatting = Formatting.Indented,

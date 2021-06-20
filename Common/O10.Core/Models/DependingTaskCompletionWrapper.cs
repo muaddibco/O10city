@@ -14,11 +14,21 @@ namespace O10.Core.Models
             { 
                 if(t.Exception != null)
                 {
-                    DependingTaskCompletion.TaskCompletion.SetException(t.Exception.InnerException);
+                    if (!DependingTaskCompletion.TaskCompletion.Task.IsCompleted &&
+                        !DependingTaskCompletion.TaskCompletion.Task.IsCanceled &&
+                        !DependingTaskCompletion.TaskCompletion.Task.IsFaulted)
+                    {
+                        DependingTaskCompletion.TaskCompletion.SetException(t.Exception.InnerException);
+                    }
                 }
                 else
                 {
-                    DependingTaskCompletion.TaskCompletion.SetResult(t.Result);
+                    if(!DependingTaskCompletion.TaskCompletion.Task.IsCompleted && 
+                       !DependingTaskCompletion.TaskCompletion.Task.IsCanceled && 
+                       !DependingTaskCompletion.TaskCompletion.Task.IsFaulted)
+                    {
+                        DependingTaskCompletion.TaskCompletion.SetResult(t.Result);
+                    }
                 }
             }, TaskScheduler.Current);
         }

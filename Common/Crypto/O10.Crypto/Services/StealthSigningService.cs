@@ -121,14 +121,14 @@ namespace O10.Crypto.Services
             };
         }
 
-        public bool Verify<T>(PayloadBase<T> payload, SignatureBase signatureBase) where T: TransactionBase
+        public bool Verify<T>(IPayload<T> payload, SignatureBase signatureBase) where T: TransactionBase
         {
             if (payload is null)
             {
                 throw new ArgumentNullException(nameof(payload));
             }
 
-            if (!(payload.Transaction is StealthTransactionBase transaction))
+            if (!(payload.GetTransaction() is StealthTransactionBase transaction))
             {
                 throw new ArgumentOutOfRangeException(nameof(payload), string.Format(Resources.ERR_WRONG_BODY_TYPE, nameof(StealthSigningService), typeof(StealthTransactionBase).FullName));
             }

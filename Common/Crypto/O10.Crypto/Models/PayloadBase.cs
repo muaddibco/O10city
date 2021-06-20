@@ -2,7 +2,12 @@
 
 namespace O10.Crypto.Models
 {
-    public abstract class PayloadBase<T> : SerializableEntity where T: TransactionBase
+    public interface IPayload<out TTransaction> where TTransaction : TransactionBase
+    {
+        TTransaction? GetTransaction();
+    }
+
+    public abstract class PayloadBase<T> : SerializableEntity, IPayload<T> where T: TransactionBase
     {
         public PayloadBase()
         {
@@ -15,5 +20,10 @@ namespace O10.Crypto.Models
         }
 
         public T? Transaction { get; set; }
+
+        public T? GetTransaction()
+        {
+            return Transaction;
+        }
     }
 }

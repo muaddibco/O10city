@@ -12,7 +12,7 @@ namespace O10.Core.Cryptography
 
         IKey[] PublicKeys { get; }
 
-        bool Verify<T>(PayloadBase<T> payload, SignatureBase signature) where T: TransactionBase;
+        bool Verify<T>(IPayload<T> payload, SignatureBase signature) where T: TransactionBase;
 
         void Initialize(params byte[][] secretKeys);
 

@@ -30,7 +30,7 @@ namespace O10.Node.Core.Synchronization
                 throw new System.ArgumentNullException(nameof(packet));
             }
 
-            if (packet.Payload.Transaction is SynchronizationConfirmedTransaction transaction)
+            if (packet.Transaction is SynchronizationConfirmedTransaction transaction)
             {
                 if (_synchronizationContext.LastBlockDescriptor != null && _synchronizationContext.LastBlockDescriptor.BlockHeight + 1 <= packet.AsPacket<SynchronizationPacket>().Payload.Height || _synchronizationContext.LastBlockDescriptor == null)
                 {

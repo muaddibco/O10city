@@ -35,7 +35,7 @@ namespace O10.Network.Handlers
 
         public void PostPacket(IPacketBase packet)
         {
-            _log.Debug(() => $"Posting to processing packet {packet.GetType().Name} [{packet.LedgerType}:{packet.Payload?.Transaction.TransactionType}]");
+            _log.Debug(() => $"Posting to processing packet {packet.GetType().Name} [{packet.LedgerType}:{packet.Transaction?.TransactionType}]");
 
             _processBlock.Post(packet);
         }

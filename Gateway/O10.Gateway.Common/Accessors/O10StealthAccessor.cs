@@ -23,7 +23,7 @@ namespace O10.Gateway.Common.Accessors
     /// Obtains Stealth packets using their Hash
     /// </summary>
     [RegisterExtension(typeof(IAccessor), Lifetime = LifetimeManagement.Singleton)]
-    public class O10StealthAccessor : AccessorBase
+    public class O10StealthAccessor : AccessorGwBase
     {
         public const string AggregatedTransactionsHeight = "AggregatedTransactionsHeight";
 

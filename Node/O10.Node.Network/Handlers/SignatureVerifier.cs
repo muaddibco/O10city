@@ -27,27 +27,22 @@ namespace O10.Network.Handlers
                 throw new ArgumentNullException(nameof(packet));
             }
 
-            if(packet.Payload == null || packet.Signature == null)
-            {
-                throw new ArgumentException("Packet must have both - body and signature", nameof(packet));
-            }
-
             bool res = false;
 
-            if (packet.Payload is SingleSourceTransactionBase && packet.Signature is SingleSourceSignature)
+            if (packet is IPacketBase<SingleSourceTransactionBase> packetSingleSource && packet.Signature is SingleSourceSignature)
             {
-                res = _signingServicesRepository.GetInstance(nameof(Ed25519SigningService)).Verify(packet.Payload, packet.Signature);
+                res = _signingServicesRepository.GetInstance(nameof(Ed25519SigningService)).Verify(packetSingleSource.Payload, packet.Signature);
             }
-            else if(packet.Payload is StealthTransactionBase && packet.Signature is StealthSignature)
+            else if(packet is IPacketBase<StealthTransactionBase> packetStealth && packet.Signature is StealthSignature)
             {
-                res = _signingServicesRepository.GetInstance(nameof(StealthSigningService)).Verify(packet.Payload, packet.Signature);
+                res = _signingServicesRepository.GetInstance(nameof(StealthSigningService)).Verify(packetStealth.Payload, packet.Signature);
 
 				//TODO: !!! urgently check why signatures validation fails
 				res = true;
             }
             else
             {
-                _log.Error($"Failed to find the appropriate Signing Service for the Transaction of type {packet.Payload.GetType().FullName} and Signature of type {packet.Signature.GetType().FullName}");
+                _log.Error($"Failed to find the appropriate Signing Service for the Transaction of type {packet.Transaction.GetType().FullName} and Signature of type {packet.Signature.GetType().FullName}");
                 return false;
             }
 

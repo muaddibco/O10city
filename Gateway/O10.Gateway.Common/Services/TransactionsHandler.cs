@@ -100,7 +100,7 @@ namespace O10.Gateway.Common.Services
             {
                 return false;
             }
-            else if(packet.Payload == null)
+            else if(packet.Transaction == null)
             {
                 res = false;
                 _completions[packet].SetException(new NoTransactionException(packet));
@@ -139,7 +139,7 @@ namespace O10.Gateway.Common.Services
             TaskCompletionWrapper<IPacketBase> wrapper = new TaskCompletionWrapper<IPacketBase>(packet);
 
             
-            EvidenceDescriptor evidenceDescriptor = _accessorProvider.GetInstance(packet.LedgerType).GetEvidence(packet.Payload.Transaction);
+            EvidenceDescriptor evidenceDescriptor = _accessorProvider.GetInstance(packet.LedgerType).GetEvidence(packet.Transaction);
 
             DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase> depending 
                 = new DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase>(evidenceDescriptor, wrapper);

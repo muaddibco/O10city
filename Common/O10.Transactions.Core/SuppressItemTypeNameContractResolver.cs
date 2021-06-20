@@ -1,10 +1,11 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
+using O10.Crypto.Models;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace O10.Core.Serialization
+namespace O10.Transactions.Core
 {
     public class SuppressItemTypeNameContractResolver : DefaultContractResolver
     {
@@ -15,7 +16,7 @@ namespace O10.Core.Serialization
             if (containerContract != null)
             {
                 if (containerContract.ItemTypeNameHandling == null)
-                    containerContract.ItemTypeNameHandling = TypeNameHandling.None;
+                    containerContract.ItemTypeNameHandling = typeof(TransactionBase).IsAssignableFrom(objectType) ? TypeNameHandling.All : TypeNameHandling.None;
             }
             return contract;
         }

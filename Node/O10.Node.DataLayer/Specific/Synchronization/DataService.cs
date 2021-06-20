@@ -147,13 +147,13 @@ namespace O10.Node.DataLayer.Specific.Synchronization
 				{
 					foreach (var item in _packets.GetConsumingEnumerable(cancellationToken))
 					{
-						if (item.State.Payload.Transaction is SynchronizationConfirmedTransaction synchronizationConfirmed)
+						if (item.State.Transaction is SynchronizationConfirmedTransaction synchronizationConfirmed)
 						{
                             Logger.LogIfDebug(() => $"Adding to buffer synchronization block {item.State.AsPacket<SynchronizationPacket>().Payload.Height}");
                             _bufferSyncConfirmedPackets.Post(item);
 						}
 
-						if (item.State.Payload.Transaction is AggregatedRegistrationsTransaction aggregatedRegistrations)
+						if (item.State.Transaction is AggregatedRegistrationsTransaction aggregatedRegistrations)
 						{
                             Logger.LogIfDebug(() => $"Adding to buffer combined block {item.State.AsPacket<SynchronizationPacket>().Payload.Height}");
                             _bufferCombinedPackets.Post(item);
@@ -175,7 +175,7 @@ namespace O10.Node.DataLayer.Specific.Synchronization
 					if (source.TryReceiveAll(out IList<TaskCompletionWrapper<IPacketBase>> packets))
 					{
 						Logger.Debug($"Getting from buffer and storing bulk of {nameof(SynchronizationConfirmedTransaction)} with heights {string.Join(',', packets.Select(b => ((SynchronizationPacket)b.State).Payload.Height))}");
-						Service.AddSynchronizationBlocks(packets.Cast<SynchronizationPacket>().Select(b => new SynchronizationPacketDb { SynchronizationPacketId = b.Payload.Height, ReceiveTime = DateTime.Now, MedianTime = b.Payload.ReportedTime, Content = b.ToString() }).ToArray());
+						Service.AddSynchronizationBlocks(packets.Select(b => new SynchronizationPacketDb { SynchronizationPacketId = ((SynchronizationPacket)b.State).Payload.Height, ReceiveTime = DateTime.Now, MedianTime = ((SynchronizationPacket)b.State).Payload.ReportedTime, Content = b.ToString() }).ToArray());
 					}
 					else
 					{

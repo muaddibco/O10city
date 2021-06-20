@@ -104,7 +104,7 @@ namespace O10.Crypto.Services
             return signature;
         }
 
-        public bool Verify<T>(PayloadBase<T> payload, SignatureBase signatureBase) where T: TransactionBase
+        public bool Verify<T>(IPayload<T> payload, SignatureBase signatureBase) where T: TransactionBase
         {
             if (payload is null)
             {
@@ -116,7 +116,7 @@ namespace O10.Crypto.Services
                 throw new ArgumentNullException(nameof(signatureBase));
             }
 
-            if (!(payload.Transaction is SingleSourceTransactionBase singleSourceTransaction))
+            if (!(payload.GetTransaction() is SingleSourceTransactionBase singleSourceTransaction))
             {
                 throw new ArgumentOutOfRangeException(nameof(payload), string.Format(Resources.ERR_WRONG_BODY_TYPE, nameof(Ed25519SigningService), typeof(SingleSourceTransactionBase).FullName));
             }

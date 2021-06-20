@@ -13,11 +13,10 @@ using Newtonsoft.Json.Serialization;
 using O10.Core.Configuration;
 using O10.Core.ExtensionMethods;
 using O10.Core.Logging;
-using O10.Core.Serialization;
 using O10.Gateway.WebApp.Common.Controllers;
 using O10.Gateway.WebApp.Common.Hubs;
-using O10.Gateway.WebApp.Common.Services;
 using O10.Server.Gateway;
+using O10.Transactions.Core;
 
 namespace O10.Gateway.WebApp
 {
@@ -61,7 +60,7 @@ namespace O10.Gateway.WebApp
                 var jsonSettings = new JsonSerializerSettings
                 {
                     TypeNameHandling = TypeNameHandling.All,
-                    ContractResolver = _suppressItemTypeNameContractResolver,
+                    //ContractResolver = _suppressItemTypeNameContractResolver,
                     TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
                     NullValueHandling = NullValueHandling.Ignore,
                     Formatting = Formatting.Indented

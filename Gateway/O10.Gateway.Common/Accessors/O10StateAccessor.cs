@@ -2,6 +2,7 @@
 using Flurl;
 using Flurl.Http;
 using O10.Core;
+using O10.Core.Architecture;
 using O10.Core.Configuration;
 using O10.Core.ExtensionMethods;
 using O10.Core.HashCalculations;
@@ -17,7 +18,8 @@ using System.Threading.Tasks;
 
 namespace O10.Gateway.Common.Accessors
 {
-    public class O10StateAccessor : AccessorBase
+    [RegisterExtension(typeof(IAccessor), Lifetime = LifetimeManagement.Singleton)]
+    public class O10StateAccessor : AccessorGwBase
     {
         private readonly ISynchronizerConfiguration _synchronizerConfiguration;
         private readonly IHashCalculation _hashCalculation;
