@@ -2,33 +2,29 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using O10.Gateway.DataLayer.SqlServer;
+using O10.Gateway.DataLayer.SQLite;
 
-namespace O10.Gateway.DataLayer.SqlServer.Migrations
+namespace O10.Gateway.DataLayer.SQLite.Migrations
 {
-    [DbContext(typeof(SqlServerDataContext))]
-    [Migration("20210619013227_Initial")]
-    partial class Initial
+    [DbContext(typeof(SQLiteDataContext))]
+    [Migration("20210624010731_TransactionHashStr")]
+    partial class TransactionHashStr
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "3.1.4")
-                .HasAnnotation("Relational:MaxIdentifierLength", 128)
-                .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                .HasAnnotation("ProductVersion", "3.1.4");
 
             modelBuilder.Entity("O10.Gateway.DataLayer.Model.Address", b =>
                 {
                     b.Property<long>("AddressId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("INTEGER");
 
-                    b.Property<byte[]>("Key")
+                    b.Property<string>("Key")
                         .IsRequired()
                         .HasColumnType("varbinary(64)");
 
@@ -43,17 +39,16 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                 {
                     b.Property<long>("AssociatedAttributeIssuanceId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("INTEGER");
 
-                    b.Property<byte[]>("IssuanceCommitment")
+                    b.Property<string>("IssuanceCommitment")
                         .IsRequired()
                         .HasColumnType("varbinary(64)");
 
                     b.Property<long>("IssuerAddressId")
-                        .HasColumnType("bigint");
+                        .HasColumnType("INTEGER");
 
-                    b.Property<byte[]>("RootIssuanceCommitment")
+                    b.Property<string>("RootIssuanceCommitment")
                         .IsRequired()
                         .HasColumnType("varbinary(64)");
 
@@ -72,10 +67,9 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                 {
                     b.Property<long>("CompromisedKeyImageId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("INTEGER");
 
-                    b.Property<byte[]>("KeyImage")
+                    b.Property<string>("KeyImage")
                         .IsRequired()
                         .HasColumnType("varbinary(64)");
 
@@ -91,10 +85,9 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                 {
                     b.Property<long>("KeyImageId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("INTEGER");
 
-                    b.Property<byte[]>("Value")
+                    b.Property<string>("Value")
                         .IsRequired()
                         .HasColumnType("varbinary(64)");
 
@@ -108,11 +101,11 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
             modelBuilder.Entity("O10.Gateway.DataLayer.Model.RegistryCombinedBlock", b =>
                 {
                     b.Property<long>("RegistryCombinedBlockId")
-                        .HasColumnType("bigint");
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Content")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("TEXT");
 
                     b.HasKey("RegistryCombinedBlockId");
 
@@ -123,15 +116,14 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                 {
                     b.Property<long>("RegistryFullBlockDataId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("INTEGER");
 
                     b.Property<long>("CombinedBlockHeight")
-                        .HasColumnType("bigint");
+                        .HasColumnType("INTEGER");
 
                     b.Property<byte[]>("Content")
                         .IsRequired()
-                        .HasColumnType("varbinary(max)");
+                        .HasColumnType("BLOB");
 
                     b.HasKey("RegistryFullBlockDataId");
 
@@ -144,21 +136,20 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                 {
                     b.Property<long>("RelationRecordId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("INTEGER");
 
-                    b.Property<byte[]>("GroupCommitment")
+                    b.Property<string>("GroupCommitment")
                         .IsRequired()
                         .HasColumnType("varbinary(64)");
 
                     b.Property<bool>("IsRevoked")
-                        .HasColumnType("bit");
+                        .HasColumnType("INTEGER");
 
-                    b.Property<byte[]>("Issuer")
+                    b.Property<string>("Issuer")
                         .IsRequired()
                         .HasColumnType("varbinary(64)");
 
-                    b.Property<byte[]>("RegistrationCommitment")
+                    b.Property<string>("RegistrationCommitment")
                         .IsRequired()
                         .HasColumnType("varbinary(64)");
 
@@ -177,26 +168,25 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                 {
                     b.Property<long>("RootAttributeIssuanceId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsOverriden")
-                        .HasColumnType("bit");
+                        .HasColumnType("INTEGER");
 
                     b.Property<long>("IssuanceCombinedBlock")
-                        .HasColumnType("bigint");
+                        .HasColumnType("INTEGER");
 
-                    b.Property<byte[]>("IssuanceCommitment")
+                    b.Property<string>("IssuanceCommitment")
                         .IsRequired()
                         .HasColumnType("varbinary(64)");
 
                     b.Property<long>("IssuerAddressId")
-                        .HasColumnType("bigint");
+                        .HasColumnType("INTEGER");
 
                     b.Property<long>("RevocationCombinedBlock")
-                        .HasColumnType("bigint");
+                        .HasColumnType("INTEGER");
 
-                    b.Property<byte[]>("RootCommitment")
+                    b.Property<string>("RootCommitment")
                         .IsRequired()
                         .HasColumnType("varbinary(64)");
 
@@ -217,33 +207,32 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                 {
                     b.Property<long>("StateTransactionId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Content")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("TEXT");
 
                     b.Property<long?>("HashTransactionHashId")
-                        .HasColumnType("bigint");
+                        .HasColumnType("INTEGER");
 
                     b.Property<long?>("OutputStealthOutputId")
-                        .HasColumnType("bigint");
+                        .HasColumnType("INTEGER");
 
                     b.Property<long>("SourceAddressId")
-                        .HasColumnType("bigint");
+                        .HasColumnType("INTEGER");
 
                     b.Property<long?>("TargetAddressId")
-                        .HasColumnType("bigint");
+                        .HasColumnType("INTEGER");
 
                     b.Property<long?>("TransactionKeyId")
-                        .HasColumnType("bigint");
+                        .HasColumnType("INTEGER");
 
-                    b.Property<int>("TransactionType")
-                        .HasColumnType("int");
+                    b.Property<ushort>("TransactionType")
+                        .HasColumnType("INTEGER");
 
                     b.Property<long>("WitnessId")
-                        .HasColumnType("bigint");
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("StateTransactionId");
 
@@ -266,21 +255,20 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                 {
                     b.Property<long>("StealthOutputId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("INTEGER");
 
-                    b.Property<byte[]>("Commitment")
+                    b.Property<string>("Commitment")
                         .IsRequired()
                         .HasColumnType("varbinary(64)");
 
-                    b.Property<byte[]>("DestinationKey")
+                    b.Property<string>("DestinationKey")
                         .IsRequired()
                         .HasColumnType("varbinary(64)");
 
                     b.Property<bool>("IsOverriden")
-                        .HasColumnType("bit");
+                        .HasColumnType("INTEGER");
 
-                    b.Property<byte[]>("OriginatingCommitment")
+                    b.Property<string>("OriginatingCommitment")
                         .HasColumnType("varbinary(64)");
 
                     b.HasKey("StealthOutputId");
@@ -298,30 +286,29 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                 {
                     b.Property<long>("StealthTransactionId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Content")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("TEXT");
 
                     b.Property<long>("HashTransactionHashId")
-                        .HasColumnType("bigint");
+                        .HasColumnType("INTEGER");
 
                     b.Property<long>("KeyImageId")
-                        .HasColumnType("bigint");
+                        .HasColumnType("INTEGER");
 
                     b.Property<long>("OutputStealthOutputId")
-                        .HasColumnType("bigint");
+                        .HasColumnType("INTEGER");
 
                     b.Property<long>("TransactionKeyId")
-                        .HasColumnType("bigint");
+                        .HasColumnType("INTEGER");
 
-                    b.Property<int>("TransactionType")
-                        .HasColumnType("int");
+                    b.Property<ushort>("TransactionType")
+                        .HasColumnType("INTEGER");
 
                     b.Property<long>("WitnessId")
-                        .HasColumnType("bigint");
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("StealthTransactionId");
 
@@ -341,9 +328,9 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
             modelBuilder.Entity("O10.Gateway.DataLayer.Model.SyncBlock", b =>
                 {
                     b.Property<long>("SyncBlockId")
-                        .HasColumnType("bigint");
+                        .HasColumnType("INTEGER");
 
-                    b.Property<byte[]>("Hash")
+                    b.Property<string>("Hash")
                         .IsRequired()
                         .HasColumnType("varbinary(64)");
 
@@ -356,15 +343,18 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                 {
                     b.Property<long>("TransactionHashId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("INTEGER");
 
                     b.Property<long>("AggregatedTransactionsHeight")
-                        .HasColumnType("bigint");
+                        .HasColumnType("INTEGER");
 
-                    b.Property<byte[]>("Hash")
+                    b.Property<string>("Hash")
                         .IsRequired()
                         .HasColumnType("varbinary(64)");
+
+                    b.Property<string>("HashString")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
 
                     b.HasKey("TransactionHashId");
 
@@ -377,10 +367,9 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                 {
                     b.Property<long>("TransactionKeyId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("INTEGER");
 
-                    b.Property<byte[]>("Key")
+                    b.Property<string>("Key")
                         .IsRequired()
                         .HasColumnType("varbinary(64)");
 
@@ -395,42 +384,37 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                 {
                     b.Property<long>("WitnessPacketId")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("INTEGER");
 
                     b.Property<long>("CombinedBlockHeight")
-                        .HasColumnType("bigint");
+                        .HasColumnType("INTEGER");
 
                     b.Property<long>("ReferencedBodyHashTransactionHashId")
-                        .HasColumnType("bigint");
+                        .HasColumnType("INTEGER");
 
-                    b.Property<byte[]>("ReferencedDestinationKey")
-                        .IsRequired()
+                    b.Property<string>("ReferencedDestinationKey")
                         .HasColumnType("varbinary(64)");
 
-                    b.Property<byte[]>("ReferencedDestinationKey2")
-                        .IsRequired()
+                    b.Property<string>("ReferencedDestinationKey2")
                         .HasColumnType("varbinary(64)");
 
-                    b.Property<byte[]>("ReferencedKeyImage")
-                        .IsRequired()
+                    b.Property<string>("ReferencedKeyImage")
                         .HasColumnType("varbinary(64)");
 
-                    b.Property<int>("ReferencedLedgerType")
-                        .HasColumnType("int");
+                    b.Property<ushort>("ReferencedLedgerType")
+                        .HasColumnType("INTEGER");
 
-                    b.Property<int>("ReferencedPacketType")
-                        .HasColumnType("int");
+                    b.Property<ushort>("ReferencedPacketType")
+                        .HasColumnType("INTEGER");
 
-                    b.Property<byte[]>("ReferencedTransactionKey")
-                        .IsRequired()
+                    b.Property<string>("ReferencedTransactionKey")
                         .HasColumnType("varbinary(64)");
 
                     b.Property<long>("Round")
-                        .HasColumnType("bigint");
+                        .HasColumnType("INTEGER");
 
                     b.Property<long>("SyncBlockHeight")
-                        .HasColumnType("bigint");
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("WitnessPacketId");
 

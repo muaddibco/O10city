@@ -36,7 +36,7 @@ namespace O10.Gateway.DataLayer.Services
 
         //void StoreIncomingTransactionalBlock(StateIncomingStoreInput storeInput);
         void StoreStateTransaction(StateIncomingStoreInput storeInput);
-        void StoreIncomingUtxoTransactionBlock(UtxoIncomingStoreInput storeInput);
+        void StoreStealthTransaction(StealthStoreInput storeInput);
 
         StateTransaction? GetStateTransaction(long witnessId);
         StateTransaction? GetStateTransaction(string source, string hashString);

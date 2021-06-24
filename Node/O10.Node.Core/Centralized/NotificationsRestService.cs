@@ -73,7 +73,7 @@ namespace O10.Node.Worker.Services
 
 						foreach (var gatewayUri in _gatewayUris)
 						{
-							_logger.LogIfDebug(() => $"Sending to gateway {gatewayUri} packet {JsonConvert.SerializeObject(rtPackage, new ByteArrayJsonConverter())}");
+							_logger.LogIfDebug(() => $"Sending to gateway {gatewayUri} packet {JsonConvert.SerializeObject(rtPackage, new ByteArrayJsonConverter(), new KeyJsonConverter())}");
                             try
                             {
                                 gatewayUri.WithClient(flurlClient).AppendPathSegment("PackageUpdate").PostJsonAsync(rtPackage).ContinueWith(t =>

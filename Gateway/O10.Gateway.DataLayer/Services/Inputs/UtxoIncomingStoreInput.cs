@@ -2,7 +2,7 @@
 
 namespace O10.Gateway.DataLayer.Services.Inputs
 {
-    public class UtxoIncomingStoreInput : IncomingStoreInput
+    public class StealthStoreInput : IncomingStoreInput
     {
         public IKey? KeyImage { get; set; }
 

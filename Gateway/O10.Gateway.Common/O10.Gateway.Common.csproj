@@ -4,6 +4,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <AssemblyName>O10.Gateway.Common</AssemblyName>
     <RootNamespace>O10.Gateway.Common</RootNamespace>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

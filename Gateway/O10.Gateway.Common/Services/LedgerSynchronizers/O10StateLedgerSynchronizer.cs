@@ -1,9 +1,12 @@
-﻿using O10.Core.Configuration;
+﻿using Newtonsoft.Json;
+using O10.Core.Architecture;
+using O10.Core.HashCalculations;
 using O10.Core.Identity;
 using O10.Core.Logging;
 using O10.Core.Models;
 using O10.Core.Translators;
 using O10.Crypto.Models;
+using O10.Gateway.Common.Exceptions;
 using O10.Gateway.DataLayer.Model;
 using O10.Gateway.DataLayer.Services;
 using O10.Gateway.DataLayer.Services.Inputs;
@@ -11,9 +14,11 @@ using O10.Transactions.Core.Accessors;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Ledgers.O10State.Transactions;
 using System;
+using System.Text.Json.Serialization;
 
 namespace O10.Gateway.Common.Services.LedgerSynchronizers
 {
+    [RegisterExtension(typeof(ILedgerSynchronizer), Lifetime = LifetimeManagement.Singleton)]
     public class O10StateLedgerSynchronizer : O10LedgerSynchronizerBase
     {
         private readonly IDataAccessService _dataAccessService;
@@ -23,8 +28,9 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
                                           IAccessorProvider accessorProvider,
                                           ITranslatorsRepository translatorsRepository,
                                           IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
+                                          IHashCalculationsRepository hashCalculationsRepository,
                                           ILoggerService loggerService) 
-            : base(accessorProvider, translatorsRepository, loggerService)
+            : base(accessorProvider, translatorsRepository, hashCalculationsRepository, loggerService)
         {
             _dataAccessService = dataAccessService;
             _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
@@ -32,7 +38,7 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
 
         public override LedgerType LedgerType => LedgerType.O10State;
 
-        public override TransactionBase GetByWitness(WitnessPacket witnessPacket)
+        public override TransactionBase? GetByWitness(WitnessPacket witnessPacket)
         {
             if (witnessPacket is null)
             {
@@ -40,7 +46,12 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
             }
 
             var transaction = _dataAccessService.GetStateTransaction(witnessPacket.WitnessPacketId);
-            return SerializableEntity.Create<TransactionBase>(transaction.Content);
+            if(transaction == null)
+            {
+                throw new NoTransactionFoundByWitnessIdException(witnessPacket.WitnessPacketId);
+            }
+
+            return JsonConvert.DeserializeObject(transaction.Content) as TransactionBase;
         }
 
         protected override void StoreTransaction(WitnessPacket wp, TransactionBase transaction)
@@ -70,7 +81,7 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
             _dataAccessService.StoreStateTransaction(storeInput);
         }
 
-        private static StateIncomingStoreInput StoreDocumentSignRecord(long witnessId, long registryCombinedBlockHeight, DocumentSignTransaction transaction)
+        private StateIncomingStoreInput StoreDocumentSignRecord(long witnessId, long registryCombinedBlockHeight, DocumentSignTransaction transaction)
             => new StateIncomingStoreInput
             {
                 CombinedRegistryBlockHeight = registryCombinedBlockHeight,
@@ -78,10 +89,11 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
                 TransactionType = transaction.TransactionType,
                 Commitment = transaction.SignerCommitment,
                 Source = transaction.Source,
-                Content = transaction.ToString()
+                Content = transaction.ToJson(),
+                Hash = _identityKeyProvider.GetKey(HashCalculation.CalculateHash(transaction.ToString()))
             };
 
-        private static StateIncomingStoreInput StoreDocumentRecord(long witnessId, long registryCombinedBlockHeight, DocumentRecordTransaction transaction)
+        private StateIncomingStoreInput StoreDocumentRecord(long witnessId, long registryCombinedBlockHeight, DocumentRecordTransaction transaction)
             => new StateIncomingStoreInput
             {
                 CombinedRegistryBlockHeight = registryCombinedBlockHeight,
@@ -89,7 +101,8 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
                 TransactionType = transaction.TransactionType,
                 Commitment = transaction.DocumentHash,
                 Source = transaction.Source,
-                Content = transaction.ToString()
+                Content = transaction.ToJson(),
+                Hash = _identityKeyProvider.GetKey(HashCalculation.CalculateHash(transaction.ToString()))
             };
 
         private StateIncomingStoreInput StoreCancelRelationRecordPacket(long witnessId, long registryCombinedBlockHeight, CancelRelationTransaction transaction)
@@ -103,7 +116,8 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
                 TransactionType = transaction.TransactionType,
                 Commitment = transaction.RegistrationCommitment,
                 Source = transaction.Source,
-                Content = transaction.ToString()
+                Content = transaction.ToJson(),
+                Hash = _identityKeyProvider.GetKey(HashCalculation.CalculateHash(transaction.ToString()))
             };
         }
 
@@ -118,7 +132,8 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
                 TransactionType = transaction.TransactionType,
                 Commitment = transaction.RegistrationCommitment,
                 Source = transaction.Source,
-                Content = transaction.ToString()
+                Content = transaction.ToJson(),
+                Hash = _identityKeyProvider.GetKey(HashCalculation.CalculateHash(transaction.ToString()))
             };
         }
 
@@ -133,11 +148,12 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
                 TransactionType = transaction.TransactionType,
                 Commitment = transaction.AssetCommitment,
                 Source = transaction.Source,
-                Content = transaction.ToString()
+                Content = transaction.ToJson(),
+                Hash = _identityKeyProvider.GetKey(HashCalculation.CalculateHash(transaction.ToString()))
             };
         }
 
-        private static StateIncomingStoreInput StoreIssueBlindedAsset(long witnessId, long registryCombinedBlockHeight, IssueBlindedAssetTransaction transaction)
+        private StateIncomingStoreInput StoreIssueBlindedAsset(long witnessId, long registryCombinedBlockHeight, IssueBlindedAssetTransaction transaction)
             => new StateIncomingStoreInput
             {
                 CombinedRegistryBlockHeight = registryCombinedBlockHeight,
@@ -145,7 +161,8 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
                 TransactionType = transaction.TransactionType,
                 Commitment = transaction.AssetCommitment,
                 Source = transaction.Source,
-                Content = transaction.ToString()
+                Content = transaction.ToJson(),
+                Hash = _identityKeyProvider.GetKey(HashCalculation.CalculateHash(transaction.ToString()))
             };
 
         private StateIncomingStoreInput StoreTransferAsset(long witnessId, long registryCombinedBlockHeight, TransferAssetToStealthTransaction transaction)
@@ -165,7 +182,8 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
                 TransactionKey = transaction.TransactionPublicKey,
                 Source = transaction.Source,
                 OriginatingCommitment = originatingCommitment,
-                Content = transaction.ToString()
+                Content = transaction.ToJson(),
+                Hash = _identityKeyProvider.GetKey(HashCalculation.CalculateHash(transaction.ToString()))
             };
         }
     }

@@ -105,7 +105,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
 
             if (stealth != null)
             {
-                return new List<IPacketBase> { TranslatorsRepository.GetInstance<StealthTransaction, IPacketBase>().Translate(stealth) };
+                return new List<IPacketBase> { TranslatorsRepository.GetInstance<StealthTransaction, StealthPacket>().Translate(stealth) };
             }
 
             return new List<IPacketBase>();

@@ -24,7 +24,7 @@ namespace O10.Transactions.Core.Accessors
                 throw new ArgumentNullException(nameof(accessDescriptor));
             }
 
-            ValidateKeys(accessDescriptor);
+            //ValidateKeys(accessDescriptor);
 
             var msg = ValidateEvidence(accessDescriptor);
             if (!string.IsNullOrEmpty(msg))

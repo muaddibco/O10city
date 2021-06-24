@@ -1,5 +1,7 @@
-﻿using O10.Core.Cryptography;
+﻿using Newtonsoft.Json;
+using O10.Core.Cryptography;
 using O10.Core.Identity;
+using O10.Core.Serialization;
 using O10.Transactions.Core.Enums;
 
 namespace O10.Transactions.Core.Ledgers.O10State.Transactions
@@ -11,6 +13,7 @@ namespace O10.Transactions.Core.Ledgers.O10State.Transactions
         /// <summary>
         /// Hash of the signed document
         /// </summary>
+        [JsonConverter(typeof(KeyJsonConverter))]
         public IKey? DocumentHash { get; set; }
 
         /// <summary>
@@ -19,15 +22,18 @@ namespace O10.Transactions.Core.Ledgers.O10State.Transactions
         /// </summary>
         public ulong RecordHeight { get; set; } // seems it is not required for locating the precise point of when exactly document was signed because the location of the signature on the timeline can be located using the hash of the transaction
 
+        [JsonConverter(typeof(KeyJsonConverter))]
         public IKey? KeyImage { get; set; } // KeyImage for checking for compromization (?)
 
         /// <summary>
         /// Commitment created from the Root Attribute
         /// </summary>
+        [JsonConverter(typeof(KeyJsonConverter))]
         public IKey? SignerCommitment { get; set; }
 
         public SurjectionProof? EligibilityProof { get; set; }
 
+        [JsonConverter(typeof(KeyJsonConverter))]
         public IKey? Issuer { get; set; }
 
         /// <summary>
@@ -36,8 +42,10 @@ namespace O10.Transactions.Core.Ledgers.O10State.Transactions
         /// </summary>
         public SurjectionProof? SignerGroupRelationProof { get; set; }
 
+        [JsonConverter(typeof(KeyJsonConverter))]
         public IKey? GroupIssuer { get; set; }
 
+        [JsonConverter(typeof(KeyJsonConverter))]
         public IKey? SignerGroupCommitment { get; set; }
 
         public SurjectionProof? SignerGroupProof { get; set; }

@@ -60,7 +60,7 @@ namespace O10.Network.Handlers
                     }
                 }
 
-                IPacketVerifier packetVerifier = _chainTypeValidationHandlersFactory.GetInstance(packet.LedgerType);
+                IPacketVerifier packetVerifier = null; // _chainTypeValidationHandlersFactory.GetInstance(packet.LedgerType);
 
                 bool res = packetVerifier?.ValidatePacket(packet) ?? true;
 

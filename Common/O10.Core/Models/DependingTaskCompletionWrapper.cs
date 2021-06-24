@@ -27,7 +27,7 @@ namespace O10.Core.Models
                        !DependingTaskCompletion.TaskCompletion.Task.IsCanceled && 
                        !DependingTaskCompletion.TaskCompletion.Task.IsFaulted)
                     {
-                        DependingTaskCompletion.TaskCompletion.SetResult(t.Result);
+                        DependingTaskCompletion.TryToComplete(t.Result);
                     }
                 }
             }, TaskScheduler.Current);

@@ -6,6 +6,10 @@ namespace O10.Transactions.Core.Accessors
     public class EvidenceDescriptor
     {
         public const string TRANSACTION_HASH = "TransactionHash";
+        public const string REFERENCED_TARGET = "ReferencedTarget";
+        public const string REFERENCED_TARGET2 = "ReferencedTarget2";
+        public const string REFERENCED_TRANSACTION_KEY = "ReferencedTransactionKey";
+        public const string REFERENCED_KEY_IMAGE = "ReferencedKeyImage";
 
         public EvidenceDescriptor()
         {

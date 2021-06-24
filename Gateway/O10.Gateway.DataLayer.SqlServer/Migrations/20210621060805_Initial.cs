@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace O10.Gateway.DataLayer.SQLite.Migrations
+namespace O10.Gateway.DataLayer.SqlServer.Migrations
 {
     public partial class Initial : Migration
     {
@@ -12,8 +12,8 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                 columns: table => new
                 {
                     AddressId = table.Column<long>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Key = table.Column<string>(type: "varbinary(64)", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Key = table.Column<byte[]>(type: "varbinary(64)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -25,8 +25,8 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                 columns: table => new
                 {
                     CompromisedKeyImageId = table.Column<long>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    KeyImage = table.Column<string>(type: "varbinary(64)", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    KeyImage = table.Column<byte[]>(type: "varbinary(64)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -50,7 +50,7 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                 columns: table => new
                 {
                     RegistryFullBlockDataId = table.Column<long>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     CombinedBlockHeight = table.Column<long>(nullable: false),
                     Content = table.Column<byte[]>(nullable: false)
                 },
@@ -64,10 +64,10 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                 columns: table => new
                 {
                     RelationRecordId = table.Column<long>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Issuer = table.Column<string>(type: "varbinary(64)", nullable: false),
-                    RegistrationCommitment = table.Column<string>(type: "varbinary(64)", nullable: false),
-                    GroupCommitment = table.Column<string>(type: "varbinary(64)", nullable: false),
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Issuer = table.Column<byte[]>(type: "varbinary(64)", nullable: false),
+                    RegistrationCommitment = table.Column<byte[]>(type: "varbinary(64)", nullable: false),
+                    GroupCommitment = table.Column<byte[]>(type: "varbinary(64)", nullable: false),
                     IsRevoked = table.Column<bool>(nullable: false)
                 },
                 constraints: table =>
@@ -80,10 +80,10 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                 columns: table => new
                 {
                     StealthOutputId = table.Column<long>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    DestinationKey = table.Column<string>(type: "varbinary(64)", nullable: false),
-                    Commitment = table.Column<string>(type: "varbinary(64)", nullable: false),
-                    OriginatingCommitment = table.Column<string>(type: "varbinary(64)", nullable: true),
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    DestinationKey = table.Column<byte[]>(type: "varbinary(64)", nullable: false),
+                    Commitment = table.Column<byte[]>(type: "varbinary(64)", nullable: false),
+                    OriginatingCommitment = table.Column<byte[]>(type: "varbinary(64)", nullable: true),
                     IsOverriden = table.Column<bool>(nullable: false)
                 },
                 constraints: table =>
@@ -96,7 +96,7 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                 columns: table => new
                 {
                     SyncBlockId = table.Column<long>(nullable: false),
-                    Hash = table.Column<string>(type: "varbinary(64)", nullable: false)
+                    Hash = table.Column<byte[]>(type: "varbinary(64)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -108,9 +108,9 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                 columns: table => new
                 {
                     TransactionHashId = table.Column<long>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     AggregatedTransactionsHeight = table.Column<long>(nullable: false),
-                    Hash = table.Column<string>(type: "varbinary(64)", nullable: false)
+                    Hash = table.Column<byte[]>(type: "varbinary(64)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -122,8 +122,8 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                 columns: table => new
                 {
                     TransactionKeyId = table.Column<long>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Key = table.Column<string>(type: "varbinary(64)", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Key = table.Column<byte[]>(type: "varbinary(64)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -135,8 +135,8 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                 columns: table => new
                 {
                     KeyImageId = table.Column<long>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    Value = table.Column<string>(type: "varbinary(64)", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Value = table.Column<byte[]>(type: "varbinary(64)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -148,10 +148,10 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                 columns: table => new
                 {
                     AssociatedAttributeIssuanceId = table.Column<long>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     IssuerAddressId = table.Column<long>(nullable: false),
-                    IssuanceCommitment = table.Column<string>(type: "varbinary(64)", nullable: false),
-                    RootIssuanceCommitment = table.Column<string>(type: "varbinary(64)", nullable: false)
+                    IssuanceCommitment = table.Column<byte[]>(type: "varbinary(64)", nullable: false),
+                    RootIssuanceCommitment = table.Column<byte[]>(type: "varbinary(64)", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -169,10 +169,10 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                 columns: table => new
                 {
                     RootAttributeIssuanceId = table.Column<long>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     IssuerAddressId = table.Column<long>(nullable: false),
-                    IssuanceCommitment = table.Column<string>(type: "varbinary(64)", nullable: false),
-                    RootCommitment = table.Column<string>(type: "varbinary(64)", nullable: false),
+                    IssuanceCommitment = table.Column<byte[]>(type: "varbinary(64)", nullable: false),
+                    RootCommitment = table.Column<byte[]>(type: "varbinary(64)", nullable: false),
                     IsOverriden = table.Column<bool>(nullable: false),
                     IssuanceCombinedBlock = table.Column<long>(nullable: false),
                     RevocationCombinedBlock = table.Column<long>(nullable: false)
@@ -193,17 +193,17 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                 columns: table => new
                 {
                     WitnessPacketId = table.Column<long>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     SyncBlockHeight = table.Column<long>(nullable: false),
                     Round = table.Column<long>(nullable: false),
                     CombinedBlockHeight = table.Column<long>(nullable: false),
-                    ReferencedLedgerType = table.Column<ushort>(nullable: false),
-                    ReferencedPacketType = table.Column<ushort>(nullable: false),
+                    ReferencedLedgerType = table.Column<int>(nullable: false),
+                    ReferencedPacketType = table.Column<int>(nullable: false),
                     ReferencedBodyHashTransactionHashId = table.Column<long>(nullable: false),
-                    ReferencedDestinationKey = table.Column<string>(type: "varbinary(64)", nullable: false),
-                    ReferencedDestinationKey2 = table.Column<string>(type: "varbinary(64)", nullable: false),
-                    ReferencedTransactionKey = table.Column<string>(type: "varbinary(64)", nullable: false),
-                    ReferencedKeyImage = table.Column<string>(type: "varbinary(64)", nullable: false)
+                    ReferencedDestinationKey = table.Column<byte[]>(type: "varbinary(64)", nullable: true),
+                    ReferencedDestinationKey2 = table.Column<byte[]>(type: "varbinary(64)", nullable: true),
+                    ReferencedTransactionKey = table.Column<byte[]>(type: "varbinary(64)", nullable: true),
+                    ReferencedKeyImage = table.Column<byte[]>(type: "varbinary(64)", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -221,9 +221,9 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                 columns: table => new
                 {
                     StateTransactionId = table.Column<long>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     WitnessId = table.Column<long>(nullable: false),
-                    TransactionType = table.Column<ushort>(nullable: false),
+                    TransactionType = table.Column<int>(nullable: false),
                     SourceAddressId = table.Column<long>(nullable: false),
                     TargetAddressId = table.Column<long>(nullable: true),
                     Content = table.Column<string>(nullable: false),
@@ -271,9 +271,9 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                 columns: table => new
                 {
                     StealthTransactionId = table.Column<long>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     WitnessId = table.Column<long>(nullable: false),
-                    TransactionType = table.Column<ushort>(nullable: false),
+                    TransactionType = table.Column<int>(nullable: false),
                     Content = table.Column<string>(nullable: false),
                     TransactionKeyId = table.Column<long>(nullable: false),
                     KeyImageId = table.Column<long>(nullable: false),

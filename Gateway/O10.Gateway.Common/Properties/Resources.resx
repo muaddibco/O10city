@@ -120,4 +120,7 @@
   <data name="ERR_NO_PACKET_OBTAINED" xml:space="preserve">
     <value>Empty packet obtained with LedgerType '{0}', combinedBlockHeight '{1}' and hash '{2}'</value>
   </data>
+  <data name="ERR_NO_TRANSACTION_FOUND" xml:space="preserve">
+    <value>No transaction found for witness with id '{0}'</value>
+  </data>
 </root>

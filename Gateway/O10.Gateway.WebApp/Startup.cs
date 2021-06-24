@@ -45,7 +45,10 @@ namespace O10.Gateway.WebApp
                 .AddControllersAsServices()
                 .AddNewtonsoftJson(o =>
                 {
-                    o.SerializerSettings.TypeNameHandling = TypeNameHandling.Auto;
+                    o.SerializerSettings.TypeNameHandling = TypeNameHandling.All;
+                    o.SerializerSettings.TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple;
+                    o.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
+                    o.SerializerSettings.Formatting = Formatting.Indented;
                     o.SerializerSettings.Converters.Add(new StringEnumConverter());
                 });
 
@@ -81,7 +84,7 @@ namespace O10.Gateway.WebApp
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
 
             app.UseRouting();
             app.UseCors(x => x

@@ -68,5 +68,14 @@ namespace O10.Gateway.Common.Properties {
                 return ResourceManager.GetString("ERR_NO_PACKET_OBTAINED", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No transaction found for witness with id &apos;{0}&apos;.
+        /// </summary>
+        internal static string ERR_NO_TRANSACTION_FOUND {
+            get {
+                return ResourceManager.GetString("ERR_NO_TRANSACTION_FOUND", resourceCulture);
+            }
+        }
     }
 }

@@ -127,9 +127,9 @@ namespace O10.Gateway.WebApp.Common.Controllers
         }
 
         [HttpGet("GetWitnessesRange/{combinedBlockHeightStart}/{combinedBlockHeightEnd}")]
-        public IActionResult GetWitnessesRange(long combinedBlockHeightStart, long combinedBlockHeightEnd = 0)
+        public ActionResult<List<WitnessPackage>> GetWitnessesRange(long combinedBlockHeightStart, long combinedBlockHeightEnd = 0)
         {
-            return Ok(_networkSynchronizer.GetWitnessRange(combinedBlockHeightStart, combinedBlockHeightEnd));
+            return Ok(_networkSynchronizer.GetWitnessRange(combinedBlockHeightStart, combinedBlockHeightEnd).ToList());
         }
 
         [HttpGet("GetLastPacketInfo/{accountPublicKey}")]

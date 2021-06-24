@@ -21,7 +21,7 @@
         public const ushort Transaction_IssueAssociatedAsset = 6;
         public const ushort Transaction_IssueAsset = 7;
         public const ushort Transaction_TransferAsset = 8;
-        public const ushort Transaction_TransferAssetToStealth = 8 + TransitionalFlag;
+        public const ushort Transaction_TransferAssetToStealth = 8 + TransitionalFlag; //61448
         public const ushort Transaction_BlindAsset = 9;
         public const ushort Transaction_RetransferAssetToStealth = 10 + TransitionalFlag;
         public const ushort Transaction_IssueBlindedAsset = 11;

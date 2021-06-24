@@ -1,4 +1,6 @@
-﻿using O10.Transactions.Core.Enums;
+﻿using Newtonsoft.Json;
+using O10.Core.Serialization;
+using O10.Transactions.Core.Enums;
 
 namespace O10.Transactions.Core.Ledgers.Synchronization.Transactions
 {
@@ -11,6 +13,7 @@ namespace O10.Transactions.Core.Ledgers.Synchronization.Transactions
         /// <summary>
         /// Hashes of the <see cref="Registry.RegistryPacket"/>  with <see cref="Registry.Transactions.FullRegistryTransaction"/> body
         /// </summary>
+        [JsonProperty(ItemConverterType = typeof(ByteArrayJsonConverter))]
         public byte[][] BlockHashes { get; set; }
     }
 }

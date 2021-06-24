@@ -294,6 +294,7 @@ namespace O10.Client.DataLayer.Services
                     Content = content,
                     SchemeName = schemeName,
                     AnchoringOriginationCommitment = new byte[Globals.DEFAULT_HASH_SIZE],
+                    IssuanceTransactionKey = new byte[Globals.DEFAULT_HASH_SIZE],
                     LastBlindingFactor = new byte[Globals.DEFAULT_HASH_SIZE],
                     LastCommitment = new byte[Globals.DEFAULT_HASH_SIZE],
                     LastDestinationKey = new byte[Globals.DEFAULT_HASH_SIZE],

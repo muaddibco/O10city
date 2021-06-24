@@ -1,4 +1,6 @@
 ﻿using Newtonsoft.Json;
+using O10.Core;
+using O10.Core.HashCalculations;
 using O10.Core.Logging;
 using O10.Core.Serialization;
 using O10.Core.Translators;
@@ -15,22 +17,27 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
 {
     public abstract class O10LedgerSynchronizerBase : ILedgerSynchronizer
     {
-        private readonly ILogger _logger;
         private readonly IAccessorProvider _accessorProvider;
         private readonly ITranslatorsRepository _translatorsRepository;
 
         public O10LedgerSynchronizerBase(IAccessorProvider accessorProvider,
                                          ITranslatorsRepository translatorsRepository,
+                                         IHashCalculationsRepository hashCalculationsRepository,
                                          ILoggerService loggerService)
         {
-            _logger = loggerService.GetLogger(GetType().Name);
+            Logger = loggerService.GetLogger(GetType().Name);
             _accessorProvider = accessorProvider;
             _translatorsRepository = translatorsRepository;
+			HashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
         }
 
         public abstract LedgerType LedgerType { get; }
 
-        public abstract TransactionBase GetByWitness(WitnessPacket witnessPacket);
+        public IHashCalculation HashCalculation { get; }
+
+        protected ILogger Logger { get; }
+
+        public abstract TransactionBase? GetByWitness(WitnessPacket witnessPacket);
 
         public virtual async Task SyncByWitness(WitnessPacket witnessPacket, RegisterTransaction registerTransaction)
         {
@@ -44,13 +51,24 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
                 throw new ArgumentNullException(nameof(registerTransaction));
             }
 
+            TransactionBase transaction = null;
+
             try
             {
-                var accessor = _accessorProvider.GetInstance(registerTransaction.ReferencedLedgerType);
                 var translator = _translatorsRepository.GetInstance<RegisterTransaction, EvidenceDescriptor>();
                 var evidence = translator.Translate(registerTransaction);
-                var transaction = await accessor.GetTransaction<TransactionBase>(evidence).ConfigureAwait(false);
-                _logger.LogIfDebug(() => $"Transaction obtained: {JsonConvert.SerializeObject(transaction, new ByteArrayJsonConverter())}");
+                var accessor = _accessorProvider.GetInstance(registerTransaction.ReferencedLedgerType);
+                transaction = await accessor.GetTransaction<TransactionBase>(evidence).ConfigureAwait(false);
+                Logger.LogIfDebug(() => $"Transaction obtained: {JsonConvert.SerializeObject(transaction, new ByteArrayJsonConverter())}");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Failure during obtaining transaction for storing by RegisterTransaction:\r\n{JsonConvert.SerializeObject(registerTransaction)}", ex);
+                throw;
+            }
+
+            try
+            {
 
                 if (transaction != null)
                 {
@@ -63,7 +81,7 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failure during obtaining and storing transaction", ex);
+                Logger.Error($"Failure during storing transaction {transaction.GetType().Name}:\r\n{JsonConvert.SerializeObject(transaction)}", ex);
                 throw;
             }
         }

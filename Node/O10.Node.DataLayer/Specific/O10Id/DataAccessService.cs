@@ -200,7 +200,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
             };
 
             var addCompletion = new TaskCompletionSource<O10Transaction>();
-            _addCompletions.Add(o10Transaction, new TaskCompletionSource<O10Transaction>());
+            _addCompletions.Add(o10Transaction, addCompletion);
 
             lock (Sync)
             {

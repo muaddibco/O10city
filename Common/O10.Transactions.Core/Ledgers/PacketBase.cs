@@ -38,16 +38,6 @@ namespace O10.Transactions.Core.Ledgers
         SignatureBase? IPacketBase.Signature { get => Signature; }
 
         IPayload<TTransaction>? IPacketBase<TTransaction>.Payload => Payload;
-
-        public string ToJson()
-        {
-            return JsonConvert.SerializeObject(this, 
-                new JsonSerializerSettings 
-                { 
-                    Converters = new List<JsonConverter> { new ByteArrayJsonConverter(), new KeyJsonConverter(), new MemoryByteJsonConverter() } ,
-                    TypeNameHandling = TypeNameHandling.All
-                });
-        }
     }
 
     public interface IPacketBase<out TTransaction> : IPacketBase where TTransaction : TransactionBase

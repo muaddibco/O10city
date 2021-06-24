@@ -12,6 +12,9 @@ using O10.Node.WebApp.Common.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using O10.Core.Configuration;
 using Newtonsoft.Json.Converters;
+using Newtonsoft.Json;
+using Flurl.Http;
+using Flurl.Http.Configuration;
 
 namespace O10.Node.WebApp
 {
@@ -40,12 +43,29 @@ namespace O10.Node.WebApp
                 .AddControllersAsServices()
                 .AddNewtonsoftJson(o => 
                 {
-                    o.SerializerSettings.TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto;
+                    o.SerializerSettings.TypeNameHandling = TypeNameHandling.All;
+                    o.SerializerSettings.TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple;
+                    o.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
+                    o.SerializerSettings.Formatting = Formatting.Indented;
                     o.SerializerSettings.Converters.Add(new StringEnumConverter());
                 });
 
             services.AddBootstrapper<NodeWebAppBootstrapper>(_logger);
             services.Replace(new ServiceDescriptor(typeof(IAppConfig), _ => new JsonAppConfig(Configuration), ServiceLifetime.Singleton));
+
+            FlurlHttp.Configure(s =>
+            {
+                var jsonSettings = new JsonSerializerSettings
+                {
+                    TypeNameHandling = TypeNameHandling.All,
+                    //ContractResolver = _suppressItemTypeNameContractResolver,
+                    TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
+                    NullValueHandling = NullValueHandling.Ignore,
+                    Formatting = Formatting.Indented
+                };
+                jsonSettings.Converters.Add(new StringEnumConverter());
+                s.JsonSerializer = new NewtonsoftJsonSerializer(jsonSettings);
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

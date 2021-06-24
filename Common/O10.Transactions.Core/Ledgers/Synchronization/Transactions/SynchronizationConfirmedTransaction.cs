@@ -1,4 +1,6 @@
-﻿using O10.Transactions.Core.Enums;
+﻿using Newtonsoft.Json;
+using O10.Core.Serialization;
+using O10.Transactions.Core.Enums;
 
 namespace O10.Transactions.Core.Ledgers.Synchronization.Transactions
 {
@@ -8,8 +10,10 @@ namespace O10.Transactions.Core.Ledgers.Synchronization.Transactions
 
         public ushort Round { get; set; }
 
+        [JsonProperty(ItemConverterType = typeof(ByteArrayJsonConverter))]
         public byte[][] Signatures { get; set; }
 
+        [JsonProperty(ItemConverterType = typeof(ByteArrayJsonConverter))]
         public byte[][] PublicKeys { get; set; }
     }
 }

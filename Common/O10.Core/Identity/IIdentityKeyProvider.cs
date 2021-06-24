@@ -11,7 +11,7 @@ namespace O10.Core.Identity
 
         //IKey GetKey(byte[] keyBytes);
 
-        IKey GetKey(Memory<byte> keyBytes);
+        IKey? GetKey(Memory<byte> keyBytes);
 
         IEqualityComparer<IKey> GetComparer();
     }

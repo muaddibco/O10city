@@ -20,6 +20,7 @@ using O10.Network.Handlers;
 using O10.Transactions.Core.DTOs;
 using O10.Transactions.Core.Ledgers;
 using O10.Transactions.Core.Ledgers.Synchronization.Transactions;
+using O10.Crypto.Models;
 
 namespace O10.Node.WebApp.Common.Controllers
 {
@@ -109,7 +110,7 @@ namespace O10.Node.WebApp.Common.Controllers
 		}
 
 		[HttpGet("Ledger/{ledgerType}/Transaction")]
-		public ActionResult<IPacketBase> GetTransaction([FromRoute]LedgerType ledgerType, [FromQuery] string combinedBlockHeight, [FromQuery] string hash)
+		public ActionResult<TransactionBase> GetTransaction([FromRoute]LedgerType ledgerType, [FromQuery] string combinedBlockHeight, [FromQuery] string hash)
 		{
 			_logger.LogIfDebug(() => $"{nameof(GetTransaction)}({ledgerType}, {combinedBlockHeight}, {hash})");
 
@@ -131,7 +132,7 @@ namespace O10.Node.WebApp.Common.Controllers
 
 				if (blockBase != null)
 				{
-					return Ok(blockBase);
+					return Ok(blockBase.Transaction);
 				}
 				else
 				{

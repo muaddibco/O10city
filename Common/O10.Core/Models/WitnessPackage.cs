@@ -7,6 +7,6 @@ namespace O10.Core.Models
 	{
 		public long CombinedBlockHeight { get; set; }
 
-		public IEnumerable<PacketWitness>? Witnesses { get; set; }
+		public List<PacketWitness>? Witnesses { get; set; }
 	}
 }

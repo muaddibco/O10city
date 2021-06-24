@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using O10.Gateway.DataLayer.SqlServer;
 
 namespace O10.Gateway.DataLayer.SqlServer.Migrations
 {
     [DbContext(typeof(SqlServerDataContext))]
-    partial class SqlServerDataContextModelSnapshot : ModelSnapshot
+    [Migration("20210621060805_Initial")]
+    partial class Initial
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -363,10 +365,6 @@ namespace O10.Gateway.DataLayer.SqlServer.Migrations
                     b.Property<byte[]>("Hash")
                         .IsRequired()
                         .HasColumnType("varbinary(64)");
-
-                    b.Property<string>("HashString")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("TransactionHashId");
 

@@ -17,5 +17,10 @@ namespace O10.Core.Models
         public T State { get; }
 
         public object? Argument { get; set; }
+
+        public bool TryToComplete(NotificationBase notification)
+        {
+            return TaskCompletion.TrySetResult(notification);
+        }
     }
 }

@@ -166,7 +166,7 @@ namespace O10.Client.Common.Services
                         }
                         else
                         {
-                            _logger.Debug($"Failed {nameof(ResolveAttributeSchemes)}({issuer}, {activeOnly}) from {_restApiConfiguration.SchemaResolutionUri}", t.Exception);
+                            _logger.Error($"Failed {nameof(ResolveAttributeSchemes)}({issuer}, {activeOnly}) from {_restApiConfiguration.SchemaResolutionUri}", t.Exception);
                         }
                     }, TaskScheduler.Current).ConfigureAwait(false);
 

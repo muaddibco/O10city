@@ -15,5 +15,7 @@ namespace O10.Gateway.DataLayer.Model
         [Required]
         [Column(TypeName = "varbinary(64)")]
 		public string Hash { get; set; }
+
+        public string HashString { get; set; }
     }
 }

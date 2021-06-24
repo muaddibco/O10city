@@ -123,7 +123,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
                 Content = content
             };
 
-            _addCompletions.Add(stealthBlock, new TaskCompletionSource<StealthTransaction>());
+            _addCompletions.Add(stealthBlock, addCompletion);
 
             lock (Sync)
             {

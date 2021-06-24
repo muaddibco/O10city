@@ -350,6 +350,10 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                         .IsRequired()
                         .HasColumnType("varbinary(64)");
 
+                    b.Property<string>("HashString")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.HasKey("TransactionHashId");
 
                     b.HasIndex("AggregatedTransactionsHeight", "Hash");
@@ -387,15 +391,12 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("ReferencedDestinationKey")
-                        .IsRequired()
                         .HasColumnType("varbinary(64)");
 
                     b.Property<string>("ReferencedDestinationKey2")
-                        .IsRequired()
                         .HasColumnType("varbinary(64)");
 
                     b.Property<string>("ReferencedKeyImage")
-                        .IsRequired()
                         .HasColumnType("varbinary(64)");
 
                     b.Property<ushort>("ReferencedLedgerType")
@@ -405,7 +406,6 @@ namespace O10.Gateway.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("ReferencedTransactionKey")
-                        .IsRequired()
                         .HasColumnType("varbinary(64)");
 
                     b.Property<long>("Round")

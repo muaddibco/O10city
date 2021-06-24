@@ -167,7 +167,7 @@ namespace O10.Client.Common.Communication
                 catch (FlurlHttpException ex)
                 {
                     p.TaskCompletion.SetException(ex);
-                    _logger.Error($"Failure during invoking {ex.Call.Request.Url}, HTTP status: {ex.Call.Response.ResponseMessage.StatusCode}, duration: {ex.Call.Duration?.TotalMilliseconds ?? 0} msec", ex);
+                    _logger.Error($"Failure during invoking {ex.Call.Request.Url}, HTTP status: {ex.Call.Response?.ResponseMessage.StatusCode.ToString() ?? "NULL"}, duration: {ex.Call.Duration?.TotalMilliseconds ?? 0} msec", ex);
                 }
                 catch (Exception ex)
                 {
@@ -212,6 +212,10 @@ namespace O10.Client.Common.Communication
                 {
                     _logger.Error($"Getting packet infos for witnesses with Ids {string.Join(',', witnessIds)} failed");
                 }
+            }
+            catch (AggregateException aex)
+            {
+                _logger.Error($"Failure during obtaining packet infos for witness ids {string.Join(',', witnessIds)}", aex.InnerException);
             }
             catch (Exception ex)
             {

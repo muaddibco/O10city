@@ -16,6 +16,7 @@ using O10.Crypto.Models;
 using FizzWare.NBuilder;
 using O10.Core.HashCalculations;
 using O10.Core.ExtensionMethods;
+using O10.Transactions.Core.Ledgers.Stealth.Transactions;
 
 namespace O10.Gateway.Common.Accessors
 {
@@ -74,11 +75,18 @@ namespace O10.Gateway.Common.Accessors
         }
 
         public override EvidenceDescriptor GetEvidence(TransactionBase transaction)
+            => ProduceForStealth((O10StealthTransactionBase)transaction);
+
+        private EvidenceDescriptor ProduceForStealth(O10StealthTransactionBase transaction)
             => Builder<EvidenceDescriptor>
                 .CreateNew()
                     .With(s => s.ActionType = transaction.TransactionType)
                     .With(s => s.LedgerType = LedgerType)
                     .Do(s => s.Parameters.Add(EvidenceDescriptor.TRANSACTION_HASH, _hashCalculation.CalculateHash(transaction.ToString()).ToHexString()))
+                    .Do(s => s.Parameters.Add(EvidenceDescriptor.REFERENCED_TARGET, transaction.DestinationKey.ToString()))
+                    .Do(s => s.Parameters.Add(EvidenceDescriptor.REFERENCED_TARGET2, transaction.DestinationKey2.ToString()))
+                    .Do(s => s.Parameters.Add(EvidenceDescriptor.REFERENCED_TRANSACTION_KEY, transaction.TransactionPublicKey.ToString()))
+                    .Do(s => s.Parameters.Add(EvidenceDescriptor.REFERENCED_KEY_IMAGE, transaction.KeyImage.ToString()))
                 .Build();
     }
 }

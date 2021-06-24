@@ -48,9 +48,9 @@ namespace O10.Client.Web.Portal.Controllers
 
         [HttpGet("AttributeDefinitions")]
         [AllowAnonymous]
-        public ActionResult<AttributeDefinition[]> GetAttributeDefinitions(string issuer, bool activeOnly)
+        public ActionResult<IEnumerable<AttributeDefinition>> GetAttributeDefinitions(string issuer, bool activeOnly)
         {
-            return _dataAccessService.GetAttributesSchemeByIssuer(issuer, activeOnly)
+            return Ok(_dataAccessService.GetAttributesSchemeByIssuer(issuer, activeOnly)
                 .Select(a => new AttributeDefinition
                 {
                     SchemeId = a.IdentitiesSchemeId,
@@ -60,7 +60,7 @@ namespace O10.Client.Web.Portal.Controllers
                     Description = a.Description,
                     IsActive = a.IsActive,
                     IsRoot = a.CanBeRoot
-                }).ToArray();
+                }).ToList());
         }
 
         [HttpGet("AttributeDefinition")]

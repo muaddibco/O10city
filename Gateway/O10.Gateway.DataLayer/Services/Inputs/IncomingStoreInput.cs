@@ -1,4 +1,5 @@
 ﻿using O10.Core.Identity;
+using System;
 
 namespace O10.Gateway.DataLayer.Services.Inputs
 {
@@ -11,5 +12,6 @@ namespace O10.Gateway.DataLayer.Services.Inputs
         public IKey? Destination { get; set; }
         public string Content { get; set; }
         public IKey? TransactionKey { get; set; }
+        public IKey? Hash { get; set; }
     }
 }

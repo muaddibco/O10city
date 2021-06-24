@@ -111,22 +111,22 @@ namespace O10.Node.DataLayer.Specific.Synchronization
 			{
 				if (blockTypeLowHeightKey.BlockType == TransactionTypes.Synchronization_ConfirmedBlock)
 				{
-					return Service.GetAllLastSynchronizationBlocks(blockTypeLowHeightKey.Height).Select(b => TranslatorsRepository.GetInstance<SynchronizationPacketDb, IPacketBase>().Translate(b));
+					return Service.GetAllLastSynchronizationBlocks(blockTypeLowHeightKey.Height).Select(b => TranslatorsRepository.GetInstance<SynchronizationPacketDb, SynchronizationPacket>().Translate(b));
 				}
 				else if (blockTypeLowHeightKey.BlockType == TransactionTypes.Synchronization_RegistryCombinationBlock)
 				{
-					return Service.GetAllLastRegistryCombinedBlocks(blockTypeLowHeightKey.Height).OrderBy(b => b.AggregatedRegistrationsTransactionId).Select(b => TranslatorsRepository.GetInstance<AggregatedRegistrationsTransactionDb, IPacketBase>().Translate(b));
+					return Service.GetAllLastRegistryCombinedBlocks(blockTypeLowHeightKey.Height).OrderBy(b => b.AggregatedRegistrationsTransactionId).Select(b => TranslatorsRepository.GetInstance<AggregatedRegistrationsTransactionDb, SynchronizationPacket>().Translate(b));
 				}
 			}
 			else if (key is BlockTypeKey blockTypeKey)
 			{
 				if (blockTypeKey.BlockType == TransactionTypes.Synchronization_ConfirmedBlock)
 				{
-					return Service.GetAllSynchronizationBlocks().Select(b => TranslatorsRepository.GetInstance<SynchronizationPacketDb, IPacketBase>().Translate(b));
+					return Service.GetAllSynchronizationBlocks().Select(b => TranslatorsRepository.GetInstance<SynchronizationPacketDb, SynchronizationPacket>().Translate(b));
 				}
 				else if (blockTypeKey.BlockType == TransactionTypes.Synchronization_RegistryCombinationBlock)
 				{
-					return Service.GetAllRegistryCombinedBlocks().Select(b => TranslatorsRepository.GetInstance<AggregatedRegistrationsTransactionDb, IPacketBase>().Translate(b));
+					return Service.GetAllRegistryCombinedBlocks().Select(b => TranslatorsRepository.GetInstance<AggregatedRegistrationsTransactionDb, SynchronizationPacket>().Translate(b));
 				}
 			}
 

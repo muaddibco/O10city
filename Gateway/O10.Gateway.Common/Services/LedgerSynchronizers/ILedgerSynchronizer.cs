@@ -21,6 +21,6 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
         /// <returns></returns>
         Task SyncByWitness(WitnessPacket witnessPacket, RegisterTransaction registerTransaction);
 
-        TransactionBase GetByWitness(WitnessPacket witnessPacket);
+        TransactionBase? GetByWitness(WitnessPacket witnessPacket);
     }
 }

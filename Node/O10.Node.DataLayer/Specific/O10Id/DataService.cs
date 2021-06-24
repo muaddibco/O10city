@@ -51,7 +51,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
 
             if (packet is O10StatePacket statePacket)
             {
-                var hash = _defaultHashCalculation.CalculateHash(packet.ToString());
+                var hash = _defaultHashCalculation.CalculateHash(packet.Transaction.ToString());
                 var hashKey = IdentityKeyProvider.GetKey(hash);
                 var addCompletionWrapper = new TaskCompletionWrapper<IPacketBase>(packet);
                 var addCompletion = Service.AddTransaction(statePacket.Payload.Transaction.Source, statePacket.Payload.Transaction.TransactionType, statePacket.Payload.Height, packet.ToJson(), hash);
@@ -119,7 +119,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
 
             if (transactionalBlock != null)
             {
-                return new List<IPacketBase> { TranslatorsRepository.GetInstance<O10Transaction, IPacketBase>().Translate(transactionalBlock) };
+                return new List<IPacketBase> { TranslatorsRepository.GetInstance<O10Transaction, O10StatePacket>().Translate(transactionalBlock) };
             }
 
             return new List<IPacketBase>();
@@ -144,7 +144,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
 
             if (transactionalBlock != null)
             {
-                return new List<IPacketBase> { TranslatorsRepository.GetInstance<O10Transaction, IPacketBase>().Translate(transactionalBlock) };
+                return new List<IPacketBase> { TranslatorsRepository.GetInstance<O10Transaction, O10StatePacket>().Translate(transactionalBlock) };
             }
 
             return new List<IPacketBase>();

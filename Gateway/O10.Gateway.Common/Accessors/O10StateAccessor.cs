@@ -11,6 +11,7 @@ using O10.Crypto.Models;
 using O10.Gateway.Common.Configuration;
 using O10.Transactions.Core.Accessors;
 using O10.Transactions.Core.Enums;
+using O10.Transactions.Core.Ledgers.O10State.Transactions;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -65,7 +66,23 @@ namespace O10.Gateway.Common.Accessors
             return transaction;
         }
 
-        public override EvidenceDescriptor GetEvidence(TransactionBase transaction)
+        public override EvidenceDescriptor GetEvidence(TransactionBase transaction) 
+            => transaction is O10StateTransitionalTransactionBase o10StateTransitionalTransaction
+                ? ProduceEvidenceForTransitional(o10StateTransitionalTransaction)
+                : ProduceEvidenceForBasic(transaction);
+
+
+        private EvidenceDescriptor ProduceEvidenceForTransitional(O10StateTransitionalTransactionBase transaction)
+            => Builder<EvidenceDescriptor>
+                .CreateNew()
+                    .With(s => s.ActionType = transaction.TransactionType)
+                    .With(s => s.LedgerType = LedgerType)
+                    .Do(s => s.Parameters.Add(EvidenceDescriptor.TRANSACTION_HASH, _hashCalculation.CalculateHash(transaction.ToString()).ToHexString()))
+                    .Do(s => s.Parameters.Add(EvidenceDescriptor.REFERENCED_TARGET, transaction.DestinationKey.ToString()))
+                    .Do(s => s.Parameters.Add(EvidenceDescriptor.REFERENCED_TRANSACTION_KEY, transaction.TransactionPublicKey.ToString()))
+                .Build();
+
+        private EvidenceDescriptor ProduceEvidenceForBasic(TransactionBase transaction)
             => Builder<EvidenceDescriptor>
                 .CreateNew()
                     .With(s => s.ActionType = transaction.TransactionType)

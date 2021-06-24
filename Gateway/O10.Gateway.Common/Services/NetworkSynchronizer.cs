@@ -113,11 +113,11 @@ namespace O10.Gateway.Common.Services
 						if (response.ResponseMessage.IsSuccessStatusCode)
 						{
 							_logger.Debug($"Transaction packet posted to Node successful");
-							w.TaskCompletion.SetResult(new SucceededNotification());
+							w.TryToComplete(new SucceededNotification());
 						}
 						else
 						{
-							w.TaskCompletion.SetResult(new FailedNotification());
+							w.TryToComplete(new FailedNotification());
 							_logger.Error($"Transaction packet posted to Node with HttpStatusCode: {response.ResponseMessage.StatusCode}, reason: \"{response.ResponseMessage.ReasonPhrase}\", content: \"{response.ResponseMessage.Content.ReadAsStringAsync().Result}\"");
 						}
 					}, wrapper, TaskScheduler.Default);
@@ -419,7 +419,7 @@ namespace O10.Gateway.Common.Services
                         _logger.Info($"Packets were stored successfully");
                         WitnessPackage witnessPackage = new WitnessPackage
                         {
-                            Witnesses = t.Result.Select(w => GetPacketWitness(w)),
+                            Witnesses = t.Result.Select(w => GetPacketWitness(w)).ToList(),
                             CombinedBlockHeight = (long)o
                         };
                         _logger.Info($"Sending witnesses at height {witnessPackage.CombinedBlockHeight}: {string.Join(",", witnessPackage.Witnesses?.Select(w => w.WitnessId))}");
@@ -475,10 +475,10 @@ namespace O10.Gateway.Common.Services
                                 witness.With<RegisterTransaction>().ReferencedLedgerType,
                                 witness.With<RegisterTransaction>().ReferencedAction,
                                 witness.With<RegisterTransaction>().Parameters.OptionalKey(EvidenceDescriptor.TRANSACTION_HASH, _identityKeyProvider),
-                                witness.With<RegisterTransaction>().Parameters.OptionalKey("ReferencedTarget", _identityKeyProvider),
-                                witness.With<RegisterTransaction>().Parameters.OptionalKey("ReferencedTarget2", _identityKeyProvider),
-                                witness.With<RegisterTransaction>().Parameters.OptionalKey("ReferencedTransactionKey", _identityKeyProvider),
-                                witness.With<RegisterTransaction>().Parameters.OptionalKey("ReferencedKeyImage", _identityKeyProvider));
+                                witness.With<RegisterTransaction>().Parameters.OptionalKey(EvidenceDescriptor.REFERENCED_TARGET, _identityKeyProvider),
+                                witness.With<RegisterTransaction>().Parameters.OptionalKey(EvidenceDescriptor.REFERENCED_TARGET2, _identityKeyProvider),
+                                witness.With<RegisterTransaction>().Parameters.OptionalKey(EvidenceDescriptor.REFERENCED_TRANSACTION_KEY, _identityKeyProvider),
+                                witness.With<RegisterTransaction>().Parameters.OptionalKey(EvidenceDescriptor.REFERENCED_KEY_IMAGE, _identityKeyProvider));
 
                         var transactionStoreCompletionSource = ObtainAndStoreTransaction(witness.With<RegisterTransaction>(), witnessStoreCompletionSource);
 
@@ -538,15 +538,18 @@ namespace O10.Gateway.Common.Services
 				if (_lastCombinedBlockDescriptor.Height >= combinedBlockHeightStart)
 				{
 					Dictionary<long, List<WitnessPacket>> witnessPackets = _dataAccessService.GetWitnessPackets((long)combinedBlockHeightStart, (long)combinedBlockHeightEnd);
-					foreach (long key in witnessPackets.Keys)
+					if (witnessPackets != null)
 					{
-						WitnessPackage witnessPackage = new WitnessPackage
+						foreach (long key in witnessPackets.Keys)
 						{
-							CombinedBlockHeight = (long)key,
-							Witnesses = witnessPackets[key].Select(w => GetPacketWitness(w)),
-						};
+							WitnessPackage witnessPackage = new WitnessPackage
+							{
+								CombinedBlockHeight = (long)key,
+								Witnesses = witnessPackets[key].Select(w => GetPacketWitness(w)).ToList(),
+							};
 
-						witnessPackages.Add(witnessPackage);
+							witnessPackages.Add(witnessPackage);
+						}
 					}
 				}
 

@@ -27,7 +27,6 @@ namespace O10.Gateway.DataLayer.Services
         private readonly object _syncSaving = new object();
         private DataContext _dataContext;
         private readonly IIdentityKeyProvider _identityKeyProvider;
-        private readonly IHashCalculation _hashCalculation;
         private readonly List<long> _utxoOutputsIndiciesMap;
 		private readonly IEnumerable<IDataContext> _dataContexts;
 		private readonly IGatewayDataContextConfiguration _configuration;
@@ -36,12 +35,14 @@ namespace O10.Gateway.DataLayer.Services
 		private Dictionary<string, List<IKey>> _rootAttributes = new Dictionary<string, List<IKey>>();
 		private Dictionary<WitnessPacket, TaskCompletionSource<WitnessPacket>> _witnessPacketStoreCompletions = new Dictionary<WitnessPacket, TaskCompletionSource<WitnessPacket>>();
 
-        public DataAccessService(IEnumerable<IDataContext> dataContexts, IConfigurationService configurationService, IHashCalculationsRepository hashCalculationsRepository, IIdentityKeyProvidersRegistry identityKeyProvidersRegistry, ILoggerService loggerService)
+        public DataAccessService(IEnumerable<IDataContext> dataContexts,
+                                 IConfigurationService configurationService,
+                                 IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
+                                 ILoggerService loggerService)
         {
 			_isInitialzed = false;
 			_utxoOutputsIndiciesMap = new List<long>();
             _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
-			_hashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
 			_dataContexts = dataContexts;
 			_configuration = configurationService.Get<IGatewayDataContextConfiguration>();
             _logger = loggerService.GetLogger(nameof(DataAccessService));
@@ -296,9 +297,7 @@ namespace O10.Gateway.DataLayer.Services
                 Target = GetOrAddAddress(storeInput.Destination),
                 TransactionKey = GetOrAddUtxoTransactionKey(storeInput.TransactionKey),
                 Output = GetOrAddUtxoOutput(storeInput.Commitment, storeInput.Destination, storeInput.OriginatingCommitment),
-                Hash = GetOrAddPacketHash(
-                                    _identityKeyProvider.GetKey(_hashCalculation.CalculateHash(storeInput.Content)),
-                                    storeInput.CombinedRegistryBlockHeight),
+                Hash = GetOrAddPacketHash(storeInput.Hash, storeInput.CombinedRegistryBlockHeight),
             };
 
             if (Monitor.TryEnter(_sync, _lockTimeout))
@@ -318,7 +317,7 @@ namespace O10.Gateway.DataLayer.Services
             }
         }
 
-        public void StoreIncomingUtxoTransactionBlock(UtxoIncomingStoreInput storeInput)
+        public void StoreStealthTransaction(StealthStoreInput storeInput)
         {
             if (storeInput is null)
             {
@@ -333,9 +332,7 @@ namespace O10.Gateway.DataLayer.Services
                 KeyImage = GetOrAddUtxoKeyImage(storeInput.KeyImage),
                 Output = GetOrAddUtxoOutput(storeInput.Commitment, storeInput.Destination) ?? throw new ArgumentException($"{nameof(storeInput.Commitment)} and {nameof(storeInput.Destination)} are missing"),
                 Content = storeInput.Content,
-                Hash = GetOrAddPacketHash(
-                    _identityKeyProvider.GetKey(_hashCalculation.CalculateHash(storeInput.Content)),
-                    storeInput.CombinedRegistryBlockHeight)
+                Hash = GetOrAddPacketHash(storeInput.Hash, storeInput.CombinedRegistryBlockHeight)
             };
 
             if (Monitor.TryEnter(_sync, _lockTimeout))
@@ -1295,14 +1292,15 @@ namespace O10.Gateway.DataLayer.Services
                 try
                 {
                     string blockHashString = blockHash.ToString();
-                    TransactionHash block = _dataContext.PacketHashes.FirstOrDefault(b => b.AggregatedTransactionsHeight == b.AggregatedTransactionsHeight && b.Hash == blockHashString);
+                    TransactionHash block = _dataContext.PacketHashes.FirstOrDefault(b => b.AggregatedTransactionsHeight == combinedRegistryBlockHeight && b.Hash == blockHashString);
 
                     if (block == null)
                     {
                         block = new TransactionHash
                         {
                             AggregatedTransactionsHeight = combinedRegistryBlockHeight,
-                            Hash = blockHashString
+                            Hash = blockHashString,
+                            HashString = blockHashString
                         };
 
                         _dataContext.PacketHashes.Add(block);
@@ -1399,13 +1397,13 @@ namespace O10.Gateway.DataLayer.Services
 
         private StealthOutput? GetOrAddUtxoOutput(IKey? commitment, IKey? destinationKey, IKey? originatingCommitment = null)
         {
-            if(commitment == null && destinationKey == null)
+            if(destinationKey == null)
             {
                 return null;
             }
 
-            string commitmentString = commitment?.ToString()??throw new ArgumentNullException(nameof(commitment));
-            string destinationKeyString = destinationKey?.ToString() ?? throw new ArgumentNullException(nameof(destinationKey));
+            string commitmentString = commitment?.ToString() ?? throw new ArgumentNullException(nameof(commitment));
+            string destinationKeyString = destinationKey.ToString();
 
             if (Monitor.TryEnter(_sync, _lockTimeout))
             {

@@ -14,6 +14,16 @@ namespace O10.Core.Models
             return JsonConvert.SerializeObject(this, new ByteArrayJsonConverter(), new KeyJsonConverter(), new MemoryByteJsonConverter());
         }
 
+        public string ToJson()
+        {
+            return JsonConvert.SerializeObject(this,
+                new JsonSerializerSettings
+                {
+                    Converters = new List<JsonConverter> { new ByteArrayJsonConverter(), new KeyJsonConverter(), new MemoryByteJsonConverter() },
+                    TypeNameHandling = TypeNameHandling.All
+                });
+        }
+
         public byte[] ToByteArray()
         {
             return Encoding.UTF8.GetBytes(ToString());

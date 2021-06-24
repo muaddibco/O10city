@@ -24,15 +24,15 @@ namespace O10.Gateway.DataLayer.Model
         public TransactionHash ReferencedBodyHash { get; set; }
 
 		[Column(TypeName = "varbinary(64)")]
-		public string ReferencedDestinationKey { get; set; }
+		public string? ReferencedDestinationKey { get; set; }
 
 		[Column(TypeName = "varbinary(64)")]
-		public string ReferencedDestinationKey2 { get; set; }
+		public string? ReferencedDestinationKey2 { get; set; }
 
 		[Column(TypeName = "varbinary(64)")]
-		public string ReferencedTransactionKey { get; set; }
+		public string? ReferencedTransactionKey { get; set; }
 
 		[Column(TypeName = "varbinary(64)")]
-		public string ReferencedKeyImage { get; set; }
+		public string? ReferencedKeyImage { get; set; }
 	}
 }

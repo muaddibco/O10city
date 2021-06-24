@@ -77,7 +77,7 @@ namespace O10.Client.Common.Communication
                             return;
                         }
 
-                        foreach (var transaction in transactions)
+                        foreach (var transaction in transactions.Where(t => !(t is null)))
                         {
                             _logger.LogIfDebug(() => $"[{AccountId}]: processing transaction {transaction.GetType().Name}");
 
