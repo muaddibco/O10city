@@ -84,6 +84,17 @@ namespace O10.Node.Core.Centralized
                 _packetsBuffer = new BufferBlock<IPacketBase>(new DataflowBlockOptions() { CancellationToken = ct });
                 _lastCombinedBlock = _synchronizationChainDataService.Single<SynchronizationPacket>(new SingleByBlockTypeKey(TransactionTypes.Synchronization_RegistryCombinationBlock));
                 _synchronizationContext.LastRegistrationCombinedBlockHeight = _lastCombinedBlock?.Payload.Height ?? 0;
+                var synchronizationConfirmedBlock = _synchronizationChainDataService.Single<SynchronizationPacket>(new SingleByBlockTypeKey(TransactionTypes.Synchronization_ConfirmedBlock));
+                if (synchronizationConfirmedBlock != null)
+                {
+                    _synchronizationContext.UpdateLastSyncBlockDescriptor(new SynchronizationDescriptor(
+                                        synchronizationConfirmedBlock.Payload.Height,
+                                        _identityKeyProvider.GetKey(_defaultTransactionHashCalculation.CalculateHash(synchronizationConfirmedBlock.ToByteArray())),
+                                        synchronizationConfirmedBlock.Payload.ReportedTime,
+                                        DateTime.UtcNow,
+                                        synchronizationConfirmedBlock.With<SynchronizationConfirmedTransaction>().Round));
+                }
+
                 _logger.LogIfDebug(() => $"{nameof(Initialize)}, {nameof(_lastCombinedBlock)}: {JsonConvert.SerializeObject(_lastCombinedBlock, new ByteArrayJsonConverter())}");
 
                 ConsumePackets(_packetsBuffer, ct);

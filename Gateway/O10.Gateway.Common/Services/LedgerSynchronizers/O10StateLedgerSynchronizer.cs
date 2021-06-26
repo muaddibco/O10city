@@ -51,7 +51,11 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
                 throw new NoTransactionFoundByWitnessIdException(witnessPacket.WitnessPacketId);
             }
 
-            return JsonConvert.DeserializeObject(transaction.Content) as TransactionBase;
+            JsonSerializerSettings serializerSettings = new JsonSerializerSettings()
+            {
+                TypeNameHandling = TypeNameHandling.All
+            };
+            return JsonConvert.DeserializeObject(transaction.Content, serializerSettings) as TransactionBase;
         }
 
         protected override void StoreTransaction(WitnessPacket wp, TransactionBase transaction)

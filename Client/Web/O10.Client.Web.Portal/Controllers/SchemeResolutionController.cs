@@ -48,7 +48,7 @@ namespace O10.Client.Web.Portal.Controllers
 
         [HttpGet("AttributeDefinitions")]
         [AllowAnonymous]
-        public ActionResult<IEnumerable<AttributeDefinition>> GetAttributeDefinitions(string issuer, bool activeOnly)
+        public ActionResult<List<AttributeDefinition>> GetAttributeDefinitions(string issuer, bool activeOnly)
         {
             return Ok(_dataAccessService.GetAttributesSchemeByIssuer(issuer, activeOnly)
                 .Select(a => new AttributeDefinition
@@ -247,7 +247,7 @@ namespace O10.Client.Web.Portal.Controllers
 
         [HttpGet("ServiceProviderRelationGroups")]
         [AllowAnonymous]
-        public ActionResult<IEnumerable<ServiceProviderRelationGroups>> GetServiceProviderRelationGroups()
+        public ActionResult<List<ServiceProviderRelationGroups>> GetServiceProviderRelationGroups()
         {
             List<ServiceProviderRelationGroups> serviceProviderRelationGroupsList = new List<ServiceProviderRelationGroups>();
             List<Account> accounts = _dataAccessService.GetAccountsByType(AccountType.ServiceProvider);
@@ -283,7 +283,7 @@ namespace O10.Client.Web.Portal.Controllers
 
         [HttpGet("GroupRelations")]
         [AllowAnonymous]
-        public ActionResult<IEnumerable<RegistrationKeyDescriptionStore>> GetGroupRelations(string issuer, string assetId)
+        public ActionResult<List<RegistrationKeyDescriptionStore>> GetGroupRelations(string issuer, string assetId)
         {
             return Ok(_dataAccessService.GetGroupRelations(assetId, issuer)
                 .Select(r => new RegistrationKeyDescriptionStore
@@ -292,7 +292,7 @@ namespace O10.Client.Web.Portal.Controllers
                     Issuer = r.Issuer,
                     Key = r.GroupOwnerKey,
                     Description = r.GroupName
-                }));
+                }).ToList());
         }
 
         [HttpPost("RegistrationCommitment")]
@@ -306,7 +306,7 @@ namespace O10.Client.Web.Portal.Controllers
 
         [HttpGet("RegistrationCommitments")]
         [AllowAnonymous]
-        public ActionResult<IEnumerable<RegistrationKeyDescriptionStore>> GetRegistrationCommitments(string issuer, string assetId)
+        public ActionResult<List<RegistrationKeyDescriptionStore>> GetRegistrationCommitments(string issuer, string assetId)
         {
             return Ok(_dataAccessService.GetRegistrationCommitments(assetId, issuer)
                 .Select(r => new RegistrationKeyDescriptionStore
@@ -315,7 +315,7 @@ namespace O10.Client.Web.Portal.Controllers
                     Issuer = r.Issuer,
                     Key = r.Commitment,
                     Description = r.ServiceProviderInfo
-                }));
+                }).ToList());
         }
 
         [HttpPost("AssociatedAttributes")]
@@ -327,16 +327,16 @@ namespace O10.Client.Web.Portal.Controllers
         }
 
         [HttpGet("AssociatedAttributes")]
-        public ActionResult<IEnumerable<AssociatedAttributeBackupDTO>> GetAssociatedAttributes(string rootIssuer, string rootAssetId)
+        public ActionResult<List<AssociatedAttributeBackupDTO>> GetAssociatedAttributes(string rootIssuer, string rootAssetId)
         {
-            IEnumerable<AssociatedAttributeBackupDTO> associatedAttributes =
+            List<AssociatedAttributeBackupDTO>? associatedAttributes =
                 _dataAccessService.GetAssociatedAttributeBackups(rootIssuer, rootAssetId)?
                 .Select(a => new AssociatedAttributeBackupDTO
                 {
                     AssociatedIssuer = a.AssociatedIssuer,
                     SchemeName = a.SchemeName,
                     Content = a.Content
-                });
+                }).ToList();
 
             return Ok(associatedAttributes);
         }

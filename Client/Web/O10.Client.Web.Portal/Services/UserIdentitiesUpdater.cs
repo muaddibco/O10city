@@ -117,6 +117,11 @@ namespace O10.Client.Web.Portal.Services
         {
             _logger.Debug($"[{_accountId}]: {nameof(RecoverRegistrations)}");
             IEnumerable<RegistrationKeyDescriptionStore> userRegistrations = await _schemeResolverService.GetRegistrationCommitments(transaction.Source.ToString(), assetId.ToHexString()).ConfigureAwait(false);
+            if(userRegistrations == null)
+            {
+                return;
+            }
+
             foreach (var userRegistration in userRegistrations)
             {
                 string groupOwnerName = await _schemeResolverService.ResolveIssuer(userRegistration.Key).ConfigureAwait(false);
@@ -141,6 +146,11 @@ namespace O10.Client.Web.Portal.Services
         {
             _logger.Debug($"[{_accountId}]: {nameof(RecoverRelations)}");
             IEnumerable<RegistrationKeyDescriptionStore> groupRelations = await _schemeResolverService.GetGroupRelations(transaction.Source.ToString(), assetId.ToHexString()).ConfigureAwait(false);
+            if(groupRelations == null)
+            {
+                return;
+            }
+
             foreach (var groupRelation in groupRelations)
             {
                 string groupOwnerName = await _schemeResolverService.ResolveIssuer(groupRelation.Key).ConfigureAwait(false);

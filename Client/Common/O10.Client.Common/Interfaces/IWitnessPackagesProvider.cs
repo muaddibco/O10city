@@ -15,5 +15,6 @@ namespace O10.Client.Common.Interfaces
 
         bool Initialize(long accountId, CancellationToken cancellationToken);
         Task Start();
+        Task Restart();
     }
 }

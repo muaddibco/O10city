@@ -32,6 +32,7 @@ namespace O10.Crypto.ConfidentialAssets
             GroupOperations.ge_tobytes(f, 0, ref fP2);
 
             f = FastHash256(f);
+            ScalarOperations.sc_reduce32(f);
 
             GroupOperations.ge_scalarmult_base(out GroupElementP3 p3, f, 0);
             GroupOperations.ge_frombytes(out GroupElementP3 publicSpendKeyP3, publicSpendKey, 0);

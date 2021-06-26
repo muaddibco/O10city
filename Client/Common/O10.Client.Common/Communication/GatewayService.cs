@@ -319,7 +319,7 @@ namespace O10.Client.Common.Communication
             return res;
         }
 
-        public async Task<IEnumerable<WitnessPackage>> GetWitnessesRange(long rangeStart, long rangeEnd)
+        public async Task<IOrderedEnumerable<WitnessPackage>?> GetWitnessesRange(long rangeStart, long rangeEnd)
         {
             Url url = _gatewayUri.AppendPathSegments("api", "synchronization", "GetWitnessesRange", rangeStart, rangeEnd);
 
@@ -330,11 +330,11 @@ namespace O10.Client.Common.Communication
                     .ConfigureRequest(s => { s.Timeout = TimeSpan.FromMinutes(60); })
                     .GetJsonAsync<IEnumerable<WitnessPackage>>().ConfigureAwait(false);
 
-                return witnessPackages;
+                return witnessPackages?.OrderBy(p => p.CombinedBlockHeight);
             }
             catch (Exception ex)
             {
-                _logger.Error($"Failed request {url.ToString()}", ex);
+                _logger.Error($"Failed request {url}", ex);
                 return null;
             }
         }

@@ -47,12 +47,13 @@ namespace O10.Node.DataLayer.Specific.Stealth
                 throw new ArgumentNullException(nameof(packet));
             }
 
-            Logger?.LogIfDebug(() => $"Storing {packet.GetType().Name}: {JsonConvert.SerializeObject(packet, new ByteArrayJsonConverter())}");
-
             if (packet is StealthPacket stealth)
             {
                 var hash = _defaultHashCalculation.CalculateHash(packet.ToString());
                 var hashKey = IdentityKeyProvider.GetKey(hash);
+
+                Logger?.LogIfDebug(() => $"Storing {packet.GetType().Name} with hash [{hashKey}]: {JsonConvert.SerializeObject(packet, new ByteArrayJsonConverter())}");
+
                 var addCompletionWrapper = new TaskCompletionWrapper<IPacketBase>(packet);
                 var addCompletion = Service.AddStealthBlock(stealth.Payload.Transaction.KeyImage, stealth.Payload.Transaction.TransactionType, stealth.Payload.Transaction.DestinationKey, stealth.ToJson(), hash.ToString());
                 addCompletion.Task.ContinueWith((t, o) =>
@@ -69,7 +70,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
                     }
                 }, new Tuple<TaskCompletionWrapper<IPacketBase>, IKey>(addCompletionWrapper, hashKey), TaskScheduler.Default);
 
-                Logger?.LogIfDebug(() => $"Storing of {packet.GetType().Name} completed");
+                Logger?.LogIfDebug(() => $"Storing of {packet.GetType().Name} with hash [{hashKey}] completed");
                 return addCompletionWrapper;
             }
         

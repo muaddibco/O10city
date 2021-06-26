@@ -13,7 +13,7 @@ namespace O10.Node.DataLayer.Specific.O10Id.Mappers
         {
             if(transactionalBlock == null)
             {
-                throw new System.ArgumentNullException(nameof(transactionalBlock));
+                return null;
             }
 
             return SerializableEntity.Create<O10StatePacket>(transactionalBlock.Content);

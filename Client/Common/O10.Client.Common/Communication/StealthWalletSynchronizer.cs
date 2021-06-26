@@ -38,7 +38,9 @@ namespace O10.Client.Common.Communication
 
         protected override async Task StorePacket(TransactionBase transaction)
         {
+            _logger.LogIfDebug(() => $"[{_accountId}]: awaiting for {nameof(StoreTransferAssetToStealth)} of the {transaction.GetType().Name} completion...");
             await StoreTransferAssetToStealth(transaction).ConfigureAwait(false);
+            _logger.LogIfDebug(() => $"[{_accountId}]: awaiting for {nameof(StoreTransferAssetToStealth)} of the {transaction.GetType().Name} completed");
 
             StoreUniversalTransport(transaction);
 

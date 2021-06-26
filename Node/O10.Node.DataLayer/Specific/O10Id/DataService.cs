@@ -47,12 +47,13 @@ namespace O10.Node.DataLayer.Specific.O10Id
                 throw new ArgumentNullException(nameof(packet));
             }
 
-            Logger?.LogIfDebug(() => $"Storing {packet.GetType().Name}: {JsonConvert.SerializeObject(packet, new ByteArrayJsonConverter())}");
-
             if (packet is O10StatePacket statePacket)
             {
                 var hash = _defaultHashCalculation.CalculateHash(packet.Transaction.ToString());
                 var hashKey = IdentityKeyProvider.GetKey(hash);
+
+                Logger?.LogIfDebug(() => $"Storing {packet.GetType().Name} with hash [{hashKey}]: {JsonConvert.SerializeObject(packet, new ByteArrayJsonConverter())}");
+
                 var addCompletionWrapper = new TaskCompletionWrapper<IPacketBase>(packet);
                 var addCompletion = Service.AddTransaction(statePacket.Payload.Transaction.Source, statePacket.Payload.Transaction.TransactionType, statePacket.Payload.Height, packet.ToJson(), hash);
                 addCompletion.Task.ContinueWith((t, o) => 
@@ -65,7 +66,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
                     }
                 }, new Tuple<TaskCompletionWrapper<IPacketBase>, IKey>(addCompletionWrapper, hashKey), TaskScheduler.Default);
 
-                Logger?.LogIfDebug(() => $"Storing of {packet.GetType().Name} completed");
+                Logger?.LogIfDebug(() => $"Storing of {packet.GetType().Name} with hash [{hashKey}] completed");
                 return addCompletionWrapper;
             }
 

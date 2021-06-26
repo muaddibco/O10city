@@ -40,82 +40,99 @@ namespace O10.Client.Common.Communication
             {
                 WitnessPackage witnessPackage = wrapper.WitnessPackage;
 
+                _logger.Debug($"[{AccountId}]: ****************>");
                 _logger.LogIfDebug(() => $"[{AccountId}]: {GetType().Name} of witnessPackage at CombinedBlockHeight {witnessPackage.CombinedBlockHeight}");
 
                 try
                 {
                     List<Task> allPacketsProcessedTasks = new List<Task>();
                     List<PacketWitness> witnessesToMe = new List<PacketWitness>();
-
-                    foreach (var item in witnessPackage.Witnesses)
+                    bool res = true;
+                    try
                     {
-                        if (_dataAccessService.WitnessAsProcessed(AccountId, item.WitnessId))
+                        foreach (var item in witnessPackage.Witnesses)
                         {
-                            _logger.Warning($"[{AccountId}]: witness {item.WitnessId} already processed");
-                            continue;
-                        }
-                        else
-                        {
-                            _logger.Debug($"[{AccountId}]: Processing witness {item.WitnessId}");
-                        }
-
-                        if (CheckPacketWitness(item))
-                        {
-                            witnessesToMe.Add(item);
-                        }
-                    }
-
-                    if (witnessesToMe.Count > 0)
-                    {
-                        _logger.LogIfDebug(() => $"[{AccountId}]: Obtaining packets for witnesses [{string.Join(',', witnessesToMe.Select(w => w.WitnessId).ToArray())}]");
-                        var transactions = await _syncStateProvider.GetTransactions(witnessesToMe.Select(w => w.WitnessId)).ConfigureAwait(false);
-
-                        if (transactions?.Any() != true)
-                        {
-                            _logger.Error($"[{AccountId}]: no packet infos obtained from the Gateway");
-                            wrapper.CompletionSource.SetResult(true);
-                            return;
-                        }
-
-                        foreach (var transaction in transactions.Where(t => !(t is null)))
-                        {
-                            _logger.LogIfDebug(() => $"[{AccountId}]: processing transaction {transaction.GetType().Name}");
-
-                            if (transaction != null)
+                            if (_dataAccessService.WitnessAsProcessed(AccountId, item.WitnessId))
                             {
-                                if (transaction is StealthTransactionBase stealthTransaction)
-                                {
-                                    _logger.LogIfDebug(() => $"[{AccountId}]: Obtained transaction {stealthTransaction.GetType().Name} with {nameof(stealthTransaction.KeyImage)}={stealthTransaction.KeyImage}");
-                                }
-                                else
-                                {
-                                    _logger.LogIfDebug(() => $"[{AccountId}]: Obtained transaction {JsonConvert.SerializeObject(transaction, new ByteArrayJsonConverter())}");
-                                }
+                                _logger.Warning($"[{AccountId}]: witness {item.WitnessId} at aggregated height {witnessPackage.CombinedBlockHeight} already processed");
+                                continue;
+                            }
+                            else
+                            {
+                                _logger.Debug($"[{AccountId}]: Processing witness {item.WitnessId} at aggregated height {witnessPackage.CombinedBlockHeight}");
+                            }
 
-                                var packetWrapper = new TaskCompletionWrapper<TransactionBase>(transaction);
-                                allPacketsProcessedTasks.Add(packetWrapper.TaskCompletion.Task);
-
-                                await _propagator.SendAsync(packetWrapper).ConfigureAwait(false);
-                                _logger.Debug($"[{AccountId}]: Passing transaction {transaction.GetType().Name} to WalletSynchronizer");
+                            if (CheckPacketWitness(item))
+                            {
+                                witnessesToMe.Add(item);
                             }
                         }
 
-                        await Task.WhenAll(allPacketsProcessedTasks).ConfigureAwait(false);
-                        wrapper.CompletionSource.SetResult(true);
-                    }
-                    else
-                    {
-                        wrapper.CompletionSource.SetResult(false);
-                    }
+                        if (witnessesToMe.Count > 0)
+                        {
+                            _logger.LogIfDebug(() => $"[{AccountId}]: Obtaining packets for witnesses [{string.Join(',', witnessesToMe.Select(w => w.WitnessId).ToArray())}] at aggregated height {witnessPackage.CombinedBlockHeight}");
+                            var transactions = await _syncStateProvider.GetTransactions(witnessesToMe.Select(w => w.WitnessId)).ConfigureAwait(false);
+                            _logger.Info($"[{AccountId}]: obtained {transactions?.Count().ToString() ?? "NULL"} transactions...");
 
-                    await _propagatorProcessed.SendAsync(witnessPackage).ConfigureAwait(false);
+                            if (transactions?.Any() != true)
+                            {
+                                _logger.Error($"[{AccountId}]: no packet infos obtained from the Gateway");
+                                return;
+                            }
+
+                            _logger.LogIfDebug(() => $"[{AccountId}]: ***> witnesses at aggregated height {witnessPackage.CombinedBlockHeight}, creation bulk of tasks for Synchronizer");
+                            foreach (var transaction in transactions.Where(t => !(t is null)))
+                            {
+                                _logger.LogIfDebug(() => $"[{AccountId}]: processing transaction {transaction.GetType().Name} at aggregated height {witnessPackage.CombinedBlockHeight}");
+
+                                if (transaction != null)
+                                {
+                                    if (transaction is StealthTransactionBase stealthTransaction)
+                                    {
+                                        _logger.LogIfDebug(() => $"[{AccountId}]: Obtained transaction {stealthTransaction.GetType().Name} with {nameof(stealthTransaction.KeyImage)}={stealthTransaction.KeyImage}");
+                                    }
+                                    else
+                                    {
+                                        _logger.LogIfDebug(() => $"[{AccountId}]: Obtained transaction {JsonConvert.SerializeObject(transaction, new ByteArrayJsonConverter())}");
+                                    }
+
+                                    var packetWrapper = new TaskCompletionWrapper<TransactionBase>(transaction);
+                                    allPacketsProcessedTasks.Add(packetWrapper.TaskCompletion.Task);
+
+                                    await _propagator.SendAsync(packetWrapper).ConfigureAwait(false);
+                                    _logger.Debug($"[{AccountId}]: Passing transaction {transaction.GetType().Name} to WalletSynchronizer");
+                                }
+                            }
+                            _logger.LogIfDebug(() => $"[{AccountId}]: ***> witnesses at aggregated height {witnessPackage.CombinedBlockHeight}, waiting for completion of bulk of tasks at Synchronizer...");
+
+                            await Task.WhenAll(allPacketsProcessedTasks).ConfigureAwait(false);
+                            _logger.LogIfDebug(() => $"[{AccountId}]: <*** witnesses at aggregated height {witnessPackage.CombinedBlockHeight}, bulk of tasks in Synchronizer completed");
+                        }
+                        else
+                        {
+                            res = false;
+                        }
+                    }
+                    finally
+                    {
+                        await PropagateProcessedPackage(witnessPackage).ConfigureAwait(false);
+                        _logger.Debug($"[{AccountId}]: <****************");
+                        wrapper.CompletionSource.TrySetResult(res);
+                    }
                 }
                 catch (Exception ex)
                 {
                     _logger.Error($"[{AccountId}]: Failure during packet extraction", ex);
-                    wrapper.CompletionSource.SetResult(false);
+                    wrapper.CompletionSource.TrySetException(ex);
                 }
             });
+        }
+
+        private async Task PropagateProcessedPackage(WitnessPackage witnessPackage)
+        {
+            _logger.Debug($"[{AccountId}]: propagating processed package at height {witnessPackage.CombinedBlockHeight}");
+            await _propagatorProcessed.SendAsync(witnessPackage).ConfigureAwait(false);
+            _logger.Debug($"[{AccountId}]: processed package at height {witnessPackage.CombinedBlockHeight} propagated");
         }
 
         public virtual void Initialize(long accountId)

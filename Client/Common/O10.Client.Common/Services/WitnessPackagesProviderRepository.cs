@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using O10.Client.Common.Interfaces;
@@ -22,9 +21,7 @@ namespace O10.Client.Common.Services
 
         public IWitnessPackagesProvider GetInstance(string key)
         {
-            IWitnessPackagesProvider providerTemp = _witnessPackagesProviders.FirstOrDefault(s => s.Name.Equals(key, StringComparison.InvariantCultureIgnoreCase));
-            IWitnessPackagesProvider provider = (IWitnessPackagesProvider)ActivatorUtilities.CreateInstance(_serviceProvider, providerTemp.GetType());
-            return provider;
+            return _witnessPackagesProviders.FirstOrDefault(s => s.Name.Equals(key, StringComparison.InvariantCultureIgnoreCase));
         }
     }
 }

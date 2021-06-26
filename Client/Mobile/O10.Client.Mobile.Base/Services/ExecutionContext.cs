@@ -29,7 +29,6 @@ namespace O10.Client.Mobile.Base.Services
     {
         private readonly ILogger _logger;
         private readonly IRestClientService _restClientService;
-        private readonly IWitnessPackagesProviderRepository _witnessPackagesProviderRepository;
         private readonly IServiceProvider _serviceProvider;
         private readonly IRestApiConfiguration _restApiConfiguration;
         private readonly TransformBlock<bool, bool> _initializationCompleted;
@@ -40,7 +39,6 @@ namespace O10.Client.Mobile.Base.Services
 
         public ExecutionContext(IGatewayService gatewayService,
                                 IRestClientService restClientService,
-                                IWitnessPackagesProviderRepository witnessPackagesProviderRepository,
                                 IBoundedAssetsService relationsBindingService,
                                 IConfigurationService configurationService,
                                 IServiceProvider serviceProvider,
@@ -49,7 +47,6 @@ namespace O10.Client.Mobile.Base.Services
             _logger = loggerService.GetLogger(GetType().Name);
             GatewayService = gatewayService;
             _restClientService = restClientService;
-            _witnessPackagesProviderRepository = witnessPackagesProviderRepository;
             _serviceProvider = serviceProvider;
             RelationsBindingService = relationsBindingService;
             _restApiConfiguration = configurationService.Get<IRestApiConfiguration>();

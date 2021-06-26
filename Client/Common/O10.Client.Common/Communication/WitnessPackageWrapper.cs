@@ -8,7 +8,7 @@ namespace O10.Client.Common.Communication
         public WitnessPackageWrapper(WitnessPackage witnessPackage)
         {
             WitnessPackage = witnessPackage;
-            CompletionSource = new TaskCompletionSource<bool>();
+            CompletionSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         }
 
         public TaskCompletionSource<bool> CompletionSource { get; }

@@ -424,7 +424,7 @@ namespace O10.Client.Web.Portal.Controllers
 
         [AllowAnonymous]
         [HttpPost("IssueIdpAttributes/{issuer}")]
-        public async Task<ActionResult<IEnumerable<AttributeValue>>> IssueIdpAttributes(string issuer, [FromBody] IssueAttributesRequestDTO request)
+        public async Task<ActionResult<List<AttributeValue>>> IssueIdpAttributes(string issuer, [FromBody] IssueAttributesRequestDTO request)
         {
             if (request is null)
             {
@@ -475,7 +475,7 @@ namespace O10.Client.Web.Portal.Controllers
 
             await _idenitiesHubContext.Clients.Group(account.AccountId.ToString()).SendAsync("RequestForIssuance", issuanceDetails);
 
-            var attributeValues = FillAttributeValues(request.Attributes, attributeDefinitions);
+            var attributeValues = FillAttributeValues(request.Attributes, attributeDefinitions).ToList();
 
             return Ok(attributeValues);
 

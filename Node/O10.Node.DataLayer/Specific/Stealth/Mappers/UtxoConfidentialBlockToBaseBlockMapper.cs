@@ -13,7 +13,7 @@ namespace O10.Node.DataLayer.Specific.Stealth.Mappers
 		{
             if (block is null)
             {
-                throw new System.ArgumentNullException(nameof(block));
+                return null;
             }
 
             return SerializableEntity.Create<StealthPacket>(block.Content);

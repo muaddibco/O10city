@@ -20,7 +20,7 @@ namespace O10.Client.Web.Portal.Controllers
 
         [AllowAnonymous]
         [HttpGet]
-        public ActionResult<IEnumerable<InherenceServiceInfo>> GetInherenceServices()
+        public ActionResult<List<InherenceServiceInfo>> GetInherenceServices()
         {
             return Ok(_inherenceServicesManager.GetAll()?
                 .Select(s =>
@@ -30,7 +30,7 @@ namespace O10.Client.Web.Portal.Controllers
                     Alias = s.Alias,
                     Description = s.Description,
                     Target = s.Target
-                }));
+                }).ToList());
         }
     }
 }

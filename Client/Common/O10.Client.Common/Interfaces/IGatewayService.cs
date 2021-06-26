@@ -13,6 +13,7 @@ using O10.Transactions.Core.Ledgers;
 using O10.Crypto.Models;
 using O10.Core.Identity;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 namespace O10.Client.Common.Interfaces
 {
@@ -47,7 +48,7 @@ namespace O10.Client.Common.Interfaces
 
         Task<byte[]> GetEmployeeRecordGroup(byte[] issuer, byte[] registrationCommitment);
 
-        Task<IEnumerable<WitnessPackage>> GetWitnessesRange(long rangeStart, long rangeEnd);
+        Task<IOrderedEnumerable<WitnessPackage>?> GetWitnessesRange(long rangeStart, long rangeEnd);
 
         string GetNotificationsHubUri();
 

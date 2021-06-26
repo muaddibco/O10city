@@ -24,6 +24,9 @@ using O10.Client.Common.Integration;
 using O10.Client.Common.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using O10.Core.Serialization;
+using O10.Core.Configuration;
+using O10.Client.Common.Configuration;
+using System.Threading.Tasks;
 
 namespace O10.Client.Web.Portal.Controllers
 {
@@ -38,10 +41,12 @@ namespace O10.Client.Web.Portal.Controllers
         private readonly ITranslatorsRepository _translatorsRepository;
         private readonly IIntegrationIdPRepository _integrationIdPRepository;
         private readonly AppSettings _appSettings;
+        private readonly IRestApiConfiguration _restApiConfiguration;
         private readonly ILogger _logger;
 
         public AccountsController(IAccountsServiceEx accountsService,
                                   IExecutionContextManager executionContextManager,
+                                  IConfigurationService configurationService,
                                   IDataAccessService dataAccessService,
                                   ILoggerService loggerService,
                                   ITranslatorsRepository translatorsRepository,
@@ -65,6 +70,7 @@ namespace O10.Client.Web.Portal.Controllers
             _integrationIdPRepository = integrationIdPRepository;
             _logger = loggerService.GetLogger(nameof(AccountsController));
             _appSettings = appSettings.Value;
+            _restApiConfiguration = configurationService.Get<IRestApiConfiguration>();
         }
 
         [HttpPost("Authenticate")]
@@ -105,6 +111,27 @@ namespace O10.Client.Web.Portal.Controllers
             _logger.LogIfDebug(() => $"[{accountDto.AccountId}]: Authenticated account {JsonConvert.SerializeObject(forLog)}");
 
             return Ok(_translatorsRepository.GetInstance<AccountDescriptor, AccountDto>().Translate(accountDescriptor));
+        }
+
+        [HttpPost("{accountId}/Sync")]
+        public async Task<IActionResult> SyncAccount(long accountId)
+        {
+            _logger.LogIfDebug(() => $"[{accountId}]: Syncing the account with Id {accountId}");
+
+            try
+            {
+                var persistency = _executionContextManager.ResolveExecutionServices(accountId);
+                var witnessPackagesProvidersRepo = persistency.Scope.ServiceProvider.GetService<IWitnessPackagesProviderRepository>();
+                IWitnessPackagesProvider packetsProvider = witnessPackagesProvidersRepo.GetInstance(_restApiConfiguration.WitnessProviderName);
+                await packetsProvider.Restart();
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"[{accountId}]: sync account failed", ex);
+                throw;
+            }
         }
 
         [HttpPost("{accountId}/Start")]

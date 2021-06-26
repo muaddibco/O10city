@@ -175,7 +175,7 @@ namespace O10.Node.DataLayer.Specific.Synchronization
 					if (source.TryReceiveAll(out IList<TaskCompletionWrapper<IPacketBase>> packets))
 					{
 						Logger.Debug($"Getting from buffer and storing bulk of {nameof(SynchronizationConfirmedTransaction)} with heights {string.Join(',', packets.Select(b => ((SynchronizationPacket)b.State).Payload.Height))}");
-						Service.AddSynchronizationBlocks(packets.Select(b => new SynchronizationPacketDb { SynchronizationPacketId = ((SynchronizationPacket)b.State).Payload.Height, ReceiveTime = DateTime.Now, MedianTime = ((SynchronizationPacket)b.State).Payload.ReportedTime, Content = b.ToString() }).ToArray());
+						Service.AddSynchronizationBlocks(packets.Select(b => new SynchronizationPacketDb { SynchronizationPacketId = ((SynchronizationPacket)b.State).Payload.Height, ReceiveTime = DateTime.Now, MedianTime = ((SynchronizationPacket)b.State).Payload.ReportedTime, Content = ((SynchronizationPacket)b.State).ToJson() }).ToArray());
 					}
 					else
 					{

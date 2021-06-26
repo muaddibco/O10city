@@ -1,15 +1,12 @@
 ﻿using System;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using O10.Client.Common.Communication.Notifications;
 using O10.Client.Common.Interfaces;
 using O10.Client.DataLayer.Services;
 using O10.Core.Logging;
 using O10.Core.Models;
 using O10.Core.Notifications;
 using O10.Crypto.Models;
-using O10.Transactions.Core.Ledgers;
-using O10.Transactions.Core.Ledgers.Stealth;
 
 namespace O10.Client.Common.Communication
 {
@@ -39,41 +36,55 @@ namespace O10.Client.Common.Communication
                 {
                     if (p.State is StealthTransactionBase packet)
                     {
-                        _logger.LogIfDebug(() => $"[{_accountId}]: Processing {packet.GetType().Name} with {nameof(packet.KeyImage)}={packet.KeyImage}");
+                        _logger.LogIfDebug(() => $"[{_accountId}]: ==> Processing {packet.GetType().Name} with {nameof(packet.KeyImage)}={packet.KeyImage}...");
                     }
                     else
                     {
-                        _logger.LogIfDebug(() => $"[{_accountId}]: Processing {p.State.GetType().Name}");
+                        _logger.LogIfDebug(() => $"[{_accountId}]: ==> Processing {p.State.GetType().Name}...");
                     }
 
                     await StorePacket(p.State).ConfigureAwait(false);
+
+                    _logger.LogIfDebug(() => $"[{_accountId}]: ==> {p.State.GetType().Name} completed");
                     p.TaskCompletion.SetResult(new SucceededNotification());
                 }
                 catch (Exception ex)
                 {
                     p.TaskCompletion.SetException(ex);
 
-                    _logger.Error($"Failed to proccess incoming packet {p.GetType().Name}", ex);
+                    _logger.Error($"[{_accountId}]: Failed to proccess incoming packet {p.GetType().Name}", ex);
                 }
             });
 
             _pipeInPackage = new ActionBlock<WitnessPackage>(async w =>
             {
-                bool tryAgain = true;
-                int attempts = 3;
-                do
+                _logger.Debug($"[{_accountId}]: updating in DB last updated aggregated height {w.CombinedBlockHeight} started...");
+                try
                 {
-                    try
+                    bool tryAgain = true;
+                    int attempts = 3;
+                    do
                     {
-                        _dataAccessService.StoreLastUpdatedCombinedBlockHeight(_accountId, w.CombinedBlockHeight);
-                        tryAgain = false;
-                    }
-                    catch (Exception ex)
-                    {
-                        await Task.Delay(500).ConfigureAwait(false);
-                        _logger.Error("Failure during updating last combined block", ex);
-                    }
-                } while (tryAgain && attempts-- > 0);
+                        try
+                        {
+                            _dataAccessService.StoreLastUpdatedCombinedBlockHeight(_accountId, w.CombinedBlockHeight);
+                            tryAgain = false;
+                        }
+                        catch (Exception ex)
+                        {
+                            await Task.Delay(500).ConfigureAwait(false);
+                            _logger.Error($"[{_accountId}]: Failure during updating last aggregated height {w.CombinedBlockHeight}", ex);
+                        }
+                    } while (tryAgain && attempts-- > 0);
+                }
+                catch(Exception ex)
+                {
+                    _logger.Debug($"[{_accountId}]: updating in DB last updated aggregated height {w.CombinedBlockHeight} failed", ex);
+                }
+                finally
+                {
+                    _logger.Debug($"[{_accountId}]: updating in DB last updated aggregated height {w.CombinedBlockHeight} completed");
+                }
             });
 
             _pipeOutTransactions = new TransformBlock<TransactionBase, TransactionBase>(w => w);
@@ -117,7 +128,9 @@ namespace O10.Client.Common.Communication
 
         protected virtual async Task StorePacket(TransactionBase transaction)
         {
+            _logger.LogIfDebug(() => $"[{_accountId}]: => awaiting for {transaction.GetType().Name} updater completion...");
             await _pipeOutTransactions.SendAsync(transaction).ConfigureAwait(false);
+            _logger.LogIfDebug(() => $"[{_accountId}]: => awaiting for {transaction.GetType().Name} updater completed");
         }
 
         protected void NotifyObservers(NotificationBase notification)
