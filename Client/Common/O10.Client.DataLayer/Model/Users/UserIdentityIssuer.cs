@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Client.DataLayer.Model.Users
 {
-    [Table("user_identity_issuers")]
+    [Table("UserIdentityIssuers")]
     public class UserIdentityIssuer
     {
         [Key]

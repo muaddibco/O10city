@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Client.DataLayer.Model.ServiceProviders
 {
-    [Table("sp_user_transactions")]
+    [Table("SpUserTransactions")]
     public class SpUserTransaction
     {
         [Key]

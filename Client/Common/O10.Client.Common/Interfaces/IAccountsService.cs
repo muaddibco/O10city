@@ -11,6 +11,7 @@ namespace O10.Client.Common.Interfaces
     {
         AccountDescriptor Authenticate(long accountId, string password);
         List<AccountDescriptor> GetAll();
+        AccountDescriptor? FindByAlias(string alias);
         AccountDescriptor GetById(long id);
         long Create(AccountType accountType, string accountInfo = null, string password = null, bool isPrivate = false);
         void Update(long accountId, string accountInfo = null, string password = null);

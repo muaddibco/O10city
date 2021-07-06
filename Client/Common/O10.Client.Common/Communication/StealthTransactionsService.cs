@@ -190,7 +190,7 @@ namespace O10.Client.Common.Communication
             return requestResult;
         }
 
-        public UserTransactionSecrets PopLastTransactionSecrets()
+        public UserTransactionSecret PopLastTransactionSecrets()
         {
             var secrets = _dataAccessService.GetUserTransactionSecrets(_accountId, NextKeyImage.ToString());
             _dataAccessService.RemoveUserTransactionSecret(_accountId, NextKeyImage.ToString());

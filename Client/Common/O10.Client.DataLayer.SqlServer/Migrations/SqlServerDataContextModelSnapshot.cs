@@ -27,15 +27,17 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("AssetId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<long?>("EcPollRecordId")
+                    b.Property<long>("EcPollRecordId")
                         .HasColumnType("bigint");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("EcCandidateRecordId");
@@ -58,6 +60,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("State")
@@ -78,15 +81,18 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("EcBlindingFactor")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("EcCommitment")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<long?>("EcPollRecordId")
+                    b.Property<long>("EcPollRecordId")
                         .HasColumnType("bigint");
 
                     b.Property<string>("VoterBlindingFactor")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("EcPollSelectionId");
@@ -106,6 +112,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("AccountInfo")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<byte>("AccountType")
@@ -121,12 +128,14 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<byte[]>("PublicSpendKey")
+                        .IsRequired()
                         .HasColumnType("varbinary(max)");
 
                     b.Property<byte[]>("PublicViewKey")
                         .HasColumnType("varbinary(max)");
 
                     b.Property<byte[]>("SecretSpendKey")
+                        .IsRequired()
                         .HasColumnType("varbinary(max)");
 
                     b.Property<byte[]>("SecretViewKey")
@@ -134,7 +143,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
 
                     b.HasKey("AccountId");
 
-                    b.ToTable("accounts");
+                    b.ToTable("Accounts");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.AccountKeyValue", b =>
@@ -148,10 +157,12 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<string>("Key")
+                        .IsRequired()
                         .HasColumnType("nvarchar(255)")
                         .HasMaxLength(255);
 
                     b.Property<string>("Value")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("AccountKeyValueId");
@@ -171,18 +182,23 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("AssociatedIssuer")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Content")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("RootAssetId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("RootIssuer")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("SchemeName")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("AssociatedAttributeBackupId");
@@ -191,7 +207,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
 
                     b.HasIndex("RootIssuer");
 
-                    b.ToTable("associated_attribute_backup");
+                    b.ToTable("AssociatedAttributeBackups");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.AutoLogin", b =>
@@ -201,17 +217,18 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasColumnType("bigint")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<long?>("AccountId")
+                    b.Property<long>("AccountId")
                         .HasColumnType("bigint");
 
                     b.Property<byte[]>("SecretKey")
+                        .IsRequired()
                         .HasColumnType("varbinary(max)");
 
                     b.HasKey("AutoLoginId");
 
                     b.HasIndex("AccountId");
 
-                    b.ToTable("auto_logins");
+                    b.ToTable("AutoLogins");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.BiometricRecord", b =>
@@ -225,15 +242,15 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("UserData")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("BiometricRecordId");
 
                     b.HasIndex("UserData")
-                        .IsUnique()
-                        .HasFilter("[UserData] IS NOT NULL");
+                        .IsUnique();
 
-                    b.ToTable("biometric_records");
+                    b.ToTable("BiometricRecords");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.ConsentManagement.ConsentManagementSettings", b =>
@@ -248,7 +265,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
 
                     b.HasKey("ConsentManagementSettingsId");
 
-                    b.ToTable("consent_management_settings");
+                    b.ToTable("ConsentManagementSettings");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.ExternalIdentityProvider", b =>
@@ -262,21 +279,23 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<string>("Alias")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("ExternalIdentityProviderId");
 
                     b.HasIndex("Name")
-                        .IsUnique()
-                        .HasFilter("[Name] IS NOT NULL");
+                        .IsUnique();
 
-                    b.ToTable("external_identity_providers");
+                    b.ToTable("ExternalIdentityProviders");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.IdentitiesScheme", b =>
@@ -307,6 +326,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("Issuer")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("IdentitiesSchemeId");
@@ -315,7 +335,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
 
                     b.HasIndex("Issuer");
 
-                    b.ToTable("identities_schemes");
+                    b.ToTable("IdentitiesSchemes");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.Identity", b =>
@@ -329,11 +349,12 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("IdentityId");
 
-                    b.ToTable("identity");
+                    b.ToTable("Identities");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.IdentityAttribute", b =>
@@ -366,7 +387,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
 
                     b.HasIndex("IdentityId");
 
-                    b.ToTable("attributes");
+                    b.ToTable("IdentityAttributes");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.IdentityTarget", b =>
@@ -380,9 +401,11 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<string>("PublicSpendKey")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("PublicViewKey")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("IdentityTargetId");
@@ -411,7 +434,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("inherence_settings");
+                    b.ToTable("InherenceSettings");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.ProcessedWitness", b =>
@@ -435,7 +458,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                     b.HasIndex("AccountId", "WitnessId")
                         .IsUnique();
 
-                    b.ToTable("processed_witnesses");
+                    b.ToTable("ProcessedWitnesss");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.SamlIdentityProvider", b =>
@@ -446,19 +469,22 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("EntityId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("PublicSpendKey")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("SecretViewKey")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("SamlIdentityProviderId");
 
                     b.HasIndex("EntityId");
 
-                    b.ToTable("saml_identity_providers");
+                    b.ToTable("SamlIdentityProviders");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.SamlServiceProvider", b =>
@@ -469,16 +495,18 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("EntityId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("SingleLogoutUrl")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("SamlServiceProviderId");
 
                     b.HasIndex("EntityId");
 
-                    b.ToTable("saml_service_providers");
+                    b.ToTable("SamlServiceProviders");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.SamlSettings", b =>
@@ -496,7 +524,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
 
                     b.HasKey("SamlSettingsId");
 
-                    b.ToTable("saml_settings");
+                    b.ToTable("SamlSettings");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.Scenarios.ScenarioAccount", b =>
@@ -516,7 +544,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
 
                     b.HasIndex("ScenarioSessionId");
 
-                    b.ToTable("scenario_accounts");
+                    b.ToTable("ScenarioAccounts");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.Scenarios.ScenarioSession", b =>
@@ -536,13 +564,14 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UserSubject")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("ScenarioSessionId");
 
                     b.HasIndex("UserSubject");
 
-                    b.ToTable("scenario_sessions");
+                    b.ToTable("ScenarioSessions");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.ServiceProviderRegistration", b =>
@@ -561,7 +590,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
 
                     b.HasKey("ServiceProviderRegistrationId");
 
-                    b.ToTable("service_provider_registrations");
+                    b.ToTable("ServiceProviderRegistrations");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.ServiceProviders.GroupRelation", b =>
@@ -572,15 +601,19 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("AssetId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("GroupName")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("GroupOwnerKey")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Issuer")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("GroupRelationId");
@@ -589,7 +622,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
 
                     b.HasIndex("Issuer");
 
-                    b.ToTable("group_relations");
+                    b.ToTable("GroupRelations");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.ServiceProviders.RegistrationCommitment", b =>
@@ -600,15 +633,19 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("AssetId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Commitment")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Issuer")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ServiceProviderInfo")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("RegistrationCommitmentId");
@@ -616,8 +653,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                     b.HasIndex("AssetId");
 
                     b.HasIndex("Commitment")
-                        .IsUnique()
-                        .HasFilter("[Commitment] IS NOT NULL");
+                        .IsUnique();
 
                     b.HasIndex("Issuer");
 
@@ -635,6 +671,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<string>("GroupName")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("RelationGroupId");
@@ -655,6 +692,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<long?>("RegistrationCommitmentId")
@@ -701,9 +739,11 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<string>("TransactionDescription")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("TransactionId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("SpUserTransactionId");
@@ -711,10 +751,9 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                     b.HasIndex("AccountId");
 
                     b.HasIndex("TransactionId")
-                        .IsUnique()
-                        .HasFilter("[TransactionId] IS NOT NULL");
+                        .IsUnique();
 
-                    b.ToTable("sp_user_transactions");
+                    b.ToTable("SpUserTransactions");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.SpAttribute", b =>
@@ -732,9 +771,11 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasColumnType("varbinary(max)");
 
                     b.Property<string>("AttributeSchemeName")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Content")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<byte[]>("IssuingCommitment")
@@ -755,7 +796,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
 
                     b.HasKey("SpAttributeId");
 
-                    b.ToTable("sp_attributes");
+                    b.ToTable("SpAttributes");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.SpDocument", b =>
@@ -769,9 +810,11 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<string>("DocumentName")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Hash")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<decimal>("LastChangeRecordHeight")
@@ -783,7 +826,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
 
                     b.HasIndex("DocumentName");
 
-                    b.ToTable("sp_documents");
+                    b.ToTable("SpDocuments");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.SpDocumentAllowedSigner", b =>
@@ -797,18 +840,22 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<string>("BlindingFactor")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<long?>("DocumentSpDocumentId")
                         .HasColumnType("bigint");
 
                     b.Property<string>("GroupCommitment")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("GroupIssuer")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("GroupName")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("SpDocumentAllowedSignerId");
@@ -817,7 +864,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
 
                     b.HasIndex("DocumentSpDocumentId");
 
-                    b.ToTable("sp_document_allowed_signers");
+                    b.ToTable("SpDocumentAllowedSigners");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.SpDocumentSignature", b =>
@@ -831,6 +878,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasColumnType("decimal(20,0)");
 
                     b.Property<byte[]>("DocumentSignRecord")
+                        .IsRequired()
                         .HasColumnType("varbinary(max)");
 
                     b.Property<long?>("DocumentSpDocumentId")
@@ -847,7 +895,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
 
                     b.HasIndex("SignatureRecordHeight");
 
-                    b.ToTable("sp_document_signatures");
+                    b.ToTable("SpDocumentSignatures");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.SpIdenitityValidation", b =>
@@ -861,12 +909,14 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<byte[]>("GroupIdCriterion")
+                        .IsRequired()
                         .HasColumnType("varbinary(max)");
 
                     b.Property<int?>("NumericCriterion")
                         .HasColumnType("int");
 
                     b.Property<string>("SchemeName")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("ValidationType")
@@ -874,7 +924,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
 
                     b.HasKey("SpIdenitityValidationId");
 
-                    b.ToTable("sp_identity_validations");
+                    b.ToTable("SpIdenitityValidations");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.SynchronizationStatus", b =>
@@ -884,7 +934,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasColumnType("bigint")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<long?>("AccountId")
+                    b.Property<long>("AccountId")
                         .HasColumnType("bigint");
 
                     b.Property<long>("LastUpdatedCombinedBlockHeight")
@@ -905,14 +955,16 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<byte[]>("BiometricSecretKey")
+                        .IsRequired()
                         .HasColumnType("varbinary(max)");
 
                     b.Property<byte[]>("InitializationVector")
+                        .IsRequired()
                         .HasColumnType("varbinary(max)");
 
                     b.HasKey("SystemSettingsId");
 
-                    b.ToTable("system_settings");
+                    b.ToTable("SystemSettings");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.UserAssociatedAttribute", b =>
@@ -926,9 +978,11 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<string>("AttributeSchemeName")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Content")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("CreationTime")
@@ -938,6 +992,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<byte[]>("RootAssetId")
+                        .IsRequired()
                         .HasColumnType("varbinary(max)");
 
                     b.Property<string>("Source")
@@ -946,7 +1001,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
 
                     b.HasKey("UserAssociatedAttributeId");
 
-                    b.ToTable("user_associated_attribute");
+                    b.ToTable("UserAssociatedAttributes");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.UserGroupRelation", b =>
@@ -960,18 +1015,23 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<string>("AssetId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("GroupName")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("GroupOwnerKey")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("GroupOwnerName")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Issuer")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("UserGroupRelationId");
@@ -982,7 +1042,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
 
                     b.HasIndex("Issuer");
 
-                    b.ToTable("user_to_group_relations");
+                    b.ToTable("UserGroupRelations");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.UserRootAttribute", b =>
@@ -1007,6 +1067,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Content")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("CreationTime")
@@ -1051,6 +1112,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasColumnType("varbinary(max)");
 
                     b.Property<string>("SchemeName")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Source")
@@ -1079,12 +1141,12 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
 
                     b.HasIndex("AccountId");
 
-                    b.ToTable("user_settings");
+                    b.ToTable("UserSettings");
                 });
 
-            modelBuilder.Entity("O10.Client.DataLayer.Model.UserTransactionSecrets", b =>
+            modelBuilder.Entity("O10.Client.DataLayer.Model.UserTransactionSecret", b =>
                 {
-                    b.Property<long>("UserTransactionSecretsId")
+                    b.Property<long>("UserTransactionSecretId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
@@ -1093,21 +1155,24 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<string>("AssetId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Issuer")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("KeyImage")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("UserTransactionSecretsId");
+                    b.HasKey("UserTransactionSecretId");
 
                     b.HasIndex("AccountId");
 
                     b.HasIndex("KeyImage");
 
-                    b.ToTable("user_transaction_secrets");
+                    b.ToTable("UserTransactionSecrets");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.Users.UserIdentityIssuer", b =>
@@ -1118,12 +1183,15 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<string>("Alias")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Key")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<DateTime>("UpdateTime")
@@ -1132,10 +1200,9 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                     b.HasKey("UserIdentityIssuerId");
 
                     b.HasIndex("Key")
-                        .IsUnique()
-                        .HasFilter("[Key] IS NOT NULL");
+                        .IsUnique();
 
-                    b.ToTable("user_identity_issuers");
+                    b.ToTable("UserIdentityIssuers");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.Users.UserRegistration", b =>
@@ -1149,15 +1216,19 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<string>("AssetId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Commitment")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Issuer")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("ServiceProviderInfo")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("UserRegistrationId");
@@ -1168,28 +1239,34 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
 
                     b.HasIndex("Issuer");
 
-                    b.ToTable("user_registrations");
+                    b.ToTable("UserRegistrations");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.ElectionCommittee.EcCandidateRecord", b =>
                 {
                     b.HasOne("O10.Client.DataLayer.ElectionCommittee.EcPollRecord", "EcPollRecord")
                         .WithMany("Candidates")
-                        .HasForeignKey("EcPollRecordId");
+                        .HasForeignKey("EcPollRecordId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.ElectionCommittee.EcPollSelection", b =>
                 {
                     b.HasOne("O10.Client.DataLayer.ElectionCommittee.EcPollRecord", "EcPollRecord")
                         .WithMany("PollSelections")
-                        .HasForeignKey("EcPollRecordId");
+                        .HasForeignKey("EcPollRecordId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.AutoLogin", b =>
                 {
                     b.HasOne("O10.Client.DataLayer.Model.Account", "Account")
                         .WithMany()
-                        .HasForeignKey("AccountId");
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.IdentityAttribute", b =>
@@ -1257,7 +1334,9 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                 {
                     b.HasOne("O10.Client.DataLayer.Model.Account", "Account")
                         .WithMany()
-                        .HasForeignKey("AccountId");
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.UserGroupRelation", b =>

@@ -825,7 +825,7 @@ namespace O10.Client.DataLayer.Services
         {
             lock (_sync)
             {
-                UserTransactionSecrets transactionSecrets = new UserTransactionSecrets
+                UserTransactionSecret transactionSecrets = new UserTransactionSecret
                 {
                     AccountId = accountId,
                     KeyImage = keyImage,
@@ -839,7 +839,7 @@ namespace O10.Client.DataLayer.Services
             }
         }
 
-        public UserTransactionSecrets GetUserTransactionSecrets(long accountId, string keyImage)
+        public UserTransactionSecret GetUserTransactionSecrets(long accountId, string keyImage)
         {
             lock (_sync)
             {
@@ -851,7 +851,7 @@ namespace O10.Client.DataLayer.Services
         {
             lock (_sync)
             {
-                UserTransactionSecrets transactionSecrets = _dataContext.UserTransactionSecrets.FirstOrDefault(s => s.AccountId == accountId && s.KeyImage == keyImage);
+                UserTransactionSecret transactionSecrets = _dataContext.UserTransactionSecrets.FirstOrDefault(s => s.AccountId == accountId && s.KeyImage == keyImage);
 
                 if (transactionSecrets != null)
                 {
@@ -1013,6 +1013,14 @@ namespace O10.Client.DataLayer.Services
                             byte[] pk = CryptoHelper.GetPublicKey(Ed25519.SecretKeyFromSeed(a.SecretSpendKey));
                             return pk.Equals32(publicKey);
                         });
+            }
+        }
+
+        public Account? FindAccountByAlias(string alias)
+        {
+            lock(_sync)
+            {
+                return _dataContext.Accounts.FirstOrDefault(a => a.AccountInfo == alias);
             }
         }
 

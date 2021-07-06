@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Client.DataLayer.Model
 {
-    [Table("sp_attributes")]
+    [Table("SpAttributes")]
     public class SpAttribute
     {
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]

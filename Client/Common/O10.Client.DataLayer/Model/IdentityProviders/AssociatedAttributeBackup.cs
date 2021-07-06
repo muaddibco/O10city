@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Client.DataLayer.Model
 {
-    [Table("associated_attribute_backup")]
+    [Table("AssociatedAttributeBackups")]
     public class AssociatedAttributeBackup
     {
         [Key]

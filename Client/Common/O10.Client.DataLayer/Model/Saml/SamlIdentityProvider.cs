@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Client.DataLayer.Model
 {
-    [Table("saml_identity_providers")]
+    [Table("SamlIdentityProviders")]
     public class SamlIdentityProvider
     {
         [Key]

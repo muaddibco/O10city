@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Client.DataLayer.Model
 {
-    [Table("user_associated_attribute")]
+    [Table("UserAssociatedAttributes")]
     public class UserAssociatedAttribute
     {
         [Key]

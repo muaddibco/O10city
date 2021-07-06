@@ -7,7 +7,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Company>O10</Company>
     <Authors>O10</Authors>
-    <Version>1.2.1</Version>
+    <Version>1.3.0</Version>
     <PackageReleaseNotes>Breake change of the IAssetsService - return value types of GetRootAttributeSchemeName and GetAssociatedAttributeSchemeNames were changed</PackageReleaseNotes>
     <Nullable>enable</Nullable>
   </PropertyGroup>

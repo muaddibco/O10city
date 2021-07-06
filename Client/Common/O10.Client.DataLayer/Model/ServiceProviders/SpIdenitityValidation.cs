@@ -4,7 +4,7 @@ using O10.Client.DataLayer.Enums;
 
 namespace O10.Client.DataLayer.Model
 {
-    [Table("sp_identity_validations")]
+    [Table("SpIdenitityValidations")]
     public class SpIdenitityValidation
     {
         [Key]

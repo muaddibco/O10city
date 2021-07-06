@@ -1214,6 +1214,13 @@ namespace O10.Crypto.ConfidentialAssets
             return ringSignature;
         }
 
+        public static bool VerifyRingSignature(BorromeanRingSignature ringSignature, byte[] msg, byte[][] pks)
+        {
+            GroupElementP3[] pubKeys = TranslatePoints(pks);
+
+            return VerifyRingSignature(ringSignature, msg, pubKeys);
+        }
+
         internal static bool VerifyRingSignature(BorromeanRingSignature ringSignature, byte[] msg, GroupElementP3[] pks)
         {
             if (ringSignature.S.Length != pks.Length)
@@ -1635,6 +1642,17 @@ namespace O10.Crypto.ConfidentialAssets
             for (int i = 0; i < points.Length; i++)
             {
                 GroupOperations.ge_frombytes(out pointsP3[i], points[i].Span, 0);
+            }
+
+            return pointsP3;
+        }
+
+        private static GroupElementP3[] TranslatePoints(byte[][] points)
+        {
+            GroupElementP3[] pointsP3 = new GroupElementP3[points.Length];
+            for (int i = 0; i < points.Length; i++)
+            {
+                GroupOperations.ge_frombytes(out pointsP3[i], points[i], 0);
             }
 
             return pointsP3;

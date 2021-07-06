@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Client.DataLayer.Model.Demo
 {
-    [Table("work_spaces")]
+    [Table("WorkSpaces")]
     public class WorkSpace
     {
         [Key]

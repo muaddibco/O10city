@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Client.DataLayer.Model
 {
-    [Table("external_identity_providers")]
+    [Table("ExternalIdentityProviders")]
     public class ExternalIdentityProvider
     {
         [Key]

@@ -3,14 +3,14 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Client.DataLayer.Model
 {
-    [Table("user_to_group_relations")]
+    [Table("UserGroupRelations")]
     public class UserGroupRelation
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public long UserGroupRelationId { get; set; }
 
-        public Account Account { get; set; }
+        public Account? Account { get; set; }
 
         public string GroupOwnerName { get; set; }
         public string GroupOwnerKey { get; set; }

@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Client.DataLayer.Model.Scenarios
 {
-    [Table("scenario_sessions")]
+    [Table("ScenarioSessions")]
     public class ScenarioSession
     {
         [Key]

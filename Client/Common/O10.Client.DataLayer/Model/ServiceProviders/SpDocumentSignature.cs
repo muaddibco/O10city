@@ -3,14 +3,14 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Client.DataLayer.Model
 {
-    [Table("sp_document_signatures")]
+    [Table("SpDocumentSignatures")]
     public class SpDocumentSignature
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public long SpDocumentSignatureId { get; set; }
 
-        public SpDocument Document { get; set; }
+        public SpDocument? Document { get; set; }
 
         public ulong SignatureRecordHeight { get; set; }
 

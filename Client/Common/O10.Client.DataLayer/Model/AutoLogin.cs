@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Client.DataLayer.Model
 {
-    [Table("auto_logins")]
+    [Table("AutoLogins")]
     public class AutoLogin
     {
         [Key]

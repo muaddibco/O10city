@@ -4,7 +4,7 @@ using O10.Client.DataLayer.Enums;
 
 namespace O10.Client.DataLayer.Model.ServiceProviders
 {
-    [Table("service_provider_settings")]
+    [Table("ServiceProviderSettings")]
     public class ServiceProviderSettings
     {
         [Key]

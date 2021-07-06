@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Client.DataLayer.Model
 {
-    [Table("processed_witnesses")]
+    [Table("ProcessedWitnesss")]
     public class ProcessedWitness
     {
         [Key]

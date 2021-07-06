@@ -90,7 +90,7 @@ namespace O10.Client.DataLayer.Services
 
 		void AddUserTransactionSecret(long accountId, string keyImage, string issuer, string assetId);
 
-		UserTransactionSecrets GetUserTransactionSecrets(long accountId, string keyImage);
+		UserTransactionSecret GetUserTransactionSecrets(long accountId, string keyImage);
 
 		void RemoveUserTransactionSecret(long accountId, string keyImage);
 
@@ -105,6 +105,7 @@ namespace O10.Client.DataLayer.Services
 		List<Account> GetAccounts();
 
 		Account GetAccount(long accountId);
+		Account? FindAccountByAlias(string alias);
 		Account GetAccount(byte[] publicKey);
 
 		List<Account> GetAccountsByType(AccountType accountType);

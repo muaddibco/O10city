@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Client.DataLayer.Model
 {
-    [Table("identities_schemes")]
+    [Table("IdentitiesSchemes")]
     public class IdentitiesScheme
     {
         public long IdentitiesSchemeId { get; set; }
@@ -14,9 +14,9 @@ namespace O10.Client.DataLayer.Model
         [Required]
         public string AttributeSchemeName { get; set; }
 
-        public string Alias { get; set; }
+        public string? Alias { get; set; }
 
-        public string Description { get; set; }
+        public string? Description { get; set; }
 
         public bool IsActive { get; set; }
 

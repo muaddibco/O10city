@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Client.DataLayer.Model.ConsentManagement
 {
-    [Table("consent_management_settings")]
+    [Table("ConsentManagementSettings")]
     public class ConsentManagementSettings
     {
         [Key]

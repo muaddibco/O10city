@@ -9,8 +9,8 @@ using O10.Client.DataLayer.SQLite;
 namespace O10.Client.DataLayer.SQLite.Migrations
 {
     [DbContext(typeof(SQLiteDataContext))]
-    [Migration("20210619012731_Refactoring1")]
-    partial class Refactoring1
+    [Migration("20210704111844_Initial")]
+    partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -25,15 +25,17 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("AssetId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<long?>("EcPollRecordId")
+                    b.Property<long>("EcPollRecordId")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("EcCandidateRecordId");
@@ -55,6 +57,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int>("State")
@@ -74,15 +77,18 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("EcBlindingFactor")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("EcCommitment")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.Property<long?>("EcPollRecordId")
+                    b.Property<long>("EcPollRecordId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("VoterBlindingFactor")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("EcPollSelectionId");
@@ -101,6 +107,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("AccountInfo")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<byte>("AccountType")
@@ -116,12 +123,14 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<byte[]>("PublicSpendKey")
+                        .IsRequired()
                         .HasColumnType("BLOB");
 
                     b.Property<byte[]>("PublicViewKey")
                         .HasColumnType("BLOB");
 
                     b.Property<byte[]>("SecretSpendKey")
+                        .IsRequired()
                         .HasColumnType("BLOB");
 
                     b.Property<byte[]>("SecretViewKey")
@@ -129,7 +138,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
 
                     b.HasKey("AccountId");
 
-                    b.ToTable("accounts");
+                    b.ToTable("Accounts");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.AccountKeyValue", b =>
@@ -142,10 +151,12 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Key")
+                        .IsRequired()
                         .HasColumnType("TEXT")
                         .HasMaxLength(255);
 
                     b.Property<string>("Value")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("AccountKeyValueId");
@@ -164,18 +175,23 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("AssociatedIssuer")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Content")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("RootAssetId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("RootIssuer")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SchemeName")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("AssociatedAttributeBackupId");
@@ -184,7 +200,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
 
                     b.HasIndex("RootIssuer");
 
-                    b.ToTable("associated_attribute_backup");
+                    b.ToTable("AssociatedAttributeBackups");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.AutoLogin", b =>
@@ -193,17 +209,18 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<long?>("AccountId")
+                    b.Property<long>("AccountId")
                         .HasColumnType("INTEGER");
 
                     b.Property<byte[]>("SecretKey")
+                        .IsRequired()
                         .HasColumnType("BLOB");
 
                     b.HasKey("AutoLoginId");
 
                     b.HasIndex("AccountId");
 
-                    b.ToTable("auto_logins");
+                    b.ToTable("AutoLogins");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.BiometricRecord", b =>
@@ -216,6 +233,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("UserData")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("BiometricRecordId");
@@ -223,7 +241,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                     b.HasIndex("UserData")
                         .IsUnique();
 
-                    b.ToTable("biometric_records");
+                    b.ToTable("BiometricRecords");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.ConsentManagement.ConsentManagementSettings", b =>
@@ -237,7 +255,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
 
                     b.HasKey("ConsentManagementSettingsId");
 
-                    b.ToTable("consent_management_settings");
+                    b.ToTable("ConsentManagementSettings");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.ExternalIdentityProvider", b =>
@@ -250,12 +268,15 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Alias")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("ExternalIdentityProviderId");
@@ -263,7 +284,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("external_identity_providers");
+                    b.ToTable("ExternalIdentityProviders");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.IdentitiesScheme", b =>
@@ -293,6 +314,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Issuer")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("IdentitiesSchemeId");
@@ -301,7 +323,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
 
                     b.HasIndex("Issuer");
 
-                    b.ToTable("identities_schemes");
+                    b.ToTable("IdentitiesSchemes");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.Identity", b =>
@@ -314,11 +336,12 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("IdentityId");
 
-                    b.ToTable("identity");
+                    b.ToTable("Identities");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.IdentityAttribute", b =>
@@ -350,7 +373,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
 
                     b.HasIndex("IdentityId");
 
-                    b.ToTable("attributes");
+                    b.ToTable("IdentityAttributes");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.IdentityTarget", b =>
@@ -363,9 +386,11 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("PublicSpendKey")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("PublicViewKey")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("IdentityTargetId");
@@ -393,7 +418,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("inherence_settings");
+                    b.ToTable("InherenceSettings");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.ProcessedWitness", b =>
@@ -416,7 +441,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                     b.HasIndex("AccountId", "WitnessId")
                         .IsUnique();
 
-                    b.ToTable("processed_witnesses");
+                    b.ToTable("ProcessedWitnesss");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.SamlIdentityProvider", b =>
@@ -426,19 +451,22 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("EntityId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("PublicSpendKey")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SecretViewKey")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("SamlIdentityProviderId");
 
                     b.HasIndex("EntityId");
 
-                    b.ToTable("saml_identity_providers");
+                    b.ToTable("SamlIdentityProviders");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.SamlServiceProvider", b =>
@@ -448,16 +476,18 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("EntityId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SingleLogoutUrl")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("SamlServiceProviderId");
 
                     b.HasIndex("EntityId");
 
-                    b.ToTable("saml_service_providers");
+                    b.ToTable("SamlServiceProviders");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.SamlSettings", b =>
@@ -474,7 +504,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
 
                     b.HasKey("SamlSettingsId");
 
-                    b.ToTable("saml_settings");
+                    b.ToTable("SamlSettings");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.Scenarios.ScenarioAccount", b =>
@@ -493,7 +523,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
 
                     b.HasIndex("ScenarioSessionId");
 
-                    b.ToTable("scenario_accounts");
+                    b.ToTable("ScenarioAccounts");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.Scenarios.ScenarioSession", b =>
@@ -512,13 +542,14 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("UserSubject")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("ScenarioSessionId");
 
                     b.HasIndex("UserSubject");
 
-                    b.ToTable("scenario_sessions");
+                    b.ToTable("ScenarioSessions");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.ServiceProviderRegistration", b =>
@@ -536,7 +567,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
 
                     b.HasKey("ServiceProviderRegistrationId");
 
-                    b.ToTable("service_provider_registrations");
+                    b.ToTable("ServiceProviderRegistrations");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.ServiceProviders.GroupRelation", b =>
@@ -546,15 +577,19 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("AssetId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("GroupName")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("GroupOwnerKey")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Issuer")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("GroupRelationId");
@@ -563,7 +598,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
 
                     b.HasIndex("Issuer");
 
-                    b.ToTable("group_relations");
+                    b.ToTable("GroupRelations");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.ServiceProviders.RegistrationCommitment", b =>
@@ -573,15 +608,19 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("AssetId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Commitment")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Issuer")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ServiceProviderInfo")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("RegistrationCommitmentId");
@@ -606,6 +645,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("GroupName")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("RelationGroupId");
@@ -625,6 +665,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<long?>("RegistrationCommitmentId")
@@ -670,9 +711,11 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("TransactionDescription")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("TransactionId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("SpUserTransactionId");
@@ -682,7 +725,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                     b.HasIndex("TransactionId")
                         .IsUnique();
 
-                    b.ToTable("sp_user_transactions");
+                    b.ToTable("SpUserTransactions");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.SpAttribute", b =>
@@ -699,9 +742,11 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("BLOB");
 
                     b.Property<string>("AttributeSchemeName")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Content")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<byte[]>("IssuingCommitment")
@@ -722,7 +767,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
 
                     b.HasKey("SpAttributeId");
 
-                    b.ToTable("sp_attributes");
+                    b.ToTable("SpAttributes");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.SpDocument", b =>
@@ -735,9 +780,11 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("DocumentName")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Hash")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<ulong>("LastChangeRecordHeight")
@@ -749,7 +796,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
 
                     b.HasIndex("DocumentName");
 
-                    b.ToTable("sp_documents");
+                    b.ToTable("SpDocuments");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.SpDocumentAllowedSigner", b =>
@@ -762,18 +809,22 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("BlindingFactor")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<long?>("DocumentSpDocumentId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("GroupCommitment")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("GroupIssuer")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("GroupName")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("SpDocumentAllowedSignerId");
@@ -782,7 +833,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
 
                     b.HasIndex("DocumentSpDocumentId");
 
-                    b.ToTable("sp_document_allowed_signers");
+                    b.ToTable("SpDocumentAllowedSigners");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.SpDocumentSignature", b =>
@@ -795,6 +846,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<byte[]>("DocumentSignRecord")
+                        .IsRequired()
                         .HasColumnType("BLOB");
 
                     b.Property<long?>("DocumentSpDocumentId")
@@ -811,7 +863,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
 
                     b.HasIndex("SignatureRecordHeight");
 
-                    b.ToTable("sp_document_signatures");
+                    b.ToTable("SpDocumentSignatures");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.SpIdenitityValidation", b =>
@@ -824,12 +876,14 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<byte[]>("GroupIdCriterion")
+                        .IsRequired()
                         .HasColumnType("BLOB");
 
                     b.Property<ushort?>("NumericCriterion")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("SchemeName")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<ushort>("ValidationType")
@@ -837,7 +891,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
 
                     b.HasKey("SpIdenitityValidationId");
 
-                    b.ToTable("sp_identity_validations");
+                    b.ToTable("SpIdenitityValidations");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.SynchronizationStatus", b =>
@@ -846,7 +900,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<long?>("AccountId")
+                    b.Property<long>("AccountId")
                         .HasColumnType("INTEGER");
 
                     b.Property<long>("LastUpdatedCombinedBlockHeight")
@@ -866,14 +920,16 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<byte[]>("BiometricSecretKey")
+                        .IsRequired()
                         .HasColumnType("BLOB");
 
                     b.Property<byte[]>("InitializationVector")
+                        .IsRequired()
                         .HasColumnType("BLOB");
 
                     b.HasKey("SystemSettingsId");
 
-                    b.ToTable("system_settings");
+                    b.ToTable("SystemSettings");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.UserAssociatedAttribute", b =>
@@ -886,9 +942,11 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("AttributeSchemeName")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Content")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("CreationTime")
@@ -898,6 +956,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<byte[]>("RootAssetId")
+                        .IsRequired()
                         .HasColumnType("BLOB");
 
                     b.Property<string>("Source")
@@ -906,7 +965,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
 
                     b.HasKey("UserAssociatedAttributeId");
 
-                    b.ToTable("user_associated_attribute");
+                    b.ToTable("UserAssociatedAttributes");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.UserGroupRelation", b =>
@@ -919,18 +978,23 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("AssetId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("GroupName")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("GroupOwnerKey")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("GroupOwnerName")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Issuer")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("UserGroupRelationId");
@@ -941,7 +1005,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
 
                     b.HasIndex("Issuer");
 
-                    b.ToTable("user_to_group_relations");
+                    b.ToTable("UserGroupRelations");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.UserRootAttribute", b =>
@@ -965,6 +1029,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Content")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime?>("CreationTime")
@@ -1009,6 +1074,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("BLOB");
 
                     b.Property<string>("SchemeName")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Source")
@@ -1036,12 +1102,12 @@ namespace O10.Client.DataLayer.SQLite.Migrations
 
                     b.HasIndex("AccountId");
 
-                    b.ToTable("user_settings");
+                    b.ToTable("UserSettings");
                 });
 
-            modelBuilder.Entity("O10.Client.DataLayer.Model.UserTransactionSecrets", b =>
+            modelBuilder.Entity("O10.Client.DataLayer.Model.UserTransactionSecret", b =>
                 {
-                    b.Property<long>("UserTransactionSecretsId")
+                    b.Property<long>("UserTransactionSecretId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
@@ -1049,21 +1115,24 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("AssetId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Issuer")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("KeyImage")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
-                    b.HasKey("UserTransactionSecretsId");
+                    b.HasKey("UserTransactionSecretId");
 
                     b.HasIndex("AccountId");
 
                     b.HasIndex("KeyImage");
 
-                    b.ToTable("user_transaction_secrets");
+                    b.ToTable("UserTransactionSecrets");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.Users.UserIdentityIssuer", b =>
@@ -1073,12 +1142,15 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Alias")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Key")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("UpdateTime")
@@ -1089,7 +1161,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                     b.HasIndex("Key")
                         .IsUnique();
 
-                    b.ToTable("user_identity_issuers");
+                    b.ToTable("UserIdentityIssuers");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.Users.UserRegistration", b =>
@@ -1102,15 +1174,19 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("AssetId")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Commitment")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Issuer")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ServiceProviderInfo")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.HasKey("UserRegistrationId");
@@ -1121,28 +1197,34 @@ namespace O10.Client.DataLayer.SQLite.Migrations
 
                     b.HasIndex("Issuer");
 
-                    b.ToTable("user_registrations");
+                    b.ToTable("UserRegistrations");
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.ElectionCommittee.EcCandidateRecord", b =>
                 {
                     b.HasOne("O10.Client.DataLayer.ElectionCommittee.EcPollRecord", "EcPollRecord")
                         .WithMany("Candidates")
-                        .HasForeignKey("EcPollRecordId");
+                        .HasForeignKey("EcPollRecordId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.ElectionCommittee.EcPollSelection", b =>
                 {
                     b.HasOne("O10.Client.DataLayer.ElectionCommittee.EcPollRecord", "EcPollRecord")
                         .WithMany("PollSelections")
-                        .HasForeignKey("EcPollRecordId");
+                        .HasForeignKey("EcPollRecordId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.AutoLogin", b =>
                 {
                     b.HasOne("O10.Client.DataLayer.Model.Account", "Account")
                         .WithMany()
-                        .HasForeignKey("AccountId");
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.IdentityAttribute", b =>
@@ -1210,7 +1292,9 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                 {
                     b.HasOne("O10.Client.DataLayer.Model.Account", "Account")
                         .WithMany()
-                        .HasForeignKey("AccountId");
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("O10.Client.DataLayer.Model.UserGroupRelation", b =>

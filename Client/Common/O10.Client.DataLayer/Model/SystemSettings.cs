@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Client.DataLayer.Model
 {
-    [Table("system_settings")]
+    [Table("SystemSettings")]
     public class SystemSettings
     {
         [Key]

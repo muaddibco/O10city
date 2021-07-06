@@ -4,14 +4,14 @@ using O10.Client.DataLayer.Enums;
 
 namespace O10.Client.DataLayer.Model
 {
-    [Table("attributes")]
+    [Table("IdentityAttributes")]
     public class IdentityAttribute
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public long AttributeId { get; set; }
 
-        public virtual Identity Identity { get; set; }
+        public Identity? Identity { get; set; }
 
         [Required]
         public string AttributeName { get; set; }
@@ -21,7 +21,7 @@ namespace O10.Client.DataLayer.Model
 
         public ClaimSubject Subject { get; set; }
 
-        public string Commitment { get; set; }
+        public string? Commitment { get; set; }
 
     }
 }

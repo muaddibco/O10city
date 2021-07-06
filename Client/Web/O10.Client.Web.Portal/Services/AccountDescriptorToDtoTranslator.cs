@@ -8,10 +8,15 @@ using O10.Core.Architecture;
 namespace O10.Client.Web.Portal.Services
 {
     [RegisterExtension(typeof(ITranslator), Lifetime = LifetimeManagement.Singleton)]
-    public class AccountDescriptorToDtoTranslator : TranslatorBase<AccountDescriptor, AccountDto>
+    public class AccountDescriptorToDtoTranslator : TranslatorBase<AccountDescriptor?, AccountDto?>
     {
-        public override AccountDto Translate(AccountDescriptor obj)
+        public override AccountDto? Translate(AccountDescriptor? obj)
         {
+            if(obj == null)
+            {
+                return null;
+            }
+
             return new AccountDto
             {
                 AccountId = obj.AccountId,

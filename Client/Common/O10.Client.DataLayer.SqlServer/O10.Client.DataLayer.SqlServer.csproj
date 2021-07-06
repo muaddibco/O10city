@@ -17,4 +17,7 @@
     <ProjectReference Include="..\..\..\Common\O10.Core\O10.Core.csproj" />
     <ProjectReference Include="..\O10.Client.DataLayer\O10.Client.DataLayer.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Migrations\" />
+  </ItemGroup>
 </Project>

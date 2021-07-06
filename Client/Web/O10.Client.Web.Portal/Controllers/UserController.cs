@@ -934,7 +934,7 @@ namespace O10.Client.Web.Portal.Controllers
                     _logger.Debug("attributesIssuanceRequest.MasterRootAttributeId == null");
                 }
 
-                string rootAttributeContent = attributes.FirstOrDefault(a => a.Key == rootAttributeDefinition.AttributeName).Value;
+                string rootAttributeContent = attributes.FirstOrDefault(a => a.Key.Equals(rootAttributeDefinition.AttributeName, StringComparison.InvariantCultureIgnoreCase)).Value;
                 if (string.IsNullOrEmpty(rootAttributeContent))
                 {
                     throw new NoValueForAttributeException(rootAttributeDefinition.AttributeName);
@@ -1020,8 +1020,8 @@ namespace O10.Client.Web.Portal.Controllers
                                         Value = kv.Value,
                                         BlindingPointValue =
                                             assetsService.GetBlindingPoint(bindingKey, rootAssetId,
-                                                assetsService.GenerateAssetId(rootAttributeDefinition.AttributeName == kv.Key ? rootAttributeDefinition.SchemeId : associateAttributeDefinitions.FirstOrDefault(a => a.AttributeName == kv.Key).SchemeId, kv.Value)),
-                                        BlindingPointRoot = kv.Key == rootAttributeName ? blindingPointRootToRoot : blindingPointAssociatedToParent
+                                                assetsService.GenerateAssetId(kv.Key.Equals(rootAttributeDefinition.AttributeName, StringComparison.InvariantCultureIgnoreCase) ? rootAttributeDefinition.SchemeId : associateAttributeDefinitions.FirstOrDefault(a => kv.Key.Equals(a.AttributeName, StringComparison.InvariantCultureIgnoreCase)).SchemeId, kv.Value)),
+                                        BlindingPointRoot = kv.Key.Equals(rootAttributeName, StringComparison.InvariantCultureIgnoreCase) ? blindingPointRootToRoot : blindingPointAssociatedToParent
                                     }))
                             .ToDictionary(kv => kv.Key, kv => kv.Value);
                 }

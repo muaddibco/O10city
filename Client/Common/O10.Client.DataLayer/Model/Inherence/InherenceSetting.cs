@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Client.DataLayer.Model.Inherence
 {
-    [Table("inherence_settings")]
+    [Table("InherenceSettings")]
     public class InherenceSetting
     {
         [Key]

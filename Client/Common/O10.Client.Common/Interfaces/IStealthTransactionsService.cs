@@ -27,6 +27,6 @@ namespace O10.Client.Common.Interfaces
 
         IKey NextKeyImage { get; }
 
-        UserTransactionSecrets PopLastTransactionSecrets();
+        UserTransactionSecret PopLastTransactionSecrets();
     }
 }

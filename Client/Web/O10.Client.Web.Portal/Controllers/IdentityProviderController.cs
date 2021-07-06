@@ -486,14 +486,14 @@ namespace O10.Client.Web.Portal.Controllers
             {
                 List<AttributeValue> attributeValues = new List<AttributeValue>();
                 var protectionAttrDefinition = attributeDefinitions.FirstOrDefault(a => a.SchemeName == AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD);
-                foreach (var attributeName in attributes.Keys.Where(a => protectionAttrDefinition?.AttributeName != a))
+                foreach (var attributeName in attributes.Keys.Where(a => !(protectionAttrDefinition?.AttributeName.Equals(a, StringComparison.InvariantCultureIgnoreCase) ?? false)))
                 {
                     string content = attributes[attributeName].Value;
 
                     AttributeValue attributeValue = new AttributeValue
                     {
                         Value = content,
-                        Definition = attributeDefinitions.FirstOrDefault(d => d.AttributeName == attributeName)
+                        Definition = attributeDefinitions.FirstOrDefault(d => d.AttributeName.Equals(attributeName, StringComparison.InvariantCultureIgnoreCase))
                     };
                     attributeValues.Add(attributeValue);
                 }
@@ -600,7 +600,7 @@ namespace O10.Client.Web.Portal.Controllers
 
             static IEnumerable<AttributeIssuanceDetails> GetValidatedIssuanceDetails(IssueAttributesRequestDTO request, IEnumerable<AttributeDefinition> attributeDefinitions)
             {
-                IEnumerable<string> notSupportedAttributeNames = request.Attributes.Keys.Where(k => attributeDefinitions.All(a => a.AttributeName != k));
+                IEnumerable<string> notSupportedAttributeNames = request.Attributes.Keys.Where(k => attributeDefinitions.All(a => !a.AttributeName.Equals(k, StringComparison.InvariantCultureIgnoreCase)));
 
                 if (notSupportedAttributeNames?.Any() ?? false)
                 {
@@ -610,7 +610,7 @@ namespace O10.Client.Web.Portal.Controllers
                 IEnumerable<AttributeIssuanceDetails> attributeIssuanceDetails = request.Attributes.Select(kv =>
                     new AttributeIssuanceDetails
                     {
-                        Definition = attributeDefinitions.FirstOrDefault(a => a.AttributeName == kv.Key),
+                        Definition = attributeDefinitions.FirstOrDefault(a => a.AttributeName.Equals(kv.Key, StringComparison.InvariantCultureIgnoreCase)),
                         Value = kv.Value
                     });
 

@@ -73,6 +73,15 @@ namespace O10.Client.Web.Portal.Controllers
             _restApiConfiguration = configurationService.Get<IRestApiConfiguration>();
         }
 
+        [HttpGet("Find")]
+        public IActionResult FindAccount(string accountAlias)
+        {
+            var accountDescriptor = _accountsService.FindByAlias(accountAlias);
+            var accountDto = _translatorsRepository.GetInstance<AccountDescriptor, AccountDto>().Translate(accountDescriptor);
+
+            return Ok(accountDto);
+        }
+
         [HttpPost("Authenticate")]
         public IActionResult Authenticate([FromBody] AccountDto accountDto)
         {

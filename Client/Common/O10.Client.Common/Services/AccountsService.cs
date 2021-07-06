@@ -99,6 +99,15 @@ namespace O10.Client.Common.Services
             return accountDescriptor;
         }
 
+        public AccountDescriptor? FindByAlias(string alias)
+        {
+            var account = _dataAccessService.FindAccountByAlias(alias);
+
+            var accountDescriptor = _translatorsRepository.GetInstance<Account, AccountDescriptor>()?.Translate(account);
+
+            return accountDescriptor;
+        }
+
         public long Create(AccountType accountType, string accountInfo = null, string password = null, bool isPrivate = false) =>
             string.IsNullOrEmpty(password)
                 ? AddNonEncryptedAccount(accountType)

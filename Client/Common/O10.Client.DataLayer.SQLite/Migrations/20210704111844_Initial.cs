@@ -14,8 +14,8 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                     AccountKeyValueId = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     AccountId = table.Column<long>(nullable: false),
-                    Key = table.Column<string>(maxLength: 255, nullable: true),
-                    Value = table.Column<string>(nullable: true)
+                    Key = table.Column<string>(maxLength: 255, nullable: false),
+                    Value = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -23,59 +23,59 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "accounts",
+                name: "Accounts",
                 columns: table => new
                 {
                     AccountId = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     SecretViewKey = table.Column<byte[]>(nullable: true),
                     PublicViewKey = table.Column<byte[]>(nullable: true),
-                    SecretSpendKey = table.Column<byte[]>(nullable: true),
-                    PublicSpendKey = table.Column<byte[]>(nullable: true),
+                    SecretSpendKey = table.Column<byte[]>(nullable: false),
+                    PublicSpendKey = table.Column<byte[]>(nullable: false),
                     AccountType = table.Column<byte>(nullable: false),
-                    AccountInfo = table.Column<string>(nullable: true),
+                    AccountInfo = table.Column<string>(nullable: false),
                     IsCompromised = table.Column<bool>(nullable: false),
-                    LastAggregatedRegistrations = table.Column<ulong>(nullable: false),
+                    LastAggregatedRegistrations = table.Column<long>(nullable: false),
                     IsPrivate = table.Column<bool>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_accounts", x => x.AccountId);
+                    table.PrimaryKey("PK_Accounts", x => x.AccountId);
                 });
 
             migrationBuilder.CreateTable(
-                name: "associated_attribute_backup",
+                name: "AssociatedAttributeBackups",
                 columns: table => new
                 {
                     AssociatedAttributeBackupId = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    RootIssuer = table.Column<string>(nullable: true),
-                    RootAssetId = table.Column<string>(nullable: true),
-                    AssociatedIssuer = table.Column<string>(nullable: true),
-                    SchemeName = table.Column<string>(nullable: true),
-                    Content = table.Column<string>(nullable: true)
+                    RootIssuer = table.Column<string>(nullable: false),
+                    RootAssetId = table.Column<string>(nullable: false),
+                    AssociatedIssuer = table.Column<string>(nullable: false),
+                    SchemeName = table.Column<string>(nullable: false),
+                    Content = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_associated_attribute_backup", x => x.AssociatedAttributeBackupId);
+                    table.PrimaryKey("PK_AssociatedAttributeBackups", x => x.AssociatedAttributeBackupId);
                 });
 
             migrationBuilder.CreateTable(
-                name: "biometric_records",
+                name: "BiometricRecords",
                 columns: table => new
                 {
                     BiometricRecordId = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    UserData = table.Column<string>(nullable: true),
+                    UserData = table.Column<string>(nullable: false),
                     PersonGuid = table.Column<Guid>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_biometric_records", x => x.BiometricRecordId);
+                    table.PrimaryKey("PK_BiometricRecords", x => x.BiometricRecordId);
                 });
 
             migrationBuilder.CreateTable(
-                name: "consent_management_settings",
+                name: "ConsentManagementSettings",
                 columns: table => new
                 {
                     ConsentManagementSettingsId = table.Column<long>(nullable: false)
@@ -84,7 +84,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_consent_management_settings", x => x.ConsentManagementSettingsId);
+                    table.PrimaryKey("PK_ConsentManagementSettings", x => x.ConsentManagementSettingsId);
                 });
 
             migrationBuilder.CreateTable(
@@ -93,7 +93,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                 {
                     EcPollRecordId = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(nullable: true),
+                    Name = table.Column<string>(nullable: false),
                     State = table.Column<int>(nullable: false),
                     AccountId = table.Column<long>(nullable: false)
                 },
@@ -103,39 +103,53 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "external_identity_providers",
+                name: "ExternalIdentityProviders",
                 columns: table => new
                 {
                     ExternalIdentityProviderId = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(nullable: true),
-                    Alias = table.Column<string>(nullable: true),
-                    Description = table.Column<string>(nullable: true),
+                    Name = table.Column<string>(nullable: false),
+                    Alias = table.Column<string>(nullable: false),
+                    Description = table.Column<string>(nullable: false),
                     AccountId = table.Column<long>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_external_identity_providers", x => x.ExternalIdentityProviderId);
+                    table.PrimaryKey("PK_ExternalIdentityProviders", x => x.ExternalIdentityProviderId);
                 });
 
             migrationBuilder.CreateTable(
-                name: "group_relations",
+                name: "GroupRelations",
                 columns: table => new
                 {
                     GroupRelationId = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    GroupOwnerKey = table.Column<string>(nullable: true),
-                    GroupName = table.Column<string>(nullable: true),
-                    AssetId = table.Column<string>(nullable: true),
-                    Issuer = table.Column<string>(nullable: true)
+                    GroupOwnerKey = table.Column<string>(nullable: false),
+                    GroupName = table.Column<string>(nullable: false),
+                    AssetId = table.Column<string>(nullable: false),
+                    Issuer = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_group_relations", x => x.GroupRelationId);
+                    table.PrimaryKey("PK_GroupRelations", x => x.GroupRelationId);
                 });
 
             migrationBuilder.CreateTable(
-                name: "identities_schemes",
+                name: "Identities",
+                columns: table => new
+                {
+                    IdentityId = table.Column<long>(nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    AccountId = table.Column<long>(nullable: false),
+                    Description = table.Column<string>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Identities", x => x.IdentityId);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "IdentitiesSchemes",
                 columns: table => new
                 {
                     IdentitiesSchemeId = table.Column<long>(nullable: false)
@@ -146,25 +160,11 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                     Description = table.Column<string>(nullable: true),
                     IsActive = table.Column<bool>(nullable: false),
                     CanBeRoot = table.Column<bool>(nullable: false),
-                    Issuer = table.Column<string>(nullable: true)
+                    Issuer = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_identities_schemes", x => x.IdentitiesSchemeId);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "identity",
-                columns: table => new
-                {
-                    IdentityId = table.Column<long>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    AccountId = table.Column<long>(nullable: false),
-                    Description = table.Column<string>(nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_identity", x => x.IdentityId);
+                    table.PrimaryKey("PK_IdentitiesSchemes", x => x.IdentitiesSchemeId);
                 });
 
             migrationBuilder.CreateTable(
@@ -174,8 +174,8 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                     IdentityTargetId = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     IdentityId = table.Column<long>(nullable: false),
-                    PublicSpendKey = table.Column<string>(nullable: true),
-                    PublicViewKey = table.Column<string>(nullable: true)
+                    PublicSpendKey = table.Column<string>(nullable: false),
+                    PublicViewKey = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -183,7 +183,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "inherence_settings",
+                name: "InherenceSettings",
                 columns: table => new
                 {
                     InherenceSettingId = table.Column<long>(nullable: false)
@@ -193,11 +193,11 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_inherence_settings", x => x.InherenceSettingId);
+                    table.PrimaryKey("PK_InherenceSettings", x => x.InherenceSettingId);
                 });
 
             migrationBuilder.CreateTable(
-                name: "processed_witnesses",
+                name: "ProcessedWitnesss",
                 columns: table => new
                 {
                     ProcessedWitnessId = table.Column<long>(nullable: false)
@@ -208,56 +208,56 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_processed_witnesses", x => x.ProcessedWitnessId);
+                    table.PrimaryKey("PK_ProcessedWitnesss", x => x.ProcessedWitnessId);
                 });
 
             migrationBuilder.CreateTable(
-                name: "registration_commitments",
+                name: "RegistrationCommitments",
                 columns: table => new
                 {
                     RegistrationCommitmentId = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Commitment = table.Column<string>(nullable: true),
-                    ServiceProviderInfo = table.Column<string>(nullable: true),
-                    AssetId = table.Column<string>(nullable: true),
-                    Issuer = table.Column<string>(nullable: true)
+                    Commitment = table.Column<string>(nullable: false),
+                    ServiceProviderInfo = table.Column<string>(nullable: false),
+                    AssetId = table.Column<string>(nullable: false),
+                    Issuer = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_registration_commitments", x => x.RegistrationCommitmentId);
+                    table.PrimaryKey("PK_RegistrationCommitments", x => x.RegistrationCommitmentId);
                 });
 
             migrationBuilder.CreateTable(
-                name: "saml_identity_providers",
+                name: "SamlIdentityProviders",
                 columns: table => new
                 {
                     SamlIdentityProviderId = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    EntityId = table.Column<string>(nullable: true),
-                    SecretViewKey = table.Column<string>(nullable: true),
-                    PublicSpendKey = table.Column<string>(nullable: true)
+                    EntityId = table.Column<string>(nullable: false),
+                    SecretViewKey = table.Column<string>(nullable: false),
+                    PublicSpendKey = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_saml_identity_providers", x => x.SamlIdentityProviderId);
+                    table.PrimaryKey("PK_SamlIdentityProviders", x => x.SamlIdentityProviderId);
                 });
 
             migrationBuilder.CreateTable(
-                name: "saml_service_providers",
+                name: "SamlServiceProviders",
                 columns: table => new
                 {
                     SamlServiceProviderId = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    EntityId = table.Column<string>(nullable: true),
-                    SingleLogoutUrl = table.Column<string>(nullable: true)
+                    EntityId = table.Column<string>(nullable: false),
+                    SingleLogoutUrl = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_saml_service_providers", x => x.SamlServiceProviderId);
+                    table.PrimaryKey("PK_SamlServiceProviders", x => x.SamlServiceProviderId);
                 });
 
             migrationBuilder.CreateTable(
-                name: "saml_settings",
+                name: "SamlSettings",
                 columns: table => new
                 {
                     SamlSettingsId = table.Column<long>(nullable: false)
@@ -267,27 +267,27 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_saml_settings", x => x.SamlSettingsId);
+                    table.PrimaryKey("PK_SamlSettings", x => x.SamlSettingsId);
                 });
 
             migrationBuilder.CreateTable(
-                name: "scenario_sessions",
+                name: "ScenarioSessions",
                 columns: table => new
                 {
                     ScenarioSessionId = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    UserSubject = table.Column<string>(nullable: true),
+                    UserSubject = table.Column<string>(nullable: false),
                     ScenarioId = table.Column<int>(nullable: false),
                     StartTime = table.Column<DateTime>(nullable: false),
                     CurrentStep = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_scenario_sessions", x => x.ScenarioSessionId);
+                    table.PrimaryKey("PK_ScenarioSessions", x => x.ScenarioSessionId);
                 });
 
             migrationBuilder.CreateTable(
-                name: "service_provider_registrations",
+                name: "ServiceProviderRegistrations",
                 columns: table => new
                 {
                     ServiceProviderRegistrationId = table.Column<long>(nullable: false)
@@ -297,18 +297,18 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_service_provider_registrations", x => x.ServiceProviderRegistrationId);
+                    table.PrimaryKey("PK_ServiceProviderRegistrations", x => x.ServiceProviderRegistrationId);
                 });
 
             migrationBuilder.CreateTable(
-                name: "sp_attributes",
+                name: "SpAttributes",
                 columns: table => new
                 {
                     SpAttributeId = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     AccountId = table.Column<long>(nullable: false),
-                    AttributeSchemeName = table.Column<string>(nullable: true),
-                    Content = table.Column<string>(nullable: true),
+                    AttributeSchemeName = table.Column<string>(nullable: false),
+                    Content = table.Column<string>(nullable: false),
                     AssetId = table.Column<byte[]>(nullable: false),
                     Source = table.Column<string>(nullable: false),
                     OriginalBlindingFactor = table.Column<byte[]>(nullable: false),
@@ -317,108 +317,109 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_sp_attributes", x => x.SpAttributeId);
+                    table.PrimaryKey("PK_SpAttributes", x => x.SpAttributeId);
                 });
 
             migrationBuilder.CreateTable(
-                name: "sp_identity_validations",
+                name: "SpIdenitityValidations",
                 columns: table => new
                 {
                     SpIdenitityValidationId = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     AccountId = table.Column<long>(nullable: false),
-                    SchemeName = table.Column<string>(nullable: true),
+                    SchemeName = table.Column<string>(nullable: false),
                     ValidationType = table.Column<ushort>(nullable: false),
                     NumericCriterion = table.Column<ushort>(nullable: true),
-                    GroupIdCriterion = table.Column<byte[]>(nullable: true)
+                    GroupIdCriterion = table.Column<byte[]>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_sp_identity_validations", x => x.SpIdenitityValidationId);
+                    table.PrimaryKey("PK_SpIdenitityValidations", x => x.SpIdenitityValidationId);
                 });
 
             migrationBuilder.CreateTable(
-                name: "sp_user_transactions",
+                name: "SpUserTransactions",
                 columns: table => new
                 {
                     SpUserTransactionId = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     AccountId = table.Column<long>(nullable: false),
                     ServiceProviderRegistrationId = table.Column<long>(nullable: false),
-                    TransactionId = table.Column<string>(nullable: true),
-                    TransactionDescription = table.Column<string>(nullable: true),
+                    TransactionId = table.Column<string>(nullable: false),
+                    TransactionDescription = table.Column<string>(nullable: false),
                     IsProcessed = table.Column<bool>(nullable: false),
                     IsConfirmed = table.Column<bool>(nullable: false),
                     IsCompromised = table.Column<bool>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_sp_user_transactions", x => x.SpUserTransactionId);
+                    table.PrimaryKey("PK_SpUserTransactions", x => x.SpUserTransactionId);
                 });
 
             migrationBuilder.CreateTable(
-                name: "system_settings",
+                name: "SystemSettings",
                 columns: table => new
                 {
                     SystemSettingsId = table.Column<int>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    InitializationVector = table.Column<byte[]>(nullable: true),
-                    BiometricSecretKey = table.Column<byte[]>(nullable: true)
+                    InitializationVector = table.Column<byte[]>(nullable: false),
+                    BiometricSecretKey = table.Column<byte[]>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_system_settings", x => x.SystemSettingsId);
+                    table.PrimaryKey("PK_SystemSettings", x => x.SystemSettingsId);
                 });
 
             migrationBuilder.CreateTable(
-                name: "user_associated_attribute",
+                name: "UserAssociatedAttributes",
                 columns: table => new
                 {
                     UserAssociatedAttributeId = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     AccountId = table.Column<long>(nullable: false),
-                    AttributeSchemeName = table.Column<string>(nullable: true),
-                    Content = table.Column<string>(nullable: true),
+                    AttributeSchemeName = table.Column<string>(nullable: false),
+                    Content = table.Column<string>(nullable: false),
                     Source = table.Column<string>(nullable: false),
                     CreationTime = table.Column<DateTime>(nullable: true),
                     LastUpdateTime = table.Column<DateTime>(nullable: true),
-                    RootAssetId = table.Column<byte[]>(nullable: true)
+                    RootAssetId = table.Column<byte[]>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_user_associated_attribute", x => x.UserAssociatedAttributeId);
+                    table.PrimaryKey("PK_UserAssociatedAttributes", x => x.UserAssociatedAttributeId);
                 });
 
             migrationBuilder.CreateTable(
-                name: "user_identity_issuers",
+                name: "UserIdentityIssuers",
                 columns: table => new
                 {
                     UserIdentityIssuerId = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Key = table.Column<string>(nullable: true),
-                    Alias = table.Column<string>(nullable: true),
-                    Description = table.Column<string>(nullable: true),
+                    Key = table.Column<string>(nullable: false),
+                    Alias = table.Column<string>(nullable: false),
+                    Description = table.Column<string>(nullable: false),
                     UpdateTime = table.Column<DateTime>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_user_identity_issuers", x => x.UserIdentityIssuerId);
+                    table.PrimaryKey("PK_UserIdentityIssuers", x => x.UserIdentityIssuerId);
                 });
 
             migrationBuilder.CreateTable(
-                name: "user_root_attributes",
+                name: "UserRootAttributes",
                 columns: table => new
                 {
                     UserAttributeId = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     AccountId = table.Column<long>(nullable: false),
-                    SchemeName = table.Column<string>(nullable: true),
-                    Content = table.Column<string>(nullable: true),
+                    SchemeName = table.Column<string>(nullable: false),
+                    Content = table.Column<string>(nullable: false),
                     AssetId = table.Column<byte[]>(nullable: false),
                     Source = table.Column<string>(nullable: false),
-                    IssuanceCommitment = table.Column<byte[]>(nullable: false),
+                    AnchoringOriginationCommitment = table.Column<byte[]>(nullable: false),
                     OriginalBlindingFactor = table.Column<byte[]>(nullable: false),
-                    OriginalCommitment = table.Column<byte[]>(nullable: false),
+                    IssuanceTransactionKey = table.Column<byte[]>(nullable: false),
+                    IssuanceCommitment = table.Column<byte[]>(nullable: false),
                     LastBlindingFactor = table.Column<byte[]>(nullable: false),
                     LastCommitment = table.Column<byte[]>(nullable: false),
                     LastTransactionKey = table.Column<byte[]>(nullable: false),
@@ -431,133 +432,156 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_user_root_attributes", x => x.UserAttributeId);
+                    table.PrimaryKey("PK_UserRootAttributes", x => x.UserAttributeId);
                 });
 
             migrationBuilder.CreateTable(
-                name: "user_transaction_secrets",
+                name: "UserTransactionSecrets",
                 columns: table => new
                 {
-                    UserTransactionSecretsId = table.Column<long>(nullable: false)
+                    UserTransactionSecretId = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     AccountId = table.Column<long>(nullable: false),
-                    KeyImage = table.Column<string>(nullable: true),
-                    Issuer = table.Column<string>(nullable: true),
-                    AssetId = table.Column<string>(nullable: true),
-                    BlindingFactor = table.Column<string>(nullable: true)
+                    KeyImage = table.Column<string>(nullable: false),
+                    Issuer = table.Column<string>(nullable: false),
+                    AssetId = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_user_transaction_secrets", x => x.UserTransactionSecretsId);
+                    table.PrimaryKey("PK_UserTransactionSecrets", x => x.UserTransactionSecretId);
                 });
 
             migrationBuilder.CreateTable(
-                name: "auto_logins",
+                name: "AutoLogins",
                 columns: table => new
                 {
                     AutoLoginId = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    SecretKey = table.Column<byte[]>(nullable: true),
-                    AccountId = table.Column<long>(nullable: true)
+                    SecretKey = table.Column<byte[]>(nullable: false),
+                    AccountId = table.Column<long>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_auto_logins", x => x.AutoLoginId);
+                    table.PrimaryKey("PK_AutoLogins", x => x.AutoLoginId);
                     table.ForeignKey(
-                        name: "FK_auto_logins_accounts_AccountId",
+                        name: "FK_AutoLogins_Accounts_AccountId",
                         column: x => x.AccountId,
-                        principalTable: "accounts",
+                        principalTable: "Accounts",
+                        principalColumn: "AccountId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RelationGroups",
+                columns: table => new
+                {
+                    RelationGroupId = table.Column<long>(nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    AccountId = table.Column<long>(nullable: true),
+                    GroupName = table.Column<string>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RelationGroups", x => x.RelationGroupId);
+                    table.ForeignKey(
+                        name: "FK_RelationGroups_Accounts_AccountId",
+                        column: x => x.AccountId,
+                        principalTable: "Accounts",
                         principalColumn: "AccountId",
                         onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
-                name: "sp_documents",
+                name: "SpDocuments",
                 columns: table => new
                 {
                     SpDocumentId = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     AccountId = table.Column<long>(nullable: true),
-                    DocumentName = table.Column<string>(nullable: true),
-                    Hash = table.Column<string>(nullable: true),
+                    DocumentName = table.Column<string>(nullable: false),
+                    Hash = table.Column<string>(nullable: false),
                     LastChangeRecordHeight = table.Column<ulong>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_sp_documents", x => x.SpDocumentId);
+                    table.PrimaryKey("PK_SpDocuments", x => x.SpDocumentId);
                     table.ForeignKey(
-                        name: "FK_sp_documents_accounts_AccountId",
+                        name: "FK_SpDocuments_Accounts_AccountId",
                         column: x => x.AccountId,
-                        principalTable: "accounts",
+                        principalTable: "Accounts",
                         principalColumn: "AccountId",
                         onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
-                name: "sp_employee_groups",
-                columns: table => new
-                {
-                    SpEmployeeGroupId = table.Column<long>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    AccountId = table.Column<long>(nullable: true),
-                    GroupName = table.Column<string>(nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_sp_employee_groups", x => x.SpEmployeeGroupId);
-                    table.ForeignKey(
-                        name: "FK_sp_employee_groups_accounts_AccountId",
-                        column: x => x.AccountId,
-                        principalTable: "accounts",
-                        principalColumn: "AccountId",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "synchronization_statuses",
+                name: "SynchronizationStatuses",
                 columns: table => new
                 {
                     SynchronizationStatusId = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    AccountId = table.Column<long>(nullable: true),
-                    LastUpdatedCombinedBlockHeight = table.Column<ulong>(nullable: false)
+                    AccountId = table.Column<long>(nullable: false),
+                    LastUpdatedCombinedBlockHeight = table.Column<long>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_synchronization_statuses", x => x.SynchronizationStatusId);
+                    table.PrimaryKey("PK_SynchronizationStatuses", x => x.SynchronizationStatusId);
                     table.ForeignKey(
-                        name: "FK_synchronization_statuses_accounts_AccountId",
+                        name: "FK_SynchronizationStatuses_Accounts_AccountId",
                         column: x => x.AccountId,
-                        principalTable: "accounts",
+                        principalTable: "Accounts",
+                        principalColumn: "AccountId",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserGroupRelations",
+                columns: table => new
+                {
+                    UserGroupRelationId = table.Column<long>(nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    AccountId = table.Column<long>(nullable: true),
+                    GroupOwnerName = table.Column<string>(nullable: false),
+                    GroupOwnerKey = table.Column<string>(nullable: false),
+                    GroupName = table.Column<string>(nullable: false),
+                    AssetId = table.Column<string>(nullable: false),
+                    Issuer = table.Column<string>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserGroupRelations", x => x.UserGroupRelationId);
+                    table.ForeignKey(
+                        name: "FK_UserGroupRelations_Accounts_AccountId",
+                        column: x => x.AccountId,
+                        principalTable: "Accounts",
                         principalColumn: "AccountId",
                         onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
-                name: "user_registrations",
+                name: "UserRegistrations",
                 columns: table => new
                 {
                     UserRegistrationId = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     AccountId = table.Column<long>(nullable: true),
-                    Commitment = table.Column<string>(nullable: true),
-                    ServiceProviderInfo = table.Column<string>(nullable: true),
-                    AssetId = table.Column<string>(nullable: true),
-                    Issuer = table.Column<string>(nullable: true)
+                    Commitment = table.Column<string>(nullable: false),
+                    ServiceProviderInfo = table.Column<string>(nullable: false),
+                    AssetId = table.Column<string>(nullable: false),
+                    Issuer = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_user_registrations", x => x.UserRegistrationId);
+                    table.PrimaryKey("PK_UserRegistrations", x => x.UserRegistrationId);
                     table.ForeignKey(
-                        name: "FK_user_registrations_accounts_AccountId",
+                        name: "FK_UserRegistrations_Accounts_AccountId",
                         column: x => x.AccountId,
-                        principalTable: "accounts",
+                        principalTable: "Accounts",
                         principalColumn: "AccountId",
                         onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
-                name: "user_settings",
+                name: "UserSettings",
                 columns: table => new
                 {
                     UserSettingsId = table.Column<long>(nullable: false)
@@ -567,35 +591,11 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_user_settings", x => x.UserSettingsId);
+                    table.PrimaryKey("PK_UserSettings", x => x.UserSettingsId);
                     table.ForeignKey(
-                        name: "FK_user_settings_accounts_AccountId",
+                        name: "FK_UserSettings_Accounts_AccountId",
                         column: x => x.AccountId,
-                        principalTable: "accounts",
-                        principalColumn: "AccountId",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "user_to_group_relations",
-                columns: table => new
-                {
-                    UserGroupRelationId = table.Column<long>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    AccountId = table.Column<long>(nullable: true),
-                    GroupOwnerName = table.Column<string>(nullable: true),
-                    GroupOwnerKey = table.Column<string>(nullable: true),
-                    GroupName = table.Column<string>(nullable: true),
-                    AssetId = table.Column<string>(nullable: true),
-                    Issuer = table.Column<string>(nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_user_to_group_relations", x => x.UserGroupRelationId);
-                    table.ForeignKey(
-                        name: "FK_user_to_group_relations_accounts_AccountId",
-                        column: x => x.AccountId,
-                        principalTable: "accounts",
+                        principalTable: "Accounts",
                         principalColumn: "AccountId",
                         onDelete: ReferentialAction.Restrict);
                 });
@@ -606,10 +606,10 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                 {
                     EcCandidateRecordId = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(nullable: true),
-                    AssetId = table.Column<string>(nullable: true),
+                    Name = table.Column<string>(nullable: false),
+                    AssetId = table.Column<string>(nullable: false),
                     IsActive = table.Column<bool>(nullable: false),
-                    EcPollRecordId = table.Column<long>(nullable: true)
+                    EcPollRecordId = table.Column<long>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -619,7 +619,7 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         column: x => x.EcPollRecordId,
                         principalTable: "EcPollRecords",
                         principalColumn: "EcPollRecordId",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -628,10 +628,10 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                 {
                     EcPollSelectionId = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    EcPollRecordId = table.Column<long>(nullable: true),
-                    EcCommitment = table.Column<string>(nullable: true),
-                    EcBlindingFactor = table.Column<string>(nullable: true),
-                    VoterBlindingFactor = table.Column<string>(nullable: true)
+                    EcPollRecordId = table.Column<long>(nullable: false),
+                    EcCommitment = table.Column<string>(nullable: false),
+                    EcBlindingFactor = table.Column<string>(nullable: false),
+                    VoterBlindingFactor = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -641,11 +641,11 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                         column: x => x.EcPollRecordId,
                         principalTable: "EcPollRecords",
                         principalColumn: "EcPollRecordId",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
-                name: "attributes",
+                name: "IdentityAttributes",
                 columns: table => new
                 {
                     AttributeId = table.Column<long>(nullable: false)
@@ -654,21 +654,21 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                     AttributeName = table.Column<string>(nullable: false),
                     Content = table.Column<string>(nullable: false),
                     Subject = table.Column<int>(nullable: false),
-                    Commitment = table.Column<byte[]>(nullable: true)
+                    Commitment = table.Column<string>(nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_attributes", x => x.AttributeId);
+                    table.PrimaryKey("PK_IdentityAttributes", x => x.AttributeId);
                     table.ForeignKey(
-                        name: "FK_attributes_identity_IdentityId",
+                        name: "FK_IdentityAttributes_Identities_IdentityId",
                         column: x => x.IdentityId,
-                        principalTable: "identity",
+                        principalTable: "Identities",
                         principalColumn: "IdentityId",
                         onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
-                name: "scenario_accounts",
+                name: "ScenarioAccounts",
                 columns: table => new
                 {
                     ScenarioAccountId = table.Column<long>(nullable: false)
@@ -678,47 +678,82 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_scenario_accounts", x => x.ScenarioAccountId);
+                    table.PrimaryKey("PK_ScenarioAccounts", x => x.ScenarioAccountId);
                     table.ForeignKey(
-                        name: "FK_scenario_accounts_scenario_sessions_ScenarioSessionId",
+                        name: "FK_ScenarioAccounts_ScenarioSessions_ScenarioSessionId",
                         column: x => x.ScenarioSessionId,
-                        principalTable: "scenario_sessions",
+                        principalTable: "ScenarioSessions",
                         principalColumn: "ScenarioSessionId",
                         onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
-                name: "sp_document_allowed_signers",
+                name: "RelationRecords",
+                columns: table => new
+                {
+                    RelationRecordId = table.Column<long>(nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    AccountId = table.Column<long>(nullable: true),
+                    Description = table.Column<string>(nullable: false),
+                    RootAttributeValue = table.Column<string>(nullable: false),
+                    RegistrationCommitmentId = table.Column<long>(nullable: true),
+                    RelationGroupId = table.Column<long>(nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RelationRecords", x => x.RelationRecordId);
+                    table.ForeignKey(
+                        name: "FK_RelationRecords_Accounts_AccountId",
+                        column: x => x.AccountId,
+                        principalTable: "Accounts",
+                        principalColumn: "AccountId",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_RelationRecords_RegistrationCommitments_RegistrationCommitmentId",
+                        column: x => x.RegistrationCommitmentId,
+                        principalTable: "RegistrationCommitments",
+                        principalColumn: "RegistrationCommitmentId",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_RelationRecords_RelationGroups_RelationGroupId",
+                        column: x => x.RelationGroupId,
+                        principalTable: "RelationGroups",
+                        principalColumn: "RelationGroupId",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SpDocumentAllowedSigners",
                 columns: table => new
                 {
                     SpDocumentAllowedSignerId = table.Column<long>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     AccountId = table.Column<long>(nullable: true),
                     DocumentSpDocumentId = table.Column<long>(nullable: true),
-                    GroupIssuer = table.Column<string>(nullable: true),
-                    GroupName = table.Column<string>(nullable: true),
-                    GroupCommitment = table.Column<string>(nullable: true),
-                    BlindingFactor = table.Column<string>(nullable: true)
+                    GroupIssuer = table.Column<string>(nullable: false),
+                    GroupName = table.Column<string>(nullable: false),
+                    GroupCommitment = table.Column<string>(nullable: false),
+                    BlindingFactor = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_sp_document_allowed_signers", x => x.SpDocumentAllowedSignerId);
+                    table.PrimaryKey("PK_SpDocumentAllowedSigners", x => x.SpDocumentAllowedSignerId);
                     table.ForeignKey(
-                        name: "FK_sp_document_allowed_signers_accounts_AccountId",
+                        name: "FK_SpDocumentAllowedSigners_Accounts_AccountId",
                         column: x => x.AccountId,
-                        principalTable: "accounts",
+                        principalTable: "Accounts",
                         principalColumn: "AccountId",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
-                        name: "FK_sp_document_allowed_signers_sp_documents_DocumentSpDocumentId",
+                        name: "FK_SpDocumentAllowedSigners_SpDocuments_DocumentSpDocumentId",
                         column: x => x.DocumentSpDocumentId,
-                        principalTable: "sp_documents",
+                        principalTable: "SpDocuments",
                         principalColumn: "SpDocumentId",
                         onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
-                name: "sp_document_signatures",
+                name: "SpDocumentSignatures",
                 columns: table => new
                 {
                     SpDocumentSignatureId = table.Column<long>(nullable: false)
@@ -726,45 +761,16 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                     DocumentSpDocumentId = table.Column<long>(nullable: true),
                     SignatureRecordHeight = table.Column<ulong>(nullable: false),
                     DocumentRecordHeight = table.Column<ulong>(nullable: false),
-                    DocumentSignRecord = table.Column<byte[]>(nullable: true)
+                    DocumentSignRecord = table.Column<byte[]>(nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_sp_document_signatures", x => x.SpDocumentSignatureId);
+                    table.PrimaryKey("PK_SpDocumentSignatures", x => x.SpDocumentSignatureId);
                     table.ForeignKey(
-                        name: "FK_sp_document_signatures_sp_documents_DocumentSpDocumentId",
+                        name: "FK_SpDocumentSignatures_SpDocuments_DocumentSpDocumentId",
                         column: x => x.DocumentSpDocumentId,
-                        principalTable: "sp_documents",
+                        principalTable: "SpDocuments",
                         principalColumn: "SpDocumentId",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "sp_employees",
-                columns: table => new
-                {
-                    SpEmployeeId = table.Column<long>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    AccountId = table.Column<long>(nullable: true),
-                    Description = table.Column<string>(nullable: true),
-                    RootAttributeRaw = table.Column<string>(nullable: false),
-                    RegistrationCommitment = table.Column<string>(nullable: true),
-                    SpEmployeeGroupId = table.Column<long>(nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_sp_employees", x => x.SpEmployeeId);
-                    table.ForeignKey(
-                        name: "FK_sp_employees_accounts_AccountId",
-                        column: x => x.AccountId,
-                        principalTable: "accounts",
-                        principalColumn: "AccountId",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_sp_employees_sp_employee_groups_SpEmployeeGroupId",
-                        column: x => x.SpEmployeeGroupId,
-                        principalTable: "sp_employee_groups",
-                        principalColumn: "SpEmployeeGroupId",
                         onDelete: ReferentialAction.Restrict);
                 });
 
@@ -779,28 +785,23 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                 column: "Key");
 
             migrationBuilder.CreateIndex(
-                name: "IX_associated_attribute_backup_RootAssetId",
-                table: "associated_attribute_backup",
+                name: "IX_AssociatedAttributeBackups_RootAssetId",
+                table: "AssociatedAttributeBackups",
                 column: "RootAssetId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_associated_attribute_backup_RootIssuer",
-                table: "associated_attribute_backup",
+                name: "IX_AssociatedAttributeBackups_RootIssuer",
+                table: "AssociatedAttributeBackups",
                 column: "RootIssuer");
 
             migrationBuilder.CreateIndex(
-                name: "IX_attributes_IdentityId",
-                table: "attributes",
-                column: "IdentityId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_auto_logins_AccountId",
-                table: "auto_logins",
+                name: "IX_AutoLogins_AccountId",
+                table: "AutoLogins",
                 column: "AccountId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_biometric_records_UserData",
-                table: "biometric_records",
+                name: "IX_BiometricRecords_UserData",
+                table: "BiometricRecords",
                 column: "UserData",
                 unique: true);
 
@@ -830,30 +831,40 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                 column: "EcPollRecordId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_external_identity_providers_Name",
-                table: "external_identity_providers",
+                name: "IX_ExternalIdentityProviders_Name",
+                table: "ExternalIdentityProviders",
                 column: "Name",
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_group_relations_AssetId",
-                table: "group_relations",
+                name: "IX_GroupRelations_AssetId",
+                table: "GroupRelations",
                 column: "AssetId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_group_relations_Issuer",
-                table: "group_relations",
+                name: "IX_GroupRelations_Issuer",
+                table: "GroupRelations",
                 column: "Issuer");
 
             migrationBuilder.CreateIndex(
-                name: "IX_identities_schemes_AttributeName",
-                table: "identities_schemes",
+                name: "IX_IdentitiesSchemes_AttributeName",
+                table: "IdentitiesSchemes",
                 column: "AttributeName");
 
             migrationBuilder.CreateIndex(
-                name: "IX_identities_schemes_Issuer",
-                table: "identities_schemes",
+                name: "IX_IdentitiesSchemes_Issuer",
+                table: "IdentitiesSchemes",
                 column: "Issuer");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_IdentityAttributes_Commitment",
+                table: "IdentityAttributes",
+                column: "Commitment");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_IdentityAttributes_IdentityId",
+                table: "IdentityAttributes",
+                column: "IdentityId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_IdentityTargets_IdentityId",
@@ -861,168 +872,173 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                 column: "IdentityId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_inherence_settings_Name",
-                table: "inherence_settings",
+                name: "IX_InherenceSettings_Name",
+                table: "InherenceSettings",
                 column: "Name",
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_processed_witnesses_AccountId_WitnessId",
-                table: "processed_witnesses",
+                name: "IX_ProcessedWitnesss_AccountId_WitnessId",
+                table: "ProcessedWitnesss",
                 columns: new[] { "AccountId", "WitnessId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_registration_commitments_AssetId",
-                table: "registration_commitments",
+                name: "IX_RegistrationCommitments_AssetId",
+                table: "RegistrationCommitments",
                 column: "AssetId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_registration_commitments_Issuer",
-                table: "registration_commitments",
-                column: "Issuer");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_saml_identity_providers_EntityId",
-                table: "saml_identity_providers",
-                column: "EntityId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_saml_service_providers_EntityId",
-                table: "saml_service_providers",
-                column: "EntityId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_scenario_accounts_ScenarioSessionId",
-                table: "scenario_accounts",
-                column: "ScenarioSessionId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_scenario_sessions_UserSubject",
-                table: "scenario_sessions",
-                column: "UserSubject");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_sp_document_allowed_signers_AccountId",
-                table: "sp_document_allowed_signers",
-                column: "AccountId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_sp_document_allowed_signers_DocumentSpDocumentId",
-                table: "sp_document_allowed_signers",
-                column: "DocumentSpDocumentId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_sp_document_signatures_DocumentRecordHeight",
-                table: "sp_document_signatures",
-                column: "DocumentRecordHeight");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_sp_document_signatures_DocumentSpDocumentId",
-                table: "sp_document_signatures",
-                column: "DocumentSpDocumentId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_sp_document_signatures_SignatureRecordHeight",
-                table: "sp_document_signatures",
-                column: "SignatureRecordHeight");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_sp_documents_AccountId",
-                table: "sp_documents",
-                column: "AccountId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_sp_documents_DocumentName",
-                table: "sp_documents",
-                column: "DocumentName");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_sp_employee_groups_AccountId",
-                table: "sp_employee_groups",
-                column: "AccountId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_sp_employees_AccountId",
-                table: "sp_employees",
-                column: "AccountId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_sp_employees_RegistrationCommitment",
-                table: "sp_employees",
-                column: "RegistrationCommitment",
+                name: "IX_RegistrationCommitments_Commitment",
+                table: "RegistrationCommitments",
+                column: "Commitment",
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_sp_employees_SpEmployeeGroupId",
-                table: "sp_employees",
-                column: "SpEmployeeGroupId");
+                name: "IX_RegistrationCommitments_Issuer",
+                table: "RegistrationCommitments",
+                column: "Issuer");
 
             migrationBuilder.CreateIndex(
-                name: "IX_sp_user_transactions_AccountId",
-                table: "sp_user_transactions",
+                name: "IX_RelationGroups_AccountId",
+                table: "RelationGroups",
                 column: "AccountId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_sp_user_transactions_TransactionId",
-                table: "sp_user_transactions",
+                name: "IX_RelationRecords_AccountId",
+                table: "RelationRecords",
+                column: "AccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RelationRecords_RegistrationCommitmentId",
+                table: "RelationRecords",
+                column: "RegistrationCommitmentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RelationRecords_RelationGroupId",
+                table: "RelationRecords",
+                column: "RelationGroupId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SamlIdentityProviders_EntityId",
+                table: "SamlIdentityProviders",
+                column: "EntityId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SamlServiceProviders_EntityId",
+                table: "SamlServiceProviders",
+                column: "EntityId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ScenarioAccounts_ScenarioSessionId",
+                table: "ScenarioAccounts",
+                column: "ScenarioSessionId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ScenarioSessions_UserSubject",
+                table: "ScenarioSessions",
+                column: "UserSubject");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SpDocumentAllowedSigners_AccountId",
+                table: "SpDocumentAllowedSigners",
+                column: "AccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SpDocumentAllowedSigners_DocumentSpDocumentId",
+                table: "SpDocumentAllowedSigners",
+                column: "DocumentSpDocumentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SpDocuments_AccountId",
+                table: "SpDocuments",
+                column: "AccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SpDocuments_DocumentName",
+                table: "SpDocuments",
+                column: "DocumentName");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SpDocumentSignatures_DocumentRecordHeight",
+                table: "SpDocumentSignatures",
+                column: "DocumentRecordHeight");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SpDocumentSignatures_DocumentSpDocumentId",
+                table: "SpDocumentSignatures",
+                column: "DocumentSpDocumentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SpDocumentSignatures_SignatureRecordHeight",
+                table: "SpDocumentSignatures",
+                column: "SignatureRecordHeight");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SpUserTransactions_AccountId",
+                table: "SpUserTransactions",
+                column: "AccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SpUserTransactions_TransactionId",
+                table: "SpUserTransactions",
                 column: "TransactionId",
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_synchronization_statuses_AccountId",
-                table: "synchronization_statuses",
+                name: "IX_SynchronizationStatuses_AccountId",
+                table: "SynchronizationStatuses",
                 column: "AccountId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_user_identity_issuers_Key",
-                table: "user_identity_issuers",
+                name: "IX_UserGroupRelations_AccountId",
+                table: "UserGroupRelations",
+                column: "AccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserGroupRelations_AssetId",
+                table: "UserGroupRelations",
+                column: "AssetId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserGroupRelations_Issuer",
+                table: "UserGroupRelations",
+                column: "Issuer");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserIdentityIssuers_Key",
+                table: "UserIdentityIssuers",
                 column: "Key",
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_user_registrations_AccountId",
-                table: "user_registrations",
+                name: "IX_UserRegistrations_AccountId",
+                table: "UserRegistrations",
                 column: "AccountId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_user_registrations_AssetId",
-                table: "user_registrations",
+                name: "IX_UserRegistrations_AssetId",
+                table: "UserRegistrations",
                 column: "AssetId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_user_registrations_Issuer",
-                table: "user_registrations",
+                name: "IX_UserRegistrations_Issuer",
+                table: "UserRegistrations",
                 column: "Issuer");
 
             migrationBuilder.CreateIndex(
-                name: "IX_user_settings_AccountId",
-                table: "user_settings",
+                name: "IX_UserSettings_AccountId",
+                table: "UserSettings",
                 column: "AccountId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_user_to_group_relations_AccountId",
-                table: "user_to_group_relations",
+                name: "IX_UserTransactionSecrets_AccountId",
+                table: "UserTransactionSecrets",
                 column: "AccountId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_user_to_group_relations_AssetId",
-                table: "user_to_group_relations",
-                column: "AssetId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_user_to_group_relations_Issuer",
-                table: "user_to_group_relations",
-                column: "Issuer");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_user_transaction_secrets_AccountId",
-                table: "user_transaction_secrets",
-                column: "AccountId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_user_transaction_secrets_KeyImage",
-                table: "user_transaction_secrets",
+                name: "IX_UserTransactionSecrets_KeyImage",
+                table: "UserTransactionSecrets",
                 column: "KeyImage");
         }
 
@@ -1032,19 +1048,16 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                 name: "AccountKeyValues");
 
             migrationBuilder.DropTable(
-                name: "associated_attribute_backup");
+                name: "AssociatedAttributeBackups");
 
             migrationBuilder.DropTable(
-                name: "attributes");
+                name: "AutoLogins");
 
             migrationBuilder.DropTable(
-                name: "auto_logins");
+                name: "BiometricRecords");
 
             migrationBuilder.DropTable(
-                name: "biometric_records");
-
-            migrationBuilder.DropTable(
-                name: "consent_management_settings");
+                name: "ConsentManagementSettings");
 
             migrationBuilder.DropTable(
                 name: "EcCandidateRecords");
@@ -1053,103 +1066,106 @@ namespace O10.Client.DataLayer.SQLite.Migrations
                 name: "EcPollSelections");
 
             migrationBuilder.DropTable(
-                name: "external_identity_providers");
+                name: "ExternalIdentityProviders");
 
             migrationBuilder.DropTable(
-                name: "group_relations");
+                name: "GroupRelations");
 
             migrationBuilder.DropTable(
-                name: "identities_schemes");
+                name: "IdentitiesSchemes");
+
+            migrationBuilder.DropTable(
+                name: "IdentityAttributes");
 
             migrationBuilder.DropTable(
                 name: "IdentityTargets");
 
             migrationBuilder.DropTable(
-                name: "inherence_settings");
+                name: "InherenceSettings");
 
             migrationBuilder.DropTable(
-                name: "processed_witnesses");
+                name: "ProcessedWitnesss");
 
             migrationBuilder.DropTable(
-                name: "registration_commitments");
+                name: "RelationRecords");
 
             migrationBuilder.DropTable(
-                name: "saml_identity_providers");
+                name: "SamlIdentityProviders");
 
             migrationBuilder.DropTable(
-                name: "saml_service_providers");
+                name: "SamlServiceProviders");
 
             migrationBuilder.DropTable(
-                name: "saml_settings");
+                name: "SamlSettings");
 
             migrationBuilder.DropTable(
-                name: "scenario_accounts");
+                name: "ScenarioAccounts");
 
             migrationBuilder.DropTable(
-                name: "service_provider_registrations");
+                name: "ServiceProviderRegistrations");
 
             migrationBuilder.DropTable(
-                name: "sp_attributes");
+                name: "SpAttributes");
 
             migrationBuilder.DropTable(
-                name: "sp_document_allowed_signers");
+                name: "SpDocumentAllowedSigners");
 
             migrationBuilder.DropTable(
-                name: "sp_document_signatures");
+                name: "SpDocumentSignatures");
 
             migrationBuilder.DropTable(
-                name: "sp_employees");
+                name: "SpIdenitityValidations");
 
             migrationBuilder.DropTable(
-                name: "sp_identity_validations");
+                name: "SpUserTransactions");
 
             migrationBuilder.DropTable(
-                name: "sp_user_transactions");
+                name: "SynchronizationStatuses");
 
             migrationBuilder.DropTable(
-                name: "synchronization_statuses");
+                name: "SystemSettings");
 
             migrationBuilder.DropTable(
-                name: "system_settings");
+                name: "UserAssociatedAttributes");
 
             migrationBuilder.DropTable(
-                name: "user_associated_attribute");
+                name: "UserGroupRelations");
 
             migrationBuilder.DropTable(
-                name: "user_identity_issuers");
+                name: "UserIdentityIssuers");
 
             migrationBuilder.DropTable(
-                name: "user_registrations");
+                name: "UserRegistrations");
 
             migrationBuilder.DropTable(
-                name: "user_root_attributes");
+                name: "UserRootAttributes");
 
             migrationBuilder.DropTable(
-                name: "user_settings");
+                name: "UserSettings");
 
             migrationBuilder.DropTable(
-                name: "user_to_group_relations");
-
-            migrationBuilder.DropTable(
-                name: "user_transaction_secrets");
-
-            migrationBuilder.DropTable(
-                name: "identity");
+                name: "UserTransactionSecrets");
 
             migrationBuilder.DropTable(
                 name: "EcPollRecords");
 
             migrationBuilder.DropTable(
-                name: "scenario_sessions");
+                name: "Identities");
 
             migrationBuilder.DropTable(
-                name: "sp_documents");
+                name: "RegistrationCommitments");
 
             migrationBuilder.DropTable(
-                name: "sp_employee_groups");
+                name: "RelationGroups");
 
             migrationBuilder.DropTable(
-                name: "accounts");
+                name: "ScenarioSessions");
+
+            migrationBuilder.DropTable(
+                name: "SpDocuments");
+
+            migrationBuilder.DropTable(
+                name: "Accounts");
         }
     }
 }

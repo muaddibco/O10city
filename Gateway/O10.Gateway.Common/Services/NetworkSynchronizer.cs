@@ -581,10 +581,17 @@ namespace O10.Gateway.Common.Services
 					
 					WitnessPacket witness = _dataAccessService.GetWitnessPacket(witnessId);
 
-					_logger.LogIfDebug(() => $"{nameof(WitnessPacket)}: {JsonConvert.SerializeObject(witness, new ByteArrayJsonConverter())}");
+					if (witness != null)
+					{
+						_logger.LogIfDebug(() => $"{nameof(WitnessPacket)}: {JsonConvert.SerializeObject(witness, new ByteArrayJsonConverter())}");
 
-					var packet = _ledgerSynchronizersRepository.GetInstance(witness.ReferencedLedgerType).GetByWitness(witness);
-					transactions.Add(packet);
+						var packet = _ledgerSynchronizersRepository.GetInstance(witness.ReferencedLedgerType).GetByWitness(witness);
+						transactions.Add(packet);
+					}
+					else
+                    {
+						_logger.Error($"Failed to obtain witness, NULL obtained for witnessId {witnessId}");
+                    }
 				}
 
 				return await Task.FromResult(transactions).ConfigureAwait(false);

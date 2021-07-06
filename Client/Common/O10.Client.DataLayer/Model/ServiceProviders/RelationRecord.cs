@@ -10,15 +10,15 @@ namespace O10.Client.DataLayer.Model.ServiceProviders
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public long RelationRecordId { get; set; }
 
-        public Account Account { get; set; }
+        public Account? Account { get; set; }
 
         public string Description { get; set; }
 
         [Required]
         public string RootAttributeValue { get; set; }
 
-        public RegistrationCommitment RegistrationCommitment { get; set; }
+        public RegistrationCommitment? RegistrationCommitment { get; set; }
 
-        public RelationGroup RelationGroup { get; set; }
+        public RelationGroup? RelationGroup { get; set; }
     }
 }

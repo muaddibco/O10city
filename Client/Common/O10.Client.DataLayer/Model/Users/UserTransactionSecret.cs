@@ -3,12 +3,12 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Client.DataLayer.Model
 {
-    [Table("user_transaction_secrets")]
-    public class UserTransactionSecrets
+    [Table("UserTransactionSecrets")]
+    public class UserTransactionSecret
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public long UserTransactionSecretsId { get; set; }
+        public long UserTransactionSecretId { get; set; }
 
         public long AccountId { get; set; }
 

@@ -56,7 +56,7 @@ namespace O10.Client.DataLayer
 
         public DbSet<ExternalIdentityProvider> ExternalIdentityProviders { get; set; }
         public DbSet<AssociatedAttributeBackup> AssociatedAttributeBackups { get; set; }
-        public DbSet<UserTransactionSecrets> UserTransactionSecrets { get; set; }
+        public DbSet<UserTransactionSecret> UserTransactionSecrets { get; set; }
 
         public DbSet<EcPollRecord> PollRecords { get; set; }
         public DbSet<EcCandidateRecord> CandidateRecords { get; set; }
@@ -90,8 +90,8 @@ namespace O10.Client.DataLayer
             modelBuilder.Entity<ExternalIdentityProvider>().HasIndex("Name").IsUnique();
             modelBuilder.Entity<AssociatedAttributeBackup>().HasIndex(p => p.RootIssuer);
             modelBuilder.Entity<AssociatedAttributeBackup>().HasIndex(p => p.RootAssetId);
-            modelBuilder.Entity<UserTransactionSecrets>().HasIndex(p => p.AccountId);
-            modelBuilder.Entity<UserTransactionSecrets>().HasIndex(p => p.KeyImage);
+            modelBuilder.Entity<UserTransactionSecret>().HasIndex(p => p.AccountId);
+            modelBuilder.Entity<UserTransactionSecret>().HasIndex(p => p.KeyImage);
             modelBuilder.Entity<AccountKeyValue>().HasIndex(p => p.AccountId);
             modelBuilder.Entity<AccountKeyValue>().HasIndex(p => p.Key);
             modelBuilder.Entity<EcPollRecord>().HasIndex(p => p.Name);
