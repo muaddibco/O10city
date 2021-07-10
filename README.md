@@ -10,27 +10,18 @@
 4. O10.MobileWallet - solution that holds all projects relevant for mobile wallet (that uses Gateway for accessing network Nodes)
 5. O10All - solution that holds all projects of Node, Gateway, Demo Portal and DB Setup
 
-## How to make local run
+## How to make local run via Visual Studio
 
 ### 1. Database initialization
-Before running a Node, Gateway and a Portal it is needed to initialize database. 
-Launch O10.Setup.Simulation.exe "As Administrator" with argument --WipeAll. 
-This executable located at "O10.Node\NodeSetup\O10.Setup.Simulation". 
-Do not close window when it will finish - copy aside key printed in console window and only then close window.
+Before running a Node, Gateway and a Portal it is needed to setup a database. For this get SQL Server image and run it with the following command:
+
+docker run -e 'ACCEPT_EULA=Y' -e 'SA_PASSWORD=p@ssword1' -e 'MSSQL_PID=Express' -p 1433:1433 -d mcr.microsoft.com/mssql/server:2017-latest-ubuntu
 
 ### 2. Running a Node
-In order to run a Node launch O10.Node.Console.exe and provide it with key copied aside during database initialization step.
+Open O10.Node.sln file using your Visual Studio and run the project O10.Node.WebApp
 
 ### 3. Running a Gateway
-Prior to running a Gateway locally it is required to publish it to a local folder.
-Once Gateway is published successfully, launch it with following command (from the folder that Gateway was published to):
-
-    > dotnet O10.Server.Gateway.dll
+Open O10.Gateway.sln file using your Visual Studio and run the project O10.Gateway.WebApp
 
 ### 4. Running a Portal
-Prior to running a Portal locally it is required to publish it to a local folder.
-Once Portal is published successfully, launch it with following command (from the folder that Portal was published to):
-
-    > dotnet O10.Client.Web.Portal.dll --server.urls="http://0.0.0.0:5050"
-
-When Portal is up and running it is available for browing with URL http://localhost:5050
+Open O10.Portal.sln file using your Visual Studio and run the project O10.Client.Web.Portal
