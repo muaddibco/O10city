@@ -27,3 +27,13 @@ jobs:
       run: |
         docker build . -f dockerfile-node --tag muaddibco/o10node:latest
         docker push muaddibco/o10node:latest
+    -
+      name: Build and push Gateway
+      run: |
+        docker build . -f dockerfile-gateway --tag muaddibco/o10gateway:latest
+        docker push muaddibco/o10gateway:latest
+    -
+      name: Build and push Portal
+      run: |
+        docker build . -f dockerfile-portal --tag muaddibco/o10portal:latest
+        docker push muaddibco/o10portal:latest
