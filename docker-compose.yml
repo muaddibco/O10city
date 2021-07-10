@@ -9,7 +9,7 @@ services:
     environment:
       - ASPNETCORE_URLS=http://+:80
       - GWSERVICENAME=o10.gateway.webapp
-      - DBSERVER=host.docker.internal,1434
+      - DBSERVER=db
     ports:
     - 5003:80
 
@@ -20,7 +20,7 @@ services:
       dockerfile: Node/O10.Node.WebApp/dockerfile
     environment:
       - ASPNETCORE_URLS=http://+:80
-      - DBSERVER=host.docker.internal,1434
+      - DBSERVER=db
     ports:
     - 5001:80
 
@@ -34,7 +34,7 @@ services:
       - GWSERVICENAME=o10.gateway.webapp
       - NODESERVICENAME=o10.node.webapp
       - GATEWAYKEY=7109020FC572C7D84DB0BFE41595454EA2B8BEA65A8EAE398F0833D54DA1EA0B
-      - DBSERVER=host.docker.internal,1434
+      - DBSERVER=db
     ports:
     - 5002:80
 
