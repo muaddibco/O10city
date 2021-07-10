@@ -56,9 +56,9 @@ namespace O10.Crypto.Tests
 			Assert.True(resDiff);
 
 			RangeProof rangeProof3 = CryptoHelper.ProveRange(out byte[] C3, out byte[] mask3, 99, assetCommitment);
-			bool res3 = CryptoHelper.VerRange(C3, rangeProof2, assetCommitment);
+			bool res3 = CryptoHelper.VerRange(C3, rangeProof3, assetCommitment);
 
-			Assert.True(res2);
+			Assert.True(res3);
 
 			byte[] maskDiff2 = CryptoHelper.GetDifferentialBlindingFactor(mask3, mask1);
 
