@@ -25,5 +25,5 @@ jobs:
     -
       name: Build and push Node
       run: |
-        docker build Node/O10.Node.WebApp --tag muaddibco/o10node:latest
+        docker build docker-node --tag muaddibco/o10node:latest
         docker push muaddibco/o10node:latest
