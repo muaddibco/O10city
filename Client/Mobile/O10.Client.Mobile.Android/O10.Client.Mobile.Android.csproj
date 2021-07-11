@@ -80,7 +80,7 @@
       <Version>3.2.1</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client">
-      <Version>3.1.4</Version>
+      <Version>3.1.16</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Azure.CognitiveServices.Vision.Face">
       <Version>2.3.0-preview</Version>

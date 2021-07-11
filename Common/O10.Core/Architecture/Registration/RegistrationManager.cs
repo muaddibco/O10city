@@ -119,8 +119,14 @@ namespace O10.Core.Architecture.Registration
                     _log?.Info($"Register using regiatrator {r.GetType().FullName}");
 					r.Register(this);
 				}
-			}
-			catch (ReflectionTypeLoadException ex)
+            
+                foreach (var r in typesRegistratorsManager.GetAllRegistrators())
+                {
+                    _log?.Info($"PostRegister using regiatrator {r.GetType().FullName}");
+                    r.PostRegister(_container, this);
+                }
+            }
+            catch (ReflectionTypeLoadException ex)
 			{
 				string message = "Extensions Load Exceptions:\r\n";
 				if (ex.LoaderExceptions != null)
@@ -251,6 +257,11 @@ namespace O10.Core.Architecture.Registration
                     }
                 }
             }
+        }
+
+        public IEnumerable<Type> GetImplementingTypes<T>()
+        {
+            return TypeRegistrations.Where(t => t.Implements == typeof(T)).Select(t => t.TypeToRegister);
         }
     }
 }

@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.Composition.Primitives;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.Composition.Primitives;
 using System.Reflection;
 
 
@@ -13,8 +15,8 @@ namespace O10.Core.Architecture.Registration
         void AutoRegisterAssembly(Assembly assembly);
         void AutoRegisterUsingMefCatalog(ComposablePartCatalog catalog);
 		void AutoRegisterUsingReflection();
-
-
         void CommitRegistrationsToContainer();
+
+        IEnumerable<Type> GetImplementingTypes<T>();
     }
 }

@@ -23,6 +23,7 @@ using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json.Converters;
 using Cyberboss.AspNetCore.AsyncInitializer;
 using O10.Transactions.Core;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 namespace O10.Client.Web.Portal
 {
@@ -192,6 +193,8 @@ namespace O10.Client.Web.Portal
                 {
                     o.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.LongPolling | Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets;
                 });
+
+                endpoints.MapHealthChecks("/api/Health");
             });
 
             //app.UseSpa(spa =>
