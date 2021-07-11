@@ -51,7 +51,7 @@ namespace O10.Core.Architecture
 					log?.Info($"Running initializer {item.GetType().FullName}");
 					try
 					{
-						item.Initialize(cancellationToken);
+						await item.Initialize(cancellationToken);
 					}
 					catch (Exception ex)
 					{
