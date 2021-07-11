@@ -29,7 +29,7 @@ namespace O10.Node.WebApp.Common.Controllers
 		}
 
 		[HttpGet("Gateways")]
-		public ActionResult<IEnumerable<GatewayDto>> GetGateways()
+		public ActionResult<List<GatewayDto>> GetGateways()
 		{
 			return _dataAccessService.GetGateways().Select(g => new GatewayDto { GatewayId = g.GatewayId, Alias = g.Alias, Uri = g.BaseUri}).ToList();
 		}

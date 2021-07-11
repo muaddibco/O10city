@@ -58,7 +58,7 @@ namespace O10.Node.WebApp.Common.Controllers
 
 		// GET api/values
 		[HttpGet]
-		public ActionResult<IEnumerable<InfoMessage>> Get()
+		public ActionResult<List<InfoMessage>> Get()
 		{
 			string version = Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyFileVersionAttribute>().Version;
 			return new List<InfoMessage> { new InfoMessage { Context = "Node", InfoType="Version", Message = version } };

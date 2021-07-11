@@ -60,12 +60,12 @@ namespace O10.Gateway.WebApp.Common.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<InfoMessage>>> Get()
+        public async Task<ActionResult<List<InfoMessage>>> Get()
         {
             string version = Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyFileVersionAttribute>().Version;
             _logger.Info(version);
 
-            IEnumerable<InfoMessage> nodeInfo;
+            List<InfoMessage> nodeInfo;
             try
             {
                 nodeInfo = await _networkSynchronizer.GetConnectedNodesInfo().ConfigureAwait(false);
@@ -105,7 +105,7 @@ namespace O10.Gateway.WebApp.Common.Controllers
 
             List<InfoMessage> gatewayInfo = new List<InfoMessage> { new InfoMessage { Context = "Gateway", InfoType = "Version", Message = version }, msgUpdaterConnectivity };
 
-            return Ok(gatewayInfo.Concat(nodeInfo));
+            return Ok(gatewayInfo.Concat(nodeInfo).ToList());
         }
 
         [HttpGet("GetLastRegistryCombinedBlock")]

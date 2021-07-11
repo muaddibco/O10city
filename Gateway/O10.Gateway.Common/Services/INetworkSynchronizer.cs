@@ -34,7 +34,7 @@ namespace O10.Gateway.Common.Services
 
 		Task ProcessRtPackage(RtPackage rtPackage);
 
-        Task<IEnumerable<InfoMessage>> GetConnectedNodesInfo();
+        Task<List<InfoMessage>> GetConnectedNodesInfo();
 
         TaskCompletionSource<bool> GetConnectivityCheckAwaiter(int nonce);
         void ConnectivityCheckSet(int nonce);

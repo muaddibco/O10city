@@ -185,7 +185,7 @@ namespace O10.Gateway.Common.Services
 			}
 		}
 
-        public async Task<IEnumerable<InfoMessage>> GetConnectedNodesInfo() => await _synchronizerConfiguration.NodeApiUri.GetJsonAsync<IEnumerable<InfoMessage>>(_cancellationToken).ConfigureAwait(false);
+        public async Task<List<InfoMessage>> GetConnectedNodesInfo() => await _synchronizerConfiguration.NodeApiUri.GetJsonAsync<List<InfoMessage>>(_cancellationToken).ConfigureAwait(false);
 
         public void Start()
 		{
@@ -313,7 +313,7 @@ namespace O10.Gateway.Common.Services
 				nodeIsDown = false;
 				try
 				{
-					var gateways = await _synchronizerConfiguration.NodeServiceApiUri.AppendPathSegment("Gateways").GetJsonAsync<IEnumerable<GatewayDto>>().ConfigureAwait(false);
+					var gateways = await _synchronizerConfiguration.NodeServiceApiUri.AppendPathSegment("Gateways").GetJsonAsync<List<GatewayDto>>().ConfigureAwait(false);
 					string uri = _appConfig.ReplaceToken("http://{GWSERVICENAME}/api/GatewayUpdater");
 					if (gateways.All(g => g.Uri?.ToLower() != uri.ToLower()))
 					{

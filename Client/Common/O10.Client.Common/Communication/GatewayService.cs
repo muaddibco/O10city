@@ -414,7 +414,7 @@ namespace O10.Client.Common.Communication
         public async Task<IEnumerable<InfoMessage>> GetInfo()
         {
             Url url = _gatewayUri.AppendPathSegments("api", "synchronization");
-            return await _restClientService.Request(url).GetJsonAsync<IEnumerable<InfoMessage>>().ConfigureAwait(false);
+            return await _restClientService.Request(url).GetJsonAsync<List<InfoMessage>>().ConfigureAwait(false);
         }
 
         public async Task<StatePacketInfo> GetLastPacketInfo(IKey accountPublicKey)
