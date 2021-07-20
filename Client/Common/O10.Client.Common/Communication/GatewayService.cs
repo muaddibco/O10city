@@ -321,7 +321,7 @@ namespace O10.Client.Common.Communication
 
         public async Task<IOrderedEnumerable<WitnessPackage>?> GetWitnessesRange(long rangeStart, long rangeEnd)
         {
-            Url url = _gatewayUri.AppendPathSegments("api", "synchronization", "GetWitnessesRange", rangeStart, rangeEnd);
+            Url url = _gatewayUri.AppendPathSegments("api", "synchronization", "Witnesses", rangeStart, rangeEnd);
 
             try
             {

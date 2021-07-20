@@ -895,7 +895,7 @@ namespace O10.Client.Web.Portal.Controllers
         [HttpPost("{accountId}/Attributes")]
         public async Task<IActionResult> RequestForAttributesIssuance(long accountId, [FromBody] AttributesIssuanceRequestDto attributesIssuanceRequest)
         {
-            _logger.Info("RequestForAttributesIssuance started");
+            _logger.Info($"[{accountId}]: RequestForAttributesIssuance started");
             var scope = _executionContextManager.ResolveExecutionServices(accountId).Scope;
             var assetsService = scope.ServiceProvider.GetService<IAssetsService>();
 
@@ -915,7 +915,7 @@ namespace O10.Client.Web.Portal.Controllers
                 }
                 else
                 {
-                    _logger.Debug("rootAttributeDefinition obtained");
+                    _logger.Debug($"[{accountId}]: rootAttributeDefinition obtained");
                 }
 
                 byte[] blindingPointRootToRoot = null;
@@ -923,7 +923,7 @@ namespace O10.Client.Web.Portal.Controllers
 
                 if (attributesIssuanceRequest.MasterRootAttributeId != null)
                 {
-                    _logger.Debug("attributesIssuanceRequest.MasterRootAttributeId != null");
+                    _logger.Debug($"[{accountId}]: attributesIssuanceRequest.MasterRootAttributeId != null");
                     var rootAttributeMaster = _dataAccessService.GetUserRootAttribute(attributesIssuanceRequest.MasterRootAttributeId.Value);
                     byte[] blindingPointRoot = assetsService.GetBlindingPoint(await boundedAssetsService.GetBindingKey().ConfigureAwait(false), rootAttributeMaster.AssetId);
                     blindingPointRootToRoot = assetsService.GetCommitmentBlindedByPoint(rootAttributeMaster.AssetId, blindingPointRoot);
@@ -931,7 +931,7 @@ namespace O10.Client.Web.Portal.Controllers
                 }
                 else
                 {
-                    _logger.Debug("attributesIssuanceRequest.MasterRootAttributeId == null");
+                    _logger.Debug($"[{accountId}]: attributesIssuanceRequest.MasterRootAttributeId == null");
                 }
 
                 string rootAttributeContent = attributes.FirstOrDefault(a => a.Key.Equals(rootAttributeDefinition.AttributeName, StringComparison.InvariantCultureIgnoreCase)).Value;
@@ -1026,14 +1026,20 @@ namespace O10.Client.Web.Portal.Controllers
                             .ToDictionary(kv => kv.Key, kv => kv.Value);
                 }
             }
+            catch (FlurlHttpException ex)
+            {
+                var err = await ex.Call.Response.ResponseMessage.Content.ReadAsStringAsync();
+                _logger.Error($"[{accountId}]: RequestForAttributesIssuance failed due to '{err}'", ex);
+                throw;
+            }
             catch (Exception ex)
             {
-                _logger.Error("RequestForAttributesIssuance failed", ex);
+                _logger.Error($"[{accountId}]: RequestForAttributesIssuance failed", ex);
                 throw;
             }
             finally
             {
-                _logger.Info("RequestForAttributesIssuance ended");
+                _logger.Info($"[{accountId}]: RequestForAttributesIssuance ended");
             }
         }
 

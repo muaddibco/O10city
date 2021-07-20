@@ -126,10 +126,10 @@ namespace O10.Gateway.WebApp.Common.Controllers
             return Ok(await _synchronizerConfiguration.NodeApiUri.AppendPathSegment("GetLastSyncBlock").GetJsonAsync<SyncInfoDTO>().ConfigureAwait(false));
         }
 
-        [HttpGet("GetWitnessesRange/{combinedBlockHeightStart}/{combinedBlockHeightEnd}")]
-        public ActionResult<List<WitnessPackage>> GetWitnessesRange(long combinedBlockHeightStart, long combinedBlockHeightEnd = 0)
+        [HttpGet("Witnesses/{combinedBlockHeightStart}/{combinedBlockHeightEnd}")]
+        public async Task<ActionResult<List<WitnessPackage>>> GetWitnessesRange(long combinedBlockHeightStart, long combinedBlockHeightEnd = 0)
         {
-            return Ok(_networkSynchronizer.GetWitnessRange(combinedBlockHeightStart, combinedBlockHeightEnd).ToList());
+            return (await _networkSynchronizer.GetWitnessRange(combinedBlockHeightStart, combinedBlockHeightEnd)).ToList();
         }
 
         [HttpGet("GetLastPacketInfo/{accountPublicKey}")]

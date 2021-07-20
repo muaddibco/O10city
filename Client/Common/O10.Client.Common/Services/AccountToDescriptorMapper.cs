@@ -1,11 +1,7 @@
-﻿using Chaos.NaCl;
-using O10.Client.Common.Entities;
-using O10.Client.DataLayer.Enums;
+﻿using O10.Client.Common.Entities;
 using O10.Client.DataLayer.Model;
 using O10.Core.Architecture;
-
 using O10.Core.Translators;
-using O10.Crypto.ConfidentialAssets;
 
 namespace O10.Client.Common.Services
 {
@@ -24,8 +20,8 @@ namespace O10.Client.Common.Services
                 AccountType = account.AccountType,
                 SecretSpendKey = account.SecretSpendKey,
                 SecretViewKey = account.SecretViewKey,
-                PublicSpendKey = account.AccountType == AccountType.User ? CryptoHelper.GetPublicKey(account.SecretSpendKey) : CryptoHelper.GetPublicKey(Ed25519.SecretKeyFromSeed(account.SecretSpendKey)),
-                PublicViewKey = account.AccountType == AccountType.User ? CryptoHelper.GetPublicKey(account.SecretViewKey) : null,
+                PublicSpendKey = account.PublicSpendKey,
+                PublicViewKey = account.PublicViewKey,
                 AccountInfo = account.AccountInfo,
                 AccountId = account.AccountId,
                 IsCompromised = account.IsCompromised,

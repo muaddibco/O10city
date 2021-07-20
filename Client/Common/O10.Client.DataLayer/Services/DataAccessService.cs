@@ -1008,11 +1008,7 @@ namespace O10.Client.DataLayer.Services
                 return _dataContext.Accounts
                     .Where(a => a.AccountType != AccountType.User)
                     .AsEnumerable()
-                    .FirstOrDefault(a =>
-                        {
-                            byte[] pk = CryptoHelper.GetPublicKey(Ed25519.SecretKeyFromSeed(a.SecretSpendKey));
-                            return pk.Equals32(publicKey);
-                        });
+                    .FirstOrDefault(a => a.PublicSpendKey.Equals32(publicKey));
             }
         }
 

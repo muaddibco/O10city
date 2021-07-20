@@ -8,7 +8,7 @@ using O10.Core.Tracking;
 
 namespace O10.Gateway.WebApp.Common.Services
 {
-    [RegisterExtension(typeof(INotificationService), Lifetime = LifetimeManagement.Singleton)]
+    //[RegisterExtension(typeof(INotificationService), Lifetime = LifetimeManagement.Singleton)]
     public class AzureNotificationService : INotificationService
     {
         private readonly NotificationHubClient _hub;

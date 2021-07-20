@@ -88,7 +88,7 @@ namespace O10.Client.Common.Services
             return accountDescriptor;
         }
 
-        protected AccountDescriptor TranslateToAccountDescriptor(Account account, byte[] pwdHash = null)
+        protected AccountDescriptor TranslateToAccountDescriptor(Account account, byte[]? pwdHash = null)
         {
             var accountDescriptor = _translatorsRepository.GetInstance<Account, AccountDescriptor>()?.Translate(account);
             if (accountDescriptor != null)

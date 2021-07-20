@@ -16,7 +16,8 @@ namespace O10.Gateway.DataLayer.Services
         void Initialize(CancellationToken cancellationToken);
         void UpdateLastSyncBlock(long height, IKey hash);
         bool GetLastSyncBlock(out ulong height, out byte[] hash);
-        void StoreRegistryCombinedBlock(long height, string content);
+        void StoreAggregatedRegistrations(long height, string content);
+        Task<bool> WaitUntilAggregatedRegistrationsAreStored(long aggregatedRegistrationsHeightStart, long aggregatedRegistrationsHeightEnd, TimeSpan timeout);
         void CutExcessedPackets(long combinedBlockHeight);
         void StoreRegistryFullBlock(ulong height, byte[] content);
         TaskCompletionSource<WitnessPacket> StoreWitnessPacket(long syncBlockHeight, long round, long combinedBlockHeight, LedgerType referencedLedgerType, ushort referencedPacketType, IKey referencedBodyHash, IKey referencedDestinationKey, IKey referencedDestinationKey2, IKey referencedTransactionKey, IKey referencedKeyImage);

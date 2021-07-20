@@ -352,7 +352,7 @@ namespace O10.Gateway.DataLayer.Services
             }
         }
 
-        public void StoreRegistryCombinedBlock(long height, string content)
+        public void StoreAggregatedRegistrations(long height, string content)
         {
             if (Monitor.TryEnter(_sync, _lockTimeout))
             {
@@ -378,6 +378,46 @@ namespace O10.Gateway.DataLayer.Services
             {
                 _logger.Warning("Failed to acquire lock at StoreRegistryCombinedBlock");
             }
+        }
+
+        public async Task<bool> WaitUntilAggregatedRegistrationsAreStored(long aggregatedRegistrationsHeightStart, long aggregatedRegistrationsHeightEnd, TimeSpan timeout)
+        {
+            CancellationTokenSource cts = new CancellationTokenSource(timeout);
+
+            TaskCompletionSource<bool> taskCompletion = new TaskCompletionSource<bool>();
+            cts.Token.Register(() => 
+            {
+                taskCompletion.TrySetResult(false);
+            });
+
+            PeriodicTaskFactory.Start(() => 
+            {
+                if (Monitor.TryEnter(_sync, _lockTimeout))
+                {
+                    try
+                    {
+                        bool all = _dataContext.RegistryCombinedBlocks.Count(s => s.RegistryCombinedBlockId > aggregatedRegistrationsHeightStart && s.RegistryCombinedBlockId <= aggregatedRegistrationsHeightEnd) == aggregatedRegistrationsHeightEnd - aggregatedRegistrationsHeightStart;
+                        if(all)
+                        {
+                            taskCompletion.TrySetResult(true);
+                        }
+                    }
+                    catch(Exception ex)
+                    {
+                        taskCompletion.TrySetException(ex);
+                    }
+                    finally
+                    {
+                        Monitor.Exit(_sync);
+                    }
+                }
+                else
+                {
+                    _logger.Warning("Failed to acquire lock at StoreRegistryFullBlock");
+                }
+            }, 1000, cancelToken: cts.Token);
+
+            return await taskCompletion.Task.ConfigureAwait(false);
         }
 
         public void StoreRegistryFullBlock(ulong height, byte[] content)
@@ -457,7 +497,12 @@ namespace O10.Gateway.DataLayer.Services
 			{
 				try
 				{
-					return _dataContext.WitnessPackets.Local.Where(w => w.CombinedBlockHeight >= combinedBlockHeightStart && w.CombinedBlockHeight <= combinedBlockHeightEnd).GroupBy(w => w.CombinedBlockHeight).ToDictionary(g => g.Key, g => g.ToList());
+					return _dataContext
+                        .WitnessPackets
+                        .Where(w => w.CombinedBlockHeight >= combinedBlockHeightStart && w.CombinedBlockHeight <= combinedBlockHeightEnd)
+                        .AsEnumerable()
+                        .GroupBy(w => w.CombinedBlockHeight)
+                        .ToDictionary(g => g.Key, g => g.ToList());
 				}
 				finally
 				{

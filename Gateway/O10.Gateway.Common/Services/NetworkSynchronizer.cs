@@ -21,7 +21,6 @@ using Microsoft.AspNetCore.SignalR.Client;
 using Flurl;
 using Flurl.Http;
 using Newtonsoft.Json;
-using System.Net.Http;
 using System.Collections.Concurrent;
 using O10.Core.Serialization;
 using O10.Core.Notifications;
@@ -43,6 +42,7 @@ namespace O10.Gateway.Common.Services
 	public class NetworkSynchronizer : INetworkSynchronizer
 	{
 		private readonly ConcurrentDictionary<int, TaskCompletionSource<bool>> _connectityCheckerAwaiters;
+		private readonly ConcurrentDictionary<long, TaskCompletionSource<bool>> _aggregatedRegistrationsProcessingCompleted = new ConcurrentDictionary<long, TaskCompletionSource<bool>>();
 		private readonly IDataAccessService _dataAccessService;
         private readonly ILedgerSynchronizersRepository _ledgerSynchronizersRepository;
         private readonly ISynchronizerConfiguration _synchronizerConfiguration;
@@ -224,9 +224,27 @@ namespace O10.Gateway.Common.Services
 
 				ProduceWitnessesAndStoreTransactions(rtPackage.AggregatedRegistrations, rtPackage.FullRegistrations, transactionStoreCompletionSources);
 
-				ProduceAndSendWitnessPackage(rtPackage.AggregatedRegistrations, transactionStoreCompletionSources);
+				if ((transactionStoreCompletionSources?.Count ?? 0) > 0)
+				{
+					_logger.Info($"Waiting for storing {transactionStoreCompletionSources?.Count} packets...");
 
-				StoreRegistryCombinedBlock(rtPackage.AggregatedRegistrations);
+					await Task.WhenAll(transactionStoreCompletionSources).ContinueWith((t, o) =>
+					{
+						var aggregatedRegistrationsCompletion = GetAggregatedTransactionsTaskCompletion((SynchronizationPacket)o);
+
+						if (t.IsCompletedSuccessfully)
+						{
+							aggregatedRegistrationsCompletion.SetResult(true);
+							_logger.Info($"Packets were stored successfully");
+							ProduceAndSendWitnessPackage(((SynchronizationPacket)o).Payload.Height, t.Result);
+						}
+						else
+						{
+							_logger.Error($"Packets were not stored successfully", t.Exception);
+							aggregatedRegistrationsCompletion.SetException(t.Exception.InnerException);
+						}
+					}, rtPackage.AggregatedRegistrations, TaskScheduler.Current).ConfigureAwait(false);
+				}
 			}
 			catch (Exception ex)
 			{
@@ -234,10 +252,131 @@ namespace O10.Gateway.Common.Services
 			}
 		}
 
-		public async Task SendEphemeralPacket(Transactions.Core.Ledgers.Stealth.StealthPacket packet)
-        {
+		public async Task<IEnumerable<WitnessPackage>> GetWitnessRange(long combinedBlockHeightStart, long combinedBlockHeightEnd = 0)
+		{
+			try
+			{
+				List<WitnessPackage> witnessPackages = new List<WitnessPackage>();
 
+				if (combinedBlockHeightEnd == 0)
+				{
+					combinedBlockHeightEnd = _lastCombinedBlockDescriptor.Height - 1;
+				}
+
+				if (_lastCombinedBlockDescriptor.Height >= combinedBlockHeightStart)
+                {
+					bool res = await _dataAccessService.WaitUntilAggregatedRegistrationsAreStored(combinedBlockHeightStart, combinedBlockHeightEnd, TimeSpan.FromSeconds(10)).ConfigureAwait(false);
+
+					if(!res)
+                    {
+						throw new InvalidOperationException("Waiting for aggregated registrations storing timed out");
+                    }
+
+                    Dictionary<long, List<WitnessPacket>> witnessPackets = _dataAccessService.GetWitnessPackets(combinedBlockHeightStart, combinedBlockHeightEnd);
+
+                    if (witnessPackets != null)
+                    {
+                        foreach (long key in witnessPackets.Keys)
+                        {
+                            WitnessPackage witnessPackage = new WitnessPackage
+                            {
+                                CombinedBlockHeight = key,
+                                Witnesses = witnessPackets[key].Select(w => GetPacketWitness(w)).ToList(),
+                            };
+
+                            witnessPackages.Add(witnessPackage);
+                        }
+                    }
+                }
+
+                return witnessPackages;
+			}
+			catch (Exception ex)
+			{
+				_logger.Error($"Failure at {nameof(GetWitnessRange)}({combinedBlockHeightStart}, {combinedBlockHeightEnd})", ex);
+				throw;
+			}
+		}
+
+        private TaskCompletionSource<bool> GetAggregatedTransactionsTaskCompletion(SynchronizationPacket aggregatedRegistrations)
+        {
+			var t = new TaskCompletionSource<bool>(aggregatedRegistrations);
+
+			t.Task.ContinueWith(t =>
+			{
+				var aggregatedRegistrations = (SynchronizationPacket)t.AsyncState;
+
+				StoreRegistryCombinedBlock(aggregatedRegistrations);
+
+				if (t.IsCompletedSuccessfully)
+				{
+					_logger.Info($"Processing of the aggregated registrations with the height {aggregatedRegistrations.Payload.Height} completed successfull");
+				}
+				else
+				{
+					_logger.Error($"Processing of the aggregated registrations with the height {aggregatedRegistrations.Payload.Height} completed with error", t.Exception.InnerException);
+				}
+			});
+			
+			return _aggregatedRegistrationsProcessingCompleted.GetOrAdd(aggregatedRegistrations.Payload.Height, t);
         }
+
+        public async Task<IEnumerable<TransactionBase>> GetTransactions(IEnumerable<long> witnessIds)
+		{
+			if (witnessIds is null)
+			{
+				throw new ArgumentNullException(nameof(witnessIds));
+			}
+
+			_logger.Debug($"Getting transactions for witnesses [{string.Join(',', witnessIds)}]");
+
+			try
+			{
+				List<TransactionBase> transactions = new List<TransactionBase>();
+
+				foreach (long witnessId in witnessIds)
+				{
+					_logger.Info($"Getting transaction for witness with id {witnessId}");
+
+					WitnessPacket witness = _dataAccessService.GetWitnessPacket(witnessId);
+
+					if (witness != null)
+					{
+						_logger.LogIfDebug(() => $"{nameof(WitnessPacket)}: {JsonConvert.SerializeObject(witness, new ByteArrayJsonConverter())}");
+
+						var packet = _ledgerSynchronizersRepository.GetInstance(witness.ReferencedLedgerType).GetByWitness(witness);
+						transactions.Add(packet);
+					}
+					else
+					{
+						_logger.Error($"Failed to obtain witness, NULL obtained for witnessId {witnessId}");
+					}
+				}
+
+				return await Task.FromResult(transactions).ConfigureAwait(false);
+			}
+			catch (Exception ex)
+			{
+				_logger.Error($"Failure at {nameof(GetTransactions)}([{string.Join(',', witnessIds)}])", ex);
+				throw;
+			}
+		}
+
+		public async Task<StatePacketInfo> GetLastPacketInfo(IKey accountPublicKey)
+		{
+			if (accountPublicKey is null)
+			{
+				throw new ArgumentNullException(nameof(accountPublicKey));
+			}
+
+			return await GetLastPacketInfo(accountPublicKey.ToString()).ConfigureAwait(false);
+		}
+
+		public async Task<StatePacketInfo> GetLastPacketInfo(string accountPublicKey)
+		{
+			StatePacketInfo statePacketInfo = await _synchronizerConfiguration.NodeApiUri.AppendPathSegment("GetLastStatePacketInfo").SetQueryParam("publicKey", accountPublicKey).GetJsonAsync<StatePacketInfo>().ConfigureAwait(false);
+			return statePacketInfo;
+		}
 
 		public TaskCompletionSource<bool> GetConnectivityCheckAwaiter(int nonce)
         {
@@ -379,7 +518,7 @@ namespace O10.Gateway.Common.Services
 				AggregatedRegistrationsTransactionDTO registryCombinedBlock = await _synchronizerConfiguration.NodeApiUri.AppendPathSegment("LastAggregatedRegistrations").GetJsonAsync<AggregatedRegistrationsTransactionDTO>().ConfigureAwait(false);
 				if (registryCombinedBlock != null)
 				{
-					_dataAccessService.CutExcessedPackets((long)registryCombinedBlock.Height);
+					_dataAccessService.CutExcessedPackets(registryCombinedBlock.Height);
 				}
 				else
 				{
@@ -395,7 +534,7 @@ namespace O10.Gateway.Common.Services
 
         private void StoreRegistryCombinedBlock(SynchronizationPacket aggregatedTransactionsPacket)
         {
-            _dataAccessService.StoreRegistryCombinedBlock(aggregatedTransactionsPacket.Payload.Height, aggregatedTransactionsPacket.ToString());
+            _dataAccessService.StoreAggregatedRegistrations(aggregatedTransactionsPacket.Payload.Height, aggregatedTransactionsPacket.ToString());
 
             if ((_lastCombinedBlockDescriptor?.Height ?? 0) < aggregatedTransactionsPacket.Payload.Height)
             {
@@ -407,31 +546,17 @@ namespace O10.Gateway.Common.Services
             }
         }
 
-        private void ProduceAndSendWitnessPackage(SynchronizationPacket aggregatedTransactionsPacket, List<Task<WitnessPacket>> transactionStoreCompletionSources)
-        {
-            if ((transactionStoreCompletionSources?.Count ?? 0) > 0)
-            {
-				_logger.Info($"Waiting for storing {transactionStoreCompletionSources?.Count} packets...");
-                Task.WhenAll(transactionStoreCompletionSources).ContinueWith((t, o) =>
-                {
-                    if (t.IsCompletedSuccessfully)
-                    {
-                        _logger.Info($"Packets were stored successfully");
-                        WitnessPackage witnessPackage = new WitnessPackage
-                        {
-                            Witnesses = t.Result.Select(w => GetPacketWitness(w)).ToList(),
-                            CombinedBlockHeight = (long)o
-                        };
-                        _logger.Info($"Sending witnesses at height {witnessPackage.CombinedBlockHeight}: {string.Join(",", witnessPackage.Witnesses?.Select(w => w.WitnessId))}");
-                        PipeOut?.SendAsync(witnessPackage);
-                    }
-                    else
-					{
-                        _logger.Error($"Packets were not stored successfully", t.Exception);
-					}
-				}, aggregatedTransactionsPacket.Payload.Height, TaskScheduler.Current);
-            }
-        }
+		private void ProduceAndSendWitnessPackage(long aggregatedTransactionsPacketHeight, WitnessPacket[] witnessPackets)
+		{
+			WitnessPackage witnessPackage = new WitnessPackage
+			{
+				Witnesses = witnessPackets.Select(w => GetPacketWitness(w)).ToList(),
+				CombinedBlockHeight = aggregatedTransactionsPacketHeight
+			};
+			_logger.Info($"Sending witnesses at height {witnessPackage.CombinedBlockHeight}: {string.Join(",", witnessPackage.Witnesses?.Select(w => w.WitnessId))}");
+
+			PipeOut?.SendAsync(witnessPackage);
+		}
 
         private PacketWitness GetPacketWitness(WitnessPacket w) => new PacketWitness
         {
@@ -522,101 +647,6 @@ namespace O10.Gateway.Common.Services
 			}, (registerTransaction, transactionStoreCompletionSource), TaskScheduler.Current);
 
 			return transactionStoreCompletionSource;
-		}
-
-		public IEnumerable<WitnessPackage> GetWitnessRange(long combinedBlockHeightStart, long combinedBlockHeightEnd = 0)
-		{
-			try
-			{
-				List<WitnessPackage> witnessPackages = new List<WitnessPackage>();
-
-				if (combinedBlockHeightEnd == 0)
-				{
-					combinedBlockHeightEnd = _lastCombinedBlockDescriptor.Height - 1;
-				}
-
-				if (_lastCombinedBlockDescriptor.Height >= combinedBlockHeightStart)
-				{
-					Dictionary<long, List<WitnessPacket>> witnessPackets = _dataAccessService.GetWitnessPackets((long)combinedBlockHeightStart, (long)combinedBlockHeightEnd);
-					if (witnessPackets != null)
-					{
-						foreach (long key in witnessPackets.Keys)
-						{
-							WitnessPackage witnessPackage = new WitnessPackage
-							{
-								CombinedBlockHeight = (long)key,
-								Witnesses = witnessPackets[key].Select(w => GetPacketWitness(w)).ToList(),
-							};
-
-							witnessPackages.Add(witnessPackage);
-						}
-					}
-				}
-
-				return witnessPackages;
-			}
-			catch (Exception ex)
-			{
-				_logger.Error($"Failure at {nameof(GetWitnessRange)}({combinedBlockHeightStart}, {combinedBlockHeightEnd})", ex);
-				throw;
-			}
-		}
-
-		public async Task<IEnumerable<TransactionBase>> GetTransactions(IEnumerable<long> witnessIds)
-		{
-            if (witnessIds is null)
-            {
-                throw new ArgumentNullException(nameof(witnessIds));
-            }
-
-            _logger.Debug($"Getting transactions for witnesses [{string.Join(',',witnessIds)}]");
-
-			try
-			{
-				List<TransactionBase> transactions = new List<TransactionBase>();
-
-				foreach (long witnessId in witnessIds)
-				{
-					_logger.Info($"Getting transaction for witness with id {witnessId}");
-					
-					WitnessPacket witness = _dataAccessService.GetWitnessPacket(witnessId);
-
-					if (witness != null)
-					{
-						_logger.LogIfDebug(() => $"{nameof(WitnessPacket)}: {JsonConvert.SerializeObject(witness, new ByteArrayJsonConverter())}");
-
-						var packet = _ledgerSynchronizersRepository.GetInstance(witness.ReferencedLedgerType).GetByWitness(witness);
-						transactions.Add(packet);
-					}
-					else
-                    {
-						_logger.Error($"Failed to obtain witness, NULL obtained for witnessId {witnessId}");
-                    }
-				}
-
-				return await Task.FromResult(transactions).ConfigureAwait(false);
-			}
-			catch (Exception ex)
-			{
-				_logger.Error($"Failure at {nameof(GetTransactions)}([{string.Join(',', witnessIds)}])", ex);
-				throw;
-			}
-		}
-
-		public async Task<StatePacketInfo> GetLastPacketInfo(IKey accountPublicKey)
-        {
-            if (accountPublicKey is null)
-            {
-                throw new ArgumentNullException(nameof(accountPublicKey));
-            }
-
-            return await GetLastPacketInfo(accountPublicKey.ToString()).ConfigureAwait(false);
-		}
-
-		public async Task<StatePacketInfo> GetLastPacketInfo(string accountPublicKey)
-        {
-			StatePacketInfo statePacketInfo = await _synchronizerConfiguration.NodeApiUri.AppendPathSegment("GetLastStatePacketInfo").SetQueryParam("publicKey", accountPublicKey).GetJsonAsync<StatePacketInfo>().ConfigureAwait(false);
-			return statePacketInfo;
 		}
 
 		#endregion
