@@ -83,7 +83,7 @@ namespace O10.Client.Web.Portal.Controllers
         }
 
         [HttpPost("Authenticate")]
-        public IActionResult Authenticate([FromBody] AccountDto accountDto)
+        public IActionResult Authenticate([FromBody] AuthenticationAccountDTO accountDto)
         {
             _logger.LogIfDebug(() => $"[{accountDto.AccountId}]: Started authentication of the account {JsonConvert.SerializeObject(accountDto)}");
 

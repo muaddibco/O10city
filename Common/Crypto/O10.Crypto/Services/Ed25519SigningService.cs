@@ -10,6 +10,8 @@ using O10.Crypto.Exceptions;
 using O10.Crypto.Properties;
 using System.Text;
 using O10.Crypto.Models;
+using O10.Core.Logging;
+using System.Linq;
 
 namespace O10.Crypto.Services
 {
@@ -18,12 +20,14 @@ namespace O10.Crypto.Services
     {
         protected byte[] _secretKey;
         protected byte[] _expandedPrivateKey;
+        private readonly ILogger _logger;
 
-        public Ed25519SigningService(IHashCalculationsRepository hashCalculationRepository, IIdentityKeyProvidersRegistry identityKeyProvidersRegistry)
+        public Ed25519SigningService(IHashCalculationsRepository hashCalculationRepository, IIdentityKeyProvidersRegistry identityKeyProvidersRegistry, ILoggerService loggerService)
         {
             DefaultHashCalculation = hashCalculationRepository.Create(Globals.DEFAULT_HASH);
             IdentityKeyProvider = identityKeyProvidersRegistry.GetInstance();
             PublicKeys = new IKey[1];
+            _logger = loggerService.GetLogger(nameof(Ed25519SigningService));
         }
 
         public IKey[] PublicKeys { get; private set; }
@@ -133,6 +137,8 @@ namespace O10.Crypto.Services
 
         public bool CheckTarget(params IKey[] targetValues)
         {
+            _logger.LogIfDebug(() => $"Checking target for {string.Join(',', targetValues.Select(s => s.ToString()))} and Public Key {PublicKeys[0].Value}");
+
             if (targetValues == null)
             {
                 throw new ArgumentNullException(nameof(targetValues));

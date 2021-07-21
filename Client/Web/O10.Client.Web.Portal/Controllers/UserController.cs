@@ -980,6 +980,8 @@ namespace O10.Client.Web.Portal.Controllers
                     };
                 }
 
+                _logger.LogIfDebug(() => $"[{accountId}]: {JsonConvert.SerializeObject(request, Formatting.Indented, new ByteArrayJsonConverter(), new KeyJsonConverter())}");
+
                 var attributeValues =
                     await _portalConfiguration
                     .IdentityProviderUri

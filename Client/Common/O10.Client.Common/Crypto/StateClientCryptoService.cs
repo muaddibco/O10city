@@ -5,6 +5,7 @@ using O10.Core.Cryptography;
 using O10.Core.ExtensionMethods;
 using O10.Core.HashCalculations;
 using O10.Core.Identity;
+using O10.Core.Logging;
 using O10.Crypto.ConfidentialAssets;
 using O10.Crypto.Services;
 using System.Collections.Generic;
@@ -17,8 +18,8 @@ namespace O10.Client.Common.Crypto
         private byte[] _blindingSecretKey;
         private IKey _publicKey;
 
-        public StateClientCryptoService(IHashCalculationsRepository hashCalculationRepository, IIdentityKeyProvidersRegistry identityKeyProvidersRegistry)
-            : base(hashCalculationRepository, identityKeyProvidersRegistry)
+        public StateClientCryptoService(IHashCalculationsRepository hashCalculationRepository, IIdentityKeyProvidersRegistry identityKeyProvidersRegistry, ILoggerService loggerService)
+            : base(hashCalculationRepository, identityKeyProvidersRegistry, loggerService)
         {
         }
 

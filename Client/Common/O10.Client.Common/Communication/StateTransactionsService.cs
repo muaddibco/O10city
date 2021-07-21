@@ -280,7 +280,7 @@ namespace O10.Client.Common.Communication
 
             SurjectionProof surjectionProof = CryptoHelper.CreateSurjectionProof(assetCommitment, new byte[][] { issuedAssetCommitment }, 0, blindingFactor);
 
-            _logger.LogIfDebug(() => $"{nameof(TransferAssetToStealth)} with secretKey={secretKey.ToHexString()}, transactionKey={transactionKey.ToHexString()}, destinationKey={destinationKey.ToHexString()}");
+            _logger.LogIfDebug(() => $"{nameof(TransferAssetToStealth)} with secretKey={secretKey.ToHexString()}, transactionKey={transactionKey.ToHexString()}, destinationKey={destinationKey.ToHexString()}, while receiver's Public Spend Key is {receiver.PublicSpendKey.ToHexString()} and Public View Key is {receiver.PublicViewKey.ToHexString()}");
 
             var transferAssetToStealth = new TransferAssetToStealthTransaction
             {

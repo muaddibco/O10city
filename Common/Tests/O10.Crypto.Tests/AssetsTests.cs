@@ -559,6 +559,21 @@ namespace O10.Crypto.Tests
         }
 
         //[Fact]
+        public void DestinationKeyTest2()
+        {
+            //413E653529D73C769374D62531DC530EDFEB42D0D695BF13337B06A7F30818C6, 922EE7C2BDD3AA87387E8B6C73EA858E466EEBCFA0DC30D45BDA7163B69A5A8D, 600387719AD95BF8ED923CED03FE8422CB6EA72F51F4CB3CE16CEA3B8BB20D07, 9560C477DA6B887E0EDC03578596B289BF30658350022E7E051D2305B4B5DAD0
+            byte[] publicTransactionKey = "922EE7C2BDD3AA87387E8B6C73EA858E466EEBCFA0DC30D45BDA7163B69A5A8D".HexStringToByteArray();
+            byte[] secretViewKey = "600387719AD95BF8ED923CED03FE8422CB6EA72F51F4CB3CE16CEA3B8BB20D07".HexStringToByteArray();
+            byte[] publicSpendKey = "9560C477DA6B887E0EDC03578596B289BF30658350022E7E051D2305B4B5DAD0".HexStringToByteArray();
+
+            byte[] destinationKey = "413E653529D73C769374D62531DC530EDFEB42D0D695BF13337B06A7F30818C6".HexStringToByteArray();
+
+            bool isDestinationKeyMine = CryptoHelper.IsDestinationKeyMine(destinationKey, publicTransactionKey, secretViewKey, publicSpendKey);
+
+            Assert.True(isDestinationKeyMine);
+        }
+
+        //[Fact]
         public void AssetValueRangeProof()
         {
             byte[] assetId = CryptoHelper.GetRandomSeed();

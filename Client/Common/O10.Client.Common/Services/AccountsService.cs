@@ -71,16 +71,14 @@ namespace O10.Client.Common.Services
             return accountDescriptor;
         }
 
-        private AccountDescriptor AuthenticateStealthAccount(AuthenticationInput authenticationInput)
+        private AccountDescriptor? AuthenticateStealthAccount(AuthenticationInput authenticationInput)
         {
-            AccountDescriptor accountDescriptor = null;
+            AccountDescriptor? accountDescriptor = null;
 
             bool res = IsPasswordValid(authenticationInput.Account, authenticationInput.Password);
             if (res)
             {
-                byte[] pwdBytes = Encoding.ASCII.GetBytes(authenticationInput.Password);
-
-                byte[] pwdHash = CryptoHelper.FastHash256(pwdBytes);
+                byte[] pwdHash = _hashCalculation.CalculateHash(Encoding.UTF8.GetBytes(authenticationInput.Password));
 
                 accountDescriptor = TranslateToAccountDescriptor(authenticationInput.Account, pwdHash);
             }
@@ -91,8 +89,10 @@ namespace O10.Client.Common.Services
         protected AccountDescriptor TranslateToAccountDescriptor(Account account, byte[]? pwdHash = null)
         {
             var accountDescriptor = _translatorsRepository.GetInstance<Account, AccountDescriptor>()?.Translate(account);
-            if (accountDescriptor != null)
+            if (accountDescriptor != null && pwdHash != null)
             {
+                accountDescriptor.SecretSpendKey = CryptoHelper.SumScalars(account.SecretSpendKey, pwdHash);
+                accountDescriptor.SecretViewKey = (account.AccountType == AccountType.User) ? CryptoHelper.SumScalars(account.SecretViewKey, pwdHash) : null;
                 accountDescriptor.PwdHash = pwdHash;
             }
 
@@ -108,7 +108,7 @@ namespace O10.Client.Common.Services
             return accountDescriptor;
         }
 
-        public long Create(AccountType accountType, string accountInfo = null, string password = null, bool isPrivate = false) =>
+        public long Create(AccountType accountType, string? accountInfo = null, string? password = null, bool isPrivate = false) =>
             string.IsNullOrEmpty(password)
                 ? AddNonEncryptedAccount(accountType)
                 : AddEncryptedAccount(accountType, accountInfo, password, isPrivate);
