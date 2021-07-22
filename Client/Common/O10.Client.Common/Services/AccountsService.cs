@@ -60,7 +60,9 @@ namespace O10.Client.Common.Services
             bool res = IsPasswordValid(authenticationInput.Account, authenticationInput.Password);
             if (res)
             {
-                accountDescriptor = TranslateToAccountDescriptor(authenticationInput.Account);
+                byte[] pwdHash = _hashCalculation.CalculateHash(Encoding.UTF8.GetBytes(authenticationInput.Password));
+
+                accountDescriptor = TranslateToAccountDescriptor(authenticationInput.Account, pwdHash);
 
                 if (!authenticationInput.Account.IsPrivate && !_dataAccessService.IsAutoLoginExist(authenticationInput.Account.AccountId))
                 {
