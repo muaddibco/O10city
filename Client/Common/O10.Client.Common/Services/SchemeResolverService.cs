@@ -69,14 +69,14 @@ namespace O10.Client.Common.Services
         }
 
 
-        public async Task<AttributeDefinition> ResolveAttributeScheme(string issuer, long schemeId)
+        public async Task<AttributeDefinition?> ResolveAttributeScheme(string issuer, long schemeId)
         {
             if (!Uri.IsWellFormedUriString(_restApiConfiguration.SchemaResolutionUri, UriKind.Absolute))
             {
                 throw new SchemeResolverServiceNotInitializedException();
             }
 
-            AttributeDefinition attributeScheme = null;
+            AttributeDefinition? attributeScheme = null;
 
             try
             {

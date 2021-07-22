@@ -79,13 +79,13 @@ namespace O10.Client.Common.Identities
             }
         }
 
-        public async Task<string> GetAttributeSchemeName(byte[] assetId, string issuer)
+        public async Task<string?> GetAttributeSchemeName(byte[] assetId, string issuer)
         {
             long schemeId = BitConverter.ToInt64(assetId, 24);
 
-            AttributeDefinition attributeScheme = await _schemeResolverService.ResolveAttributeScheme(issuer, schemeId).ConfigureAwait(false);
+            var attributeScheme = await _schemeResolverService.ResolveAttributeScheme(issuer, schemeId).ConfigureAwait(false);
 
-            return attributeScheme.SchemeName;
+            return attributeScheme?.SchemeName;
         }
 
         public async Task<AttributeDefinition> GetAttributeDefinition(byte[] assetId, string issuer)

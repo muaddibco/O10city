@@ -14,6 +14,7 @@ using O10.Crypto.Models;
 using O10.Transactions.Core.Ledgers.O10State.Transactions;
 using O10.Transactions.Core.Ledgers.Stealth.Transactions;
 using System.Linq;
+using System;
 
 namespace O10.Client.Common.Communication
 {
@@ -38,9 +39,7 @@ namespace O10.Client.Common.Communication
 
         protected override async Task StorePacket(TransactionBase transaction)
         {
-            _logger.LogIfDebug(() => $"[{_accountId}]: awaiting for {nameof(StoreTransferAssetToStealth)} of the {transaction.GetType().Name} completion...");
             await StoreTransferAssetToStealth(transaction).ConfigureAwait(false);
-            _logger.LogIfDebug(() => $"[{_accountId}]: awaiting for {nameof(StoreTransferAssetToStealth)} of the {transaction.GetType().Name} completed");
 
             StoreUniversalTransport(transaction);
 
@@ -189,23 +188,31 @@ namespace O10.Client.Common.Communication
 
         private void StoreTransitionCompromisedProofs(TransactionBase transactionBase)
         {
-            if (transactionBase is KeyImageCompromisedTransaction transaction)
+            try
             {
-                //((IStealthClientCryptoService)_clientCryptoService).DecodeEcdhTuple(transaction.EcdhTuple, transaction.TransactionPublicKey, out byte[] blindingFactor, out byte[] assetId);
-
-                string oldKeyImage = transaction.KeyImage.Value.ToArray().ToHexString();
-                string keyImage = ((IStealthClientCryptoService)_clientCryptoService).GetKeyImage(transaction.TransactionPublicKey).ToHexString();
-                if (_dataAccessService.UpdateUserAttribute(_accountId, oldKeyImage, keyImage, transaction.AssetCommitment, transaction.TransactionPublicKey, transaction.DestinationKey))
+                if (transactionBase is KeyImageCompromisedTransaction transaction)
                 {
-                    NotifyObservers(new UserAttributeStateUpdate
+                    _logger.LogIfDebug(() => $"[{_accountId}]: starting {nameof(StoreTransitionCompromisedProofs)} of the {transaction.GetType().Name}...");
+                    //((IStealthClientCryptoService)_clientCryptoService).DecodeEcdhTuple(transaction.EcdhTuple, transaction.TransactionPublicKey, out byte[] blindingFactor, out byte[] assetId);
+
+                    string oldKeyImage = transaction.KeyImage.Value.ToArray().ToHexString();
+                    string keyImage = ((IStealthClientCryptoService)_clientCryptoService).GetKeyImage(transaction.TransactionPublicKey).ToHexString();
+                    if (_dataAccessService.UpdateUserAttribute(_accountId, oldKeyImage, keyImage, transaction.AssetCommitment, transaction.TransactionPublicKey, transaction.DestinationKey))
                     {
-                        Issuer = null,
-                        AssetId = /*assetId*/null,
-                        AssetCommitment = transaction.AssetCommitment,
-                        TransactionKey = transaction.TransactionPublicKey,
-                        DestinationKey = transaction.DestinationKey
-                    });
+                        NotifyObservers(new UserAttributeStateUpdate
+                        {
+                            Issuer = null,
+                            AssetId = /*assetId*/null,
+                            AssetCommitment = transaction.AssetCommitment,
+                            TransactionKey = transaction.TransactionPublicKey,
+                            DestinationKey = transaction.DestinationKey
+                        });
+                    }
                 }
+            }
+            finally
+            {
+                _logger.LogIfDebug(() => $"[{_accountId}]: finished {nameof(StoreTransitionCompromisedProofs)} of the {transactionBase.GetType().Name}");
             }
         }
 
@@ -227,74 +234,91 @@ namespace O10.Client.Common.Communication
         //TODO: need to wight to replace storing of UtxoUnspentOutput with sending notification about received packet (like StoreTransitionOnboardingDisclosingProofs)
         private async Task StoreTransferAssetToStealth(TransactionBase transactionBase)
         {
-            if (transactionBase is TransferAssetToStealthTransaction transaction)
+            try
             {
-                ((IStealthClientCryptoService)_clientCryptoService).DecodeEcdhTuple(transaction.TransferredAsset.EcdhTuple, transaction.TransactionPublicKey, out byte[] blindingFactor, out byte[] assetId);
-
-                byte[] issuanceCommitment = transaction.SurjectionProof.AssetCommitments[0];
-
-                _logger.LogIfDebug(() => $"[{_accountId}]: Checking issuance commitment {issuanceCommitment.ToHexString()} for disabling Root Attributes");
-
-                List<long> disabledIds = _dataAccessService.MarkUserRootAttributesOverriden(_accountId, transaction.SurjectionProof.AssetCommitments[0]);
-
-                if ((disabledIds?.Count ?? 0) > 0)
+                if (transactionBase is TransferAssetToStealthTransaction transaction)
                 {
-                    _logger.LogIfDebug(() => $"[{_accountId}]: Root Attributes with Ids {string.Join(',', disabledIds)} disabled");
+                    _logger.LogIfDebug(() => $"[{_accountId}]: starting {nameof(StoreTransferAssetToStealth)} of the {transaction.GetType().Name}...");
 
-                    EligibilityCommitmentsDisabled eligibilityCommitmentsDisabled = new EligibilityCommitmentsDisabled { DisabledIds = disabledIds };
+                    ((IStealthClientCryptoService)_clientCryptoService).DecodeEcdhTuple(transaction.TransferredAsset.EcdhTuple, transaction.TransactionPublicKey, out byte[] blindingFactor, out byte[] assetId);
 
-                    NotifyObservers(eligibilityCommitmentsDisabled);
-                }
+                    byte[] issuanceCommitment = transaction.SurjectionProof.AssetCommitments[0];
 
-                bool isMine = _clientCryptoService.CheckTarget(transaction.DestinationKey, transaction.TransactionPublicKey);
+                    _logger.LogIfDebug(() => $"[{_accountId}]: Checking issuance commitment {issuanceCommitment.ToHexString()} for disabling Root Attributes");
 
-                _logger.LogIfDebug(() => $"[{_accountId}]: Target checked for destination key {transaction.DestinationKey} and transaction key {transaction.TransactionPublicKey} and found is mine: {isMine}");
+                    List<long> disabledIds = _dataAccessService.MarkUserRootAttributesOverriden(_accountId, transaction.SurjectionProof.AssetCommitments[0]);
 
-                if (isMine)
-                {
-                    List<UserRootAttribute> userRootAttributes = _dataAccessService.GetAllNonConfirmedRootAttributes(_accountId);
-                    UserRootAttribute userRootAttribute = null;
-                    foreach (var item in from item in userRootAttributes
-                                         where item.AssetId.Equals32(assetId) && transaction.Source.ToString() == item.Source
-                                         select item)
+                    if ((disabledIds?.Count ?? 0) > 0)
                     {
-                        userRootAttribute = item;
-                        break;
+                        _logger.LogIfDebug(() => $"[{_accountId}]: Root Attributes with Ids {string.Join(',', disabledIds)} disabled");
+
+                        EligibilityCommitmentsDisabled eligibilityCommitmentsDisabled = new EligibilityCommitmentsDisabled { DisabledIds = disabledIds };
+
+                        NotifyObservers(eligibilityCommitmentsDisabled);
                     }
 
-                    string keyImage = ((IStealthClientCryptoService)_clientCryptoService).GetKeyImage(transaction.TransactionPublicKey).ToHexString();
+                    bool isMine = _clientCryptoService.CheckTarget(transaction.DestinationKey, transaction.TransactionPublicKey);
 
-                    if (userRootAttribute != null)
+                    _logger.LogIfDebug(() => $"[{_accountId}]: Target checked for destination key {transaction.DestinationKey} and transaction key {transaction.TransactionPublicKey} and found is mine: {isMine}");
+
+                    if (isMine)
                     {
-                        userRootAttribute.AssetId = assetId;
-                        userRootAttribute.IssuanceTransactionKey = transaction.TransactionPublicKey.ToByteArray();
-                        userRootAttribute.IssuanceCommitment = transaction.TransferredAsset.AssetCommitment.ToByteArray();
-                        userRootAttribute.AnchoringOriginationCommitment = transaction.SurjectionProof.AssetCommitments[0];
-                        userRootAttribute.LastCommitment = transaction.TransferredAsset.AssetCommitment.ToByteArray();
-                        userRootAttribute.LastTransactionKey = transaction.TransactionPublicKey.ToByteArray();
-                        userRootAttribute.NextKeyImage = keyImage;
-                        userRootAttribute.LastDestinationKey = transaction.DestinationKey.ToByteArray();
-                        userRootAttribute.Source = transaction.Source.Value.ToHexString();
-                        _dataAccessService.UpdateConfirmedRootAttribute(userRootAttribute);
-                    }
-                    else
-                    {
-                        userRootAttribute = new UserRootAttribute
+                        List<UserRootAttribute> userRootAttributes = _dataAccessService.GetAllNonConfirmedRootAttributes(_accountId);
+                        UserRootAttribute userRootAttribute = null;
+                        foreach (var item in from item in userRootAttributes
+                                             where item.AssetId.Equals32(assetId) && transaction.Source.ToString() == item.Source
+                                             select item)
                         {
-                            AssetId = assetId,
-                            SchemeName = await _assetsService.GetAttributeSchemeName(assetId, transaction.Source.ToString()).ConfigureAwait(false),
-                            IssuanceTransactionKey = transaction.TransactionPublicKey.ToByteArray(),
-                            IssuanceCommitment = transaction.TransferredAsset.AssetCommitment.ToByteArray(),
-                            AnchoringOriginationCommitment = transaction.SurjectionProof.AssetCommitments[0],
-                            LastCommitment = transaction.TransferredAsset.AssetCommitment.ToByteArray(),
-                            LastTransactionKey = transaction.TransactionPublicKey.ToByteArray(),
-                            NextKeyImage = keyImage,
-                            LastDestinationKey = transaction.DestinationKey.ToByteArray(),
-                            Source = transaction.Source.Value.ToHexString()
-                        };
-                        _dataAccessService.AddUserRootAttribute(_accountId, userRootAttribute);
+                            userRootAttribute = item;
+                            break;
+                        }
+
+                        string keyImage = ((IStealthClientCryptoService)_clientCryptoService).GetKeyImage(transaction.TransactionPublicKey).ToHexString();
+
+                        if (userRootAttribute != null)
+                        {
+                            userRootAttribute.AssetId = assetId;
+                            userRootAttribute.IssuanceTransactionKey = transaction.TransactionPublicKey.ToByteArray();
+                            userRootAttribute.IssuanceCommitment = transaction.TransferredAsset.AssetCommitment.ToByteArray();
+                            userRootAttribute.AnchoringOriginationCommitment = transaction.SurjectionProof.AssetCommitments[0];
+                            userRootAttribute.LastCommitment = transaction.TransferredAsset.AssetCommitment.ToByteArray();
+                            userRootAttribute.LastTransactionKey = transaction.TransactionPublicKey.ToByteArray();
+                            userRootAttribute.NextKeyImage = keyImage;
+                            userRootAttribute.LastDestinationKey = transaction.DestinationKey.ToByteArray();
+                            userRootAttribute.Source = transaction.Source.Value.ToHexString();
+                            _dataAccessService.UpdateConfirmedRootAttribute(userRootAttribute);
+                        }
+                        else
+                        {
+                            var schemeName = await _assetsService.GetAttributeSchemeName(assetId, transaction.Source.ToString()).ConfigureAwait(false);
+                            if (!string.IsNullOrEmpty(schemeName))
+                            {
+                                userRootAttribute = new UserRootAttribute
+                                {
+                                    AssetId = assetId,
+                                    SchemeName = await _assetsService.GetAttributeSchemeName(assetId, transaction.Source.ToString()).ConfigureAwait(false),
+                                    IssuanceTransactionKey = transaction.TransactionPublicKey.ToByteArray(),
+                                    IssuanceCommitment = transaction.TransferredAsset.AssetCommitment.ToByteArray(),
+                                    AnchoringOriginationCommitment = transaction.SurjectionProof.AssetCommitments[0],
+                                    LastCommitment = transaction.TransferredAsset.AssetCommitment.ToByteArray(),
+                                    LastTransactionKey = transaction.TransactionPublicKey.ToByteArray(),
+                                    NextKeyImage = keyImage,
+                                    LastDestinationKey = transaction.DestinationKey.ToByteArray(),
+                                    Source = transaction.Source.Value.ToHexString()
+                                };
+                                _dataAccessService.AddUserRootAttribute(_accountId, userRootAttribute);
+                            }
+                            else
+                            {
+                                throw new InvalidOperationException($"Failed to obtain scheme name for asset {assetId} of the {transaction.Source}");
+                            }
+                        }
                     }
                 }
+            }
+            finally
+            {
+                _logger.LogIfDebug(() => $"[{_accountId}]: finished {nameof(StoreTransferAssetToStealth)} of the {transactionBase.GetType().Name}");
             }
         }
     }

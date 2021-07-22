@@ -15,7 +15,7 @@ namespace O10.Client.Common.Interfaces
 
         Task<long> GetSchemeId(string schemeName, string issuer);
 
-        Task<string> GetAttributeSchemeName(byte[] assetId, string issuer);
+        Task<string?> GetAttributeSchemeName(byte[] assetId, string issuer);
         Task<AttributeDefinition> GetAttributeDefinition(byte[] assetId, string issuer);
 
         void GetBlindingPoint(byte[] bindingKey, byte[] rootAssetId, out byte[] blindingPoint, out byte[] blindingFactor);

@@ -10,7 +10,7 @@ namespace O10.Client.Common.Interfaces
     {
         Task<string> ResolveIssuer(string issuer);
         Task<IEnumerable<AttributeDefinition>> ResolveAttributeSchemes(string issuer, bool activeOnly = false);
-        Task<AttributeDefinition> ResolveAttributeScheme(string issuer, long schemeId);
+        Task<AttributeDefinition?> ResolveAttributeScheme(string issuer, long schemeId);
         Task<AttributeDefinition> ResolveAttributeScheme(string issuer, string schemeName);
 
         Task<AttributeDefinition> GetRootAttributeScheme(string issuer);
