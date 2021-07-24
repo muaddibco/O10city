@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json.Converters;
-using System.Collections.Generic;
-using System.Text.Json.Serialization;
+﻿using System.Collections.Generic;
 
 namespace O10.Client.Web.Portal.Dtos.User
 {
@@ -14,7 +12,7 @@ namespace O10.Client.Web.Portal.Dtos.User
 
         public AttributeState State { get; set; }
         
-        public string Issuer { get; set; }
+        public string IssuerAddress { get; set; }
         
         public string IssuerName { get; set; }
         

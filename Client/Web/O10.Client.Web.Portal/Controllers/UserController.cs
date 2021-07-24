@@ -120,12 +120,12 @@ namespace O10.Client.Web.Portal.Controllers
             foreach (var rootAttribute in userRootAttributes)
             {
                 var issuer = rootAttribute.Source;
-                var userAttributeScheme = userAttributeSchemes.Find(i => i.Issuer == issuer && i.RootAssetId == rootAttribute.AssetId.ToHexString());
+                var userAttributeScheme = userAttributeSchemes.Find(i => i.IssuerAddress == issuer && i.RootAssetId == rootAttribute.AssetId.ToHexString());
                 if(userAttributeScheme == null)
                 {
                     userAttributeScheme = new UserAttributeSchemeDto
                     {
-                        Issuer = issuer,
+                        IssuerAddress = issuer,
                         IssuerName = _dataAccessService.GetUserIdentityIsserAlias(issuer),
                         RootAttributeContent = rootAttribute.Content,
                         RootAssetId = rootAttribute.AssetId.ToHexString(),
@@ -151,7 +151,7 @@ namespace O10.Client.Web.Portal.Controllers
 
                         var userAssociatedAttributes = new UserAssociatedAttributesDto
                         {
-                            Issuer = group.Key,
+                            IssuerAddress = group.Key,
                             IssuerName = issuerName
                         };
 
@@ -230,10 +230,8 @@ namespace O10.Client.Web.Portal.Controllers
                 UserAttributeId = c.UserAttributeId,
                 SchemeName = c.SchemeName,
                 Content = c.Content,
-                Validated = !string.IsNullOrEmpty(c.Content),
-                Source = c.Source,
+                IssuerAddress = c.Source,
                 IssuerName = issuerName,
-                IsOverriden = c.IsOverriden,
                 State = c.IsOverriden ? AttributeState.Disabled : (c.LastCommitment.ToHexString() == "0000000000000000000000000000000000000000000000000000000000000000" ? AttributeState.NotConfirmed : AttributeState.Confirmed)
             };
         }
@@ -389,10 +387,10 @@ namespace O10.Client.Web.Portal.Controllers
 
         private async Task<(BiometricPersonDataForSignatureDto dataForSignature, byte[] sourceImageBlindingFactor)> GetInputDataForBiometricSignature(UserAttributeTransferDto userAttributeTransfer, long accountId, IAssetsService assetsService)
         {
-            var imageAttr = _dataAccessService.GetUserAssociatedAttributes(accountId).FirstOrDefault(t => t.Source == userAttributeTransfer.Source && t.AttributeSchemeName == AttributesSchemes.ATTR_SCHEME_NAME_PASSPORTPHOTO);
+            var imageAttr = _dataAccessService.GetUserAssociatedAttributes(accountId).FirstOrDefault(t => t.Source == userAttributeTransfer.IssuerAddress && t.AttributeSchemeName == AttributesSchemes.ATTR_SCHEME_NAME_PASSPORTPHOTO);
 
             byte[] sourceImageBytes = Convert.FromBase64String(imageAttr.Content);
-            byte[] sourceImageAssetId = await assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_PASSPORTPHOTO, imageAttr.Content, userAttributeTransfer.Source).ConfigureAwait(false);
+            byte[] sourceImageAssetId = await assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_PASSPORTPHOTO, imageAttr.Content, userAttributeTransfer.IssuerAddress).ConfigureAwait(false);
             byte[] sourceImageBlindingFactor = CryptoHelper.GetRandomSeed();
             byte[] sourceImageCommitment = CryptoHelper.GetAssetCommitment(sourceImageBlindingFactor, sourceImageAssetId);
             SurjectionProof surjectionProof = CryptoHelper.CreateNewIssuanceSurjectionProof(sourceImageCommitment, new byte[][] { sourceImageAssetId }, 0, sourceImageBlindingFactor);

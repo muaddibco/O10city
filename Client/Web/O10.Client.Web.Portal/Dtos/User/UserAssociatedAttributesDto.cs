@@ -9,7 +9,7 @@ namespace O10.Client.Web.Portal.Dtos.User
             Attributes = new List<UserAssociatedAttributeDto>();
         }
 
-        public string Issuer { get; set; }
+        public string IssuerAddress { get; set; }
 
         public string IssuerName { get; set; }
 

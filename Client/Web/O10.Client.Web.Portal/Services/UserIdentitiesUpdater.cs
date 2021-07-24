@@ -20,6 +20,7 @@ using O10.Client.Common.Communication.Notifications;
 using O10.Core.Notifications;
 using O10.Crypto.Models;
 using O10.Transactions.Core.Ledgers.O10State.Transactions;
+using O10.Client.Web.Portal.Dtos;
 
 namespace O10.Client.Web.Portal.Services
 {
@@ -69,10 +70,9 @@ namespace O10.Client.Web.Portal.Services
                                     new UserAttributeDto
                                     {
                                         SchemeName = t.Result,
-                                        Source = transaction.Source.ToString(),
+                                        IssuerAddress = transaction.Source.ToString(),
                                         Content = userRootAttribute.Content,
-                                        Validated = true,
-                                        IsOverriden = false
+                                        State = AttributeState.NotConfirmed
                                     });
                                 }
                             }, TaskScheduler.Current).ConfigureAwait(false);
@@ -229,10 +229,9 @@ namespace O10.Client.Web.Portal.Services
             UserAttributeDto userAttributeDto = new UserAttributeDto
             {
                 SchemeName = userAttribute.SchemeName,
-                Source = userAttribute.Source,
+                IssuerAddress = userAttribute.Source,
                 Content = userAttribute.Content,
-                Validated = false,
-                IsOverriden = true
+                State = AttributeState.Disabled
             };
 
             _idenitiesHubContext.Clients.Group(_accountId.ToString(CultureInfo.InvariantCulture)).SendAsync("PushUserAttributeUpdate", userAttributeDto);
