@@ -7,6 +7,7 @@ namespace O10.Core.Logging
     public interface ILogger
     {
         void Initialize(string scopeName, string logConfigurationFile = null, LogLevel logLevel = LogLevel.Info);
+        void SetContext(string context);
 
         void Error(string msg, params object[] messageArgs);
         void Error(string msg, Exception ex, params object[] messageArgs);

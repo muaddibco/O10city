@@ -78,6 +78,10 @@ namespace O10.Tests.Core
             _testOutputHelper.WriteLine("[INFO] " + msg);
         }
 
+        public void SetContext(string context)
+        {
+        }
+
         public void Warning(string msg, params object[] messageArgs)
         {
             _testOutputHelper.WriteLine("[WARN] " + msg, messageArgs);

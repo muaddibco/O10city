@@ -8,7 +8,6 @@ using O10.Client.Common.Interfaces;
 using O10.Client.Common.Services;
 using O10.Client.DataLayer.Services;
 using O10.Core.Architecture;
-
 using O10.Core.Logging;
 using O10.Core.Models;
 using O10.Core.Serialization;
@@ -19,7 +18,7 @@ namespace O10.Client.Common.Communication
     [RegisterExtension(typeof(IWitnessPackagesProvider), Lifetime = LifetimeManagement.Scoped)]
     public class SignalRWitnessPackagesProvider : WitnessPackageProviderBase
     {
-        private HubConnection _hubConnection;
+        private SignalrHubConnection? _hubConnection;
 
         private readonly BlockingCollection<WitnessPackage> _witnessPackages = new BlockingCollection<WitnessPackage>();
 
@@ -104,63 +103,21 @@ namespace O10.Client.Common.Communication
         {
             string signalrHubUri = _gatewayService.GetNotificationsHubUri();
 
-            await DestryHubConnection();
+            if (_hubConnection != null)
+            {
+                await _hubConnection.DestroyHubConnection();
+            }
 
-            _hubConnection = new HubConnectionBuilder().WithUrl(signalrHubUri).Build();
+            _hubConnection = new SignalrHubConnection(new Uri(signalrHubUri), _accountId.ToString(), _logger, _cancellationToken);
+            await _hubConnection.BuildHubConnection();
 
             _logger.Info($"[{_accountId}]: SignalRPacketsProvider created instance of hubConnection to URI {signalrHubUri}");
-
-            _hubConnection.Closed += OnHubConnectionClose;
 
             _hubConnection.On<WitnessPackage>("PacketsUpdate", w =>
             {
                 _logger.LogIfDebug(() => $"[{_accountId}]: SignalR - obtained from gateway {nameof(w.CombinedBlockHeight)}={w.CombinedBlockHeight}");
                 _witnessPackages.Add(w);
             });
-        }
-
-        private async Task DestryHubConnection()
-        {
-            _logger.LogIfDebug(() => $"[{_accountId}]: closing hub started...");
-            try
-            {
-                if (_hubConnection != null)
-                {
-                    _hubConnection.Closed -= OnHubConnectionClose;
-
-                    if(_hubConnection.State != HubConnectionState.Disconnected)
-                    {
-                        await _hubConnection.StopAsync();
-                    }
-
-                    await _hubConnection.DisposeAsync();
-                }
-            }
-            catch(Exception ex)
-            {
-                _logger.Error($"[{_accountId}]: closing hub failed", ex);
-            }
-            finally
-            {
-                _logger.LogIfDebug(() => $"[{_accountId}]: closing hub completed");
-            }
-
-            _hubConnection = null;
-        }
-
-        private async Task OnHubConnectionClose(Exception error)
-        {
-            _logger.Error($"[{_accountId}]: !!!! SignalRPacketsProvider hubConnection closed with error '{error?.Message}', reconnecting: {!_cancellationToken.IsCancellationRequested}", error);
-
-            if (!_cancellationToken.IsCancellationRequested)
-            {
-                await Task.Delay(new Random().Next(0, 5) * 1000, _cancellationToken).ConfigureAwait(false);
-
-                if (!_cancellationToken.IsCancellationRequested)
-                {
-                    await StartHubConnection().ConfigureAwait(false);
-                }
-            }
         }
 
         private async Task ProcessWitnessPackage(WitnessPackage w)
@@ -183,43 +140,12 @@ namespace O10.Client.Common.Communication
 
             await AscertainAccountIsUpToDate().ConfigureAwait(false);
 
-            _logger.Info($"[{_accountId}]: SignalRPacketsProvider hubConnection connecting...");
-            await (await _hubConnection.StartAsync(_cancellationToken).ContinueWith<Task>(async t =>
-            {
-                if (t.IsCompletedSuccessfully)
-                {
-                    _logger.Info($"[{_accountId}]: **** SignalRPacketsProvider hubConnection connected");
-                }
-                else
-                {
-                    _logger.Error($"[{_accountId}]: **** Failure during establishing connection with Gateway. Reconnecting...");
-                    if (t.Exception != null && t.Exception.InnerExceptions != null)
-                    {
-                        foreach (Exception exception in t.Exception.InnerExceptions)
-                        {
-                            _logger.Error($"[{_accountId}]: Failure during establishing connection with Gateway", exception);
-                        }
-                    }
-
-                    await RetryStartHubConnection().ConfigureAwait(false);
-                }
-            }, TaskScheduler.Default).ConfigureAwait(false)).ConfigureAwait(false);
-            _logger.Info($"[{_accountId}]: SignalRPacketsProvider hubConnection completed");
+            await _hubConnection.StartHubConnection();
         }
 
-        private async Task RetryStartHubConnection()
+        protected override Task OnStop()
         {
-            await BuildHubConnection();
-
-            await Task.Delay(1000).ConfigureAwait(false);
-            await StartHubConnection().ConfigureAwait(false);
-        }
-
-        protected override async Task OnStop()
-        {
-            await _hubConnection.StopAsync().ConfigureAwait(false);
-            await _hubConnection.DisposeAsync().ConfigureAwait(false);
-            _hubConnection = null;
+            return Task.CompletedTask;
         }
     }
 }

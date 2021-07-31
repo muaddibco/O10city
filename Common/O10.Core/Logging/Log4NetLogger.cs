@@ -20,6 +20,7 @@ namespace O10.Core.Logging
         private bool _isInitialized;
         private string _logRepositoryName;
 		private ILog _log;
+        private string? _context;
 
 		private static readonly object _sync = new object();
 
@@ -54,18 +55,18 @@ namespace O10.Core.Logging
         public virtual void Debug(string msg, params object[] messageArgs)
         {
 			if(_log.IsDebugEnabled)
-			{
-				string formattedMessage = FormatMessage(msg, messageArgs);
+            {
+                string formattedMessage = FormatMessage(msg, messageArgs);
 
-				_log.Debug(formattedMessage);
-			}
-		}
+                _log.Debug(GetContextedMessage(formattedMessage));
+            }
+        }
 
-		public virtual void Debug(Func<string> getMsg)
+        public virtual void Debug(Func<string> getMsg)
 		{
 			if (_log.IsDebugEnabled && getMsg != null)
 			{
-				_log.Debug(getMsg());
+				_log.Debug(GetContextedMessage(getMsg()));
 			}
 		}
 
@@ -74,7 +75,7 @@ namespace O10.Core.Logging
 			if(_log.IsInfoEnabled)
 			{
 				string formattedMessage = FormatMessage(msg, messageArgs);
-				_log.Info(formattedMessage);
+				_log.Info(GetContextedMessage(formattedMessage));
 			}
 		}
 
@@ -83,7 +84,7 @@ namespace O10.Core.Logging
 			if(_log.IsWarnEnabled)
 			{
 				string formattedMessage = FormatMessage(msg, messageArgs);
-				_log.Warn(formattedMessage);
+				_log.Warn(GetContextedMessage(formattedMessage));
 			}
 		}
 
@@ -93,7 +94,7 @@ namespace O10.Core.Logging
 			{
 				string formattedMessage = FormatMessage(msg, messageArgs);
 
-				_log.Error(formattedMessage);
+				_log.Error(GetContextedMessage(formattedMessage));
 			}
 		}
 
@@ -109,7 +110,7 @@ namespace O10.Core.Logging
 			{
 				string formattedMessage = FormatMessage(msg, messageArgs);
 
-				_log.Error(formattedMessage, ex);
+				_log.Error(GetContextedMessage(formattedMessage), ex);
 			}
 		}
 
@@ -132,7 +133,7 @@ namespace O10.Core.Logging
 
                 if(!string.IsNullOrEmpty(formattedMessage))
                 {
-                    _log.Debug(formattedMessage);
+                    _log.Debug(GetContextedMessage(formattedMessage));
                 }
             }
         }
@@ -144,7 +145,7 @@ namespace O10.Core.Logging
                 string message = messageFactory?.Invoke();
                 if (!string.IsNullOrEmpty(message))
                 {
-                    _log.Debug(message);
+                    _log.Debug(GetContextedMessage(message));
                 }
             }
         }
@@ -187,6 +188,16 @@ namespace O10.Core.Logging
             }
 
             return string.Format(msg ?? string.Empty, messageArgs);
+        }
+
+        public void SetContext(string context)
+        {
+            _context = context;
+        }
+
+        private string GetContextedMessage(string msg)
+        {
+            return (!string.IsNullOrEmpty(_context) ? $"[{_context}]: " : string.Empty) + msg;
         }
     }
 }

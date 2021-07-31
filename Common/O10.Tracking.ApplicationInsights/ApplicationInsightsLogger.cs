@@ -112,5 +112,9 @@ namespace O10.Tracking.ApplicationInsights
 				}
 			}
 		}
-	}
+
+        public void SetContext(string context)
+        {
+        }
+    }
 }
