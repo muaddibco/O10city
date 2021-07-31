@@ -7,9 +7,9 @@ using O10.Core.Configuration;
 using O10.Network.Tests.Fixtures;
 using O10.Client.Web.Portal.Configuration;
 using O10.Client.Web.Portal.Controllers;
-using O10.Client.Web.Portal.Dtos;
 using O10.Client.Web.Portal.Services;
 using Xunit;
+using O10.Client.Web.DataContracts;
 
 namespace O10.Client.Web.Portal.Test
 {

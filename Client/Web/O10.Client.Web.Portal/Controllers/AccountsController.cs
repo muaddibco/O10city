@@ -2,13 +2,12 @@
 using Microsoft.Extensions.Options;
 using System;
 using System.Linq;
-using O10.Client.DataLayer.Enums;
-using O10.Client.Web.Portal.Dtos;
+using O10.Client.Web.DataContracts;
 using O10.Client.Web.Portal.Helpers;
 using O10.Client.Web.Portal.Services;
 using O10.Core.ExtensionMethods;
 using O10.Client.Web.Common.Services;
-using O10.Client.Web.Portal.Dtos.User;
+using O10.Client.Web.DataContracts.User;
 using O10.Client.Common.Entities;
 using O10.Client.DataLayer.Services;
 using O10.Client.DataLayer.Model.Scenarios;
@@ -94,7 +93,7 @@ namespace O10.Client.Web.Portal.Controllers
                 throw new AccountAuthenticationFailedException(accountDto.AccountId);
             }
 
-            if (accountDescriptor.AccountType == AccountType.User)
+            if (accountDescriptor.AccountType == AccountTypeDTO.User)
             {
                 _executionContextManager.InitializeUtxoExecutionServices(accountDescriptor.AccountId, accountDescriptor.SecretSpendKey, accountDescriptor.SecretViewKey, accountDescriptor.PwdHash);
                 var persistency = _executionContextManager.ResolveExecutionServices(accountDto.AccountId);
@@ -158,7 +157,7 @@ namespace O10.Client.Web.Portal.Controllers
                     throw new AccountNotFoundException(accountId);
                 }
 
-                if (accountDescriptor.AccountType == AccountType.User)
+                if (accountDescriptor.AccountType == AccountTypeDTO.User)
                 {
                     _executionContextManager.InitializeUtxoExecutionServices(accountDescriptor.AccountId, accountDescriptor.SecretSpendKey, accountDescriptor.SecretViewKey, accountDescriptor.PwdHash);
                 }
@@ -302,7 +301,7 @@ namespace O10.Client.Web.Portal.Controllers
         public IActionResult OverrideUserAccount(long accountId, [FromBody] AccountOverrideDto accountOverride)
         {
             _logger.LogIfDebug(() => $"[{accountId}]: {nameof(OverrideUserAccount)} with {JsonConvert.SerializeObject(accountOverride, new ByteArrayJsonConverter())}");
-            _accountsService.Override(AccountType.User, accountId, accountOverride.SecretSpendKey.HexStringToByteArray(), accountOverride.SecretViewKey.HexStringToByteArray(), accountOverride.Password, accountOverride.LastCombinedBlockHeight);
+            _accountsService.Override(AccountTypeDTO.User, accountId, accountOverride.SecretSpendKey.HexStringToByteArray(), accountOverride.SecretViewKey.HexStringToByteArray(), accountOverride.Password, accountOverride.LastCombinedBlockHeight);
 
             _executionContextManager.UnregisterExecutionServices(accountId);
             return Ok();
@@ -320,7 +319,7 @@ namespace O10.Client.Web.Portal.Controllers
 
                 accountDescriptor = _accountsService.Authenticate(accountId, password);
 
-                if (accountDescriptor.AccountType == AccountType.User)
+                if (accountDescriptor.AccountType == AccountTypeDTO.User)
                 {
                     _executionContextManager.InitializeUtxoExecutionServices(accountId, accountDescriptor.SecretSpendKey, accountDescriptor.SecretViewKey, accountDescriptor.PwdHash);
                 }

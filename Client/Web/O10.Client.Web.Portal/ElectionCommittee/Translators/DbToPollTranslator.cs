@@ -6,6 +6,7 @@ using O10.Core.Translators;
 using O10.Core.ExtensionMethods;
 using System;
 using System.Linq;
+using O10.Client.Web.DataContracts.ElectionCommittee;
 
 namespace O10.Client.Web.Portal.ElectionCommittee.Translators
 {

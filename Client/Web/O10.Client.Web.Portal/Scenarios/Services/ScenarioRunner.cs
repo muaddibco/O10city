@@ -9,7 +9,6 @@ using O10.Client.Common.Interfaces;
 using O10.Client.DataLayer.Enums;
 using O10.Client.DataLayer.Services;
 using O10.Core.Architecture;
-
 using O10.Core.Configuration;
 using O10.Client.Web.Portal.Scenarios.Configuration;
 using O10.Client.Web.Portal.Scenarios.Models;
@@ -209,7 +208,7 @@ namespace O10.Client.Web.Portal.Scenarios.Services
                     foreach (var scenarioAccount in scenarioAccounts)
                     {
                         AccountDescriptor account = _accountsService.GetById(scenarioAccount.AccountId);
-                        if (account.AccountType == AccountType.IdentityProvider || account.AccountType == AccountType.ServiceProvider)
+                        if (account.AccountType == AccountTypeDTO.IdentityProvider || account.AccountType == AccountTypeDTO.ServiceProvider)
                         {
                             AccountDescriptor accountDescriptor = _accountsService.Authenticate(scenarioAccount.AccountId, "qqq");
                             _executionContextManager.InitializeStateExecutionServices(accountDescriptor.AccountId, accountDescriptor.SecretSpendKey);
@@ -280,7 +279,7 @@ namespace O10.Client.Web.Portal.Scenarios.Services
         {
             foreach (var scenarioAccount in scenarioDefinition.Setup.Accounts.Where(a => a.AccountType == AccountType.User))
             {
-                long accountId = _accountsService.Create(AccountType.User, scenarioAccount.AccountInfo, "qqq", true);
+                long accountId = _accountsService.Create(AccountTypeDTO.User, scenarioAccount.AccountInfo, "qqq", true);
                 _dataAccessService.AddScenarionSessionAccount(scenarioSessionId, accountId);
             }
         }
@@ -289,7 +288,7 @@ namespace O10.Client.Web.Portal.Scenarios.Services
         {
             foreach (var scenarioAccount in scenarioDefinition.Setup.Accounts.Where(a => a.AccountType == AccountType.ServiceProvider))
             {
-                long accountId = _accountsService.Create(AccountType.ServiceProvider, scenarioAccount.AccountInfo, "qqq", true);
+                long accountId = _accountsService.Create(AccountTypeDTO.ServiceProvider, scenarioAccount.AccountInfo, "qqq", true);
                 _dataAccessService.AddScenarionSessionAccount(scenarioSessionId, accountId);
                 AccountDescriptor accountDescriptor = _accountsService.Authenticate(accountId, "qqq");
                 _executionContextManager.InitializeStateExecutionServices(accountId, accountDescriptor.SecretSpendKey);
@@ -313,7 +312,7 @@ namespace O10.Client.Web.Portal.Scenarios.Services
         {
             foreach (var scenarioAccount in scenarioDefinition.Setup.Accounts.Where(a => a.AccountType == AccountType.IdentityProvider))
             {
-                long accountId = _accountsService.Create(AccountType.IdentityProvider, scenarioAccount.AccountInfo, "qqq", true);
+                long accountId = _accountsService.Create(AccountTypeDTO.IdentityProvider, scenarioAccount.AccountInfo, "qqq", true);
                 _dataAccessService.AddScenarionSessionAccount(scenarioSessionId, accountId);
                 AccountDescriptor accountDescriptor = _accountsService.Authenticate(accountId, "qqq");
                 _executionContextManager.InitializeStateExecutionServices(accountId, accountDescriptor.SecretSpendKey);

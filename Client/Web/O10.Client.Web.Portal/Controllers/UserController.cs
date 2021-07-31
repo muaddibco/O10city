@@ -8,7 +8,7 @@ using O10.Client.DataLayer.Services;
 using O10.Client.Web.Portal.Services;
 using O10.Core.ExtensionMethods;
 using O10.Client.DataLayer.Enums;
-using O10.Client.Web.Portal.Dtos;
+using O10.Client.Web.DataContracts;
 using O10.Core.Configuration;
 using O10.Crypto.ConfidentialAssets;
 using System.Text;
@@ -21,7 +21,7 @@ using System.Net.Http;
 using O10.Client.DataLayer.Model;
 using System.Collections.Specialized;
 using O10.Client.Common.Interfaces.Outputs;
-using O10.Client.Web.Portal.Dtos.User;
+using O10.Client.Web.DataContracts.User;
 using Microsoft.AspNetCore.SignalR;
 using System.Web;
 using O10.Client.Web.Common.Dtos.SamlIdp;
@@ -50,6 +50,7 @@ using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using O10.Core.Serialization;
 using O10.Transactions.Core.DTOs;
+using O10.Client.Web.DataContracts.ElectionCommittee;
 
 namespace O10.Client.Web.Portal.Controllers
 {
@@ -1628,7 +1629,7 @@ namespace O10.Client.Web.Portal.Controllers
             byte[][] assetIds = new byte[vote.CandidateAssetIds.Length][];
             int index = Array.IndexOf(vote.CandidateAssetIds, vote.SelectedAssetId);
             byte[][] bfs = new byte[vote.CandidateAssetIds.Length][];
-            CandidateCommitment[] commitments = new CandidateCommitment[vote.CandidateAssetIds.Length];
+            ElectionCommittee.Models.CandidateCommitment[] commitments = new ElectionCommittee.Models.CandidateCommitment[vote.CandidateAssetIds.Length];
             for (int i = 0; i < vote.CandidateAssetIds.Length; i++)
             {
                 assetIds[i] = vote.CandidateAssetIds[i].HexStringToByteArray();
@@ -1637,7 +1638,7 @@ namespace O10.Client.Web.Portal.Controllers
             {
                 bfs[i] = CryptoHelper.GetRandomSeed();
                 byte[] candidateCommitment = CryptoHelper.GetAssetCommitment(bfs[i], assetIds[i]);
-                commitments[i] = new CandidateCommitment
+                commitments[i] = new ElectionCommittee.Models.CandidateCommitment
                 {
                     Commitment = candidateCommitment,
                     IssuanceProof = CryptoHelper.CreateNewIssuanceSurjectionProof(candidateCommitment, assetIds, i, bfs[i])

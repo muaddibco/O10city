@@ -2,7 +2,7 @@
 using System.Threading;
 using O10.Client.Common.Interfaces.Inputs;
 using O10.Core.Architecture;
-using O10.Client.Web.Portal.Dtos.ServiceProvider;
+using O10.Client.Web.DataContracts.ServiceProvider;
 using O10.Client.Common.Interfaces;
 
 namespace O10.Client.Web.Portal.Services

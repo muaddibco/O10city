@@ -1,4 +1,5 @@
-﻿using O10.Client.Web.Portal.ElectionCommittee.Models;
+﻿using O10.Client.Web.DataContracts.ElectionCommittee;
+using O10.Client.Web.Portal.ElectionCommittee.Models;
 using O10.Core.Architecture;
 using O10.Core.Cryptography;
 using O10.Core.Identity;

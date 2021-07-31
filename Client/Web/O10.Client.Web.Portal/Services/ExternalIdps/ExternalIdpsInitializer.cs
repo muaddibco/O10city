@@ -4,14 +4,11 @@ using System.Threading;
 using O10.Client.Common.Entities;
 using O10.Client.Common.Interfaces;
 using O10.Client.DataLayer.AttributesScheme;
-using O10.Client.DataLayer.Enums;
 using O10.Client.DataLayer.Services;
-using O10.Client.Web.Common;
 using O10.Client.Web.Common.Configuration;
 using O10.Core;
 using O10.Core.ExtensionMethods;
 using O10.Core.Architecture;
-
 using O10.Core.Configuration;
 using O10.Core.Logging;
 using System;
@@ -277,7 +274,7 @@ namespace O10.Client.Web.Portal.Services.ExternalIdps
         {
             string pwd = GetDefaultIdpPassword(externalIdp.Name);
 
-            long accountId = _accountsService.Create(AccountType.IdentityProvider, externalIdp.Alias, pwd, true);
+            long accountId = _accountsService.Create(AccountTypeDTO.IdentityProvider, externalIdp.Alias, pwd, true);
 
             return accountId;
         }

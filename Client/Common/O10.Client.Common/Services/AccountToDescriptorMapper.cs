@@ -17,7 +17,7 @@ namespace O10.Client.Common.Services
 
             return new AccountDescriptor
             {
-                AccountType = account.AccountType,
+                AccountType = (AccountTypeDTO)account.AccountType,
                 SecretSpendKey = account.SecretSpendKey,
                 SecretViewKey = account.SecretViewKey,
                 PublicSpendKey = account.PublicSpendKey,

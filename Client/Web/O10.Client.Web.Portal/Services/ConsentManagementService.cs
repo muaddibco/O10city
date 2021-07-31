@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.SignalR;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -7,14 +6,11 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks.Dataflow;
-using O10.Transactions.Core.Ledgers.Stealth;
 using O10.Client.Common.Entities;
 using O10.Client.Common.Interfaces;
 using O10.Client.Common.Interfaces.Inputs;
-using O10.Client.DataLayer.Enums;
 using O10.Client.DataLayer.Model.ConsentManagement;
 using O10.Client.DataLayer.Services;
-using O10.Client.Web.Common;
 using O10.Client.Web.Common.Configuration;
 using O10.Core;
 using O10.Core.Architecture;
@@ -23,12 +19,10 @@ using O10.Core.ExtensionMethods;
 using O10.Core.HashCalculations;
 using O10.Core.Logging;
 using O10.Crypto.ConfidentialAssets;
-using O10.Client.Web.Portal.Dtos.ServiceProvider;
+using O10.Client.Web.DataContracts.ServiceProvider;
 using O10.Client.Web.Portal.Hubs;
 using Microsoft.Extensions.DependencyInjection;
-using O10.Core.Serialization;
 using O10.Core.Notifications;
-using O10.Transactions.Core.Ledgers;
 using O10.Crypto.Models;
 
 namespace O10.Client.Web.Portal.Services
@@ -190,7 +184,7 @@ namespace O10.Client.Web.Portal.Services
         private ConsentManagementSettings CreateNewConsentManagementServiceAccount()
         {
             ConsentManagementSettings settings;
-            long accountId = _accountsService.Create(AccountType.User, nameof(ConsentManagementService), GetDefaultConsentManagementPassword(), true);
+            long accountId = _accountsService.Create(AccountTypeDTO.User, nameof(ConsentManagementService), GetDefaultConsentManagementPassword(), true);
             settings = new ConsentManagementSettings
             {
                 AccountId = accountId

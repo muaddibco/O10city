@@ -2,7 +2,8 @@
 using Newtonsoft.Json.Linq;
 using O10.Client.Common.Dtos.UniversalProofs;
 using O10.Client.DataLayer.Services;
-using O10.Client.Web.Portal.Dtos.ElectionCommittee;
+using O10.Client.Web.DataContracts.ElectionCommittee;
+using O10.Client.Web.DataContracts.ElectionCommittee;
 using O10.Client.Web.Portal.ElectionCommittee;
 using O10.Client.Web.Portal.ElectionCommittee.Models;
 using O10.Client.Web.Portal.Services;

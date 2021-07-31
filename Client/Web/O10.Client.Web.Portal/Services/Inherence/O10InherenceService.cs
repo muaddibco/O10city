@@ -3,13 +3,10 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using O10.Transactions.Core.Ledgers.Stealth;
 using O10.Client.Common.Entities;
 using O10.Client.Common.Interfaces;
-using O10.Client.DataLayer.Enums;
 using O10.Client.DataLayer.Model.Inherence;
 using O10.Client.DataLayer.Services;
-using O10.Client.Web.Common;
 using O10.Client.Web.Common.Configuration;
 using O10.Core.Architecture;
 using O10.Core.Configuration;
@@ -25,7 +22,6 @@ using Microsoft.Extensions.DependencyInjection;
 using O10.Client.Common.Exceptions;
 using O10.Core.Serialization;
 using O10.Core.Notifications;
-using O10.Transactions.Core.Ledgers;
 using O10.Crypto.Models;
 using O10.Transactions.Core.Ledgers.Stealth.Transactions;
 
@@ -150,7 +146,7 @@ namespace O10.Client.Web.Portal.Services.Inherence
         private InherenceSetting CreateO10Inherence()
         {
             _logger.Info("CreateO10Inherence");
-            AccountId = _accountsService.Create(AccountType.ServiceProvider, nameof(O10InherenceService), GetDefaultO10InherencePassword(), true);
+            AccountId = _accountsService.Create(AccountTypeDTO.ServiceProvider, nameof(O10InherenceService), GetDefaultO10InherencePassword(), true);
             InherenceSetting inherenceSetting = _dataAccessService.AddInherenceSetting(Name, AccountId);
             _logger.LogIfDebug(() => $"[{AccountId}]: {nameof(CreateO10Inherence)} account created");
 

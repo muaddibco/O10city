@@ -3,10 +3,10 @@ using Microsoft.Extensions.Options;
 using NSubstitute;
 using O10.Network.Tests.Fixtures;
 using O10.Client.Web.Portal.Controllers;
-using O10.Client.Web.Portal.Dtos;
 using O10.Client.Web.Portal.Helpers;
 using O10.Client.Web.Portal.Services;
 using Xunit;
+using O10.Client.Web.DataContracts;
 
 namespace O10.Client.Web.Portal.Test
 {

@@ -1,6 +1,4 @@
-﻿using O10.Client.DataLayer.Enums;
-
-namespace O10.Client.Common.Entities
+﻿namespace O10.Client.Common.Entities
 {
     public class AccountDescriptor
     {
@@ -8,7 +6,7 @@ namespace O10.Client.Common.Entities
         public byte[] PublicSpendKey { get; set; }
         public byte[] SecretViewKey { get; set; }
         public byte[] PublicViewKey { get; set; }
-        public AccountType AccountType { get; set; }
+        public AccountTypeDTO AccountType { get; set; }
         public string AccountInfo { get; set; }
         public byte[] PwdHash { get; set; }
         public long AccountId { get; set; }

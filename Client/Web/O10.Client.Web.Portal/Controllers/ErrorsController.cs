@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using O10.Client.Common.Exceptions;
-using O10.Client.Web.Portal.Dtos;
+using O10.Client.Web.DataContracts;
 using O10.Client.Web.Portal.Exceptions;
 using O10.Core.Logging;
 

@@ -110,7 +110,7 @@ namespace O10.Client.Common.Services
             return accountDescriptor;
         }
 
-        public long Create(AccountType accountType, string? accountInfo = null, string? password = null, bool isPrivate = false) =>
+        public long Create(AccountTypeDTO accountType, string? accountInfo = null, string? password = null, bool isPrivate = false) =>
             string.IsNullOrEmpty(password)
                 ? AddNonEncryptedAccount(accountType)
                 : AddEncryptedAccount(accountType, accountInfo, password, isPrivate);
@@ -141,7 +141,7 @@ namespace O10.Client.Common.Services
             _dataAccessService.ResetAccount(accountId, secretSpendKey, secretViewKey, publicSpendKey, publicViewKey, combinedBlock.Height);
         }
 
-        public void Override(AccountType accountType, long accountId, byte[] secretSpendKey, byte[] secretViewKey, string password, long lastRegistryCombinedBlockHeight) =>
+        public void Override(AccountTypeDTO accountType, long accountId, byte[] secretSpendKey, byte[] secretViewKey, string password, long lastRegistryCombinedBlockHeight) =>
             OverrideEncryptedAccount(accountType, accountId, password, secretSpendKey, secretViewKey, lastRegistryCombinedBlockHeight);
 
         public void Delete(long accountId) =>
@@ -157,7 +157,7 @@ namespace O10.Client.Common.Services
 
         #region Private Functions
 
-        private long AddEncryptedAccount(AccountType accountType, string accountInfo, string passphrase, bool isPrivate = false)
+        private long AddEncryptedAccount(AccountTypeDTO accountType, string accountInfo, string passphrase, bool isPrivate = false)
         {
             GenerateSecretKeys(accountType, out byte[] secretSpendKey, out byte[] secretViewKey);
 
@@ -168,7 +168,7 @@ namespace O10.Client.Common.Services
             var combinedBlock = AsyncUtil.RunSync(() => _gatewayService.GetLastRegistryCombinedBlock());
             long accountId = _dataAccessService.AddAccount((byte)accountType, accountInfo, secretSpendKey, secretViewKey, publicSpendKey, publicViewKey, combinedBlock?.Height ?? 0, isPrivate);
 
-            if (accountType == AccountType.User)
+            if (accountType == AccountTypeDTO.User)
             {
                 _dataAccessService.SetUserSettings(accountId, new UserSettings { IsAutoTheftProtection = true });
             }
@@ -176,13 +176,13 @@ namespace O10.Client.Common.Services
             return accountId;
         }
 
-        private long AddNonEncryptedAccount(AccountType accountType)
+        private long AddNonEncryptedAccount(AccountTypeDTO accountType)
         {
             GenerateSecretKeys(accountType, out byte[] secretSpendKey, out byte[] secretViewKey);
             var combinedBlock = AsyncUtil.RunSync(() => _gatewayService.GetLastRegistryCombinedBlock());
             long accountId = _dataAccessService.AddAccount((byte)accountType, null, secretSpendKey, secretViewKey, null, null, combinedBlock.Height, false);
 
-            if (accountType == AccountType.User)
+            if (accountType == AccountTypeDTO.User)
             {
                 _dataAccessService.SetUserSettings(accountId, new UserSettings { IsAutoTheftProtection = true });
             }
@@ -193,34 +193,34 @@ namespace O10.Client.Common.Services
         private void UpdateExistingAccount(long accountId, string accountInfo, string passphrase)
         {
             Account account = _dataAccessService.GetAccount(accountId);
-            GeneratePasswordKeys(account.AccountType, passphrase, account.SecretSpendKey, account.SecretViewKey, out byte[] publicSpendKey, out byte[] publicViewKey);
+            GeneratePasswordKeys((AccountTypeDTO)account.AccountType, passphrase, account.SecretSpendKey, account.SecretViewKey, out byte[] publicSpendKey, out byte[] publicViewKey);
             _dataAccessService.UpdateAccount(accountId, accountInfo, publicSpendKey, publicViewKey);
         }
 
-        private static void GenerateSecretKeys(AccountType accountType, out byte[] secretSpendKey, out byte[] secretViewKey)
+        private static void GenerateSecretKeys(AccountTypeDTO accountType, out byte[] secretSpendKey, out byte[] secretViewKey)
         {
             secretSpendKey = CryptoHelper.GetRandomSeed();
-            secretViewKey = (accountType == AccountType.User) ? CryptoHelper.GetRandomSeed() : null;
+            secretViewKey = (accountType == AccountTypeDTO.User) ? CryptoHelper.GetRandomSeed() : null;
         }
 
-        private void GeneratePasswordKeys(AccountType accountType, string passphrase, byte[] secretSpendKey, byte[] secretViewKey, out byte[] publicSpendKey, out byte[] publicViewKey)
+        private void GeneratePasswordKeys(AccountTypeDTO accountType, string passphrase, byte[] secretSpendKey, byte[] secretViewKey, out byte[] publicSpendKey, out byte[] publicViewKey)
         {
             byte[] pwdHash = _hashCalculation.CalculateHash(Encoding.UTF8.GetBytes(passphrase));
             byte[] secretSpendKeyPwd = CryptoHelper.SumScalars(secretSpendKey, pwdHash);
-            byte[] secretViewKeyPwd = (accountType == AccountType.User) ? CryptoHelper.SumScalars(secretViewKey, pwdHash) : null;
+            byte[] secretViewKeyPwd = (accountType == AccountTypeDTO.User) ? CryptoHelper.SumScalars(secretViewKey, pwdHash) : null;
 
-            publicSpendKey = (accountType == AccountType.User) ? CryptoHelper.GetPublicKey(secretSpendKeyPwd) : CryptoHelper.GetPublicKey(Ed25519.SecretKeyFromSeed(secretSpendKeyPwd));
-            publicViewKey = (accountType == AccountType.User) ? CryptoHelper.GetPublicKey(secretViewKeyPwd) : null;
+            publicSpendKey = (accountType == AccountTypeDTO.User) ? CryptoHelper.GetPublicKey(secretSpendKeyPwd) : CryptoHelper.GetPublicKey(Ed25519.SecretKeyFromSeed(secretSpendKeyPwd));
+            publicViewKey = (accountType == AccountTypeDTO.User) ? CryptoHelper.GetPublicKey(secretViewKeyPwd) : null;
         }
 
-        private void OverrideEncryptedAccount(AccountType accountType, long accountId, string passphrase, byte[] secretSpendKey, byte[] secretViewKey, long lastRegistryCombinedBlockHeight)
+        private void OverrideEncryptedAccount(AccountTypeDTO accountType, long accountId, string passphrase, byte[] secretSpendKey, byte[] secretViewKey, long lastRegistryCombinedBlockHeight)
         {
             byte[] pwdHash = _hashCalculation.CalculateHash(Encoding.UTF8.GetBytes(passphrase));
             byte[] secretSpendKeyPwd = CryptoHelper.SumScalars(secretSpendKey, pwdHash);
-            byte[] secretViewKeyPwd = (accountType == AccountType.User) ? CryptoHelper.SumScalars(secretViewKey, pwdHash) : null;
+            byte[] secretViewKeyPwd = (accountType == AccountTypeDTO.User) ? CryptoHelper.SumScalars(secretViewKey, pwdHash) : null;
 
-            byte[] publicSpendKey = (accountType == AccountType.User) ? CryptoHelper.GetPublicKey(secretSpendKeyPwd) : CryptoHelper.GetPublicKey(Ed25519.SecretKeyFromSeed(secretSpendKeyPwd));
-            byte[] publicViewKey = (accountType == AccountType.User) ? CryptoHelper.GetPublicKey(secretViewKeyPwd) : null;
+            byte[] publicSpendKey = (accountType == AccountTypeDTO.User) ? CryptoHelper.GetPublicKey(secretSpendKeyPwd) : CryptoHelper.GetPublicKey(Ed25519.SecretKeyFromSeed(secretSpendKeyPwd));
+            byte[] publicViewKey = (accountType == AccountTypeDTO.User) ? CryptoHelper.GetPublicKey(secretViewKeyPwd) : null;
 
             //EncryptKeys(accountType, passphrase, secretSpendKey, secretViewKey, out byte[] secretSpendKeyEnc, out byte[] secretViewKeyEnc);
 

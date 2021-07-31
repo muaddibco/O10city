@@ -9,7 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using O10.Client.Common.Interfaces;
 using O10.Core.Logging;
-using O10.Client.Web.Portal.Dtos.IdentityProvider;
+using O10.Client.Web.DataContracts.IdentityProvider;
 using O10.Client.DataLayer.Model;
 using O10.Client.Web.Portal.Services.Idps;
 using O10.Client.Common.Entities;
@@ -24,6 +24,7 @@ using O10.Core.Cryptography;
 using System.Collections.Concurrent;
 using Microsoft.Extensions.DependencyInjection;
 using O10.Transactions.Core.Ledgers.O10State.Transactions;
+using O10.Client.Web.DataContracts.ElectionCommittee;
 
 namespace O10.Client.Web.Portal.ElectionCommittee
 {
@@ -145,7 +146,7 @@ namespace O10.Client.Web.Portal.ElectionCommittee
 
         public Poll RegisterPoll(string name)
         {
-            var accountId = _accountsService.Create(DataLayer.Enums.AccountType.IdentityProvider, name, "qqq", true);
+            var accountId = _accountsService.Create(AccountTypeDTO.IdentityProvider, name, "qqq", true);
             var account = _accountsService.GetById(accountId);
             var issuer = account.PublicSpendKey.ToHexString();
 

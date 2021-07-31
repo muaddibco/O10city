@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.SignalR;
 using O10.Client.Common.Interfaces;
 using O10.Client.Web.Common.Hubs;
-using O10.Client.Web.Portal.Dtos;
+using O10.Client.Web.DataContracts;
 using O10.Core.Models;
 using System;
 using System.Collections.Generic;

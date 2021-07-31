@@ -12,7 +12,7 @@ using O10.Client.Common.Entities;
 using System.Threading.Tasks;
 using O10.Core.Logging;
 using System;
-using O10.Client.Web.Portal.Dtos.User;
+using O10.Client.Web.DataContracts.User;
 using System.Threading;
 using Newtonsoft.Json;
 using O10.Core.Serialization;
@@ -20,7 +20,7 @@ using O10.Client.Common.Communication.Notifications;
 using O10.Core.Notifications;
 using O10.Crypto.Models;
 using O10.Transactions.Core.Ledgers.O10State.Transactions;
-using O10.Client.Web.Portal.Dtos;
+using O10.Client.Web.DataContracts;
 
 namespace O10.Client.Web.Portal.Services
 {

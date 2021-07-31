@@ -29,7 +29,7 @@ using O10.Client.Web.Portal.ExternalIdps.Validators;
 using O10.Client.Web.Portal.Exceptions;
 using System.Collections.ObjectModel;
 using O10.Transactions.Core.Ledgers.O10State;
-using O10.Client.Web.Portal.Dtos.IdentityProvider;
+using O10.Client.Web.DataContracts.IdentityProvider;
 using Microsoft.AspNetCore.SignalR;
 using O10.Client.Web.Common.Hubs;
 using O10.Client.Common.Exceptions;
@@ -87,7 +87,7 @@ namespace O10.Client.Web.Portal.Controllers
             if (scenarioSession != null)
             {
                 IEnumerable<ScenarioAccount> scenarioAccounts = _dataAccessService.GetScenarioAccounts(scenarioSession.ScenarioSessionId);
-                var identityProviders = _accountsService.GetAll().Where(a => a.AccountType == AccountType.IdentityProvider && scenarioAccounts.Any(sa => sa.AccountId == a.AccountId)).Select(a => new IdentityProviderInfoDto
+                var identityProviders = _accountsService.GetAll().Where(a => a.AccountType == AccountTypeDTO.IdentityProvider && scenarioAccounts.Any(sa => sa.AccountId == a.AccountId)).Select(a => new IdentityProviderInfoDto
                 {
                     Id = a.AccountId.ToString(CultureInfo.InvariantCulture),
                     Description = a.AccountInfo,
@@ -98,7 +98,7 @@ namespace O10.Client.Web.Portal.Controllers
             }
             else
             {
-                var identityProviders = _accountsService.GetAll().Where(a => !a.IsPrivate && a.AccountType == AccountType.IdentityProvider).Select(a => new IdentityProviderInfoDto
+                var identityProviders = _accountsService.GetAll().Where(a => !a.IsPrivate && a.AccountType == AccountTypeDTO.IdentityProvider).Select(a => new IdentityProviderInfoDto
                 {
                     Id = a.AccountId.ToString(CultureInfo.InvariantCulture),
                     Description = a.AccountInfo,
@@ -225,7 +225,7 @@ namespace O10.Client.Web.Portal.Controllers
                 throw new AccountNotFoundException(accountId);
             }
 
-            if(account.AccountType != AccountType.IdentityProvider)
+            if(account.AccountType != AccountTypeDTO.IdentityProvider)
             {
                 throw new UnexpectedAccountTypeException(accountId, account.AccountType);
             }

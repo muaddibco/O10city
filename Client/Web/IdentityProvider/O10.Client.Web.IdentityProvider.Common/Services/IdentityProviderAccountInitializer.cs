@@ -1,23 +1,21 @@
 ﻿using System.Threading;
-using O10.Client.Web.Common;
 using O10.Client.Web.Common.Configuration;
 using O10.Core;
 using O10.Core.Architecture;
-
 using O10.Core.Configuration;
 using O10.IdentityProvider.DataLayer.Services;
 using ICoreDataAccessService = O10.Client.DataLayer.Services.IDataAccessService;
 using O10.Client.Common.Interfaces;
-using O10.Client.DataLayer.Enums;
 using O10.Client.DataLayer.AttributesScheme;
 using O10.Core.ExtensionMethods;
 using O10.Core.Logging;
 using System;
 using System.Threading.Tasks;
+using O10.Client.Common.Entities;
 
 namespace O10.Server.IdentityProvider.Common.Services
 {
-	[RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Singleton)]
 	public class IdentityProviderAccountInitializer : InitializerBase
 	{
 		private readonly IAzureConfiguration _azureConfiguration;
@@ -88,7 +86,7 @@ namespace O10.Server.IdentityProvider.Common.Services
 		{
 			string pwd = GetDefaultIdpPassword();
 
-			long accountId = _accountsService.Create(AccountType.IdentityProvider, "O10 Identity Provider", pwd, true);
+			long accountId = _accountsService.Create(AccountTypeDTO.IdentityProvider, "O10 Identity Provider", pwd, true);
 			_dataAccessService.SetIdentityProviderAccountId(accountId);
 
 			return accountId;

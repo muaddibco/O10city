@@ -1,4 +1,6 @@
-﻿namespace O10.Client.Web.Portal.ElectionCommittee.Models
+﻿using O10.Client.Web.DataContracts.ElectionCommittee;
+
+namespace O10.Client.Web.Portal.ElectionCommittee.Models
 {
     public class PollResult
     {

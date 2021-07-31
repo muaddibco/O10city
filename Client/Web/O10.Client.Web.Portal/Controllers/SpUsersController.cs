@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using O10.Client.Common.Interfaces;
 using System.Linq;
 using System;
-using O10.Client.Web.Portal.Dtos.ServiceProvider;
+using O10.Client.Web.DataContracts.ServiceProvider;
 using O10.Client.Web.Common.Services;
 using O10.Client.DataLayer.AttributesScheme;
 using System.IO;
@@ -19,7 +19,7 @@ using System.Threading.Tasks;
 using O10.Client.DataLayer.Entities;
 using O10.Client.Common.Entities;
 using O10.Client.Common.Dtos.UniversalProofs;
-using O10.Client.Web.Portal.Dtos.User;
+using O10.Client.Web.DataContracts.User;
 using Microsoft.Extensions.DependencyInjection;
 using O10.Client.DataLayer.Model.ServiceProviders;
 

@@ -92,21 +92,18 @@
     <ProjectReference Include="..\IdentityProvider\O10.Client.Web.IdentityProvider.DataLayer\O10.Client.Web.IdentityProvider.DataLayer.csproj" />
     <ProjectReference Include="..\IdentityProvider\O10.Client.Web.IdentityProvider.Common\O10.Client.Web.IdentityProvider.Common.csproj" />
     <ProjectReference Include="..\O10.Client.Web.Common\O10.Client.Web.Common.csproj" />
+    <ProjectReference Include="..\O10.Client.Web.DataContracts\O10.Client.Web.DataContracts.csproj" />
     <ProjectReference Include="..\Saml\O10.Client.Web.Saml.Common\O10.Client.Web.Saml.Common.csproj" />
     <ProjectReference Include="..\Saml\Saml2.Authentication.Core\Saml2.Authentication.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- Don't publish the SPA source files, but do show them in the project files list -->
-    <Compile Remove="Dtos\User\RelationProofsSession\**" />
     <Compile Remove="Logs\**" />
     <Content Remove="$(SpaRoot)**" />
-    <Content Remove="Dtos\User\RelationProofsSession\**" />
     <Content Remove="Logs\**" />
-    <EmbeddedResource Remove="Dtos\User\RelationProofsSession\**" />
     <EmbeddedResource Remove="Logs\**" />
     <None Remove="$(SpaRoot)**" />
-    <None Remove="Dtos\User\RelationProofsSession\**" />
     <None Remove="Logs\**" />
     <None Include="$(SpaRoot)**" Exclude="$(SpaRoot)node_modules\**" />
   </ItemGroup>

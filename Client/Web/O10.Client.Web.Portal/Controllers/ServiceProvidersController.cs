@@ -5,18 +5,14 @@ using System.Collections.Generic;
 using System.Linq;
 using O10.Client.Web.Portal.Services;
 using O10.Core.ExtensionMethods;
-using O10.Client.Web.Portal.Dtos;
 using O10.Client.DataLayer.Services;
 using O10.Client.DataLayer.Model;
 using O10.Client.Common.Interfaces;
 using O10.Client.DataLayer.Enums;
 using System.Globalization;
-using O10.Crypto.ConfidentialAssets;
-using O10.Client.Web.Portal.Dtos.ServiceProvider;
-using System.IO;
+using O10.Client.Web.DataContracts.ServiceProvider;
 using O10.Core.HashCalculations;
 using O10.Core;
-using O10.Client.Web.Common.Services;
 using System.Threading.Tasks;
 using O10.Client.DataLayer.AttributesScheme;
 using O10.Client.DataLayer.Model.Scenarios;
@@ -28,8 +24,6 @@ using Flurl.Http;
 using O10.Client.Common.Interfaces.Inputs;
 using Newtonsoft.Json;
 using O10.Client.Common.Entities;
-using Microsoft.Extensions.DependencyInjection;
-using O10.Client.DataLayer.Model.ServiceProviders;
 
 namespace O10.Client.Web.Portal.Controllers
 {
@@ -84,7 +78,7 @@ namespace O10.Client.Web.Portal.Controllers
             if (scenarioSession != null)
             {
                 IEnumerable<ScenarioAccount> scenarioAccounts = _dataAccessService.GetScenarioAccounts(scenarioSession.ScenarioSessionId);
-                var serviceProviders = _accountsService.GetAll().Where(a => a.AccountType == AccountType.ServiceProvider && scenarioAccounts.Any(sa => sa.AccountId == a.AccountId)).Select(a => new ServiceProviderInfoDto
+                var serviceProviders = _accountsService.GetAll().Where(a => a.AccountType == AccountTypeDTO.ServiceProvider && scenarioAccounts.Any(sa => sa.AccountId == a.AccountId)).Select(a => new ServiceProviderInfoDto
                 {
                     Id = a.AccountId.ToString(CultureInfo.InvariantCulture),
                     Description = a.AccountInfo,
@@ -95,7 +89,7 @@ namespace O10.Client.Web.Portal.Controllers
             }
             else
             {
-                var serviceProviders = _accountsService.GetAll().Where(a => !a.IsPrivate && a.AccountType == AccountType.ServiceProvider).Select(a => new ServiceProviderInfoDto
+                var serviceProviders = _accountsService.GetAll().Where(a => !a.IsPrivate && a.AccountType == AccountTypeDTO.ServiceProvider).Select(a => new ServiceProviderInfoDto
                 {
                     Id = a.AccountId.ToString(CultureInfo.InvariantCulture),
                     Description = a.AccountInfo,

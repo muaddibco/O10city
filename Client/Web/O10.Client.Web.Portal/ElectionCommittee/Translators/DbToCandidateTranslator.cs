@@ -1,11 +1,10 @@
 ﻿using O10.Client.DataLayer.ElectionCommittee;
-using O10.Client.Web.Portal.ElectionCommittee.Models;
 using O10.Core.Identity;
 using O10.Core.ExtensionMethods;
 using O10.Core.Translators;
 using System;
 using O10.Core.Architecture;
-
+using O10.Client.Web.DataContracts.ElectionCommittee;
 
 namespace O10.Client.Web.Portal.ElectionCommittee.Translators
 {

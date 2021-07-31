@@ -6,7 +6,7 @@ using System.Linq;
 using O10.Client.DataLayer.Model.Scenarios;
 using O10.Client.DataLayer.Services;
 using O10.Core.Logging;
-using O10.Client.Web.Portal.Dtos.Scenarios;
+using O10.Client.Web.DataContracts.Scenarios;
 using O10.Client.Web.Portal.Scenarios.Models;
 using O10.Client.Web.Portal.Scenarios.Services;
 
