@@ -1,8 +1,6 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
 using O10.Core.Logging;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -39,8 +37,6 @@ namespace O10.Client.Common.Communication
                 }
             });
         }
-
-        public IDisposable On<T1>(string methodName, Action<T1> handler) => _hubConnection.On<T1>(methodName, w => handler(w));
 
         public async Task BuildHubConnection()
         {
@@ -108,6 +104,18 @@ namespace O10.Client.Common.Communication
             }
 
             _hubConnection = null;
+        }
+
+        public IDisposable On<T1>(string methodName, Action<T1> handler) => _hubConnection.On<T1>(methodName, w => handler(w));
+
+        public async Task AddToGroup(string groupName, CancellationToken cancellationToken)
+        {
+            await _hubConnection.InvokeAsync("AddToGroup", groupName, cancellationToken);
+        }
+
+        public async Task RemoveFromGroup(string groupName, CancellationToken cancellationToken)
+        {
+            await _hubConnection.InvokeAsync("RemoveFromGroup", groupName, cancellationToken);
         }
 
         private async Task OnHubConnectionClose(Exception error)
