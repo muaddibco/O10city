@@ -87,7 +87,7 @@ export class UserService {
 	}
 
   getServiceProviderActionInfo(accountId: number, actionInfo: string, assetId: string, attributeContent: string) {
-		return this.http.get<ServiceProviderActionAndValidations>('/api/User/ServiceProviderActionInfo?accountId=' + accountId + '&actionInfo=' + actionInfo + "&assetId=" + assetId + "&attributeContent=" + attributeContent);
+		return this.http.get<ServiceProviderActionAndValidations>('/api/User/ActionDetails?accountId=' + accountId + '&actionInfo=' + actionInfo + "&assetId=" + assetId + "&attributeContent=" + attributeContent);
 	}
 
   getDisclosedSecrets(accountId: number, password: string) {
@@ -114,10 +114,11 @@ export class UserService {
 export class ActionType {
 	public static IdentityRequest: string = '1';
 	public static ServiceProvider: string = '2';
-	public static ValidateSignature: string = '7';
-	public static ProofRelations: string = '8';
-	public static RegisterIdentity: string = '10';
-	public static OverrideAccount: string = '11';
+	public static ProofRelations: string = '3';
+  public static RegisterIdentity: string = '4';
+	public static ValidateSignature: string = '5';
+  public static OverrideAccount: string = '6';
+  public static Saml: string = '7';
 }
 
 export class SpActionType {

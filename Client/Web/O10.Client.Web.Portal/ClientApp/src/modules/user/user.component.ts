@@ -515,7 +515,7 @@ export class UserComponent implements OnInit {
       that.action = r.action;
       that.target = r.actionInfo;
 
-		if (r.action === ActionType.IdentityRequest || r.action === '12') { that.router.navigate(['/userIdentityRequest'], { queryParams: { actionType: r.action, target: r.actionInfo } }); }
+		if (r.action === ActionType.IdentityRequest) { that.router.navigate(['/userIdentityRequest'], { queryParams: { actionType: r.action, target: r.actionInfo } }); }
 		else if (r.action === ActionType.ServiceProvider) { that.ServiceProvider(r.actionInfo); }
 		else if (r.action === ActionType.ValidateSignature) { that.ValidateDocumentSignature(r.actionInfo); }
 		else if (r.action === ActionType.ProofRelations) { that.initiateRelationProofsSession(r.actionInfo); }

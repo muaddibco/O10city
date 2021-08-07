@@ -19,9 +19,9 @@ using System.Threading.Tasks;
 using O10.Client.DataLayer.Entities;
 using O10.Client.Common.Entities;
 using O10.Client.Common.Dtos.UniversalProofs;
-using O10.Client.Web.DataContracts.User;
 using Microsoft.Extensions.DependencyInjection;
 using O10.Client.DataLayer.Model.ServiceProviders;
+using O10.Client.Web.DataContracts;
 
 namespace O10.Client.Web.Portal.Controllers
 {
@@ -185,13 +185,26 @@ namespace O10.Client.Web.Portal.Controllers
 
         [AllowAnonymous]
         [HttpGet("Action")]
-        public IActionResult GetActionInfo([FromQuery(Name = "t")] int actionType, [FromQuery(Name = "pk")] string publicKey, [FromQuery(Name = "sk")] string sessionKey, [FromQuery(Name = "rk")] string registrationKey)
+        public IActionResult GetActionInfo([FromQuery(Name = "t")] ActionTypeDto actionType, [FromQuery(Name = "pk")] string publicKey, [FromQuery(Name = "sk")] string sessionKey, [FromQuery(Name = "rk")] string registrationKey)
         {
             AccountDescriptor spAccount = _accountsService.GetByPublicKey(publicKey.HexStringToByteArray());
             bool isRegistered = false;
-            string extraInfo = null;
-            List<string> validations = new List<string>();
+            var requiredValidations = new Dictionary<string, ValidationTypeDto>();
+            var permittedRelations = new Dictionary<string, List<string>>();
+            var existingRelations = new HashSet<string>();
             string[] details = Array.Empty<string>();
+
+            ActionDetailsDto actionInfo = new ActionDetailsDto
+            {
+                ActionType = actionType,
+                AccountInfo = spAccount.AccountInfo,
+                IsRegistered = isRegistered,
+                PublicKey = publicKey,
+                SessionKey = sessionKey,
+                IsBiometryRequired = false,
+                RequiredValidations = requiredValidations,
+                PermittedRelations = permittedRelations
+            };
 
             // Onboarding & Login
             //if (actionType == 0)
@@ -202,82 +215,58 @@ namespace O10.Client.Web.Portal.Controllers
             //}
             // Employee registration
             //else 
-            if (actionType == 1)
+            if (actionType == ActionTypeDto.Relation)
             {
                 List<RelationRecord> spEmployees = _dataAccessService.GetRelationRecords(spAccount.AccountId, registrationKey.DecodeFromString64());
-                extraInfo = "";
 
-                foreach (RelationRecord spEmployee in spEmployees)
+                foreach (RelationRecord spEmployee in spEmployees.Where(s => s.RegistrationCommitment != null))
                 {
-                    if (!string.IsNullOrEmpty(extraInfo))
-                    {
-                        extraInfo += "/";
-                    }
-                    extraInfo += $"{spAccount.AccountInfo}|{spEmployee?.RelationGroup?.GroupName}|{spEmployee.RegistrationCommitment != null}";
+                    existingRelations.Add(spEmployee.RelationGroup.GroupName);
                 }
 
                 isRegistered = spEmployees.Count > 0;
             }
-            // Document sign
-            else if (actionType == 2)
+            else if (actionType == ActionTypeDto.DocumentSign)
             {
                 SignedDocumentEntity spDocument = _dataAccessService.GetSpDocument(spAccount.AccountId, registrationKey);
                 if (spDocument != null)
                 {
                     isRegistered = true;
-                    extraInfo = $"{spDocument.DocumentName}|{spDocument.Hash}|{spDocument.LastChangeRecordHeight}";
+                    actionInfo.ActionItemKey = $"{spDocument.DocumentName}|{spDocument.Hash}|{spDocument.LastChangeRecordHeight}";
 
                     foreach (var allowedSigner in spDocument.AllowedSigners)
                     {
-                        validations.Add($"{allowedSigner.GroupIssuer};{allowedSigner.GroupName}");
+                        if(!permittedRelations.ContainsKey(allowedSigner.GroupIssuer))
+                        {
+                            permittedRelations.Add(allowedSigner.GroupIssuer, new List<string>());
+                        }
+                        
+                        permittedRelations[allowedSigner.GroupIssuer].Add(allowedSigner.GroupName);
                     }
                 }
             }
-            bool isBiometryRequired = false;
 
-            if (actionType == 0 || actionType == 1)
+            if (actionType == ActionTypeDto.Identification || actionType == ActionTypeDto.Relation)
             {
                 IEnumerable<SpIdenitityValidation> spIdenitityValidations = _dataAccessService.GetSpIdenitityValidations(spAccount.AccountId);
 
                 if (spIdenitityValidations != null && spIdenitityValidations.Count() > 0)
                 {
-                    //IEnumerable<Tuple<AttributeType, string>> attributeDescriptions = _identityAttributesService.GetAssociatedAttributeTypes();
-                    //IEnumerable<Tuple<ValidationType, string>> validationDescriptions = _identityAttributesService.GetAssociatedValidationTypes();
-
                     foreach (SpIdenitityValidation spIdenitityValidation in spIdenitityValidations)
                     {
                         if (!AttributesSchemes.ATTR_SCHEME_NAME_PASSPORTPHOTO.Equals(spIdenitityValidation.SchemeName))
                         {
-                            validations.Add($"{spIdenitityValidation.SchemeName}:{spIdenitityValidation.ValidationType}");
+                            requiredValidations.Add(spIdenitityValidation.SchemeName, (ValidationTypeDto)spIdenitityValidation.ValidationType);
                         }
                         else
                         {
-                            isBiometryRequired = true;
+                            actionInfo.IsBiometryRequired = true;
                         }
-                        //                  if (spIdenitityValidation.AttributeType != AttributeType.DateOfBirth)
-                        //{
-                        //                      validityInfo.Add(attributeDescriptions.FirstOrDefault(d => d.Item1 == spIdenitityValidation.AttributeType)?.Item2 ?? spIdenitityValidation.AttributeType.ToString());
-                        //                  }
-                        //                  else
-                        //{
-                        //	validityInfo.Add(validationDescriptions.FirstOrDefault(d => d.Item1 == spIdenitityValidation.ValidationType)?.Item2 ?? spIdenitityValidation.ValidationType.ToString());
-                        //}
                     }
                 }
             }
 
-            ServiceProviderActionAndValidationsDto serviceProviderActionAndValidations = new ServiceProviderActionAndValidationsDto
-            {
-                SpInfo = spAccount.AccountInfo,
-                IsRegistered = isRegistered,
-                PublicKey = publicKey,
-                SessionKey = sessionKey,
-                ExtraInfo = extraInfo,
-                IsBiometryRequired = isBiometryRequired,
-                Validations = validations
-            };
-
-            return Ok(serviceProviderActionAndValidations);
+            return Ok(actionInfo);
         }
 
         [AllowAnonymous]

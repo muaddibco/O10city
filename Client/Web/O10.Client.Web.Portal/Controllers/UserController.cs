@@ -1161,58 +1161,59 @@ namespace O10.Client.Web.Portal.Controllers
             return actionDetails;
         }
 
-        [HttpGet("ActionType")]
-        public IActionResult GetActionType(string actionInfo)
+        [HttpGet("ActionInfo")]
+        public ActionResult<UserActionInfoDto> GetActionInfo(string actionInfo)
         {
             string actionDecoded = actionInfo.DecodeFromString64();
+            string actionInfoEncoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(actionDecoded.Split("://", 2)[1]));
 
             if (actionDecoded.StartsWith("iss://"))
             {
-                return Ok(new { Action = "12", ActionInfo = Convert.ToBase64String(Encoding.UTF8.GetBytes(actionDecoded.Replace("iss://", ""))) });
-            }
-            else if (actionDecoded.StartsWith("dis://"))
-            {
-                return Ok(new { Action = "11", ActionInfo = Convert.ToBase64String(Encoding.UTF8.GetBytes(actionDecoded.Replace("dis://", ""))) });
-            }
-            else if (actionDecoded.StartsWith("wreg://"))
-            {
-                return Ok(new { Action = "10", ActionInfo = Convert.ToBase64String(Encoding.UTF8.GetBytes(actionDecoded.Replace("wreg://", ""))) });
-            }
-            else if (actionDecoded.StartsWith("saml://"))
-            {
-                return Ok(new { Action = "2", ActionInfo = actionInfo });
-            }
-            else if (actionDecoded.StartsWith("prf://"))
-            {
-                return GetProofActionType(actionDecoded);
-            }
-            else if (actionDecoded.StartsWith("sig://"))
-            {
-                return GetSignatureValidationActionType(actionDecoded);
+                return Ok(new UserActionInfoDto { ActionType = UserActionTypeDto.IdentityRequest, ActionInfoEncoded = actionInfoEncoded });
             }
             else if (actionDecoded.StartsWith("spp://"))
             {
-                return Ok(new { Action = "2", ActionInfo = actionInfo });
+                return Ok(new UserActionInfoDto { ActionType = UserActionTypeDto.ServiceProvider, ActionInfoEncoded = actionInfoEncoded });
             }
-            else
+            else if (actionDecoded.StartsWith("prf://"))
             {
-                if (actionDecoded.Contains("ProcessRootIdentityRequest", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    return Ok(new { Action = "1", ActionInfo = actionInfo });
-                }
+                return Ok(new UserActionInfoDto { ActionType = UserActionTypeDto.ProofRelations, ActionInfoEncoded = actionInfoEncoded });
             }
+            else if (actionDecoded.StartsWith("wreg://"))
+            {
+                return Ok(new UserActionInfoDto { ActionType = UserActionTypeDto.RegisterIdentity, ActionInfoEncoded = actionInfoEncoded });
+            }
+            else if (actionDecoded.StartsWith("sig://"))
+            {
+                return Ok(new UserActionInfoDto { ActionType = UserActionTypeDto.ValidateSignature, ActionInfoEncoded = actionInfoEncoded });
+            }
+            else if (actionDecoded.StartsWith("dis://"))
+            {
+                return Ok(new UserActionInfoDto { ActionType = UserActionTypeDto.OverrideAccount, ActionInfoEncoded = actionInfoEncoded });
+            }
+            else if (actionDecoded.StartsWith("saml://"))
+            {
+                return Ok(new UserActionInfoDto { ActionType = UserActionTypeDto.Saml, ActionInfoEncoded = actionInfoEncoded });
+            }
+            /*else if (actionDecoded.StartsWith("idr://"))
+            {
+                //if (actionDecoded.Contains("ProcessRootIdentityRequest", StringComparison.InvariantCultureIgnoreCase))
+                ///{
+                    return Ok(new { Action = "1", ActionInfo = actionInfo });
+                //}
+            }*/
 
             return BadRequest();
         }
 
         private IActionResult GetProofActionType(string actionDecoded)
         {
-            return Ok(new { Action = "8", ActionInfo = actionDecoded.Replace("prf://", "") });
+            return Ok(new { Action = "3", ActionInfo = actionDecoded.Replace("prf://", "") });
         }
 
         private IActionResult GetSignatureValidationActionType(string actionDecoded)
         {
-            return Ok(new { Action = "7", ActionInfo = actionDecoded.Replace("sig://", "") });
+            return Ok(new { Action = "5", ActionInfo = actionDecoded.Replace("sig://", "") });
         }
 
         [HttpGet("ServiceProviderActionType")]
@@ -1238,16 +1239,16 @@ namespace O10.Client.Web.Portal.Controllers
             return Ok(new { ActionType = actionType });
         }
 
-        [HttpGet("ServiceProviderActionInfo")]
-        public async Task<ActionResult<ServiceProviderActionAndValidationsDto>> GetServiceProviderActionInfo(long accountId, string actionInfo, long attributeId)
+        [HttpGet("ActionDetails")]
+        public async Task<ActionResult<ActionDetailsDto>> GetActionDetails(long accountId, string actionInfo, long attributeId)
         {
-            ServiceProviderActionAndValidationsDto serviceProviderActionAndValidations = null;
+            ActionDetailsDto? actionInfoDto = null;
             var persistency = _executionContextManager.ResolveExecutionServices(accountId);
             var boundedAssetsService = persistency.Scope.ServiceProvider.GetService<IBoundedAssetsService>();
             string actionDecoded = actionInfo.DecodeUnescapedFromString64();
 
-
-            if (actionDecoded.StartsWith("cnsn://"))
+            // TODO: processing consent must be implemented in a different function that will be invoked from a separate component (not from ServiceProvider)
+            /*if (actionDecoded.StartsWith("cnsn://"))
             {
                 actionDecoded = actionDecoded.Replace("cnsn://", "");
                 TransactionConsentRequest consentRequest = JsonConvert.DeserializeObject<TransactionConsentRequest>(actionDecoded);
@@ -1262,26 +1263,25 @@ namespace O10.Client.Web.Portal.Controllers
                     return registrationCommitment.Equals32(consentRequest.RegistrationCommitment.HexStringToByteArray());
                 });
 
-                serviceProviderActionAndValidations = new ServiceProviderActionAndValidationsDto
+                actionInfoDto = new ActionInfoDto
                 {
                     IsRegistered = false,
                     PublicKey = consentRequest.PublicSpendKey,
                     PublicKey2 = consentRequest.PublicViewKey,
                     IsBiometryRequired = consentRequest.WithBiometricProof,
-                    ExtraInfo = $"{consentRequest.TransactionId}|{consentRequest.Description}",
-                    Validations = new List<string>(),
+                    ActionItemKey = $"{consentRequest.TransactionId}|{consentRequest.Description}",
                     SessionKey = $"{confirm.ToHexString()}|{decline.ToHexString()}",
                     PredefinedAttributeId = rootAttribute.UserAttributeId
                 };
 
             }
-            else if (actionDecoded.StartsWith("spp://"))
+            else if (actionDecoded.StartsWith("spp://"))*/
             {
-                actionDecoded = actionDecoded.Replace("spp://", "");
+                //actionDecoded = actionDecoded.Replace("spp://", "");
 
                 UriBuilder uriBuilder = new UriBuilder(actionDecoded);
                 NameValueCollection queryParams = HttpUtility.ParseQueryString(uriBuilder.Query);
-                string actionType = queryParams["t"];
+                ActionTypeDto actionType = (ActionTypeDto)int.Parse(queryParams["t"]);
 
                 byte[] targetBytes = queryParams["pk"]?.HexStringToByteArray();
 
@@ -1289,47 +1289,47 @@ namespace O10.Client.Web.Portal.Controllers
                 var assetId = rootAttribute.AssetId;
                 var attributeContent = rootAttribute.Content;
 
-                if (actionType == "0") // Login and register
+                if (actionType == ActionTypeDto.Identification) // Login and register
                 {
                     boundedAssetsService.GetBoundedCommitment(assetId, targetBytes, out byte[] blindingFactor, out byte[] assetCommitment);
                     queryParams["rk"] = assetCommitment.ToHexString();
                     uriBuilder.Query = queryParams.ToString();
                 }
-                else if (actionType == "1") // employee registration
+                else if (actionType == ActionTypeDto.Relation) // employee registration
                 {
                     queryParams["rk"] = attributeContent.EncodeToString64();
                     uriBuilder.Query = queryParams.ToString();
                 }
 
                 await uriBuilder.Uri.ToString()
-                    .GetJsonAsync<ServiceProviderActionAndValidationsDto>()
+                    .GetJsonAsync<ActionDetailsDto>()
                     .ContinueWith(t =>
                     {
                         if (t.IsCompleted && !t.IsFaulted)
                         {
-                            serviceProviderActionAndValidations = t.Result;
+                            actionInfoDto = t.Result;
                         }
                     }, TaskScheduler.Current).ConfigureAwait(false);
 
-                if (actionType == "2") // document sign
+                /*if (actionType == ActionTypeDto.DocumentSign) // document sign
                 {
-                    for (int i = 0; i < serviceProviderActionAndValidations.Validations.Count; i++)
+                    for (int i = 0; i < actionInfoDto.RequiredValidations.Count; i++)
                     {
-                        string item = serviceProviderActionAndValidations.Validations[i];
+                        string item = actionInfoDto.RequiredValidations[i];
                         string[] validationParts = item.Split(';');
                         (string groupOwnerName, string issuer, string relationAssetId) = _dataAccessService.GetRelationUserAttributes(accountId, validationParts[0], validationParts[1]);
                         if (!string.IsNullOrEmpty(groupOwnerName) && !string.IsNullOrEmpty(issuer) && !string.IsNullOrEmpty(relationAssetId))
                         {
-                            serviceProviderActionAndValidations.Validations[i] += $"|Relation to group {validationParts[1]} of {groupOwnerName}|{issuer};{relationAssetId}";
+                            actionInfoDto.RequiredValidations[i] += $"|Relation to group {validationParts[1]} of {groupOwnerName}|{issuer};{relationAssetId}";
                         }
                         else
                         {
-                            serviceProviderActionAndValidations.Validations[i] = null;
+                            actionInfoDto.RequiredValidations[i] = null;
                         }
                     }
-                }
+                }*/
             }
-            else if (actionDecoded.StartsWith("saml://"))
+            /*else if (actionDecoded.StartsWith("saml://"))
             {
                 //persistency.ClientCryptoService.GetBoundedCommitment(rootAttribute.AssetId, targetBytes, out byte[] blindingFactor, out byte[] assetCommitment);
                 //	registrationKey = assetCommitment.ToHexString();
@@ -1375,14 +1375,14 @@ namespace O10.Client.Web.Portal.Controllers
                 //    validationsExpression = ":" + string.Join("|", validations);
                 //}
 
-                serviceProviderActionAndValidations = new ServiceProviderActionAndValidationsDto
+                actionInfoDto = new ActionInfoDto
                 {
                     IsRegistered = false,
                     PublicKey = samlIdpSessionInfo.TargetPublicSpendKey,
                     PublicKey2 = samlIdpSessionInfo.TargetPublicViewKey,
                     IsBiometryRequired = false,
                     ExtraInfo = string.Empty,
-                    Validations = samlIdpSessionInfo.Validations,
+                    RequiredValidations = samlIdpSessionInfo.Validations,
                     SessionKey = sessionKeyComplemented.ToHexString()
                 };
 
@@ -1391,8 +1391,8 @@ namespace O10.Client.Web.Portal.Controllers
                     validationsExpression = ":" + string.Join("|", samlIdpSessionInfo.Validations);
                 }
 
-            }
-            return serviceProviderActionAndValidations;
+            }*/
+            return actionInfoDto;
         }
 
         [HttpPost("ClearCompromised")]
