@@ -107,11 +107,13 @@ namespace O10.Node.DataLayer.Specific.Stealth
                 _keyImages.Add(keyImage);
             }
 
-            KeyImage StealthKeyImage = new KeyImage { Value = keyImage.Value.ToArray().ToHexString() };
+            var keyImageValue = keyImage.Value.ToArray().ToHexString();
+            KeyImage StealthKeyImage = new KeyImage { Value = keyImageValue, ValueString = keyImageValue };
 
             StealthTransactionHashKey blockHashKey = new StealthTransactionHashKey
             {
-                Hash = hashString
+                Hash = hashString,
+                HashString = hashString
             };
 
             StealthTransaction stealthBlock = new StealthTransaction
@@ -128,7 +130,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
             lock (Sync)
             {
                 DataContext.StealthKeyImages.Add(StealthKeyImage);
-                DataContext.BlockHashKeys.Add(blockHashKey);
+                DataContext.StealthTransactionHashKeys.Add(blockHashKey);
                 DataContext.StealthBlocks.Add(stealthBlock);
             }
 
@@ -214,19 +216,19 @@ namespace O10.Node.DataLayer.Specific.Stealth
         {
             lock (Sync)
             {
-                return DataContext.StealthBlocks.Include(s => s.KeyImage).Include(s => s.HashKey).FirstOrDefault(p => p.KeyImage.Value == keyImage)?.HashKey.Hash;
+                return DataContext.StealthBlocks.Include(s => s.KeyImage).Include(s => s.HashKey).FirstOrDefault(p => p.KeyImage.Value == keyImage)?.HashKey.HashString;
             }
         }
 
         private StealthTransactionHashKey GetLocalAwareHashKey(string hashString, long aggregatedRegistryHeight)
         {
-            StealthTransactionHashKey hashKey = DataContext.BlockHashKeys.Local.FirstOrDefault(h =>
+            StealthTransactionHashKey hashKey = DataContext.StealthTransactionHashKeys.Local.FirstOrDefault(h =>
                         (h.RegistryHeight == aggregatedRegistryHeight || h.RegistryHeight == (aggregatedRegistryHeight - 1))
                         && h.Hash == hashString);
 
             if (hashKey == null)
             {
-                hashKey = DataContext.BlockHashKeys.FirstOrDefault(h =>
+                hashKey = DataContext.StealthTransactionHashKeys.FirstOrDefault(h =>
                         (h.RegistryHeight == aggregatedRegistryHeight || h.RegistryHeight == (aggregatedRegistryHeight - 1))
                         && h.Hash == hashString);
             }
@@ -235,7 +237,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
 
         private StealthTransactionHashKey GetLocalAwareHashKey(string hashString)
         {
-            StealthTransactionHashKey hashKey = DataContext.BlockHashKeys.Local.FirstOrDefault(h => h.Hash == hashString);
+            StealthTransactionHashKey hashKey = DataContext.StealthTransactionHashKeys.Local.FirstOrDefault(h => h.Hash == hashString);
 
             return hashKey;
         }

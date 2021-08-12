@@ -24,6 +24,7 @@ using Newtonsoft.Json.Converters;
 using Cyberboss.AspNetCore.AsyncInitializer;
 using O10.Transactions.Core;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using O10.Core.Serialization;
 
 namespace O10.Client.Web.Portal
 {
@@ -119,6 +120,8 @@ namespace O10.Client.Web.Portal
                 };
 
                 jsonSettings.Converters.Add(new StringEnumConverter());
+                jsonSettings.Converters.Add(new KeyJsonConverter());
+                //jsonSettings.Converters.Add(new ByteArrayJsonConverter());
                 s.JsonSerializer = new NewtonsoftJsonSerializer(jsonSettings);
             });
         }

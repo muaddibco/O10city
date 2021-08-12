@@ -3,7 +3,10 @@ using Flurl.Http;
 using System.Net.Http;
 using O10.Client.Common.Interfaces;
 using O10.Core.Architecture;
-
+using Newtonsoft.Json;
+using O10.Core.Serialization;
+using Flurl.Http.Configuration;
+using Newtonsoft.Json.Converters;
 
 namespace O10.Client.Common.Communication
 {
@@ -20,8 +23,23 @@ namespace O10.Client.Common.Communication
         {
             HttpClient httpClient = new HttpClient(_httpClientHandlerCreationService.GetInsecureHandler());
             FlurlClient flurlClient = new FlurlClient(httpClient);
-            return uri.WithClient(flurlClient);
+            flurlClient.Configure(s =>
+            {
+                var jsonSettings = new JsonSerializerSettings
+                {
+                    TypeNameHandling = TypeNameHandling.All,
+                    TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
+                    NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore,
+                    Formatting = Formatting.Indented,
+                };
 
+                jsonSettings.Converters.Add(new StringEnumConverter());
+                jsonSettings.Converters.Add(new KeyJsonConverter());
+                //jsonSettings.Converters.Add(new ByteArrayJsonConverter());
+                s.JsonSerializer = new NewtonsoftJsonSerializer(jsonSettings);
+            });
+
+            return uri.WithClient(flurlClient);
         }
 
         public IFlurlRequest Request(Url url)

@@ -101,11 +101,14 @@ namespace O10.Client.Common.Communication
 
         public async Task<OutputSources[]> GetOutputs(int amount)
         {
-            Url url = _gatewayUri.AppendPathSegments("api", "synchronization", "GetOutputs", amount.ToString(CultureInfo.InvariantCulture));
+            return await Unwrap(async () =>
+            {
+                Url url = _gatewayUri.AppendPathSegments("api", "synchronization", "GetOutputs", amount.ToString(CultureInfo.InvariantCulture));
 
-            OutputSources[] outputModels = await _restClientService.Request(url).GetJsonAsync<OutputSources[]>().ConfigureAwait(false);
+                OutputSources[] outputModels = await _restClientService.Request(url).GetJsonAsync<OutputSources[]>().ConfigureAwait(false);
 
-            return outputModels;
+                return outputModels;
+            }).ConfigureAwait(true);
         }
 
         public bool Initialize(string gatewayUri, CancellationToken cancellationToken)
@@ -129,6 +132,12 @@ namespace O10.Client.Common.Communication
 
             PipeInTransactions = new ActionBlock<TaskCompletionWrapper<IPacketBase>>(async p =>
             {
+                if(p == null)
+                {
+                    _logger.Warning("null packet wrapper obtained");
+                    return;
+                }
+
                 try
                 {
                     _logger.Info($"Sending transaction {p.State.GetType().Name}");
@@ -167,7 +176,7 @@ namespace O10.Client.Common.Communication
                 catch (FlurlHttpException ex)
                 {
                     p.TaskCompletion.SetException(ex);
-                    _logger.Error($"Failure during invoking {ex.Call.Request.Url}, HTTP status: {ex.Call.Response?.ResponseMessage.StatusCode.ToString() ?? "NULL"}, duration: {ex.Call.Duration?.TotalMilliseconds ?? 0} msec", ex);
+                    _logger.Error($"Failure during invokation of {ex.Call.Request.Url} with body:\r\n{ex.Call.RequestBody}\r\nHTTP status: {ex.Call.Response?.ResponseMessage.StatusCode.ToString() ?? "NULL"}, duration: {ex.Call.Duration?.TotalMilliseconds ?? 0} msec\r\nResponse: {await ex.GetResponseStringAsync().ConfigureAwait(false)}", ex);
                 }
                 catch (Exception ex)
                 {
@@ -439,6 +448,36 @@ namespace O10.Client.Common.Communication
             catch (Exception ex)
             {
                 _logger.Error($"Failed request {url}", ex);
+                throw;
+            }
+        }
+
+        private async Task<T> Unwrap<T>(Func<Task<T>> f)
+        {
+            try
+            {
+                return await f().ConfigureAwait(true);
+            }
+            catch (AggregateException ex)
+            {
+                if(ex.InnerException is FlurlHttpException fex)
+                {
+                    _logger.Error($"Failed to invoke {fex.Call.Request.Url} due to the error: {await fex.Call.Response.GetStringAsync().ConfigureAwait(true)}", fex);
+                }
+                else
+                {
+                    _logger.Error("Invokation failed", ex.InnerException);
+                }
+                throw;
+            }
+            catch (FlurlHttpException ex)
+            {
+                _logger.Error($"Failed to invoke {ex.Call.Request.Url} due to the error: {await ex.Call.Response.GetStringAsync().ConfigureAwait(true)}", ex);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error("Invokation failed", ex);
                 throw;
             }
         }

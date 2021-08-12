@@ -297,6 +297,10 @@ export class ServiceProviderLoginRegComponent implements OnInit {
 		}
 	}
 
+  onCancel() {
+    this.router.navigate(['/user']);
+  }
+
 	onConsentDecline() {
 		this.submitted = true;
 
@@ -361,10 +365,6 @@ export class ServiceProviderLoginRegComponent implements OnInit {
 
 	public get nextWebcamObservable(): Observable<boolean | string> {
 		return this.nextWebcam.asObservable();
-	}
-
-	onCancel() {
-		this.router.navigate(['/user']);
 	}
 
 	clearSnapshot() {

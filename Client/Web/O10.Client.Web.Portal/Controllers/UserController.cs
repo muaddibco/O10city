@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,20 +11,15 @@ using O10.Client.Web.DataContracts;
 using O10.Core.Configuration;
 using O10.Crypto.ConfidentialAssets;
 using System.Text;
-using O10.Client.Common.Identities;
 using O10.Client.Common.Interfaces.Inputs;
 using System.Globalization;
 using Flurl;
 using Flurl.Http;
-using System.Net.Http;
 using O10.Client.DataLayer.Model;
 using System.Collections.Specialized;
-using O10.Client.Common.Interfaces.Outputs;
 using O10.Client.Web.DataContracts.User;
 using Microsoft.AspNetCore.SignalR;
 using System.Web;
-using O10.Client.Web.Common.Dtos.SamlIdp;
-using O10.Client.Web.Common.Services;
 using O10.Client.Web.Common.Hubs;
 using O10.Client.Web.Common.Dtos.Biometric;
 using O10.Core.Cryptography;
@@ -42,10 +36,8 @@ using O10.Client.Common.Entities;
 using O10.Client.Web.Portal.Configuration;
 using O10.Core.Identity;
 using O10.Client.Common.Dtos.UniversalProofs;
-using O10.Client.Common.Communication;
 using O10.Client.Web.Portal.Exceptions;
 using O10.Client.Web.Portal.ElectionCommittee.Models;
-using Flurl.Util;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using O10.Core.Serialization;
@@ -68,7 +60,6 @@ namespace O10.Client.Web.Portal.Controllers
         private readonly IGatewayService _gatewayService;
         private readonly ISchemeResolverService _schemeResolverService;
         private readonly IEligibilityProofsProvider _eligibilityProofsProvider;
-        private readonly IStealthClientCryptoService _stealthClientCryptoService;
         private readonly IIdentityKeyProvider _identityKeyProvider;
         private readonly IHubContext<IdentitiesHub> _idenitiesHubContext;
         private readonly IRestApiConfiguration _restApiConfiguration;
@@ -86,7 +77,6 @@ namespace O10.Client.Web.Portal.Controllers
                               ISchemeResolverService schemeResolverService,
                               IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
                               IEligibilityProofsProvider eligibilityProofsProvider,
-                              IStealthClientCryptoService stealthClientCryptoService,
                               IConfigurationService configurationService,
                               IHubContext<IdentitiesHub> idenitiesHubContext,
                               ILoggerService loggerService,
@@ -101,7 +91,6 @@ namespace O10.Client.Web.Portal.Controllers
             _gatewayService = gatewayService;
             _schemeResolverService = schemeResolverService;
             _eligibilityProofsProvider = eligibilityProofsProvider;
-            _stealthClientCryptoService = stealthClientCryptoService;
             _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
             _idenitiesHubContext = idenitiesHubContext;
             _restApiConfiguration = configurationService.Get<IRestApiConfiguration>();
@@ -521,8 +510,8 @@ namespace O10.Client.Web.Portal.Controllers
             };
         }
 
-        [HttpPost("UniversalProofs")]
-        public async Task<IActionResult> SendUniversalProofs([FromQuery] long accountId, [FromBody] UniversalProofsSendingRequest request)
+        [HttpPost("{accountId}/UniversalProofs")]
+        public async Task<IActionResult> SendUniversalProofs(long accountId, [FromBody] UniversalProofsSendingRequest request)
         {
             if (request is null)
             {
@@ -583,8 +572,8 @@ namespace O10.Client.Web.Portal.Controllers
             var boundedAssetsService = persistency.Scope.ServiceProvider.GetService<IBoundedAssetsService>();
             var rootAttribute = _dataAccessService.GetUserRootAttribute(identityPool.RootAttributeId);
             var associatedAttributes = _dataAccessService.GetUserAssociatedAttributes(accountId).Where(a => identityPool.AssociatedAttributes?.Contains(a.UserAssociatedAttributeId) ?? false);
-
-            var rootIssuer = await boundedAssetsService.GetAttributeProofs(_stealthClientCryptoService.GetBlindingFactor(rootAttribute.LastTransactionKey),
+            var clientCryptoService = persistency.Scope.ServiceProvider.GetService<IStealthClientCryptoService>();
+            var rootIssuer = await boundedAssetsService.GetAttributeProofs(clientCryptoService.GetBlindingFactor(rootAttribute.LastTransactionKey),
                                                                            rootAttribute,
                                                                            target,
                                                                            associatedAttributes,
@@ -1686,10 +1675,11 @@ namespace O10.Client.Web.Portal.Controllers
                 EcCommitment = _identityKeyProvider.GetKey(ecCommitment.EcCommitment)
             };
 
-            var bfBase = _stealthClientCryptoService.GetBlindingFactor(rootAttributePoll.LastTransactionKey); // TODO: bfBase prevoiusly had a different generated value from the `bf`
+            var clientCryptoService = persistency.Scope.ServiceProvider.GetService<IStealthClientCryptoService>();
+            var bfBase = clientCryptoService.GetBlindingFactor(rootAttributePoll.LastTransactionKey); // TODO: bfBase prevoiusly had a different generated value from the `bf`
             var rootIssuerBase = await boundedAssetsService.GetAttributeProofs(bfBase, rootAttribute, withProtectionAttribute: true).ConfigureAwait(false);
             
-            var bf = _stealthClientCryptoService.GetBlindingFactor(rootAttributePoll.LastTransactionKey);
+            var bf = clientCryptoService.GetBlindingFactor(rootAttributePoll.LastTransactionKey);
             var rootIssuerPoll = await boundedAssetsService.GetAttributeProofs(bf, rootAttributePoll).ConfigureAwait(false);
 
             UniversalProofs universalProofs = new UniversalProofs

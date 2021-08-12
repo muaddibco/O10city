@@ -13,6 +13,7 @@ using Newtonsoft.Json.Serialization;
 using O10.Core.Configuration;
 using O10.Core.ExtensionMethods;
 using O10.Core.Logging;
+using O10.Core.Serialization;
 using O10.Gateway.WebApp.Common.Controllers;
 using O10.Gateway.WebApp.Common.Hubs;
 using O10.Server.Gateway;
@@ -69,6 +70,8 @@ namespace O10.Gateway.WebApp
                     Formatting = Formatting.Indented
                 };
                 jsonSettings.Converters.Add(new StringEnumConverter());
+                jsonSettings.Converters.Add(new KeyJsonConverter());
+                jsonSettings.Converters.Add(new ByteArrayJsonConverter());
                 s.JsonSerializer = new NewtonsoftJsonSerializer(jsonSettings);
             });
         }

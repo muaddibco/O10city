@@ -44,7 +44,7 @@ namespace O10.Client.Common.Crypto
         // TODO: this function must able to calculate Cr = Pb + Ir + Ig
         public async Task<SurjectionProof> CreateProofToRegistration(Memory<byte> receiverPublicKey, Memory<byte> blindingFactor, Memory<byte> assetCommitment, Memory<byte> rootAssetId, IEnumerable<Memory<byte>>? assetIds = null)
         {
-            if (assetIds is null)
+            /*if (assetIds is null)
             {
                 throw new ArgumentNullException(nameof(assetIds));
             }
@@ -52,14 +52,22 @@ namespace O10.Client.Common.Crypto
             if(!assetIds.Any())
             {
                 throw new ArgumentException("There must be at least one assetId for proof of registration creation", nameof(assetIds));
-            }
+            }*/
 
+            // registrationBlindingFactor = scalar(H(pwd)*receiverPublicKey)
+            // registrationCommitment = G * scalar(H(pwd)*receiverPublicKey) + I(rootAssetId)
+            // or
+            // registrationCommitment = G * H(scalar(H(pwd)*receiverPublicKey)|assetIds) + I(rootAssetId)
             (byte[] registrationBlindingFactor, byte[] registrationCommitment) = await GetBoundedCommitment(receiverPublicKey, rootAssetId, assetIds).ConfigureAwait(false);
             byte[] blindingFactorToRegistration = CryptoHelper.GetDifferentialBlindingFactor(blindingFactor.Span, registrationBlindingFactor);
 
             var sp = CryptoHelper.CreateSurjectionProof(assetCommitment.Span, new byte[][] { registrationCommitment }, 0, blindingFactorToRegistration);
 
-            sp.AssetCommitments[0] = CryptoHelper.AddAssetIds(registrationCommitment, assetIds.Skip(1));
+            /// TODO: ??? what is this ???
+            if (assetIds?.Count() > 1)
+            {
+                sp.AssetCommitments[0] = CryptoHelper.AddAssetIds(registrationCommitment, assetIds.Skip(1));
+            }
 
             return sp;
         }

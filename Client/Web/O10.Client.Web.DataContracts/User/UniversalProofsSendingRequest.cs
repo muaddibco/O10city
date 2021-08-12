@@ -8,6 +8,11 @@ namespace O10.Client.Web.DataContracts.User
 {
     public class UniversalProofsSendingRequest
     {
+        public UniversalProofsSendingRequest()
+        {
+            IdentityPools = new List<IdentityPool>();
+        }
+
         public long RootAttributeId { get; set; }
         
         [JsonConverter(typeof(KeyJsonConverter))]
@@ -27,7 +32,7 @@ namespace O10.Client.Web.DataContracts.User
             /// root attribute of the associated identity too), according to validations requested
             /// by counterparty
             /// </summary>
-            public List<long> AssociatedAttributes { get; set; }
+            public List<long>? AssociatedAttributes { get; set; }
         }
     }
 }

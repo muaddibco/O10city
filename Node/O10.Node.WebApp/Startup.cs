@@ -15,6 +15,7 @@ using Newtonsoft.Json.Converters;
 using Newtonsoft.Json;
 using Flurl.Http;
 using Flurl.Http.Configuration;
+using O10.Core.Serialization;
 
 namespace O10.Node.WebApp
 {
@@ -64,6 +65,8 @@ namespace O10.Node.WebApp
                     Formatting = Formatting.Indented
                 };
                 jsonSettings.Converters.Add(new StringEnumConverter());
+                jsonSettings.Converters.Add(new KeyJsonConverter());
+                jsonSettings.Converters.Add(new ByteArrayJsonConverter());
                 s.JsonSerializer = new NewtonsoftJsonSerializer(jsonSettings);
             });
         }

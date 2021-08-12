@@ -1,16 +1,12 @@
 ﻿using O10.Client.Common.Configuration;
 using O10.Client.Common.Interfaces;
-using O10.Client.Common.Interfaces.Inputs;
-using O10.Client.DataLayer.Services;
 using O10.Core.Architecture;
 using O10.Core.Configuration;
-using O10.Core.Cryptography;
 using O10.Core.ExtensionMethods;
 using O10.Core.Identity;
 using O10.Core.Logging;
 using O10.Core.Models;
 using O10.Crypto.Models;
-using O10.Crypto.Services;
 using O10.Transactions.Core.DTOs;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Ledgers;
@@ -45,6 +41,7 @@ namespace O10.Client.Common.Communication.LedgerWriters
             _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
             _restApiConfiguration = configurationService.Get<IRestApiConfiguration>();
             _pipeIn = new TransformBlock<TaskCompletionWrapper<TransactionBase>, DependingTaskCompletionWrapper<IPacketBase, TransactionBase>>(ProducePacket);
+            _pipeIn.LinkTo(_gatewayService.PipeInTransactions);
         }
 
         public override LedgerType LedgerType => LedgerType.Stealth;
@@ -56,32 +53,48 @@ namespace O10.Client.Common.Communication.LedgerWriters
             await base.Initialize(accountId).ConfigureAwait(false);
         }
 
-        private async Task<DependingTaskCompletionWrapper<IPacketBase, TransactionBase>> ProducePacket(TaskCompletionWrapper<TransactionBase> wrapper)
+        private async Task<DependingTaskCompletionWrapper<IPacketBase, TransactionBase>?> ProducePacket(TaskCompletionWrapper<TransactionBase> wrapper)
         {
             if (!(wrapper.State is O10StealthTransactionBase o10StealthTransaction))
             {
-                throw new ArgumentOutOfRangeException(nameof(wrapper));
+                wrapper.TaskCompletion.SetException(new ArgumentOutOfRangeException(nameof(wrapper)));
+                return null;
             }
 
             if (!(wrapper.Argument is StealthPropagationArgument arg))
             {
-                throw new ArgumentOutOfRangeException(nameof(wrapper));
+                wrapper.TaskCompletion.SetException(new ArgumentOutOfRangeException(nameof(wrapper)));
+                return null;
             }
 
             StealthPayload payload = new StealthPayload(o10StealthTransaction);
 
-            OutputSources[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
-            GetDestinationKeysRing(arg.PrevDestinationKey, outputModels.Select(m => m.DestinationKey).ToArray(), out int pos, out IKey[] destinationKeys);
-
-            var signature = _clientCryptoService.Sign(payload, new StealthSignatureInput(arg.PrevTransactionKey, destinationKeys, pos, arg.PreSigningAction)) as StealthSignature;
-
-            var packet = new StealthPacket
+            try
             {
-                Payload = payload,
-                Signature = signature
-            };
+                OutputSources[] outputModels = await _gatewayService.GetOutputs(_restApiConfiguration.RingSize + 1).ConfigureAwait(false);
+                GetDestinationKeysRing(arg.PrevDestinationKey, outputModels.Select(m => m.DestinationKey).ToArray(), out int pos, out IKey[] destinationKeys);
 
-            return new DependingTaskCompletionWrapper<IPacketBase, TransactionBase>(packet, wrapper);
+                var signature = _clientCryptoService.Sign(payload, new StealthSignatureInput(arg.PrevTransactionKey, destinationKeys, pos, arg.PreSigningAction)) as StealthSignature;
+
+                var packet = new StealthPacket
+                {
+                    Payload = payload,
+                    Signature = signature
+                };
+
+                return new DependingTaskCompletionWrapper<IPacketBase, TransactionBase>(packet, wrapper);
+
+            }
+            catch (AggregateException ex)
+            {
+                Logger.Error($"Failed to produce and send stealth packet", ex.InnerException);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"Failed to produce and send stealth packet", ex);
+                return null;
+            }        
         }
 
         /// <summary>

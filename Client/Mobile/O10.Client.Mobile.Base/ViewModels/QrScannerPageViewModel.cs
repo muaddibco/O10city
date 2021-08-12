@@ -75,7 +75,7 @@ namespace O10.Client.Mobile.Base.ViewModels
             {
                 Device.BeginInvokeOnMainThread(async () =>
                 {
-                    INavigationResult navigationResult = await NavigationService.NavigateAsync($"../{navigationUri}").ConfigureAwait(true);
+                    INavigationResult navigationResult = await NavigationService.NavigateAsync($"../{navigationUri}").ConfigureAwait(false);
 
                     if (!navigationResult.Success)
                     {
