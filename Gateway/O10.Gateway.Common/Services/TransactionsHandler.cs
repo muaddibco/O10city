@@ -54,6 +54,7 @@ namespace O10.Gateway.Common.Services
             _pipeOutPacket = new TransformBlock<TaskCompletionWrapper<IPacketBase>, TaskCompletionWrapper<IPacketBase>>(p => p);
             
             _pipeInPacket.LinkTo(_pipeEvidence, ValidatePacket);
+            _pipeInPacket.LinkTo(DataflowBlock.NullTarget<IPacketBase>());
             _accessorProvider = accessorProvider;
         }
 
