@@ -20,6 +20,7 @@ using O10.Core;
 using O10.Core.Translators;
 using O10.Core.Logging;
 using O10.Node.DataLayer.DataServices.Notifications;
+using O10.Core.ExtensionMethods;
 
 namespace O10.Node.DataLayer.Specific.Stealth
 {
@@ -49,13 +50,13 @@ namespace O10.Node.DataLayer.Specific.Stealth
 
             if (packet is StealthPacket stealth)
             {
-                var hash = _defaultHashCalculation.CalculateHash(packet.ToString());
+                var hash = _defaultHashCalculation.CalculateHash(stealth.Payload.Transaction.ToString());
                 var hashKey = IdentityKeyProvider.GetKey(hash);
 
                 Logger?.LogIfDebug(() => $"Storing {packet.GetType().Name} with hash [{hashKey}]: {JsonConvert.SerializeObject(packet, new ByteArrayJsonConverter())}");
 
                 var addCompletionWrapper = new TaskCompletionWrapper<IPacketBase>(packet);
-                var addCompletion = Service.AddStealthBlock(stealth.Payload.Transaction.KeyImage, stealth.Payload.Transaction.TransactionType, stealth.Payload.Transaction.DestinationKey, stealth.ToJson(), hash.ToString());
+                var addCompletion = Service.AddStealthBlock(stealth.Payload.Transaction.KeyImage, stealth.Payload.Transaction.TransactionType, stealth.Payload.Transaction.DestinationKey, stealth.ToJson(), hash.ToHexString());
                 addCompletion.Task.ContinueWith((t, o) =>
                 {
                     var w = ((Tuple<TaskCompletionWrapper<IPacketBase>, IKey>)o).Item1;

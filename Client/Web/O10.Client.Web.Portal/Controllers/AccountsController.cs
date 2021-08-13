@@ -258,7 +258,7 @@ namespace O10.Client.Web.Portal.Controllers
             
             if(accountDto == null)
             {
-                throw new AccountNotFoundException(accountId);
+                return NotFound();
             }
             
             return Ok(accountDto);

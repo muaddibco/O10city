@@ -107,7 +107,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
                 _keyImages.Add(keyImage);
             }
 
-            var keyImageValue = keyImage.Value.ToArray().ToHexString();
+            var keyImageValue = keyImage.ToString();
             KeyImage StealthKeyImage = new KeyImage { Value = keyImageValue, ValueString = keyImageValue };
 
             StealthTransactionHashKey blockHashKey = new StealthTransactionHashKey

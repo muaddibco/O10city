@@ -9,7 +9,7 @@ namespace O10.Client.Web.DataContracts
         public string AccountInfo { get; set; }
         public string Password { get; set; }
 
-        public string PublicViewKey { get; set; }
-        public string PublicSpendKey { get; set; }
+        public string? PublicViewKey { get; set; }
+        public string? PublicSpendKey { get; set; }
     }
 }
