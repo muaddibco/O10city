@@ -20,6 +20,7 @@ using O10.Client.DataLayer.Model;
 using O10.Client.Common.Configuration;
 using O10.Client.Common.Dtos.UniversalProofs;
 using System.Collections.Generic;
+using O10.Client.Common.Exceptions;
 
 namespace O10.Client.Common.Tests
 {
@@ -29,6 +30,7 @@ namespace O10.Client.Common.Tests
         private readonly IIdentityKeyProvidersRegistry _identityKeyProvidersRegistry;
         private readonly IGatewayService _gatewayService;
         private readonly IEligibilityProofsProvider _eligibilityProofsProvider;
+        private readonly IStealthClientCryptoService _clientCryptoService;
         private readonly IConfigurationService _configurationService;
         private readonly IRestApiConfiguration _restApiConfiguration;
         private readonly string _issuer;
@@ -72,32 +74,42 @@ namespace O10.Client.Common.Tests
 
                 byte[][] issuanceCommitments = new byte[ringSize][];
 
-                for (int i = 0; i < ringSize; i++)
+                issuanceCommitments[0] = _issuer.HexStringToByteArray();
+
+                for (int i = 1; i < ringSize; i++)
                 {
                     issuanceCommitments[i] = CryptoHelper.GetRandomSeed();
                 }
 
                 return issuanceCommitments;
             });
+
+            _clientCryptoService = new StealthClientCryptoService(_identityKeyProvidersRegistry, coreFixture.LoggerService);
+            _clientCryptoService.Initialize(CryptoHelper.GetRandomSeed(), CryptoHelper.GetRandomSeed());
         }
 
         [Fact]
         public async void CreateAndValidateValidRootAttributeProof()
         {
-            var boundedAssetsService = new BoundedAssetsService(_assetsService, _identityKeyProvidersRegistry, _eligibilityProofsProvider);
+            var boundedAssetsService = new BoundedAssetsService(_assetsService, _clientCryptoService, _identityKeyProvidersRegistry, _eligibilityProofsProvider);
             var proofsValidationService = new ProofsValidationService(_gatewayService, _assetsService, CoreFixture.LoggerService, null);
 
             await boundedAssetsService.Initialize("pwd").ConfigureAwait(false);
 
-            byte[] issuer = CryptoHelper.GetRandomSeed();
+            byte[] issuer = _issuer.HexStringToByteArray();
 
             string rootAttributeValue = "rootAttribute";
             byte[] rootAttributeAssetId = _assetsService.GenerateAssetId(1, rootAttributeValue);
-            byte[] issuanceBf = CryptoHelper.GetRandomSeed();
-            byte[] issuanceCommitment = CryptoHelper.GetAssetCommitment(issuanceBf, rootAttributeAssetId);
 
-            string associatedAttributeValue = "associatedAttribute";
-            byte[] associatedAttributeAssetId = _assetsService.GenerateAssetId(2, associatedAttributeValue);
+            byte[] transactonSecretKey = CryptoHelper.GetRandomSeed();
+            byte[] transactionPublickey = CryptoHelper.GetPublicKey(transactonSecretKey);
+            byte[] bf = _clientCryptoService.GetBlindingFactor(transactionPublickey);
+            byte[] assetCommitment = CryptoHelper.GetAssetCommitment(bf, rootAttributeAssetId);
+
+            byte[] issuanceTransactionSecretKey = CryptoHelper.GetRandomSeed();
+            byte[] issuanceTransactionPublicKey = CryptoHelper.GetPublicKey(issuanceTransactionSecretKey);
+            byte[] issuanceBf = CryptoHelper.GetOTSK(issuanceTransactionSecretKey, _clientCryptoService.PublicKeys[1].ToByteArray());
+            byte[] issuanceCommitment = CryptoHelper.GetAssetCommitment(issuanceBf, rootAttributeAssetId);
 
             UserRootAttribute userRootAttribute = new UserRootAttribute
             {
@@ -105,19 +117,61 @@ namespace O10.Client.Common.Tests
                 Content = "rootAttribute",
                 SchemeName = AttributesSchemes.ATTR_SCHEME_NAME_IDCARD,
                 IssuanceCommitment = issuanceCommitment,
-                OriginalBlindingFactor = issuanceBf,
+                IssuanceTransactionKey = issuanceTransactionPublicKey,
                 Source = issuer.ToHexString()
             };
 
-            var attributeProofs = await boundedAssetsService.GetRootAttributeProofs(issuanceBf, userRootAttribute).ConfigureAwait(false);
+            var attributeProofs = await boundedAssetsService.GetRootAttributeProofs(bf, userRootAttribute).ConfigureAwait(false);
+
+            Assert.Equal(assetCommitment.ToHexString(), attributeProofs.Commitment.ToString());
 
             await proofsValidationService.CheckEligibilityProofs(attributeProofs.Commitment.Value, attributeProofs.BindingProof, null).ConfigureAwait(false);
         }
 
         [Fact]
+        public async void CreateAndValidateRootAttributeProof_IssuanceBfIncorrect_ShouldFail()
+        {
+            var boundedAssetsService = new BoundedAssetsService(_assetsService, _clientCryptoService, _identityKeyProvidersRegistry, _eligibilityProofsProvider);
+            var proofsValidationService = new ProofsValidationService(_gatewayService, _assetsService, CoreFixture.LoggerService, null);
+
+            await boundedAssetsService.Initialize("pwd").ConfigureAwait(false);
+
+            byte[] issuer = _issuer.HexStringToByteArray();
+
+            string rootAttributeValue = "rootAttribute";
+            byte[] rootAttributeAssetId = _assetsService.GenerateAssetId(1, rootAttributeValue);
+
+            byte[] transactonSecretKey = CryptoHelper.GetRandomSeed();
+            byte[] transactionPublickey = CryptoHelper.GetPublicKey(transactonSecretKey);
+            byte[] bf = _clientCryptoService.GetBlindingFactor(transactionPublickey);
+            byte[] assetCommitment = CryptoHelper.GetAssetCommitment(bf, rootAttributeAssetId);
+
+            byte[] issuanceTransactionSecretKey = CryptoHelper.GetRandomSeed();
+            byte[] issuanceTransactionPublicKey = CryptoHelper.GetPublicKey(issuanceTransactionSecretKey);
+            byte[] issuanceBf = CryptoHelper.GetRandomSeed();
+            byte[] issuanceCommitment = CryptoHelper.GetAssetCommitment(issuanceBf, rootAttributeAssetId);
+
+            UserRootAttribute userRootAttribute = new UserRootAttribute
+            {
+                AssetId = rootAttributeAssetId,
+                Content = "rootAttribute",
+                SchemeName = AttributesSchemes.ATTR_SCHEME_NAME_IDCARD,
+                IssuanceCommitment = issuanceCommitment,
+                IssuanceTransactionKey = issuanceTransactionPublicKey,
+                Source = issuer.ToHexString()
+            };
+
+            var attributeProofs = await boundedAssetsService.GetRootAttributeProofs(bf, userRootAttribute).ConfigureAwait(false);
+
+            Assert.Equal(assetCommitment.ToHexString(), attributeProofs.Commitment.ToString());
+
+            await Assert.ThrowsAsync<CommitmentNotEligibleException>(async () => await proofsValidationService.CheckEligibilityProofs(attributeProofs.Commitment.Value, attributeProofs.BindingProof, null).ConfigureAwait(false)).ConfigureAwait(false);
+        }
+
+        [Fact]
         public async void CreateAndValidateValidAssociatedAttributeProof()
         {
-            var boundedAssetsService = new BoundedAssetsService(_assetsService, _identityKeyProvidersRegistry, _eligibilityProofsProvider);
+            var boundedAssetsService = new BoundedAssetsService(_assetsService, _clientCryptoService, _identityKeyProvidersRegistry, _eligibilityProofsProvider);
             var proofsValidationService = new ProofsValidationService(_gatewayService, _assetsService, CoreFixture.LoggerService, null);
 
             await boundedAssetsService.Initialize("pwd").ConfigureAwait(false);
@@ -182,7 +236,7 @@ namespace O10.Client.Common.Tests
         [Fact]
         public async void CreateAndValidateValidTwoLayerAttributeProofs()
         {
-            var boundedAssetsService = new BoundedAssetsService(_assetsService, _identityKeyProvidersRegistry, _eligibilityProofsProvider);
+            var boundedAssetsService = new BoundedAssetsService(_assetsService, _clientCryptoService, _identityKeyProvidersRegistry, _eligibilityProofsProvider);
             var proofsValidationService = new ProofsValidationService(_gatewayService, _assetsService, CoreFixture.LoggerService, null);
 
             await boundedAssetsService.Initialize("pwd").ConfigureAwait(false);

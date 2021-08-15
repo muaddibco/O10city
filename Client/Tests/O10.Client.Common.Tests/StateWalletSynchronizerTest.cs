@@ -1,5 +1,4 @@
 ﻿using NSubstitute;
-using O10.Transactions.Core.Parsers;
 using O10.Client.Common.Communication;
 using O10.Core.Configuration;
 using O10.Core.Identity;
@@ -20,7 +19,6 @@ namespace O10.Client.Common.Tests
 
         private readonly IStateClientCryptoService _clientCryptoService;
         private readonly IDataAccessService _dataAccessService;
-        private readonly IBlockParsersRepositoriesRepository _blockParsersRepositoriesRepository;
         private readonly IIdentityKeyProvidersRegistry _identityKeyProvidersRegistry;
         private readonly IConfigurationService _configurationService;
 
@@ -31,7 +29,6 @@ namespace O10.Client.Common.Tests
         public StateWalletSynchronizerTest(CoreFixture coreFixture, ITestOutputHelper testOutputHelper)
             : base(coreFixture, testOutputHelper)
         {
-            _blockParsersRepositoriesRepository = Substitute.For<IBlockParsersRepositoriesRepository>();
             _identityKeyProvidersRegistry = Substitute.For<IIdentityKeyProvidersRegistry>();
             _configurationService = Substitute.For<IConfigurationService>();
 

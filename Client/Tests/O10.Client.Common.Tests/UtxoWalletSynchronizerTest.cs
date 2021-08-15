@@ -1,5 +1,4 @@
 ﻿using NSubstitute;
-using O10.Transactions.Core.Parsers;
 using O10.Client.Common.Communication;
 using O10.Client.Common.Interfaces;
 using O10.Client.DataLayer.Services;
@@ -17,12 +16,12 @@ namespace O10.Client.Common.Tests
 
         private readonly StealthWalletSynchronizer _utxoWalletSynchronizer;
 
-        private readonly IDataAccessService _externalDataAccessService;
-        private readonly IBlockParsersRepositoriesRepository _blockParsersRepositoriesRepository;
+        private readonly IDataAccessService _dataAccessService;
         private readonly IIdentityKeyProvidersRegistry _identityKeyProvidersRegistry;
         private readonly IConfigurationService _configurationService;
 		private readonly IAssetsService _assetsService;
         private readonly IStealthClientCryptoService _clientCryptoService;
+        private readonly IStealthTransactionsService _transactionsService;
 
         #endregion
 
@@ -32,8 +31,9 @@ namespace O10.Client.Common.Tests
             : base(coreFixture, testOutputHelper)
         {
 			_utxoWalletSynchronizer = new StealthWalletSynchronizer(
-				_externalDataAccessService = Substitute.For<IDataAccessService>(),
+				_dataAccessService = Substitute.For<IDataAccessService>(),
                 _clientCryptoService = Substitute.For<IStealthClientCryptoService>(),
+                _transactionsService = Substitute.For<IStealthTransactionsService>(),
                 _assetsService = Substitute.For<IAssetsService>(),
                 CoreFixture.LoggerService);
         }

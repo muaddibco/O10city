@@ -31,10 +31,10 @@ namespace O10.Client.Common.Communication
 
         public override async Task Start()
         {
-            _logger.Debug($"[{_accountId}]: #### Starting {nameof(SignalRWitnessPackagesProvider)}");
+            _logger.Debug($"#### Starting {nameof(SignalRWitnessPackagesProvider)}");
 
             await StartHubConnection().ConfigureAwait(false);
-            _logger.Debug($"[{_accountId}]: #### Starting {nameof(SignalRWitnessPackagesProvider)} completed");
+            _logger.Debug($"#### Starting {nameof(SignalRWitnessPackagesProvider)} completed");
         }
 
         public override async Task Restart()
@@ -59,10 +59,10 @@ namespace O10.Client.Common.Communication
                 foreach (var w in _witnessPackages.GetConsumingEnumerable(_cancellationToken))
                 {
                     await WitnessProcessingSemaphore.WaitAsync();
-                    _logger.Debug($"[{_accountId}]: ==============================================>");
+                    _logger.Debug($"==============================================>");
                     try
                     {
-                        _logger.LogIfDebug(() => $"[{_accountId}]: processing witness package with {nameof(w.CombinedBlockHeight)}={w.CombinedBlockHeight} while {nameof(_lastObtainedCombinedBlockHeight)}={_lastObtainedCombinedBlockHeight}");
+                        _logger.LogIfDebug(() => $"processing witness package with {nameof(w.CombinedBlockHeight)}={w.CombinedBlockHeight} while {nameof(_lastObtainedCombinedBlockHeight)}={_lastObtainedCombinedBlockHeight}");
                         if (w.CombinedBlockHeight > _lastObtainedCombinedBlockHeight)
                         {
                             if (w.CombinedBlockHeight - _lastObtainedCombinedBlockHeight > 1)
@@ -74,28 +74,28 @@ namespace O10.Client.Common.Communication
                         }
                         else
                         {
-                            _logger.Warning($"[{_accountId}]: Skip processing - height of RegistryCombinedBlock at obtained packet is {w.CombinedBlockHeight} while last one is {_lastObtainedCombinedBlockHeight}");
+                            _logger.Warning($"Skip processing - height of RegistryCombinedBlock at obtained packet is {w.CombinedBlockHeight} while last one is {_lastObtainedCombinedBlockHeight}");
                         }
 
                     }
                     catch (Exception ex)
                     {
-                        _logger.Error($"[{_accountId}]: failure during processing witness packages", ex);
+                        _logger.Error($"failure during processing witness packages", ex);
                     }
                     finally
                     {
-                        _logger.Debug($"[{_accountId}]: <==============================================");
+                        _logger.Debug($"<==============================================");
                         WitnessProcessingSemaphore.Release();
                     }
                 }
             }
             catch (OperationCanceledException)
             {
-                _logger.Info($"[{_accountId}]: {nameof(SignalRWitnessPackagesProvider)} stopped");
+                _logger.Info($"{nameof(SignalRWitnessPackagesProvider)} stopped");
             }
             catch (Exception ex)
             {
-                _logger.Error($"[{_accountId}]: {nameof(SignalRWitnessPackagesProvider)} failed", ex);
+                _logger.Error($"{nameof(SignalRWitnessPackagesProvider)} failed", ex);
             }
         }
 
@@ -108,39 +108,40 @@ namespace O10.Client.Common.Communication
                 await _hubConnection.DestroyHubConnection();
             }
 
-            _hubConnection = new SignalrHubConnection(new Uri(signalrHubUri), _accountId.ToString(), _logger, _cancellationToken);
+            _hubConnection = new SignalrHubConnection(new Uri(signalrHubUri), _accountId.ToString(), _logger, _cancellationToken, AscertainAccountIsUpToDate);
             await _hubConnection.BuildHubConnection();
 
-            _logger.Info($"[{_accountId}]: SignalRPacketsProvider created instance of hubConnection to URI {signalrHubUri}");
+            _logger.Info($"SignalRPacketsProvider created instance of hubConnection to URI {signalrHubUri}");
 
             _hubConnection.On<WitnessPackage>("PacketsUpdate", w =>
             {
-                _logger.LogIfDebug(() => $"[{_accountId}]: SignalR - obtained from gateway {nameof(w.CombinedBlockHeight)}={w.CombinedBlockHeight}");
+                _logger.LogIfDebug(() => $"SignalR - obtained from gateway {nameof(w.CombinedBlockHeight)}={w.CombinedBlockHeight}");
                 _witnessPackages.Add(w);
             });
         }
 
         private async Task ProcessWitnessPackage(WitnessPackage w)
         {
-            _logger.LogIfDebug(() => $"[{_accountId}]: {nameof(ProcessWitnessPackage)} {JsonConvert.SerializeObject(w, new ByteArrayJsonConverter())}");
+            _logger.LogIfDebug(() => $"{nameof(ProcessWitnessPackage)} {JsonConvert.SerializeObject(w, new ByteArrayJsonConverter())}");
 
             _lastObtainedCombinedBlockHeight = w.CombinedBlockHeight;
             WitnessPackageWrapper wrapper = new WitnessPackageWrapper(w);
             await Propagator.SendAsync(wrapper).ConfigureAwait(false);
             
-            _logger.LogIfDebug(() => $"[{_accountId}]: ====> waiting for completion of processing witness package at {w.CombinedBlockHeight}...");
+            _logger.LogIfDebug(() => $"====> waiting for completion of processing witness package at {w.CombinedBlockHeight}...");
             bool res = await wrapper.CompletionSource.Task.ConfigureAwait(false);
-            _logger.LogIfDebug(() => $"[{_accountId}]: <==== processing witness package at {w.CombinedBlockHeight} completed");
+            _logger.LogIfDebug(() => $"<==== processing witness package at {w.CombinedBlockHeight} completed");
         }
 
         private async Task StartHubConnection()
         {
-            _logger.Info($"[{_accountId}]: **** starting {nameof(StartHubConnection)}");
-            _logger.LogIfDebug(() => $"[{_accountId}]: {nameof(StartHubConnection)} called from the {(new System.Diagnostics.StackTrace()).GetFrame(3).GetMethod().Name}...");
+            _logger.Info($"**** starting {nameof(StartHubConnection)}");
+            _logger.LogIfDebug(() => $"{nameof(StartHubConnection)} called from the {(new System.Diagnostics.StackTrace()).GetFrame(3).GetMethod().Name}...");
 
-            await AscertainAccountIsUpToDate().ConfigureAwait(false);
-
-            await _hubConnection.StartHubConnection();
+            if (_hubConnection != null)
+            {
+                await _hubConnection.StartHubConnection().ConfigureAwait(false);
+            }
         }
 
         protected override Task OnStop()

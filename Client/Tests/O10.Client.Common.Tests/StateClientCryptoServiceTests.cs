@@ -11,16 +11,19 @@ using O10.Core.Identity;
 using O10.Crypto.ConfidentialAssets;
 using O10.Crypto.HashCalculations;
 using Xunit;
+using O10.Tests.Core;
+using O10.Tests.Core.Fixtures;
+using Xunit.Abstractions;
 
 namespace O10.Client.Common.Tests
 {
-    public class StateClientCryptoServiceTests
+    public class StateClientCryptoServiceTests : TestBase
     {
         private readonly IHashCalculationsRepository _hashCalculationsRepository;
         private readonly IIdentityKeyProvidersRegistry _identityKeyProvidersRegistry;
         private readonly IAssetsService _assetsService;
 
-        public StateClientCryptoServiceTests()
+        public StateClientCryptoServiceTests(CoreFixture coreFixture, ITestOutputHelper testOutputHelper) : base(coreFixture, testOutputHelper)
         {
             _hashCalculationsRepository = Substitute.For<IHashCalculationsRepository>();
             _hashCalculationsRepository.Create(HashType.Keccak256).Returns(new Keccak256HashCalculation());
@@ -49,7 +52,7 @@ namespace O10.Client.Common.Tests
         [Fact]
         public void DecodeCommitmentSucceeded()
         {
-            StateClientCryptoService clientCryptoService = new StateClientCryptoService(_hashCalculationsRepository, _identityKeyProvidersRegistry);
+            StateClientCryptoService clientCryptoService = new StateClientCryptoService(_hashCalculationsRepository, _identityKeyProvidersRegistry, CoreFixture.LoggerService);
             var decoded = clientCryptoService.DecodeCommitment(Array.Empty<byte>(), Array.Empty<byte>());
 
             Assert.NotNull(decoded);
@@ -58,7 +61,7 @@ namespace O10.Client.Common.Tests
         [Fact]
         public void DecodeEcdhTupleSucceeded()
         {
-            StateClientCryptoService clientCryptoService = new StateClientCryptoService(_hashCalculationsRepository, _identityKeyProvidersRegistry);
+            StateClientCryptoService clientCryptoService = new StateClientCryptoService(_hashCalculationsRepository, _identityKeyProvidersRegistry, CoreFixture.LoggerService);
             clientCryptoService.Initialize(CryptoHelper.GetRandomSeed());
 
             byte[] arr1 = Array.Empty<byte>();
@@ -72,7 +75,7 @@ namespace O10.Client.Common.Tests
         [Fact]
         public void DecodeEcdhTuplePayloadSucceeded()
         {
-            StateClientCryptoService clientCryptoService = new StateClientCryptoService(_hashCalculationsRepository, _identityKeyProvidersRegistry);
+            StateClientCryptoService clientCryptoService = new StateClientCryptoService(_hashCalculationsRepository, _identityKeyProvidersRegistry, CoreFixture.LoggerService);
 
             byte[] arr1 = Array.Empty<byte>();
             byte[] arr2 = Array.Empty<byte>();
@@ -86,7 +89,7 @@ namespace O10.Client.Common.Tests
         [Fact]
         public void DecodeEcdhTupleProofsSucceeded()
         {
-            StateClientCryptoService clientCryptoService = new StateClientCryptoService(_hashCalculationsRepository, _identityKeyProvidersRegistry);
+            StateClientCryptoService clientCryptoService = new StateClientCryptoService(_hashCalculationsRepository, _identityKeyProvidersRegistry, CoreFixture.LoggerService);
 
             byte[] arr1 = Array.Empty<byte>();
             byte[] arr2 = Array.Empty<byte>();
@@ -102,7 +105,7 @@ namespace O10.Client.Common.Tests
         [Fact]
         public void EncodeEcdhTupleSucceeded()
         {
-            StateClientCryptoService clientCryptoService = new StateClientCryptoService(_hashCalculationsRepository, _identityKeyProvidersRegistry);
+            StateClientCryptoService clientCryptoService = new StateClientCryptoService(_hashCalculationsRepository, _identityKeyProvidersRegistry, CoreFixture.LoggerService);
 
             byte[] arr1 = Array.Empty<byte>();
             byte[] arr2 = Array.Empty<byte>();
@@ -114,7 +117,7 @@ namespace O10.Client.Common.Tests
         [Fact]
         public void GetBoundedCommitmentSucceeded()
         {
-            StateClientCryptoService clientCryptoService = new StateClientCryptoService(_hashCalculationsRepository, _identityKeyProvidersRegistry);
+            StateClientCryptoService clientCryptoService = new StateClientCryptoService(_hashCalculationsRepository, _identityKeyProvidersRegistry, CoreFixture.LoggerService);
 
             byte[] arr1 = Array.Empty<byte>();
             byte[] arr2 = Array.Empty<byte>();
@@ -128,7 +131,7 @@ namespace O10.Client.Common.Tests
         [Fact]
         public void InitializeSucceeded()
         {
-            StateClientCryptoService clientCryptoService = new StateClientCryptoService(_hashCalculationsRepository, _identityKeyProvidersRegistry);
+            StateClientCryptoService clientCryptoService = new StateClientCryptoService(_hashCalculationsRepository, _identityKeyProvidersRegistry, CoreFixture.LoggerService);
 
             clientCryptoService.Initialize(Array.Empty<byte[]>());
 
@@ -139,7 +142,7 @@ namespace O10.Client.Common.Tests
 		public void EncodeDecodeAssetTest()
 		{
 			byte[] secretKey = CryptoHelper.GetRandomSeed();
-			StateClientCryptoService clientCryptoService = new StateClientCryptoService(_hashCalculationsRepository, _identityKeyProvidersRegistry);
+			StateClientCryptoService clientCryptoService = new StateClientCryptoService(_hashCalculationsRepository, _identityKeyProvidersRegistry, CoreFixture.LoggerService);
 			clientCryptoService.Initialize(secretKey);
 
 			byte[] assetId = _assetsService.GenerateAssetId(1, "123456789");

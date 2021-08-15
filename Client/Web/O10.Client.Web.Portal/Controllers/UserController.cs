@@ -590,22 +590,25 @@ namespace O10.Client.Web.Portal.Controllers
             string universalProofsStringify = JsonConvert.SerializeObject(universalProofs);
 
             bool postSucceeded = false;
-            await _restApiConfiguration
-                .UniversalProofsPoolUri.PostJsonAsync(universalProofs)
-                .ContinueWith(t =>
-                {
-                    if (!t.IsCompletedSuccessfully)
+            await (await _restApiConfiguration
+                    .UniversalProofsPoolUri.PostJsonAsync(universalProofs)
+                    .ContinueWith(async t =>
                     {
-                        string response = AsyncUtil.RunSync(async () => await ((FlurlHttpException)t.Exception.InnerException).Call.Response.GetStringAsync().ConfigureAwait(false));
-                        _logger.Error($"Failure during posting Universal Proofs", t.Exception.InnerException);
-                        throw new UniversalProofsSendingFailedException(t.Exception.InnerException.Message, t.Exception.InnerException);
+                        _logger.LogIfDebug(() => $"[{accountId}]: Universal proofs storing at {_restApiConfiguration.UniversalProofsPoolUri}\r\n{universalProofsStringify}");
 
-                    }
-                    else
-                    {
-                        postSucceeded = true;
-                    }
-                }, TaskScheduler.Current)
+                        if (!t.IsCompletedSuccessfully)
+                        {
+                            string response = await ((FlurlHttpException)t.Exception.InnerException).GetResponseStringAsync().ConfigureAwait(false);
+                            _logger.Error($"[{accountId}]: Failure during posting Universal Proofs", t.Exception.InnerException);
+                            throw new UniversalProofsSendingFailedException(t.Exception.InnerException.Message, t.Exception.InnerException);
+
+                        }
+                        else
+                        {
+                            postSucceeded = true;
+                        }
+                    }, TaskScheduler.Current)
+                    .ConfigureAwait(false))
                 .ConfigureAwait(false);
 
             if (postSucceeded && storeRegistration)

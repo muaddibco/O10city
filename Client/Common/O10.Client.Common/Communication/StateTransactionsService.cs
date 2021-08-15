@@ -275,7 +275,7 @@ namespace O10.Client.Common.Communication
             byte[] secretKey = CryptoHelper.GetRandomSeed();
             byte[] transactionKey = CryptoHelper.GetPublicKey(secretKey);
             byte[] destinationKey = CryptoHelper.GetDestinationKey(secretKey, receiver.PublicSpendKey, receiver.PublicViewKey);
-            byte[] blindingFactor = CryptoHelper.GetRandomSeed();
+            byte[] blindingFactor = CryptoHelper.GetOTSK(receiver.PublicViewKey, secretKey);
             byte[] assetCommitment = CryptoHelper.GetAssetCommitment(blindingFactor, assetId);
 
             SurjectionProof surjectionProof = CryptoHelper.CreateSurjectionProof(assetCommitment, new byte[][] { issuedAssetCommitment }, 0, blindingFactor);

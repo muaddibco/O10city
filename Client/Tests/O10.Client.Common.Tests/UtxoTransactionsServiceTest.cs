@@ -1,9 +1,6 @@
 ﻿using NSubstitute;
 using System;
-using O10.Transactions.Core.Parsers;
-using O10.Transactions.Core.Serializers;
 using O10.Client.Common.Communication;
-using O10.Client.Common.Communication.SynchronizerNotifications;
 using O10.Client.Common.Interfaces;
 using O10.Core.HashCalculations;
 using O10.Core.Identity;
@@ -23,8 +20,6 @@ namespace O10.Client.Common.Tests
 
         private readonly IHashCalculationsRepository _hashCalculationsRepository;
         private readonly IIdentityKeyProvidersRegistry _identityKeyProvidersRegistry;
-        private readonly ISerializersFactory _serializersFactory;
-        private readonly IBlockParsersRepositoriesRepository _blockParsersRepositoriesRepository;
         private readonly IGatewayService _gatewayService;
         private readonly IStealthClientCryptoService _clientCryptoService;
         private readonly IBoundedAssetsService _boundedAssetsService;
@@ -42,9 +37,8 @@ namespace O10.Client.Common.Tests
                 _identityKeyProvidersRegistry = Substitute.For<IIdentityKeyProvidersRegistry>(),
                 _clientCryptoService = Substitute.For<IStealthClientCryptoService>(),
                 _boundedAssetsService = Substitute.For<IBoundedAssetsService>(),
-                _serializersFactory = Substitute.For<ISerializersFactory>(),
-                _blockParsersRepositoriesRepository = Substitute.For<IBlockParsersRepositoriesRepository>(),
                 _eligibilityProofsProvider = Substitute.For<IEligibilityProofsProvider>(),
+                null,
                 _gatewayService = Substitute.For<IGatewayService>(),
                 CoreFixture.LoggerService
                 );

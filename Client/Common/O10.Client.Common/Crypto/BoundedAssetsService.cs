@@ -22,11 +22,13 @@ namespace O10.Client.Common.Crypto
     {
         private TaskCompletionSource<byte[]> _bindingKeySource;
         private readonly IAssetsService _assetsService;
+        private readonly IStealthClientCryptoService _clientCryptoService;
         private readonly IEligibilityProofsProvider _eligibilityProofsProvider;
         private readonly IIdentityKeyProvider _identityKeyProvider;
 
         public BoundedAssetsService(
             IAssetsService assetsService,
+            IStealthClientCryptoService clientCryptoService,
             IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
             IEligibilityProofsProvider eligibilityProofsProvider)
         {
@@ -36,6 +38,7 @@ namespace O10.Client.Common.Crypto
             }
 
             _assetsService = assetsService;
+            _clientCryptoService = clientCryptoService;
             _eligibilityProofsProvider = eligibilityProofsProvider;
             _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
         }
@@ -155,7 +158,8 @@ namespace O10.Client.Common.Crypto
             byte[] commitment = CryptoHelper.GetNonblindedAssetCommitment(rootAttribute.AssetId);
             var commitmentToRoot = _identityKeyProvider.GetKey(CryptoHelper.BlindAssetCommitment(commitment, bf));
             byte[] issuer = rootAttribute.Source.HexStringToByteArray();
-            SurjectionProof eligibilityProof = await _eligibilityProofsProvider.CreateEligibilityProof(rootAttribute.IssuanceCommitment, rootAttribute.OriginalBlindingFactor, commitmentToRoot.Value, bf, issuer).ConfigureAwait(false);
+            byte[] issuanceBf = _clientCryptoService.GetBlindingFactor(rootAttribute.IssuanceTransactionKey);
+            SurjectionProof eligibilityProof = await _eligibilityProofsProvider.CreateEligibilityProof(commitmentToRoot.Value, bf, rootAttribute.IssuanceCommitment, issuanceBf, issuer).ConfigureAwait(false);
 
             var attributeProofs = new AttributeProofs
             {

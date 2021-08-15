@@ -37,7 +37,14 @@ namespace O10.Tests.Core
 
         public void Error(string msg, params object[] messageArgs)
         {
-            _testOutputHelper.WriteLine("[ERROR] " + msg, messageArgs);
+            if (messageArgs.Length > 0)
+            {
+                _testOutputHelper.WriteLine("[ERROR] " + msg, messageArgs);
+            }
+            else
+            {
+                _testOutputHelper.WriteLine("[ERROR] " + msg);
+            }
         }
 
         public void Error(string msg, Exception ex, params object[] messageArgs)

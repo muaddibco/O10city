@@ -30,7 +30,7 @@ namespace O10.Client.DataLayer.Model
         public byte[] AnchoringOriginationCommitment { get; set; }
 
         [Required]
-        [Obsolete("Generate issuance blinding factor using Issuance Transaction Key")]
+        [Obsolete("Generate issuance blinding factor using Issuance Transaction Key: bf = Hs(T * svk)")]
         public byte[] OriginalBlindingFactor { get; set; }
 
         [Required]

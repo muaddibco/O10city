@@ -812,5 +812,25 @@ namespace O10.Crypto.Tests
 			Array.Copy(BitConverter.GetBytes((uint)1), 0, assetId, hash.Length, sizeof(uint));
 			return assetId;
 		}
+
+        [Fact]
+        public void ManualSurjectionProofsTest()
+        {
+            byte[] bfDiff = "C5B83786DD143AF237F9DEBD5D5298C62028109FF4F8A0EF59D278AF29DAA50E".HexStringToByteArray();
+            byte[] commitment = "D2A2B47518C69B1DAA5689027C091D06F4D08CDCB971D08DDF55DC889C52FF01".HexStringToByteArray();
+            byte[][] commitments = new byte[][]
+            {
+                "109CF73B89AA9593C91BE7FC6EAB195D12FE050231D9C28245035C1D01E589FD".HexStringToByteArray(),
+                "FD8A39FDA9AC47505EB697355B2185474BE1EC546FFE77610BB02D41FCE2A7B7".HexStringToByteArray()
+            };
+
+            int pos = 0;
+
+            var sp = CryptoHelper.CreateSurjectionProof(commitment, commitments, pos, bfDiff);
+
+            var res = CryptoHelper.VerifySurjectionProof(sp, commitment);
+
+            Assert.True(res);
+        }
 	}
 }

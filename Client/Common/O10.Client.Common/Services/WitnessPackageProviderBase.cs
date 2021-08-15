@@ -51,12 +51,13 @@ namespace O10.Client.Common.Services
         public bool Initialize(long accountId, CancellationToken cancellationToken)
         {
             _accountId = accountId;
-            _logger.Info($"[{_accountId}]: {GetType().Name} Initialize");
+            _logger.SetContext(accountId.ToString());
+            _logger.Info($"{GetType().Name} Initialize");
 
             _cancellationToken = cancellationToken;
             _cancellationToken.Register(async () =>
             {
-                _logger.Info($"[{_accountId}]: stopping");
+                _logger.Info("stopping");
 
                 try
                 {
@@ -64,17 +65,17 @@ namespace O10.Client.Common.Services
 
                     PipeOut?.Complete();
 
-                    _logger.Info($"[{_accountId}]: stopped");
+                    _logger.Info("stopped");
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error($"[{_accountId}]: stopping failed", ex);
+                    _logger.Error("stopping failed", ex);
                 }
             });
 
             _dataAccessService.GetLastUpdatedCombinedBlockHeight(accountId, out _lastObtainedCombinedBlockHeight);
 
-            _logger.Info($"[{_accountId}]: LastObtainedCombinedBlockHeight = {_lastObtainedCombinedBlockHeight}");
+            _logger.Info($"LastObtainedCombinedBlockHeight = {_lastObtainedCombinedBlockHeight}");
 
             try
             {
@@ -82,7 +83,7 @@ namespace O10.Client.Common.Services
             }
             catch (Exception ex)
             {
-                _logger.Error($"[{_accountId}]: InitializeInner failed", ex);
+                _logger.Error("InitializeInner failed", ex);
                 return false;
             }
 
@@ -91,7 +92,7 @@ namespace O10.Client.Common.Services
 
         protected async Task ObtainWitnessesRange(long start, long end)
         {
-            _logger.Debug($"[{_accountId}]: {nameof(ObtainWitnessesRange)}({start}, {end})");
+            _logger.Debug($"{nameof(ObtainWitnessesRange)}({start}, {end})");
 
             IOrderedEnumerable<WitnessPackage>? witnessPackages = null;
 
@@ -101,12 +102,12 @@ namespace O10.Client.Common.Services
             }
             catch (AggregateException ex)
             {
-                _logger.Error($"[{_accountId}]: {nameof(ObtainWitnessesRange)} - Failure during obtaning witness range", ex.InnerException);
+                _logger.Error($"{nameof(ObtainWitnessesRange)} - Failure during obtaning witness range", ex.InnerException);
             }
             catch (Exception ex)
             {
                 // TODO: blind exception catch seems improper here!
-                _logger.Error($"[{_accountId}]: {nameof(ObtainWitnessesRange)} - Failure during obtaning witness range", ex);
+                _logger.Error($"{nameof(ObtainWitnessesRange)} - Failure during obtaning witness range", ex);
             }
 
             if (witnessPackages != null)
@@ -115,20 +116,20 @@ namespace O10.Client.Common.Services
                 {
                     foreach (var item in witnessPackages)
                     {
-                        _logger.LogIfDebug(() => $"[{_accountId}]: {nameof(ObtainWitnessesRange)} - witnessPackage = {JsonConvert.SerializeObject(item, new ByteArrayJsonConverter())}");
+                        _logger.LogIfDebug(() => $"{nameof(ObtainWitnessesRange)} - witnessPackage = {JsonConvert.SerializeObject(item, new ByteArrayJsonConverter())}");
                         WitnessPackageWrapper wrapper = new WitnessPackageWrapper(item);
                         await Propagator.SendAsync(wrapper).ConfigureAwait(false);
 
-                        _logger.LogIfDebug(() => $"[{_accountId}]: ====> {nameof(ObtainWitnessesRange)} - waiting for completion of processing witness package at {item.CombinedBlockHeight}...");
+                        _logger.LogIfDebug(() => $"====> {nameof(ObtainWitnessesRange)} - waiting for completion of processing witness package at {item.CombinedBlockHeight}...");
                         bool res = await wrapper.CompletionSource.Task.ConfigureAwait(false);
-                        _logger.LogIfDebug(() => $"[{_accountId}]: <==== {nameof(ObtainWitnessesRange)} - processing witness package at {item.CombinedBlockHeight} completed");
+                        _logger.LogIfDebug(() => $"<==== {nameof(ObtainWitnessesRange)} - processing witness package at {item.CombinedBlockHeight} completed");
                     }
 
                     _lastObtainedCombinedBlockHeight = end;
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error($"[{_accountId}]: {nameof(ObtainWitnessesRange)} - Failure during processing witnesses at ({start}, {end})", ex);
+                    _logger.Error($"{nameof(ObtainWitnessesRange)} - Failure during processing witnesses at ({start}, {end})", ex);
                     throw;
                 }
             }
@@ -139,12 +140,12 @@ namespace O10.Client.Common.Services
             try
             {
                 await WitnessProcessingSemaphore.WaitAsync();
-                _logger.Debug($"[{_accountId}]: ==============================================>");
-                _logger.Debug($"[{_accountId}]: {nameof(AscertainAccountIsUpToDate)} - starting...");
+                _logger.Debug($"==============================================>");
+                _logger.Debug($"{nameof(AscertainAccountIsUpToDate)} - starting...");
 
                 AggregatedRegistrationsTransactionDTO registryCombinedBlockModel = await _gatewayService.GetLastRegistryCombinedBlock().ConfigureAwait(false);
 
-                _logger.LogIfDebug(() => $"[{_accountId}]: {nameof(AscertainAccountIsUpToDate)} - Network's LastAggregatedRegistrations = {JsonConvert.SerializeObject(registryCombinedBlockModel, new ByteArrayJsonConverter())}, local height = {_lastObtainedCombinedBlockHeight}");
+                _logger.LogIfDebug(() => $"{nameof(AscertainAccountIsUpToDate)} - Network's LastAggregatedRegistrations = {JsonConvert.SerializeObject(registryCombinedBlockModel, new ByteArrayJsonConverter())}, local height = {_lastObtainedCombinedBlockHeight}");
 
                 if (registryCombinedBlockModel != null)
                 {
@@ -161,13 +162,13 @@ namespace O10.Client.Common.Services
             }
             catch (Exception ex)
             {
-                _logger.Error($"[{_accountId}]: Failure at {nameof(AscertainAccountIsUpToDate)}", ex);
+                _logger.Error($"Failure at {nameof(AscertainAccountIsUpToDate)}", ex);
                 throw;
             }
             finally
             {
-                _logger.Debug($"[{_accountId}]: {nameof(AscertainAccountIsUpToDate)} - completed");
-                _logger.Debug($"[{_accountId}]: <==============================================");
+                _logger.Debug($"{nameof(AscertainAccountIsUpToDate)} - completed");
+                _logger.Debug($"<==============================================");
                 WitnessProcessingSemaphore.Release();
             }
         }
