@@ -125,6 +125,7 @@ namespace O10.Client.Common.Communication
             _logger.LogIfDebug(() => $"{nameof(ProcessWitnessPackage)} {JsonConvert.SerializeObject(w, new ByteArrayJsonConverter())}");
 
             _lastObtainedCombinedBlockHeight = w.CombinedBlockHeight;
+            _logger.Info($"Local height of aggregated transactions adjusted to {w.CombinedBlockHeight}");
             WitnessPackageWrapper wrapper = new WitnessPackageWrapper(w);
             await Propagator.SendAsync(wrapper).ConfigureAwait(false);
             

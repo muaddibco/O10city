@@ -32,6 +32,7 @@ using O10.Crypto.Models;
 using O10.Transactions.Core.Ledgers.Stealth.Transactions;
 using O10.Client.DataLayer.Model.ServiceProviders;
 using O10.Transactions.Core.Ledgers.O10State.Transactions;
+using O10.Client.Web.Common.Extensions;
 
 namespace O10.Client.Web.Portal.Services
 {
@@ -90,11 +91,11 @@ namespace O10.Client.Web.Portal.Services
             {
                 if (p == null)
                 {
-                    _logger.Error($"[{_accountId}]: Obtained NULL packet");
+                    _logger.Error($"Obtained NULL packet");
                     return;
                 }
 
-                _logger.Info($"[{_accountId}]: Obtained {p.GetType().Name} packet");
+                _logger.Info($"Obtained {p.GetType().Name} packet");
 
                 try
                 {
@@ -120,7 +121,7 @@ namespace O10.Client.Web.Portal.Services
 
                     if (p is KeyImageCompromisedTransaction compromisedProofs)
                     {
-                        ProcessCompromisedProofs(compromisedProofs.KeyImage);
+                        await ProcessCompromisedProofs(compromisedProofs.KeyImage).ConfigureAwait(false);
                     }
 
                     if (p is TransferAssetTransaction transferAsset)
@@ -135,7 +136,7 @@ namespace O10.Client.Web.Portal.Services
                 }
                 catch (Exception ex)
                 {
-                    _logger.Error($"[{_accountId}]: Failed to process packet {p.GetType().Name}", ex);
+                    _logger.Error($"Failed to process packet {p.GetType().Name}", ex);
                 }
             });
         }
@@ -154,7 +155,7 @@ namespace O10.Client.Web.Portal.Services
 
                 if (!isEligibilityCorrect && !string.IsNullOrEmpty(universalProofs.SessionKey))
                 {
-                    await _idenitiesHubContext.Clients.Group(universalProofs.SessionKey).SendAsync("EligibilityCheckFailed").ConfigureAwait(false);
+                    await _idenitiesHubContext.SendMessageAsync(_logger, universalProofs.SessionKey, "EligibilityCheckFailed").ConfigureAwait(false);
                     return;
                 }
 
@@ -170,18 +171,18 @@ namespace O10.Client.Web.Portal.Services
                     {
                         if (aex.InnerException is FlurlHttpException fex)
                         {
-                            _logger.Error($"[{_accountId}]: Failed request '{fex.Call.Request.Url}' with body '{fex.Call.RequestBody}'");
+                            _logger.Error($"Failed request '{fex.Call.Request.Url}' with body '{fex.Call.RequestBody}'");
                         }
                         msg = aex.InnerException.Message;
 
-                        _logger.Error($"[{_accountId}]: Failure at {nameof(ProcessUniversalTransport)}", aex.InnerException);
+                        _logger.Error($"Failure at {nameof(ProcessUniversalTransport)}", aex.InnerException);
                     }
                     else
                     {
-                        _logger.Error($"[{_accountId}]: Failure at {nameof(ProcessUniversalTransport)}", ex);
+                        _logger.Error($"Failure at {nameof(ProcessUniversalTransport)}", ex);
                     }
 
-                    await _idenitiesHubContext.Clients.Group(universalProofs.SessionKey).SendAsync("ProtectionCheckFailed", msg).ConfigureAwait(false);
+                    await _idenitiesHubContext.SendMessageAsync(_logger, universalProofs.SessionKey, "ProtectionCheckFailed", msg).ConfigureAwait(false);
                     return;
                 }
 
@@ -206,7 +207,7 @@ namespace O10.Client.Web.Portal.Services
             }
             catch (TimeoutException)
             {
-                _logger.Error($"[{_accountId}]: Timeout during obtaining {nameof(UniversalProofs)} for key image {universalTransport.KeyImage}");
+                _logger.Error($"Timeout during obtaining {nameof(UniversalProofs)} for key image {universalTransport.KeyImage}");
             }
         }
 
@@ -215,10 +216,10 @@ namespace O10.Client.Web.Portal.Services
 
         private async Task ProcessUniversalProofsAuthentication(RootIssuer rootIssuer, string sessionKey, IKey keyImage)
         {
-            await ValidateAssociatedProofs(rootIssuer, ex => 
+            await ValidateAssociatedProofs(rootIssuer, async ex => 
             {
-                _idenitiesHubContext.Clients.Group(_accountId.ToString(CultureInfo.InvariantCulture)).SendAsync("PushAuthorizationFailed", new { Code = 3, ex.Message }).Wait();
-                _idenitiesHubContext.Clients.Group(sessionKey).SendAsync("PushSpAuthorizationFailed", new { Code = 3, ex.Message }).Wait();
+                await _idenitiesHubContext.SendMessageAsync(_logger, _accountId.ToString(), "PushAuthorizationFailed", new { Code = 3, ex.Message }).ConfigureAwait(false);
+                await _idenitiesHubContext.SendMessageAsync(_logger, sessionKey, "PushSpAuthorizationFailed", new { Code = 3, ex.Message }).ConfigureAwait(false);
             }).ConfigureAwait(false);
 
             SurjectionProof registrationProof = rootIssuer.IssuersAttributes.FirstOrDefault(a => a.Issuer.Equals(rootIssuer.Issuer))?.RootAttribute.CommitmentProof.SurjectionProof;
@@ -231,9 +232,7 @@ namespace O10.Client.Web.Portal.Services
 
             if (isNew)
             {
-                await _idenitiesHubContext
-                    .Clients.Group(_accountId.ToString(CultureInfo.InvariantCulture))
-                    .SendAsync("PushRegistration",
+                await _idenitiesHubContext.SendMessageAsync(_logger, _accountId.ToString(), "PushRegistration",
                         new ServiceProviderRegistrationExDto
                         {
                             Issuer = issuer,
@@ -244,9 +243,8 @@ namespace O10.Client.Web.Portal.Services
                             IssuanceCommitments = rootIssuer.IssuersAttributes.Find(s => s.Issuer.Equals(rootIssuer.Issuer)).RootAttribute.BindingProof.AssetCommitments.Select(a => a.ToHexString()).ToList()
                         })
                     .ConfigureAwait(false);
-                await _idenitiesHubContext
-                    .Clients.Group(sessionKey)
-                    .SendAsync("PushUserRegistration",
+
+                await _idenitiesHubContext.SendMessageAsync(_logger, sessionKey, "PushUserRegistration",
                         new ServiceProviderRegistrationDto
                         {
                             ServiceProviderRegistrationId = registrationId.ToString(CultureInfo.InvariantCulture),
@@ -256,10 +254,7 @@ namespace O10.Client.Web.Portal.Services
             }
             else
             {
-                await _idenitiesHubContext
-                    .Clients
-                    .Group(_accountId.ToString(CultureInfo.InvariantCulture))
-                    .SendAsync("PushAuthorizationSucceeded",
+                await _idenitiesHubContext.SendMessageAsync(_logger, _accountId.ToString(), "PushAuthorizationSucceeded",
                         new ServiceProviderRegistrationExDto
                         {
                             Issuer = issuer,
@@ -269,11 +264,12 @@ namespace O10.Client.Web.Portal.Services
                             Commitment = registrationProof.AssetCommitments[0].ToHexString(),
                             IssuanceCommitments = rootIssuer.IssuersAttributes.Find(s => s.Issuer.Equals(rootIssuer.Issuer)).RootAttribute.BindingProof.AssetCommitments.Select(a => a.ToHexString()).ToList()
                         }).ConfigureAwait(false);
-                ProceedCorrectAuthentication(keyImage, sessionKey);
+                
+                await ProceedCorrectAuthentication(keyImage, sessionKey).ConfigureAwait(false);
             }
         }
 
-        private async Task ValidateAssociatedProofs(RootIssuer rootIssuer, Action<Exception> onValidationFailure = null)
+        private async Task ValidateAssociatedProofs(RootIssuer rootIssuer, Func<Exception, Task>? onValidationFailure = null)
         {
             IEnumerable<SpIdenitityValidation> spIdenitityValidations = _dataAccessService.GetSpIdenitityValidations(_accountId);
 
@@ -283,7 +279,11 @@ namespace O10.Client.Web.Portal.Services
             }
             catch (Exception ex) when (ex is NoValidationProofsException || ex is ValidationProofFailedException || ex is ValidationProofsWereNotCompleteException)
             {
-                onValidationFailure?.Invoke(ex);
+                if (onValidationFailure != null)
+                {
+                    await onValidationFailure.Invoke(ex).ConfigureAwait(false);
+                }
+
                 throw;
             }
         }
@@ -295,11 +295,11 @@ namespace O10.Client.Web.Portal.Services
         {
             if (_dataAccessService.UpdateSpDocumentSignature(_accountId, packet.DocumentHash.ToHexString(), packet.RecordHeight, packet.Height, packet.RawData.ToArray()))
             {
-                _logger.Info($"[{_accountId}]: Document with hash {packet.DocumentHash.ToHexString()} was signed successfully");
+                _logger.Info($"Document with hash {packet.DocumentHash.ToHexString()} was signed successfully");
             }
             else
             {
-                _logger.Error($"[{_accountId}]: Failed to update raw signature record of Document with hash {packet.DocumentHash.ToHexString()}");
+                _logger.Error($"Failed to update raw signature record of Document with hash {packet.DocumentHash.ToHexString()}");
             }
         }
 
@@ -316,52 +316,52 @@ namespace O10.Client.Web.Portal.Services
 
             if (spDocument == null)
             {
-                _logger.Error($"[{_accountId}]: Failed to find document for account {_accountId} with hash {documentHash.ToHexString()}");
+                _logger.Error($"Failed to find document for account {_accountId} with hash {documentHash.ToHexString()}");
                 await _idenitiesHubContext.Clients.Group(sessionKey).SendAsync("PushDocumentNotFound").ConfigureAwait(false);
                 return;
             }
             else
             {
-                _logger.LogIfDebug(() => $"[{_accountId}]: Signing document {JsonConvert.SerializeObject(spDocument, new ByteArrayJsonConverter())}");
+                _logger.LogIfDebug(() => $"Signing document {JsonConvert.SerializeObject(spDocument, new ByteArrayJsonConverter())}");
             }
 
             bool isEligibilityCorrect = await CheckEligibilityProofs(packet.AssetCommitment, packet.EligibilityProof, issuer).ConfigureAwait(false);
 
             if (!isEligibilityCorrect)
             {
-                _logger.Error($"[{_accountId}]: Eligibility proofs were wrong");
+                _logger.Error($"Eligibility proofs were wrong");
                 //await _idenitiesHubContext.Clients.Group(sessionKey).SendAsync("PushDocumentSignIncorrect", new { Code = 2, Message = "Eligibility proofs were wrong" }).ConfigureAwait(false);
                 //return;
             }
             else
             {
-                _logger.Debug($"[{_accountId}]: Eligibility proofs were correct");
+                _logger.Debug($"Eligibility proofs were correct");
             }
 
             if (!CryptoHelper.VerifySurjectionProof(packet.SignerGroupRelationProof, packet.AssetCommitment, documentHash, BitConverter.GetBytes(spDocument.LastChangeRecordHeight)))
             {
-                _logger.Error($"[{_accountId}]: Signer group relation proofs were wrong");
+                _logger.Error($"Signer group relation proofs were wrong");
                 await _idenitiesHubContext.Clients.Group(sessionKey).SendAsync("PushDocumentSignIncorrect", new { Code = 2, Message = "Signer group relation proofs were wrong" }).ConfigureAwait(false);
                 return;
             }
 
-            _logger.Debug($"[{_accountId}]: Checking Allowed Signers");
+            _logger.Debug($"Checking Allowed Signers");
 
             SurjectionProof signatureGroupProof = null;
             string groupIssuer = null;
             foreach (var allowedSigner in spDocument.AllowedSigners)
             {
-                _logger.LogIfDebug(() => $"[{_accountId}]: Checking agains allowed signer definition {JsonConvert.SerializeObject(allowedSigner, new ByteArrayJsonConverter())}");
+                _logger.LogIfDebug(() => $"Checking agains allowed signer definition {JsonConvert.SerializeObject(allowedSigner, new ByteArrayJsonConverter())}");
 
                 byte[] groupAssetId = await _assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_RELATIONGROUP, allowedSigner.GroupIssuer + allowedSigner.GroupName, allowedSigner.GroupIssuer).ConfigureAwait(false);
                 byte[] expectedGroupCommitment = CryptoHelper.GetAssetCommitment(groupNameBlindingFactor, groupAssetId);
                 if (packet.AllowedGroupCommitment.Equals32(expectedGroupCommitment))
                 {
-                    _logger.Debug($"[{_accountId}]: Checking allowed signer started");
+                    _logger.Debug($"Checking allowed signer started");
                     byte[] groupCommitment = await _gatewayService.GetEmployeeRecordGroup(allowedSigner.GroupIssuer.HexStringToByteArray(), packet.SignerGroupRelationProof.AssetCommitments[0]).ConfigureAwait(false);
                     if (groupCommitment != null && CryptoHelper.VerifySurjectionProof(packet.AllowedGroupNameSurjectionProof, packet.AllowedGroupCommitment))
                     {
-                        _logger.Debug($"[{_accountId}]: validation of signer succeeded");
+                        _logger.Debug($"validation of signer succeeded");
                         byte[] diffBF = CryptoHelper.GetDifferentialBlindingFactor(groupNameBlindingFactor, allowedSigner.BlindingFactor);
                         byte[][] commitments = spDocument.AllowedSigners.Select(s => s.GroupCommitment).ToArray();
                         byte[] allowedGroupCommitment = allowedSigner.GroupCommitment;
@@ -381,27 +381,27 @@ namespace O10.Client.Web.Portal.Services
                     }
                     else
                     {
-                        _logger.Error($"[{_accountId}]: validation of signer failed");
+                        _logger.Error($"validation of signer failed");
                     }
                 }
                 else
                 {
-                    _logger.Debug($"[{_accountId}]: Skipping");
+                    _logger.Debug($"Skipping");
                 }
             }
 
             if (signatureGroupProof == null)
             {
-                _logger.Error($"[{_accountId}]: Signer group relation proofs were wrong");
+                _logger.Error($"Signer group relation proofs were wrong");
                 await _idenitiesHubContext.Clients.Group(sessionKey).SendAsync("PushDocumentSignIncorrect", new { Code = 2, Message = "Signer group relation proofs were wrong" }).ConfigureAwait(false);
                 return;
             }
             else
             {
-                _logger.Debug($"[{_accountId}]: Signer group relation proofs were correct");
+                _logger.Debug($"Signer group relation proofs were correct");
             }
 
-            _logger.Info($"[{_accountId}]: All verifications for signing request of document {spDocument.DocumentName} at account {_accountId} were passed. Issuing document sign record");
+            _logger.Info($"All verifications for signing request of document {spDocument.DocumentName} at account {_accountId} were passed. Issuing document sign record");
 
             var issueDocumentSignTransaction = await _transactionsService.IssueDocumentSignRecord(documentHash, spDocument.LastChangeRecordHeight, packet.KeyImage.Value.ToArray(), packet.AssetCommitment, packet.EligibilityProof, issuer, packet.SignerGroupRelationProof, packet.AllowedGroupCommitment, groupIssuer.HexStringToByteArray(), packet.AllowedGroupNameSurjectionProof, signatureGroupProof).ConfigureAwait(false);
             long signatureId = _dataAccessService.AddSpDocumentSignature(_accountId, spDocument.DocumentId, spDocument.LastChangeRecordHeight, issueDocumentSignTransaction.Height);
@@ -414,9 +414,9 @@ namespace O10.Client.Web.Portal.Services
                 SignatureRecordHeight = issueDocumentSignTransaction.Height
             };
 
-            _logger.Info($"[{_accountId}]: DocumentSignature: {JsonConvert.SerializeObject(documentSignature)}");
+            _logger.Info($"DocumentSignature: {JsonConvert.SerializeObject(documentSignature)}");
 
-            _logger.Info("[{_accountId}]: Sending PushDocumentSignature to the Back Office of SP");
+            _logger.Info("Sending PushDocumentSignature to the Back Office of SP");
             await _idenitiesHubContext.Clients.Group(_accountId.ToString(CultureInfo.InvariantCulture))
                 .SendAsync("PushDocumentSignature", documentSignature).ConfigureAwait(false);
 
@@ -445,7 +445,7 @@ namespace O10.Client.Web.Portal.Services
             var assetId = await _assetsService.GenerateAssetId(rootAttributeProofs.SchemeName, rootAttributeProofs.CommitmentProof.DidUrls[0], universalProofs.MainIssuer.ToString()).ConfigureAwait(false);
             if (!CryptoHelper.VerifyIssuanceSurjectionProof(rootAttributeProofs.CommitmentProof.SurjectionProof, rootAttributeProofs.Commitment.Value.Span, new byte[][] { assetId }))
             {
-                await _idenitiesHubContext.Clients.Group(sessionKey).SendAsync("PushEmployeeIncorrectRegistration", new { Code = 1, Message = "RegistrationCommitment does not match to provided Asset Id" }).ConfigureAwait(false);
+                await _idenitiesHubContext.SendMessageAsync(_logger, sessionKey, "PushEmployeeIncorrectRegistration", new { Code = 1, Message = "RegistrationCommitment does not match to provided Asset Id" }).ConfigureAwait(false);
                 return;
             }
 
@@ -455,13 +455,13 @@ namespace O10.Client.Web.Portal.Services
 
             if (!isEligibilityCorrect)
             {
-                await _idenitiesHubContext.Clients.Group(sessionKey).SendAsync("PushEmployeeIncorrectRegistration", new { Code = 2, Message = "Eligibility proofs were wrong" }).ConfigureAwait(false);
+                await _idenitiesHubContext.SendMessageAsync(_logger, sessionKey, "PushEmployeeIncorrectRegistration", new { Code = 2, Message = "Eligibility proofs were wrong" }).ConfigureAwait(false);
                 return;
             }
 
-            await ValidateAssociatedProofs(universalProofs.GetMainRootIssuer(), ex =>
+            await ValidateAssociatedProofs(universalProofs.GetMainRootIssuer(), async ex =>
             {
-                _idenitiesHubContext.Clients.Group(sessionKey).SendAsync("PushSpAuthorizationFailed", new { Code = 3, ex.Message }).Wait();
+                await _idenitiesHubContext.SendMessageAsync(_logger, sessionKey, "PushSpAuthorizationFailed", new { Code = 3, ex.Message }).ConfigureAwait(false);
             }).ConfigureAwait(false);
 
             relationRecords.ForEach(async relationRecord =>
@@ -472,7 +472,7 @@ namespace O10.Client.Web.Portal.Services
                     if (relationRecord.RegistrationCommitment != null && relationRecord.RegistrationCommitment.Commitment.Equals(registrationCommitment.ToHexString()))
                     {
                         // TODO: need to adjust this logic
-                        await _idenitiesHubContext.Clients.Group(sessionKey).SendAsync("PushRelationAlreadyRegistered").ConfigureAwait(false);
+                        await _idenitiesHubContext.SendMessageAsync(_logger, sessionKey, "PushRelationAlreadyRegistered").ConfigureAwait(false);
                         return;
                     }
 
@@ -488,23 +488,22 @@ namespace O10.Client.Web.Portal.Services
 
                     _dataAccessService.SetRelationRegistrationCommitment(_accountId, relationRecord.RelationRecordId, registrationCommitment.ToHexString());
                     await _transactionsService.IssueRelationRecordTransaction(_identityKeyProvider.GetKey(registrationCommitment)).ConfigureAwait(false);
-                    await _idenitiesHubContext.Clients.Group(_accountId.ToString(CultureInfo.InvariantCulture)).SendAsync("PushEmployeeUpdate", new EmployeeDto { AssetId = assetId.ToHexString(), RegistrationCommitment = registrationCommitment.ToHexString() }).ConfigureAwait(false);
-                    await _idenitiesHubContext.Clients.Group(sessionKey).SendAsync("PushEmployeeRegistration", new { Commitment = registrationCommitment.ToHexString() }).ConfigureAwait(false);
+                    await _idenitiesHubContext.SendMessageAsync(_logger, _accountId.ToString(), "PushEmployeeUpdate", new EmployeeDto { AssetId = assetId.ToHexString(), RegistrationCommitment = registrationCommitment.ToHexString() }).ConfigureAwait(false);
+                    await _idenitiesHubContext.SendMessageAsync(_logger, sessionKey, "PushEmployeeRegistration", new { Commitment = registrationCommitment.ToHexString() }).ConfigureAwait(false);
                 }
                 else
                 {
-                    await _idenitiesHubContext.Clients.Group(sessionKey).SendAsync("PushEmployeeNotRegistered").ConfigureAwait(false);
+                    await _idenitiesHubContext.SendMessageAsync(_logger, sessionKey, "PushEmployeeNotRegistered").ConfigureAwait(false);
                     return;
                 }
             });
         }
 
-        private static IEnumerable<ValidationCriteria> ToValidationCriterias(IEnumerable<SpIdenitityValidation> spIdenitityValidations)
-        {
-            return spIdenitityValidations
-                                            .Select(v =>
-                                                new ValidationCriteria { SchemeName = v.SchemeName, ValidationType = v.ValidationType, NumericCriterion = v.NumericCriterion, GroupIdCriterion = v.GroupIdCriterion });
-        }
+        private static IEnumerable<ValidationCriteria> ToValidationCriterias(IEnumerable<SpIdenitityValidation> spIdenitityValidations) => 
+            spIdenitityValidations
+            .Select(v => 
+                new ValidationCriteria { SchemeName = v.SchemeName, ValidationType = v.ValidationType, NumericCriterion = v.NumericCriterion, GroupIdCriterion = v.GroupIdCriterion }
+                );
 
         private void ProcessTransferAsset(TransferAssetTransaction transferAsset)
         {
@@ -515,18 +514,18 @@ namespace O10.Client.Web.Portal.Services
                 {
                     _dataAccessService.StoreSpAttribute(_accountId, t.Result, assetId, transferAsset.Source.Value.ToHexString(), blindingFactor, transferAsset.TransferredAsset.AssetCommitment.ToByteArray(), transferAsset.SurjectionProof.AssetCommitments[0]);
 
-                    _idenitiesHubContext.Clients.Group(_accountId.ToString(CultureInfo.InvariantCulture)).SendAsync("PushAttribute", new SpAttributeDto { SchemeName = t.Result, Source = transferAsset.Source.ArraySegment.Array.ToHexString(), AssetId = assetId.ToHexString(), OriginalBlindingFactor = blindingFactor.ToHexString(), OriginalCommitment = transferAsset.TransferredAsset.AssetCommitment.ToString(), IssuingCommitment = transferAsset.SurjectionProof.AssetCommitments[0].ToHexString(), Validated = false, IsOverriden = false });
+                    _idenitiesHubContext.SendMessageAsync(_logger, _accountId.ToString(), "PushAttribute", new SpAttributeDto { SchemeName = t.Result, Source = transferAsset.Source.ArraySegment.Array.ToHexString(), AssetId = assetId.ToHexString(), OriginalBlindingFactor = blindingFactor.ToHexString(), OriginalCommitment = transferAsset.TransferredAsset.AssetCommitment.ToString(), IssuingCommitment = transferAsset.SurjectionProof.AssetCommitments[0].ToHexString(), Validated = false, IsOverriden = false }).ConfigureAwait(false);
                 }
             }, TaskScheduler.Current);
         }
 
-        private void ProcessCompromisedProofs(IKey compromisedKeyImage)
+        private async Task ProcessCompromisedProofs(IKey compromisedKeyImage)
         {
-            _logger.LogIfDebug(() => $"[{_accountId}]: {nameof(ProcessCompromisedProofs)} CompromisedKeyImage = {compromisedKeyImage}");
+            _logger.LogIfDebug(() => $"{nameof(ProcessCompromisedProofs)} CompromisedKeyImage = {compromisedKeyImage}");
 
             string transactionId = _consentManagementService.GetTransactionRequestByKeyImage(compromisedKeyImage.ToString());
 
-            _logger.Debug($"[{_accountId}]: {nameof(transactionId)} from GetTransactionRequestByKeyImage is '{transactionId}'");
+            _logger.Debug($"{nameof(transactionId)} from GetTransactionRequestByKeyImage is '{transactionId}'");
 
             if (!string.IsNullOrEmpty(transactionId))
             {
@@ -537,29 +536,29 @@ namespace O10.Client.Web.Portal.Services
             if (_keyImageToSessonKeyMap.ContainsKey(compromisedKeyImage))
             {
                 string sessionKey = _keyImageToSessonKeyMap[compromisedKeyImage];
-                _logger.Debug($"[{_accountId}]: Compromised session found: {sessionKey}");
-                _idenitiesHubContext.Clients.Group(sessionKey).SendAsync("PushAuthorizationCompromised");
+                _logger.Debug($"Compromised session found: {sessionKey}");
+                await _idenitiesHubContext.SendMessageAsync(_logger, sessionKey, "PushAuthorizationCompromised").ConfigureAwait(false);
             }
             else
             {
-                _logger.Error($"[{_accountId}]: Compromised session not found");
+                _logger.Error($"Compromised session not found");
             }
         }
 
-        private void ProceedCorrectAuthentication(IKey keyImage, string sessionKey)
+        private async Task ProceedCorrectAuthentication(IKey keyImage, string sessionKey)
         {
-            _logger.LogIfDebug(() => $"[{_accountId}]: {nameof(ProceedCorrectAuthentication)}, storing {nameof(sessionKey)} {sessionKey} with {nameof(keyImage)} {keyImage}");
+            _logger.LogIfDebug(() => $"{nameof(ProceedCorrectAuthentication)}, storing {nameof(sessionKey)} {sessionKey} with {nameof(keyImage)} {keyImage}");
             if (!_keyImageToSessonKeyMap.ContainsKey(keyImage))
             {
                 _keyImageToSessonKeyMap.Add(keyImage, sessionKey);
             }
 
-            _idenitiesHubContext.Clients.Group(sessionKey).SendAsync("PushSpAuthorizationSucceeded", new { Token = string.Empty });
+            await _idenitiesHubContext.SendMessageAsync(_logger, sessionKey, "PushSpAuthorizationSucceeded", new { Token = string.Empty }).ConfigureAwait(false);
         }
 
         private async Task<bool> CheckEligibilityProofs(Memory<byte> assetCommitment, SurjectionProof eligibilityProofs, Memory<byte> issuer)
         {
-            _logger.LogIfDebug(() => $"[{_accountId}]: {nameof(CheckEligibilityProofs)} with assetCommitment={assetCommitment.ToHexString()}, issuer={issuer.ToHexString()}, eligibilityProofs={JsonConvert.SerializeObject(eligibilityProofs, new ByteArrayJsonConverter())}");
+            _logger.LogIfDebug(() => $"{nameof(CheckEligibilityProofs)} with assetCommitment={assetCommitment.ToHexString()}, issuer={issuer.ToHexString()}, eligibilityProofs={JsonConvert.SerializeObject(eligibilityProofs, new ByteArrayJsonConverter())}");
 
             try
             {
@@ -567,7 +566,7 @@ namespace O10.Client.Web.Portal.Services
             }
             catch (CommitmentNotEligibleException)
             {
-                _logger.Error($"[{_accountId}]: {nameof(CheckEligibilityProofs)} found commitment not eligible");
+                _logger.Error($"{nameof(CheckEligibilityProofs)} found commitment not eligible");
                 return false;
             }
 
@@ -577,6 +576,7 @@ namespace O10.Client.Web.Portal.Services
         public void Initialize(long accountId, CancellationToken cancellationToken)
         {
             _accountId = accountId;
+            _logger.SetContext(_accountId.ToString());
             cancellationToken.Register(() => 
             {
                 PipeIn?.Complete();

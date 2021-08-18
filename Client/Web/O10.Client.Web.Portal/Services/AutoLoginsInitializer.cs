@@ -32,7 +32,7 @@ namespace O10.Client.Web.Portal.Services
         {
             foreach (var autoLogin in _dataAccessService.GetAutoLogins().Where(a => a.Account != null))
             {
-                _logger.LogIfDebug(() => $"Autologin of {JsonConvert.SerializeObject(autoLogin, new ByteArrayJsonConverter())}");
+                _logger.LogIfDebug(() => $"[{autoLogin.Account.AccountId}]: Autologin of {JsonConvert.SerializeObject(autoLogin, new ByteArrayJsonConverter())}");
                 int attempts = 5;
                 bool succeeded = false;
 
@@ -42,12 +42,12 @@ namespace O10.Client.Web.Portal.Services
                     {
                         _executionContextManager.InitializeStateExecutionServices(autoLogin.Account.AccountId, autoLogin.SecretKey);
 
-                        _logger.Info($"Account {autoLogin.Account.AccountInfo} with id {autoLogin.Account.AccountId} successfully auto logged in");
+                        _logger.Info($"[{autoLogin.Account.AccountId}]: Account {autoLogin.Account.AccountInfo} with id {autoLogin.Account.AccountId} successfully auto logged in");
                         succeeded = true;
                     }
                     catch (Exception ex)
                     {
-                        _logger.Error($"Failure during {nameof(AutoLoginsInitializer)} for {JsonConvert.SerializeObject(autoLogin, new ByteArrayJsonConverter())}", ex);
+                        _logger.Error($"[{autoLogin.Account.AccountId}]: Failure during {nameof(AutoLoginsInitializer)} for {JsonConvert.SerializeObject(autoLogin, new ByteArrayJsonConverter())}", ex);
                         await Task.Delay(1000);
                     }
                 } while (!succeeded && --attempts > 0);

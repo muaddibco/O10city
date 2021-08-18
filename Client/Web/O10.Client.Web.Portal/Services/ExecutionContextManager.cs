@@ -38,6 +38,7 @@ namespace O10.Client.Web.Portal.Services
                     return _persistencyItems[accountId];
                 }
 
+                _logger.Info($"[{accountId}]: >============================================================================");
                 _logger.Info($"[{accountId}]: {nameof(InitializeStateExecutionServices)} for account with id {accountId}");
 
                 try
@@ -57,6 +58,10 @@ namespace O10.Client.Web.Portal.Services
                 {
                     _logger.Error($"[{accountId}]: Failure during {nameof(InitializeStateExecutionServices)} for account with id {accountId}", ex);
                     throw;
+                }
+                finally
+                {
+                    _logger.Info($"[{accountId}]: <============================================================================");
                 }
             }
         }

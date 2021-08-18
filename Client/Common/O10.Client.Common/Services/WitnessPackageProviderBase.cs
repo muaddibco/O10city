@@ -126,6 +126,7 @@ namespace O10.Client.Common.Services
                     }
 
                     _lastObtainedCombinedBlockHeight = end;
+                    _logger.Info($"Local height of aggregated transactions adjusted to {end}");
                 }
                 catch (Exception ex)
                 {
@@ -155,6 +156,7 @@ namespace O10.Client.Common.Services
                     }
                     else if (registryCombinedBlockModel.Height < _lastObtainedCombinedBlockHeight)
                     {
+                        _logger.Warning($"It was detected that local aggregated registrations height [{_lastObtainedCombinedBlockHeight}] is higher than GW's one [{registryCombinedBlockModel.Height}]. Adjusting to GW.");
                         _lastObtainedCombinedBlockHeight = registryCombinedBlockModel.Height;
                         _dataAccessService.StoreLastUpdatedCombinedBlockHeight(_accountId, _lastObtainedCombinedBlockHeight);
                     }

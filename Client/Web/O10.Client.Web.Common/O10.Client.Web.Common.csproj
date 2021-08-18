@@ -10,6 +10,7 @@
     <PackageId>O10.Client.Web.Common</PackageId>
     <Product>O10.Client.Web.Common</Product>
     <Version>1.1.0</Version>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   
   <ItemGroup>

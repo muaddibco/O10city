@@ -260,9 +260,9 @@ namespace O10.Client.Common.Communication
         {
             Url url = _gatewayUri.AppendPathSegments("api", "synchronization", "AreRootAttributesValid", issuer.ToHexString());
             bool res = false;
-            await _restClientService.Request(url)
-                .PostJsonAsync(commitments.Select(a => a.ToHexString()))
-                .ContinueWith(t =>
+            await(await _restClientService.Request(url)
+                .PostJsonAsync(commitments.Select(a => a.ToHexString()).ToList())
+                .ContinueWith(async t =>
                 {
                     if (t.IsCompletedSuccessfully)
                     {
@@ -270,11 +270,18 @@ namespace O10.Client.Common.Communication
                     }
                     else
                     {
-                        string response = AsyncUtil.RunSync(async () => await t.Result.ResponseMessage.Content.ReadAsStringAsync().ConfigureAwait(false));
-                        _logger.Error($"Request {url} failed with response {response}");
+                        if (t.Exception.InnerException is FlurlHttpException ex)
+                        {
+                            string response = await ex.GetResponseStringAsync().ConfigureAwait(false);
+                            _logger.Error($"Request to '{url}' with the following body failed:\r\n{ex.Call.RequestBody}\r\nResponse: {response}", ex);
+                        }
+                        else
+                        {
+                            _logger.Error($"Request to '{url}' failed", t.Exception.InnerException);
+                        }
                     }
                 }, TaskScheduler.Current)
-                .ConfigureAwait(false);
+                .ConfigureAwait(false)).ConfigureAwait(false);
 
             return res;
         }

@@ -6,6 +6,7 @@ using O10.Client.Web.Common.Services;
 using O10.Core.Architecture;
 using O10.Core.Configuration;
 using O10.Core.Identity;
+using O10.Core.Logging;
 using O10.Core.Models;
 using O10.Core.Notifications;
 using O10.Crypto.Models;
@@ -32,6 +33,7 @@ namespace O10.Client.Common.Services
         private readonly IUpdaterRegistry _updaterRegistry;
         private readonly IGatewayService _gatewayService;
         private readonly IRestApiConfiguration _restApiConfiguration;
+        private readonly ILogger _logger;
 
         public StealthExecutionScopeService(
             IServiceProvider serviceProvider,
@@ -44,7 +46,8 @@ namespace O10.Client.Common.Services
             IWalletSynchronizersRepository walletSynchronizersRepository,
             IPacketsExtractorsRepository packetsExtractorsRepository,
             IUpdaterRegistry updaterRegistry,
-            IGatewayService gatewayService)
+            IGatewayService gatewayService,
+            ILoggerService loggerService)
         {
             _serviceProvider = serviceProvider;
             _witnessPackagesProviderRepository = witnessPackagesProviderRepository;
@@ -57,6 +60,7 @@ namespace O10.Client.Common.Services
             _updaterRegistry = updaterRegistry;
             _gatewayService = gatewayService;
             _restApiConfiguration = configurationService.Get<IRestApiConfiguration>();
+            _logger = loggerService.GetLogger(nameof(StealthExecutionScopeService));
         }
 
         public string Name => "Stealth";
@@ -78,6 +82,8 @@ namespace O10.Client.Common.Services
             {
                 throw new ArgumentException($"It is expected argument of type {nameof(UtxoScopeInitializationParams)}");
             }
+            _logger.SetContext(scopeInitializationParams.AccountId.ToString());
+            _logger.Info("Initializong scope service started...");
 
             IWitnessPackagesProvider packetsProvider = _witnessPackagesProviderRepository.GetInstance(_restApiConfiguration.WitnessProviderName);
             IPacketsExtractor utxoWalletPacketsExtractor = _packetsExtractorsRepository.GetInstance("StealthWallet");
@@ -115,7 +121,8 @@ namespace O10.Client.Common.Services
             walletSynchronizer.GetSourcePipe<TransactionBase>().LinkTo(userIdentitiesUpdater.PipeIn);
             walletSynchronizer.GetSourcePipe<NotificationBase>().LinkTo(userIdentitiesUpdater.PipeInNotifications);
 
-            packetsProvider.Start();
+            await packetsProvider.Start().ConfigureAwait(false);
+            _logger.Info("Initializong scope service finished...");
         }
     }
 }

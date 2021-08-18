@@ -98,7 +98,7 @@ namespace O10.Client.Web.Common.Services
             walletSynchronizer.GetSourcePipe<TransactionBase>().LinkTo(
                 new ActionBlock<TransactionBase>(async p => await updater.PipeIn.SendAsync(p).ConfigureAwait(false)));
 
-            packetsProvider.Start();
+            await packetsProvider.Start().ConfigureAwait(false);
         }
     }
 }
