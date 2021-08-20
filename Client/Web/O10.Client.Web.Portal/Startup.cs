@@ -25,6 +25,7 @@ using Cyberboss.AspNetCore.AsyncInitializer;
 using O10.Transactions.Core;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using O10.Core.Serialization;
+using O10.Client.Web.Portal.Services;
 
 namespace O10.Client.Web.Portal
 {
@@ -82,7 +83,11 @@ namespace O10.Client.Web.Portal
             services.AddControllersWithViews().AddNewtonsoftJson();
             //services.AddRazorPages();
 
-            services.AddCors();
+            services.AddCors(options =>
+            {
+                options.AddPolicy("Public", builder => {});
+            }).AddTransient<ICorsPolicyAccessor, CorsPolicyAccessor>();
+
             services.AddMvc()
                 .AddApplicationPart(typeof(IdentityProviderController).Assembly)
                 //.AddApplicationPart(typeof(SamlIdpController).Assembly)
@@ -155,7 +160,7 @@ namespace O10.Client.Web.Portal
             app.UseRouting();
 
             app.UseCors(x => x
-                .WithOrigins("http://localhost:4200")
+                .WithOrigins("https://localhost:5011")
                 .AllowAnyMethod()
                 .AllowAnyHeader()
                 .AllowCredentials());

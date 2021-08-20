@@ -15,11 +15,9 @@ using System.IO;
 using O10.Core.HashCalculations;
 using O10.Core;
 using O10.Client.Web.Portal.Services;
-using System.Threading.Tasks;
 using O10.Client.DataLayer.Entities;
 using O10.Client.Common.Entities;
 using O10.Client.Common.Dtos.UniversalProofs;
-using Microsoft.Extensions.DependencyInjection;
 using O10.Client.DataLayer.Model.ServiceProviders;
 using O10.Client.Web.DataContracts;
 
@@ -36,6 +34,7 @@ namespace O10.Client.Web.Portal.Controllers
         private readonly IAssetsService _assetsService;
         private readonly IUniversalProofsPool _universalProofsPool;
         private readonly IDocumentSignatureVerifier _documentSignatureVerifier;
+        private readonly ICorsPolicyAccessor _corsPolicyAccessor;
         private readonly IHashCalculation _hashCalculation;
 
         public SpUsersController(IAccountsServiceEx accountsService,
@@ -44,7 +43,8 @@ namespace O10.Client.Web.Portal.Controllers
                            IExecutionContextManager executionContextManager,
                            IAssetsService assetsService,
                            IUniversalProofsPool universalProofsPool,
-                           IDocumentSignatureVerifier documentSignatureVerifier)
+                           IDocumentSignatureVerifier documentSignatureVerifier,
+                           ICorsPolicyAccessor corsPolicyAccessor)
         {
             _accountsService = accountsService;
             _dataAccessService = dataAccessService;
@@ -52,16 +52,22 @@ namespace O10.Client.Web.Portal.Controllers
             _assetsService = assetsService;
             _universalProofsPool = universalProofsPool;
             _documentSignatureVerifier = documentSignatureVerifier;
+            _corsPolicyAccessor = corsPolicyAccessor;
             _hashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
         }
 
 
         [AllowAnonymous]
-        [HttpGet("GetSessionInfo/{spId}")]
-        public IActionResult GetSessionInfo(long spId)
+        [HttpGet("{spId}/SessionInfo")]
+        public IActionResult GetSessionInfo(long spId, string origin)
         {
             string nonce = CryptoHelper.GetRandomSeed().ToHexString();
             AccountDescriptor spAccount = _accountsService.GetById(spId);
+
+            if(!string.IsNullOrEmpty(origin) &&  !_corsPolicyAccessor.GetPolicy("Public").Origins.Contains(origin))
+            {
+                _corsPolicyAccessor.GetPolicy("Public").Origins.Add(origin);
+            }
 
             return Ok(new
             {
