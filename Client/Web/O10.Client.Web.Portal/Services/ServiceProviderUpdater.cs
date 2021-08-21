@@ -265,7 +265,7 @@ namespace O10.Client.Web.Portal.Services
                             IssuanceCommitments = rootIssuer.IssuersAttributes.Find(s => s.Issuer.Equals(rootIssuer.Issuer)).RootAttribute.BindingProof.AssetCommitments.Select(a => a.ToHexString()).ToList()
                         }).ConfigureAwait(false);
                 
-                await ProceedCorrectAuthentication(keyImage, sessionKey).ConfigureAwait(false);
+                await ProceedCorrectAuthentication(keyImage, sessionKey, registrationId).ConfigureAwait(false);
             }
         }
 
@@ -545,7 +545,7 @@ namespace O10.Client.Web.Portal.Services
             }
         }
 
-        private async Task ProceedCorrectAuthentication(IKey keyImage, string sessionKey)
+        private async Task ProceedCorrectAuthentication(IKey keyImage, string sessionKey, long registrationId)
         {
             _logger.LogIfDebug(() => $"{nameof(ProceedCorrectAuthentication)}, storing {nameof(sessionKey)} {sessionKey} with {nameof(keyImage)} {keyImage}");
             if (!_keyImageToSessonKeyMap.ContainsKey(keyImage))
@@ -553,7 +553,7 @@ namespace O10.Client.Web.Portal.Services
                 _keyImageToSessonKeyMap.Add(keyImage, sessionKey);
             }
 
-            await _idenitiesHubContext.SendMessageAsync(_logger, sessionKey, "PushSpAuthorizationSucceeded", new { Token = string.Empty }).ConfigureAwait(false);
+            await _idenitiesHubContext.SendMessageAsync(_logger, sessionKey, "PushSpAuthorizationSucceeded", new { RegistrationId = registrationId }).ConfigureAwait(false);
         }
 
         private async Task<bool> CheckEligibilityProofs(Memory<byte> assetCommitment, SurjectionProof eligibilityProofs, Memory<byte> issuer)
