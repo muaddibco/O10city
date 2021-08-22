@@ -167,38 +167,40 @@ namespace O10.Client.Web.Portal.Controllers
             return Ok();
         }
 
-        [HttpGet("EmployeeGroups")]
-        public IActionResult GetEmployeeGroups(long accountId)
-        {
-            List<EmployeeGroupDto> employeeGroups = new List<EmployeeGroupDto>();
+        #region Relations
 
-            employeeGroups = _dataAccessService.GetRelationGroups(accountId).Select(g => new EmployeeGroupDto { GroupId = g.RelationGroupId, GroupName = g.GroupName }).ToList();
+        [HttpGet("{accountId}/RelationGroups")]
+        public IActionResult GetRelationGroups(long accountId)
+        {
+            List<RelationGroupDto> employeeGroups = new List<RelationGroupDto>();
+
+            employeeGroups = _dataAccessService.GetRelationGroups(accountId).Select(g => new RelationGroupDto { GroupId = g.RelationGroupId, GroupName = g.GroupName }).ToList();
 
             return Ok(employeeGroups);
         }
 
-        [HttpPost("EmployeeGroup")]
-        public IActionResult AddEmployeeGroup(long accountId, [FromBody] EmployeeGroupDto employeeGroup)
+        [HttpPost("{accountId}/RelationGroup")]
+        public IActionResult AddRelationGroup(long accountId, [FromBody] RelationGroupDto relationGroup)
         {
-            employeeGroup.GroupId = _dataAccessService.AddRelationGroup(accountId, employeeGroup.GroupName);
+            relationGroup.GroupId = _dataAccessService.AddRelationGroup(accountId, relationGroup.GroupName);
 
-            return Ok(employeeGroup);
+            return Ok(relationGroup);
         }
 
-        [HttpDelete("EmployeeGroup")]
-        public IActionResult DeleteEmployeeGroup(long accountId, long groupId)
+        [HttpDelete("{accountId}/RelationGroup/{groupId}")]
+        public IActionResult DeleteRelationGroup(long accountId, long groupId)
         {
             _dataAccessService.RemoveRelationGroup(accountId, groupId);
 
             return Ok();
         }
 
-        [HttpGet("Employees")]
-        public IActionResult GetEmployees(long accountId)
+        [HttpGet("{accountId}/Relations")]
+        public IActionResult GetRelations(long accountId)
         {
-            return Ok(_dataAccessService.GetAllSpEmployees(accountId).Select(e => new EmployeeDto
+            return Ok(_dataAccessService.GetRelations(accountId).Select(e => new RelationDto
             {
-                EmployeeId = e.RelationRecordId,
+                RelationId = e.RelationRecordId,
                 Description = e.Description,
                 RawRootAttribute = e.RootAttributeValue,
                 RegistrationCommitment = e.RegistrationCommitment?.Commitment,
@@ -206,13 +208,16 @@ namespace O10.Client.Web.Portal.Controllers
             }));
         }
 
-        [HttpPut("Employee")]
-        public IActionResult AddEmployee(long accountId, [FromBody] EmployeeDto employee)
+        [HttpPost("{accountId}/RelationGroup/{groupId}/Relation")]
+        public IActionResult AddRelation(long accountId, long groupId, [FromBody] RelationDto relation)
         {
-            employee.EmployeeId = _dataAccessService.AddRelationToGroup(accountId, employee.Description, employee.RawRootAttribute, employee.GroupId);
+            relation.RelationId = _dataAccessService.AddRelationToGroup(accountId, relation.Description, relation.RawRootAttribute, groupId);
+            relation.GroupId = groupId;
 
-            return Ok(employee);
+            return Ok(relation);
         }
+
+        #endregion Relations
 
         /*[HttpPost("Employee")]
         public IActionResult UpdateEmployee(long accountId, [FromBody] EmployeeDto employee)

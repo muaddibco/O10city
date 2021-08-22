@@ -1630,7 +1630,7 @@ namespace O10.Client.DataLayer.Services
             }
         }
 
-        public IEnumerable<RelationRecord> GetSpEmployeesByGroup(long accountId, long groupId)
+        public IEnumerable<RelationRecord> GetRelations(long accountId, long groupId)
         {
             lock (_sync)
             {
@@ -1646,7 +1646,7 @@ namespace O10.Client.DataLayer.Services
             return null;
         }
 
-        public IEnumerable<RelationRecord> GetAllSpEmployees(long accountId)
+        public IEnumerable<RelationRecord> GetRelations(long accountId)
         {
             lock (_sync)
             {

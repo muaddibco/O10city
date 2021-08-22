@@ -174,8 +174,8 @@ namespace O10.Client.DataLayer.Services
 		RelationRecord RemoveRelation(long accountId, long relationId);
 		List<RelationRecord> GetRelationRecords(long accountId, string attributeContent);
 		List<RelationRecord> GetRelationRecords(long accountId);
-		IEnumerable<RelationRecord> GetSpEmployeesByGroup(long accountId, long groupId);
-		IEnumerable<RelationRecord> GetAllSpEmployees(long accountId);
+		IEnumerable<RelationRecord> GetRelations(long accountId, long groupId);
+		IEnumerable<RelationRecord> GetRelations(long accountId);
 		IEnumerable<RelationRecord> GetNotAssiginedRelations(long accountId);
 		bool IsRelationExist(long accountId, string registrationCommitment);
         

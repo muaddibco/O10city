@@ -488,7 +488,7 @@ namespace O10.Client.Web.Portal.Services
 
                     _dataAccessService.SetRelationRegistrationCommitment(_accountId, relationRecord.RelationRecordId, registrationCommitment.ToHexString());
                     await _transactionsService.IssueRelationRecordTransaction(_identityKeyProvider.GetKey(registrationCommitment)).ConfigureAwait(false);
-                    await _idenitiesHubContext.SendMessageAsync(_logger, _accountId.ToString(), "PushEmployeeUpdate", new EmployeeDto { AssetId = assetId.ToHexString(), RegistrationCommitment = registrationCommitment.ToHexString() }).ConfigureAwait(false);
+                    await _idenitiesHubContext.SendMessageAsync(_logger, _accountId.ToString(), "PushEmployeeUpdate", new RelationDto { AssetId = assetId.ToHexString(), RegistrationCommitment = registrationCommitment.ToHexString() }).ConfigureAwait(false);
                     await _idenitiesHubContext.SendMessageAsync(_logger, sessionKey, "PushEmployeeRegistration", new { Commitment = registrationCommitment.ToHexString() }).ConfigureAwait(false);
                 }
                 else
