@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -24,6 +25,9 @@ using Flurl.Http;
 using O10.Client.Common.Interfaces.Inputs;
 using Newtonsoft.Json;
 using O10.Client.Common.Entities;
+using O10.Core.Identity;
+using O10.Crypto.ConfidentialAssets;
+using System.IO;
 
 namespace O10.Client.Web.Portal.Controllers
 {
@@ -40,16 +44,24 @@ namespace O10.Client.Web.Portal.Controllers
         private readonly IAssetsService _assetsService;
         private readonly IHashCalculation _hashCalculation;
         private readonly IRestApiConfiguration _restApiConfiguration;
+        private readonly IIdentityKeyProvider _identityKeyProvider;
         private readonly ILogger _logger;
 
-        public ServiceProvidersController(
-            IAccountsService accountsService, IExecutionContextManager executionContextManager,
-            IDataAccessService dataAccessService, IIdentityAttributesService identityAttributesService, IConsentManagementService consentManagementService,
-            IHashCalculationsRepository hashCalculationsRepository, IAssetsService assetsService, IConfigurationService configurationService, ILoggerService loggerService)
+        public ServiceProvidersController(IAccountsService accountsService,
+                                          IExecutionContextManager executionContextManager,
+                                          IDataAccessService dataAccessService,
+                                          IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
+                                          IIdentityAttributesService identityAttributesService,
+                                          IConsentManagementService consentManagementService,
+                                          IHashCalculationsRepository hashCalculationsRepository,
+                                          IAssetsService assetsService,
+                                          IConfigurationService configurationService,
+                                          ILoggerService loggerService)
         {
             _accountsService = accountsService;
             _executionContextManager = executionContextManager;
             _dataAccessService = dataAccessService;
+            _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
             _identityAttributesService = identityAttributesService;
             _consentManagementService = consentManagementService;
             _assetsService = assetsService;
@@ -219,58 +231,7 @@ namespace O10.Client.Web.Portal.Controllers
 
         #endregion Relations
 
-        /*[HttpPost("Employee")]
-        public IActionResult UpdateEmployee(long accountId, [FromBody] EmployeeDto employee)
-        {
-            _dataAccessService.ChangeRelationGroup(accountId, employee.EmployeeId, employee.GroupId);
-            var persistency = _executionContextManager.ResolveExecutionServices(accountId);
-            var transactionsService = persistency.Scope.ServiceProvider.GetService<IStateTransactionsService>();
-            transactionsService.IssueCancelEmployeeRecord(employee.RegistrationCommitment.HexStringToByteArray());
-
-            return Ok(employee);
-        }
-
-        [HttpDelete("Employee")]
-        public IActionResult DeleteEmployee(long accountId, long employeeId)
-        {
-            RelationRecord spEmployee = _dataAccessService.RemoveRelation(accountId, employeeId);
-            var persistency = _executionContextManager.ResolveExecutionServices(accountId);
-            var transactionsService = persistency.Scope.ServiceProvider.GetService<IStateTransactionsService>();
-
-            if (!string.IsNullOrEmpty(spEmployee.RegistrationCommitment))
-            {
-                transactionsService.IssueCancelEmployeeRecord(spEmployee.RegistrationCommitment.HexStringToByteArray());
-            }
-
-            return Ok();
-        }
-
-        [HttpGet("Documents")]
-        public IActionResult GetDocuments(long accountId)
-        {
-            IEnumerable<DocumentDto> documents = _dataAccessService.GetSpDocuments(accountId).Select(d => new DocumentDto
-            {
-                DocumentId = d.SpDocumentId,
-                DocumentName = d.DocumentName,
-                Hash = d.Hash,
-                AllowedSigners = (d.AllowedSigners?.Select(s => new AllowedSignerDto
-                {
-                    AllowedSignerId = s.SpDocumentAllowedSignerId,
-                    GroupName = s.GroupName,
-                    GroupOwner = s.GroupIssuer
-                }) ?? Array.Empty<AllowedSignerDto>()).ToList(),
-                Signatures = (d.DocumentSignatures?.Select(s => new DocumentSignatureDto
-                {
-                    DocumentId = s.Document.SpDocumentId,
-                    SignatureId = s.SpDocumentSignatureId,
-                    DocumentHash = s.Document.Hash,
-                    DocumentRecordHeight = s.DocumentRecordHeight,
-                    SignatureRecordHeight = s.SignatureRecordHeight
-                }) ?? Array.Empty<DocumentSignatureDto>()).ToList()
-            });
-
-            return Ok(documents);
-        }
+        #region Documents
 
         [HttpPost("Document")]
         public IActionResult AddDocument(long accountId, [FromBody] DocumentDto documentDto)
@@ -283,14 +244,6 @@ namespace O10.Client.Web.Portal.Controllers
             transactionsService.IssueDocumentRecord(document.Hash.HexStringToByteArray(), document.AllowedSigners?.Select(s => s.GroupCommitment.HexStringToByteArray()).ToArray());
 
             return Ok(documentDto);
-        }
-
-        [HttpDelete("Document")]
-        public IActionResult DeleteDocument(long accountId, long documentId)
-        {
-            _dataAccessService.RemoveSpDocument(accountId, documentId);
-
-            return Ok();
         }
 
         [HttpPost("AllowedSigner")]
@@ -324,6 +277,41 @@ namespace O10.Client.Web.Portal.Controllers
             return Ok();
         }
 
+        [HttpGet("Documents")]
+        public IActionResult GetDocuments(long accountId)
+        {
+            IEnumerable<DocumentDto> documents = _dataAccessService.GetSpDocuments(accountId).Select(d => new DocumentDto
+            {
+                DocumentId = d.SpDocumentId,
+                DocumentName = d.DocumentName,
+                Hash = d.Hash,
+                AllowedSigners = (d.AllowedSigners?.Select(s => new AllowedSignerDto
+                {
+                    AllowedSignerId = s.SpDocumentAllowedSignerId,
+                    GroupName = s.GroupName,
+                    GroupOwner = s.GroupIssuer
+                }) ?? Array.Empty<AllowedSignerDto>()).ToList(),
+                Signatures = (d.DocumentSignatures?.Select(s => new DocumentSignatureDto
+                {
+                    DocumentId = s.Document.SpDocumentId,
+                    SignatureId = s.SpDocumentSignatureId,
+                    DocumentHash = s.Document.Hash,
+                    DocumentRecordHeight = s.DocumentRecordHeight,
+                    SignatureRecordHeight = s.SignatureRecordHeight
+                }) ?? Array.Empty<DocumentSignatureDto>()).ToList()
+            });
+
+            return Ok(documents);
+        }
+
+        [HttpDelete("Document")]
+        public IActionResult DeleteDocument(long accountId, long documentId)
+        {
+            _dataAccessService.RemoveSpDocument(accountId, documentId);
+
+            return Ok();
+        }
+
         [HttpPost("CalculateFileHash"), DisableRequestSizeLimit]
         public IActionResult CalculateFileHash()
         {
@@ -342,7 +330,36 @@ namespace O10.Client.Web.Portal.Controllers
             {
                 return BadRequest();
             }
-        }*/
+        }
+
+        #endregion Documents
+
+        /*[HttpPost("Employee")]
+        public IActionResult UpdateEmployee(long accountId, [FromBody] EmployeeDto employee)
+        {
+            _dataAccessService.ChangeRelationGroup(accountId, employee.EmployeeId, employee.GroupId);
+            var persistency = _executionContextManager.ResolveExecutionServices(accountId);
+            var transactionsService = persistency.Scope.ServiceProvider.GetService<IStateTransactionsService>();
+            transactionsService.IssueCancelEmployeeRecord(employee.RegistrationCommitment.HexStringToByteArray());
+
+            return Ok(employee);
+        }
+
+        [HttpDelete("Employee")]
+        public IActionResult DeleteEmployee(long accountId, long employeeId)
+        {
+            RelationRecord spEmployee = _dataAccessService.RemoveRelation(accountId, employeeId);
+            var persistency = _executionContextManager.ResolveExecutionServices(accountId);
+            var transactionsService = persistency.Scope.ServiceProvider.GetService<IStateTransactionsService>();
+
+            if (!string.IsNullOrEmpty(spEmployee.RegistrationCommitment))
+            {
+                transactionsService.IssueCancelEmployeeRecord(spEmployee.RegistrationCommitment.HexStringToByteArray());
+            }
+
+            return Ok();
+        }
+*/
 
         [HttpGet("UserTransaction")]
         public IActionResult GetUserTransactions(long accountId)

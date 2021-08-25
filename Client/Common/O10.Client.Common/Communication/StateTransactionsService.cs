@@ -51,23 +51,24 @@ namespace O10.Client.Common.Communication
             _lastHeight = lastBlockHeight + 1;
         }
 
-        /*        public async Task<DocumentSignRecord> IssueDocumentSignRecord(byte[] documentHash, ulong recordHeight, byte[] keyImage, byte[] signerCommitment, SurjectionProof eligibilityProof, byte[] issuer, SurjectionProof signerGroupRelationProof, byte[] signerGroupCommitment, byte[] groupIssuer, SurjectionProof signerGroupProof, SurjectionProof signerAllowedGroupsProof)
-                {
-                    DocumentSignRecord packet = CreateDocumentSignRecord(documentHash, recordHeight, keyImage, signerCommitment, eligibilityProof, issuer, signerGroupRelationProof, signerGroupCommitment, groupIssuer, signerGroupProof, signerAllowedGroupsProof);
+        public async Task<DocumentRecordTransaction?> IssueDocumentRecord(byte[] documentHash, byte[][] allowedSignerCommitments)
+        {
+            var packet = CreateDocumentRecord(documentHash, allowedSignerCommitments);
 
-                    var completionResult = PropagateTransaction(packet);
+            var completionResult = PropagateTransaction(packet);
 
-                    return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
-                }
+            return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
+        }
+        public async Task<DocumentSignTransaction> IssueDocumentSignRecord(byte[] documentHash, IKey keyImage, IKey signerCommitment, SurjectionProof eligibilityProof, IKey issuer, SurjectionProof signerGroupRelationProof, IKey signerGroupCommitment, IKey groupIssuer, SurjectionProof signerGroupProof, SurjectionProof signerAllowedGroupsProof)
+        {
+            var packet = CreateDocumentSignRecord(documentHash, keyImage, signerCommitment, eligibilityProof, issuer, signerGroupRelationProof, signerGroupCommitment, groupIssuer, signerGroupProof, signerAllowedGroupsProof);
 
-                public async Task<DocumentRecord> IssueDocumentRecord(byte[] documentHash, byte[][] allowedSignerCommitments)
-                {
-                    DocumentRecord packet = CreateDocumentRecord(documentHash, allowedSignerCommitments);
+            var completionResult = PropagateTransaction(packet);
 
-                    var completionResult = PropagateTransaction(packet);
+            return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
+        }
 
-                    return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
-                }
+        /*        
 
                 public async Task<CancelEmployeeRecord> IssueCancelEmployeeRecord(byte[] registrationCommitment)
                 {
@@ -86,7 +87,7 @@ namespace O10.Client.Common.Communication
         /// <param name="blindingPointRoot"></param>
         /// <param name="originatingCommitment"></param>
         /// <returns></returns>
-        public async Task<IssueAssociatedBlindedAssetTransaction> IssueAssociatedAsset(byte[] assetId, byte[] blindingPointValue, byte[] blindingPointRoot)
+        public async Task<IssueAssociatedBlindedAssetTransaction?> IssueAssociatedAsset(byte[] assetId, byte[] blindingPointValue, byte[] blindingPointRoot)
         {
             var packet = CreateIssueAssociatedBlindedAsset(assetId, blindingPointValue, blindingPointRoot);
 
@@ -95,16 +96,21 @@ namespace O10.Client.Common.Communication
             return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
         }
 
-        public async Task<RelationTransaction> IssueRelationRecordTransaction(IKey registrationCommitment)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="registrationCommitment">commitment that already contains non-blinded commitment to group assetId</param>
+        /// <returns></returns>
+        public async Task<RelationTransaction?> IssueRelationRecordTransaction(IKey registrationCommitment)
         {
-            var packet = CreateEmployeeRecord(registrationCommitment);
+            var packet = CreateRelationRecord(registrationCommitment);
 
             var completionResult = PropagateTransaction(packet);
 
             return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
         }
 
-        public async Task<IssueBlindedAssetTransaction> IssueBlindedAsset(byte[] assetId)
+        public async Task<IssueBlindedAssetTransaction?> IssueBlindedAsset(byte[] assetId)
         {
             var packet = CreateIssueBlindedAsset(assetId);
 
@@ -115,7 +121,7 @@ namespace O10.Client.Common.Communication
 
         
 
-        public async Task<IssueBlindedAssetTransaction> IssueBlindedAsset2(byte[] assetId, byte[] blindingFactor)
+        public async Task<IssueBlindedAssetTransaction?> IssueBlindedAsset2(byte[] assetId, byte[] blindingFactor)
         {
             var packet = CreateIssueBlindedAsset2(assetId, blindingFactor);
 
@@ -124,7 +130,7 @@ namespace O10.Client.Common.Communication
             return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
         }
 
-        public async Task<TransferAssetToStealthTransaction> TransferAssetToStealth(byte[] assetId, ConfidentialAccount receiver)
+        public async Task<TransferAssetToStealthTransaction?> TransferAssetToStealth(byte[] assetId, ConfidentialAccount receiver)
         {
             if (receiver is null)
             {
@@ -138,8 +144,13 @@ namespace O10.Client.Common.Communication
             return (await completionResult.Task.ConfigureAwait(false) is SucceededNotification) ? packet : null;
         }
 
-        public async Task<TransferAssetToStealthTransaction> TransferAssetToStealth2(byte[] assetId, byte[] issuanceCommitment, ConfidentialAccount receiver)
+        public async Task<TransferAssetToStealthTransaction?> TransferAssetToStealth2(byte[] assetId, byte[] issuanceCommitment, ConfidentialAccount receiver)
         {
+            if (receiver is null)
+            {
+                throw new ArgumentNullException(nameof(receiver));
+            }
+
             var packet = CreateTransferAssetToStealth2(assetId, issuanceCommitment, receiver);
 
             var completionResult = PropagateTransaction(packet);
@@ -170,44 +181,38 @@ namespace O10.Client.Common.Communication
             return issueBlindedAsset;
         }
 
-        /* private DocumentSignRecord CreateDocumentSignRecord(byte[] documentHash, ulong recordHeight, byte[] keyImage, byte[] signerCommitment, SurjectionProof eligibilityProof, byte[] issuer, SurjectionProof signerGroupRelationProof, byte[] signerGroupCommitment, byte[] groupIssuer, SurjectionProof signerGroupProof, SurjectionProof signerAllowedGroupsProof)
-         {
-             DocumentSignRecord issueEmployeeRecord = new DocumentSignRecord
-             {
-                 DocumentHash = documentHash,
-                 RecordHeight = recordHeight,
-                 KeyImage = keyImage,
-                 SignerCommitment = signerCommitment,
-                 EligibilityProof = eligibilityProof,
-                 Issuer = issuer,
-                 SignerGroupRelationProof = signerGroupRelationProof,
-                 SignerGroupCommitment = signerGroupCommitment,
-                 GroupIssuer = groupIssuer,
-                 SignerGroupProof = signerGroupProof,
-                 SignerAllowedGroupsProof = signerAllowedGroupsProof
-             };
+        private DocumentRecordTransaction CreateDocumentRecord(byte[] documentHash, byte[][] allowedSignerCommitments)
+        {
+            var transaction = new DocumentRecordTransaction()
+            {
+                DocumentHash = documentHash,
+                AllowedSignerGroupCommitments = allowedSignerCommitments ?? Array.Empty<byte[]>()
+            };
 
-             FillHeightInfo(issueEmployeeRecord);
-             FillSyncData(issueEmployeeRecord);
-             FillAndSign(issueEmployeeRecord);
+            return transaction;
+        }
 
-             return issueEmployeeRecord;
-         }
+        private DocumentSignTransaction CreateDocumentSignRecord(byte[] documentTransactionHash, IKey keyImage, IKey signerCommitment, SurjectionProof eligibilityProof, IKey issuer, SurjectionProof signerGroupRelationProof, IKey signerGroupCommitment, IKey groupIssuer, SurjectionProof signerGroupProof, SurjectionProof signerAllowedGroupsProof)
+        {
+            var transaction = new DocumentSignTransaction
+            {
+                DocumentTransactionHash = documentTransactionHash,
+                KeyImage = keyImage,
+                SignerCommitment = signerCommitment,
+                EligibilityProof = eligibilityProof,
+                Issuer = issuer,
+                SignerGroupRelationProof = signerGroupRelationProof,
+                SignerGroupCommitment = signerGroupCommitment,
+                GroupIssuer = groupIssuer,
+                SignerGroupProof = signerGroupProof,
+                SignerAllowedGroupsProof = signerAllowedGroupsProof
+            };
 
-         private DocumentRecord CreateDocumentRecord(byte[] documentHash, byte[][] allowedSignerCommitments)
-         {
-             DocumentRecord issueEmployeeRecord = new DocumentRecord
-             {
-                 DocumentHash = documentHash,
-                 AllowedSignerGroupCommitments = allowedSignerCommitments ?? Array.Empty<byte[]>()
-             };
+            return transaction;
+        }
 
-             FillHeightInfo(issueEmployeeRecord);
-             FillSyncData(issueEmployeeRecord);
-             FillAndSign(issueEmployeeRecord);
+        /* 
 
-             return issueEmployeeRecord;
-         }
 
          private CancelEmployeeRecord CreateCancelEmployeeRecord(byte[] registrationCommitment)
          {
@@ -223,17 +228,13 @@ namespace O10.Client.Common.Communication
              return issueEmployeeRecord;
          }*/
 
-        private RelationTransaction CreateEmployeeRecord(IKey registrationCommitment)
+        private RelationTransaction CreateRelationRecord(IKey registrationCommitment)
         {
             var issueEmployeeRecord = new RelationTransaction
             {
                 RegistrationCommitment = registrationCommitment
             };
 
-/*            FillHeightInfo(issueEmployeeRecord);
-            FillSyncData(issueEmployeeRecord);
-            FillAndSign(issueEmployeeRecord);
-*/
             return issueEmployeeRecord;
         }
 

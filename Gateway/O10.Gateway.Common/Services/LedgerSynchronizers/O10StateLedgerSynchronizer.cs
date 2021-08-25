@@ -103,7 +103,7 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
                 CombinedRegistryBlockHeight = registryCombinedBlockHeight,
                 WitnessId = witnessId,
                 TransactionType = transaction.TransactionType,
-                Commitment = transaction.DocumentHash,
+                Commitment = _identityKeyProvider.GetKey(transaction.DocumentHash),
                 Source = transaction.Source,
                 Content = transaction.ToJson(),
                 Hash = _identityKeyProvider.GetKey(HashCalculation.CalculateHash(transaction.ToString()))
@@ -127,7 +127,7 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
 
         private StateIncomingStoreInput StoreRelationRecordPacket(long witnessId, long registryCombinedBlockHeight, RelationTransaction transaction)
         {
-            _dataAccessService.AddRelationRecord(transaction.Source, transaction.RegistrationCommitment, transaction.GroupCommitment);
+            _dataAccessService.AddRelationRecord(transaction.Source, transaction.RegistrationCommitment);
 
             return new StateIncomingStoreInput
             {

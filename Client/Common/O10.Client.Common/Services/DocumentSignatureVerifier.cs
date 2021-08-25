@@ -52,7 +52,7 @@ namespace O10.Client.Common.Services
             {
                 ulong combinedBlockHeight = await _gatewayService.GetCombinedBlockByTransactionHash(documentCreator, signatureTransactionHash).ConfigureAwait(false);
                 res.IsNotCompromised = !(await _gatewayService.IsKeyImageCompromised(documentSignRecord.KeyImage).ConfigureAwait(false));
-                res.DocumentHashMatch = documentSignRecord.DocumentHash.Equals(documentHash);
+                res.DocumentHashMatch = documentSignRecord.DocumentTransactionHash.Equals(documentHash);
                 res.SignerSignatureMatch = CryptoHelper.VerifySurjectionProof(documentSignRecord.SignerGroupRelationProof, documentSignRecord.SignerCommitment.Value.Span, documentHash, documentRecordTransactionHash);
                 res.EligibilityCorrect = await CheckEligibilityProofsWereValid(documentSignRecord.SignerCommitment.Value, documentSignRecord.EligibilityProof, documentSignRecord.Issuer, combinedBlockHeight).ConfigureAwait(false);
                 res.AllowedGroupRelation = CryptoHelper.VerifySurjectionProof(documentSignRecord.SignerGroupProof, documentSignRecord.SignerGroupCommitment.Value.Span);

@@ -20,7 +20,7 @@ namespace O10.Gateway.DataLayer
         public DbSet<RootAttribute> RootAttributeIssuances { get; set; }
         public DbSet<AssociatedAttributeIssuance> AssociatedAttributeIssuances { get; set; }
         public DbSet<WitnessPacket> WitnessPackets { get; set; }
-		public DbSet<RelationRecord> EmployeeRecords { get; set; }
+		public DbSet<RelationRecord> RelationRecords { get; set; }
 
         public DbSet<CompromisedKeyImage> CompromisedKeyImages { get; set; }
 

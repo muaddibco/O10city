@@ -1137,11 +1137,11 @@ namespace O10.Gateway.DataLayer.Services
             {
                 try
                 {
-                    RelationRecord employeeRecord = _dataContext.EmployeeRecords.Local.FirstOrDefault(e => e.Issuer == issuer && e.RegistrationCommitment == registrationCommitmentStr);
+                    RelationRecord employeeRecord = _dataContext.RelationRecords.Local.FirstOrDefault(e => e.Issuer == issuer && e.RegistrationCommitment == registrationCommitmentStr);
 
                     if(employeeRecord == null)
                     {
-                        employeeRecord = _dataContext.EmployeeRecords.FirstOrDefault(e => e.Issuer == issuer && e.RegistrationCommitment == registrationCommitmentStr);
+                        employeeRecord = _dataContext.RelationRecords.FirstOrDefault(e => e.Issuer == issuer && e.RegistrationCommitment == registrationCommitmentStr);
                     }
 
                     if(employeeRecord != null)
@@ -1160,7 +1160,7 @@ namespace O10.Gateway.DataLayer.Services
             }
         }
 
-        public void AddRelationRecord(IKey issuer, IKey registrationCommitment, IKey groupCommitment)
+        public void AddRelationRecord(IKey issuer, IKey registrationCommitment)
 		{
             if (issuer is null)
             {
@@ -1172,11 +1172,6 @@ namespace O10.Gateway.DataLayer.Services
                 throw new ArgumentNullException(nameof(registrationCommitment));
             }
 
-            if (groupCommitment is null)
-            {
-                throw new ArgumentNullException(nameof(groupCommitment));
-            }
-
             if (Monitor.TryEnter(_sync, _lockTimeout))
 			{
 				try
@@ -1184,11 +1179,10 @@ namespace O10.Gateway.DataLayer.Services
 					RelationRecord employeeRecord = new RelationRecord
 					{
 						Issuer = issuer.ToString(),
-						RegistrationCommitment = registrationCommitment.ToString(),
-						GroupCommitment = groupCommitment.ToString()
+						RegistrationCommitment = registrationCommitment.ToString()
 					};
 
-					_dataContext.EmployeeRecords.Add(employeeRecord);
+					_dataContext.RelationRecords.Add(employeeRecord);
 				}
 				finally
 				{
@@ -1201,17 +1195,17 @@ namespace O10.Gateway.DataLayer.Services
 			}
 		}
 
-		public byte[] GetRelationRecordGroup(string issuer, string registrationCommitment)
+		/*public byte[] GetRelationRecordGroup(string issuer, string registrationCommitment)
 		{
 			if (Monitor.TryEnter(_sync, _lockTimeout))
 			{
 				try
 				{
-					RelationRecord employeeRecord = _dataContext.EmployeeRecords.Local.FirstOrDefault(e => !e.IsRevoked && e.Issuer == issuer && e.RegistrationCommitment == registrationCommitment);
+					RelationRecord employeeRecord = _dataContext.RelationRecords.Local.FirstOrDefault(e => !e.IsRevoked && e.Issuer == issuer && e.RegistrationCommitment == registrationCommitment);
 
 					if(employeeRecord == null)
 					{
-						employeeRecord = _dataContext.EmployeeRecords.FirstOrDefault(e => !e.IsRevoked && e.Issuer == issuer && e.RegistrationCommitment == registrationCommitment);
+						employeeRecord = _dataContext.RelationRecords.FirstOrDefault(e => !e.IsRevoked && e.Issuer == issuer && e.RegistrationCommitment == registrationCommitment);
 					}
 
 					return employeeRecord?.GroupCommitment.HexStringToByteArray();
@@ -1227,7 +1221,7 @@ namespace O10.Gateway.DataLayer.Services
 			}
 
 			return null;
-		}
+		}*/
 
 		public StateTransaction? GetStateTransaction(string source, string hashString)
         {

@@ -58,10 +58,10 @@ namespace O10.Gateway.DataLayer.Services
 
         void SetRootAttributesOverriden(IKey issuer, IKey issuanceCommitment, long combinedBlockHeight);
 
-		void AddRelationRecord(IKey issuer, IKey registrationCommitment, IKey groupCommitment);
+		void AddRelationRecord(IKey issuer, IKey registrationCommitment);
 		void CancelRelationRecord(IKey issuer, IKey registrationCommitment);
 
-		byte[] GetRelationRecordGroup(string issuer, string registrationCommitment);
+		//byte[] GetRelationRecordGroup(string issuer, string registrationCommitment);
 
         void AddCompromisedKeyImage(IKey keyImage);
         bool GetIsKeyImageCompomised(IKey keyImage);

@@ -6,21 +6,19 @@ using O10.Transactions.Core.Enums;
 
 namespace O10.Transactions.Core.Ledgers.O10State.Transactions
 {
+    /// <summary>
+    /// Transaction recording signature of a document. Using the hash of this transaction will be possible to determine exact point of time 
+    /// when a document was signed and check whether signer was allowed to sign the document at the time of signing (Kirill, 2021-08-23)
+    /// </summary>
     public class DocumentSignTransaction : O10StateTransactionBase
     {
         public override ushort TransactionType => TransactionTypes.Transaction_DocumentSignRecord;
 
         /// <summary>
-        /// Hash of the signed document
+        /// Hash of the transaction that records document to be signed. 
         /// </summary>
-        [JsonConverter(typeof(KeyJsonConverter))]
-        public IKey? DocumentHash { get; set; }
-
-        /// <summary>
-        /// The height of the aggregated registry at the time of signing. This is required in order to make sure 
-        /// that signer had required permissions and valid identity at the time of signing
-        /// </summary>
-        public ulong RecordHeight { get; set; } // seems it is not required for locating the precise point of when exactly document was signed because the location of the signature on the timeline can be located using the hash of the transaction
+        [JsonConverter(typeof(ByteArrayJsonConverter))]
+        public byte[]? DocumentTransactionHash { get; set; }
 
         [JsonConverter(typeof(KeyJsonConverter))]
         public IKey? KeyImage { get; set; } // KeyImage for checking for compromization (?)
@@ -38,7 +36,7 @@ namespace O10.Transactions.Core.Ledgers.O10State.Transactions
 
         /// <summary>
         /// Proof of relation of signer commitment to registration commitment at the group. 
-        /// This proof is built using AUX that is SHA3(document name | document content)
+        /// This proof is built using AUX that is SHA3(document name | document content) (??, Kirill 2021/08/23)
         /// </summary>
         public SurjectionProof? SignerGroupRelationProof { get; set; }
 

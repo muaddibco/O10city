@@ -1,7 +1,7 @@
 ﻿using O10.Core.Architecture;
 using O10.Core.Configuration;
 
-namespace O10.Core.Tests.Classes
+namespace O10.Core.Tests.Models
 {
     [RegisterExtension(typeof(IConfigurationSection), Lifetime = LifetimeManagement.Singleton)]
     public class ConfigRoles : ConfigurationSectionBase

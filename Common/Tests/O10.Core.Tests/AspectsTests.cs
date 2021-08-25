@@ -1,7 +1,7 @@
 ﻿using NSubstitute;
 using Xunit;
 using O10.Core.Configuration;
-using O10.Core.Tests.Classes;
+using O10.Core.Tests.Models;
 
 namespace O10.Core.Tests
 {

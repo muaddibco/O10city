@@ -252,11 +252,11 @@ namespace O10.Gateway.WebApp.Common.Controllers
             return Ok(_dataAccessService.CheckRootAttributeWasValid(issuer.HexStringToByteArray(), commitment.HexStringToByteArray(), combinedBlockHeight));
         }
 
-        [HttpGet("GetEmployeeRecordGroup/{issuer}/{registrationCommitment}")]
+        /*[HttpGet("GetEmployeeRecordGroup/{issuer}/{registrationCommitment}")]
         public IActionResult GetEmployeeRecordGroup(string issuer, string registrationCommitment)
         {
             return Ok(_dataAccessService.GetRelationRecordGroup(issuer, registrationCommitment).ToHexString());
-        }
+        }*/
 
         [HttpGet("Transaction")]
         public IActionResult GetTransactionBySourceAndHeight([FromQuery] string source, [FromQuery] string transactionHash)
