@@ -2,7 +2,7 @@
 {
     public class ServiceProviderRegistrationDto
     {
-        public string ServiceProviderRegistrationId { get; set; }
+        public long RegistrationId { get; set; }
 
         public string Commitment { get; set; }
 

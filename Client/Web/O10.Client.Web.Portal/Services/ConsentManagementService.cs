@@ -206,9 +206,9 @@ namespace O10.Client.Web.Portal.Services
                 .Select(s =>
                     new SpUserTransactionDto
                     {
-                        SpUserTransactionId = s.SpUserTransactionId.ToString(),
-                        RegistrationId = s.ServiceProviderRegistrationId.ToString(),
-                        TransactionId = s.TransactionId,
+                        SpUserTransactionId = s.SpUserTransactionId,
+                        RegistrationId = s.ServiceProviderRegistrationId,
+                        TransactionKey = s.TransactionId,
                         Description = s.TransactionDescription,
                         IsProcessed = s.IsProcessed,
                         IsConfirmed = s.IsConfirmed,

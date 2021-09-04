@@ -78,7 +78,7 @@ namespace O10.Client.Web.Portal.Controllers
             return Ok(registrations.Select(r =>
             new ServiceProviderRegistrationDto
             {
-                ServiceProviderRegistrationId = r.ServiceProviderRegistrationId.ToString(CultureInfo.InvariantCulture),
+                RegistrationId = r.ServiceProviderRegistrationId,
                 Commitment = r.Commitment.ToHexString()
             }));
         }
@@ -369,22 +369,22 @@ namespace O10.Client.Web.Portal.Controllers
             var result = registrations.Select(r =>
                         new ServiceProviderRegistrationDto
                         {
-                            ServiceProviderRegistrationId = r.ServiceProviderRegistrationId.ToString(CultureInfo.InvariantCulture),
+                            RegistrationId = r.ServiceProviderRegistrationId,
                             Commitment = r.Commitment.ToHexString(),
-                            Transactions = transactionDtos.Where(t => t.RegistrationId == r.ServiceProviderRegistrationId.ToString(CultureInfo.InvariantCulture)).ToArray()
+                            Transactions = transactionDtos.Where(t => t.RegistrationId == r.ServiceProviderRegistrationId).ToArray()
                         });
 
             return Ok(result);
         }
 
         [HttpGet("UserTransaction/{registrationId}")]
-        public IActionResult GetUserTransactions(long accountId, string registrationId)
+        public IActionResult GetUserTransactions(long accountId, long registrationId)
         {
-            ServiceProviderRegistration serviceProviderRegistration = _dataAccessService.GetServiceProviderRegistration(long.Parse(registrationId));
+            ServiceProviderRegistration serviceProviderRegistration = _dataAccessService.GetServiceProviderRegistration(registrationId);
             IEnumerable<SpUserTransactionDto> transactionDtos = _consentManagementService.GetUserTransactions(accountId);
             var result = new ServiceProviderRegistrationDto
             {
-                ServiceProviderRegistrationId = registrationId,
+                RegistrationId = registrationId,
                 Commitment = serviceProviderRegistration.Commitment.ToHexString(),
                 Transactions = transactionDtos.Where(t => t.RegistrationId == registrationId).ToArray()
             };
@@ -396,15 +396,15 @@ namespace O10.Client.Web.Portal.Controllers
         public async Task<IActionResult> PushUserTransaction(long accountId, [FromBody] SpUserTransactionRequestDto spUserTransactionRequest)
         {
             AccountDescriptor account = _accountsService.GetById(accountId);
-            string transactionId = Guid.NewGuid().ToString();
-            long registrationId = long.Parse(spUserTransactionRequest.RegistrationId);
-            long userTransactionId = _dataAccessService.AddSpUserTransaction(accountId, registrationId, transactionId, spUserTransactionRequest.Description);
+            string transactionKey = Guid.NewGuid().ToString();
+            long registrationId = spUserTransactionRequest.RegistrationId;
+            long userTransactionId = _dataAccessService.AddSpUserTransaction(accountId, registrationId, transactionKey, spUserTransactionRequest.Description);
             var registration = _dataAccessService.GetServiceProviderRegistration(registrationId);
 
             TransactionConsentRequest consentRequest = new TransactionConsentRequest
             {
                 RegistrationCommitment = registration.Commitment.ToHexString(),
-                TransactionId = transactionId,
+                TransactionId = transactionKey,
                 WithKnowledgeProof = true,
                 Description = spUserTransactionRequest.Description,
                 PublicSpendKey = account.PublicSpendKey.ToHexString(),
@@ -423,9 +423,9 @@ namespace O10.Client.Web.Portal.Controllers
 
             return Ok(new SpUserTransactionDto
             {
-                SpUserTransactionId = userTransactionId.ToString(),
-                TransactionId = transactionId,
-                RegistrationId = spUserTransactionRequest.RegistrationId.ToString(),
+                SpUserTransactionId = userTransactionId,
+                TransactionKey = transactionKey,
+                RegistrationId = spUserTransactionRequest.RegistrationId,
                 Description = spUserTransactionRequest.Description
             });
         }

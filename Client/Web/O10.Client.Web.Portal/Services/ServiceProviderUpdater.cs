@@ -238,7 +238,7 @@ namespace O10.Client.Web.Portal.Services
                             Issuer = issuer,
                             IssuerName = issuerName,
                             RootAttributeName = rootAttributeDefinition.AttributeName,
-                            ServiceProviderRegistrationId = registrationId.ToString(CultureInfo.InvariantCulture),
+                            RegistrationId = registrationId,
                             Commitment = registrationProof.AssetCommitments[0].ToHexString(),
                             IssuanceCommitments = rootIssuer.IssuersAttributes.Find(s => s.Issuer.Equals(rootIssuer.Issuer)).RootAttribute.BindingProof.AssetCommitments.Select(a => a.ToHexString()).ToList()
                         })
@@ -247,7 +247,7 @@ namespace O10.Client.Web.Portal.Services
                 await _idenitiesHubContext.SendMessageAsync(_logger, sessionKey, "PushUserRegistration",
                         new ServiceProviderRegistrationDto
                         {
-                            ServiceProviderRegistrationId = registrationId.ToString(CultureInfo.InvariantCulture),
+                            RegistrationId = registrationId,
                             Commitment = registrationProof.AssetCommitments[0].ToHexString()
                         })
                     .ConfigureAwait(false);
@@ -260,7 +260,7 @@ namespace O10.Client.Web.Portal.Services
                             Issuer = issuer,
                             IssuerName = issuerName,
                             RootAttributeName = rootAttributeDefinition.AttributeName,
-                            ServiceProviderRegistrationId = registrationId.ToString(CultureInfo.InvariantCulture),
+                            RegistrationId = registrationId,
                             Commitment = registrationProof.AssetCommitments[0].ToHexString(),
                             IssuanceCommitments = rootIssuer.IssuersAttributes.Find(s => s.Issuer.Equals(rootIssuer.Issuer)).RootAttribute.BindingProof.AssetCommitments.Select(a => a.ToHexString()).ToList()
                         }).ConfigureAwait(false);

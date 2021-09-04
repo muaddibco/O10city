@@ -1450,7 +1450,7 @@ namespace O10.Client.DataLayer.Services
             {
                 Account account = _dataContext.Accounts.FirstOrDefault(a => a.AccountId == accountId);
 
-                if (account != null && !_dataContext.RelationGroups.Include(g => g.Account).Any(g => g.Account == account && g.GroupName.Equals(groupName, StringComparison.InvariantCultureIgnoreCase)))
+                if (account != null && !_dataContext.RelationGroups.Include(g => g.Account).Any(g => g.Account == account && g.GroupName.ToLower() == groupName.ToLower()))
                 {
                     RelationGroup spEmployeeGroup = new RelationGroup
                     {

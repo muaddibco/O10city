@@ -2,11 +2,11 @@
 {
     public class SpUserTransactionDto
     {
-        public string SpUserTransactionId { get; set; }
+        public long SpUserTransactionId { get; set; }
 
-        public string RegistrationId { get; set; }
+        public long RegistrationId { get; set; }
 
-        public string TransactionId { get; set; }
+        public string TransactionKey { get; set; }
         public string Description { get; set; }
 
         public bool IsProcessed { get; set; }

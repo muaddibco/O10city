@@ -20,6 +20,7 @@ using O10.Client.Common.Entities;
 using O10.Client.Common.Dtos.UniversalProofs;
 using O10.Client.DataLayer.Model.ServiceProviders;
 using O10.Client.Web.DataContracts;
+using System.Threading.Tasks;
 
 namespace O10.Client.Web.Portal.Controllers
 {
@@ -276,7 +277,7 @@ namespace O10.Client.Web.Portal.Controllers
         }
 
         [AllowAnonymous]
-        [HttpPost("CalculateFileHash"), DisableRequestSizeLimit]
+        [HttpPost("FileHash"), DisableRequestSizeLimit]
         public IActionResult CalculateFileHash()
         {
             var file = Request.Form.Files[0];
@@ -289,6 +290,25 @@ namespace O10.Client.Web.Portal.Controllers
                 byte[] hash = _hashCalculation.CalculateHash(stream.ToArray());
 
                 return Ok(new { documentName = file.FileName, hash = hash.ToHexString() });
+            }
+            else
+            {
+                return BadRequest();
+            }
+        }
+
+        [AllowAnonymous]
+        [HttpGet("FileHash"), DisableRequestSizeLimit]
+        public async Task<IActionResult> CalculateFileHash(string fileName)
+        {
+            using var stream = new MemoryStream();
+            await Request.Body.CopyToAsync(stream).ConfigureAwait(false);
+
+            if (stream.Length > 0)
+            {
+                byte[] hash = _hashCalculation.CalculateHash(stream.ToArray());
+
+                return Ok(new { documentName = fileName, hash = hash.ToHexString() });
             }
             else
             {
