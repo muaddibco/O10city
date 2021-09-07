@@ -15,7 +15,7 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "3.1.4")
+                .HasAnnotation("ProductVersion", "3.1.16")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
@@ -992,7 +992,6 @@ namespace O10.Client.DataLayer.SqlServer.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<byte[]>("RootAssetId")
-                        .IsRequired()
                         .HasColumnType("varbinary(max)");
 
                     b.Property<string>("Source")

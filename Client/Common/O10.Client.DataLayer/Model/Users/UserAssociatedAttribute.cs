@@ -24,6 +24,6 @@ namespace O10.Client.DataLayer.Model
 
         public DateTime? LastUpdateTime { get; set; }
 
-        public byte[] RootAssetId { get; set; }
+        public byte[]? RootAssetId { get; set; }
     }
 }

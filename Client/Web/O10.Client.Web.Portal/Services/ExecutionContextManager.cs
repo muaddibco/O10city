@@ -140,6 +140,11 @@ namespace O10.Client.Web.Portal.Services
             return _persistencyItems[accountId];
         }
 
+        public bool IsStarted(long accountId)
+        {
+            return _persistencyItems.ContainsKey(accountId);
+        }
+
         public void UnregisterExecutionServices(long accountId)
         {
             _logger.Info($"[{accountId}]: Stopping services for account");

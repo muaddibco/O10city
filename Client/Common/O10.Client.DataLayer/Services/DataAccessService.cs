@@ -732,7 +732,9 @@ namespace O10.Client.DataLayer.Services
                     {
                         AccountId = newAccountId,
                         AttributeSchemeName = userAssociatedAttributeOld.AttributeSchemeName,
-                        Content = userAssociatedAttributeOld.Content
+                        Content = userAssociatedAttributeOld.Content,
+                        Source = userAssociatedAttributeOld.Source,
+                        RootAssetId = userAssociatedAttributeOld.RootAssetId
                     };
 
                     _dataContext.UserAssociatedAttributes.Add(userAssociatedAttribute);
@@ -1178,81 +1180,76 @@ namespace O10.Client.DataLayer.Services
             }
         }
 
-        public long DuplicateUserAccount(long accountId, string accountInfo)
+        public Account? DuplicateUserAccount(long accountId, string accountInfo)
         {
-            long accountIdTarget = 0;
-
             lock (_sync)
             {
                 Account accountSource = _dataContext.Accounts.FirstOrDefault(a => a.AccountType == AccountType.User && a.AccountId == accountId);
 
-                if (accountSource != null)
+                if (accountSource == null)
                 {
-                    Account accountTarget = new Account
+                    return null;
+                }
+
+                Account accountTarget = new Account
+                {
+                    AccountInfo = accountInfo,
+                    AccountType = AccountType.User,
+                    PublicSpendKey = accountSource.PublicSpendKey,
+                    PublicViewKey = accountSource.PublicViewKey,
+                    SecretSpendKey = accountSource.SecretSpendKey,
+                    SecretViewKey = accountSource.SecretViewKey,
+                    LastAggregatedRegistrations = accountSource.LastAggregatedRegistrations
+                };
+
+                _dataContext.Accounts.Add(accountTarget);
+
+                SynchronizationStatus synchronizationStatusSource = _dataContext.SynchronizationStatuses.FirstOrDefault(s => s.Account.AccountId == accountId);
+                if (synchronizationStatusSource != null)
+                {
+                    SynchronizationStatus synchronizationStatus = new SynchronizationStatus
                     {
-                        AccountInfo = accountInfo,
-                        AccountType = AccountType.User,
-                        PublicSpendKey = accountSource.PublicSpendKey,
-                        PublicViewKey = accountSource.PublicViewKey,
-                        SecretSpendKey = accountSource.SecretSpendKey,
-                        SecretViewKey = accountSource.SecretViewKey,
-                        LastAggregatedRegistrations = accountSource.LastAggregatedRegistrations
+                        Account = accountTarget,
+                        LastUpdatedCombinedBlockHeight = accountSource.LastAggregatedRegistrations
                     };
 
-                    _dataContext.Accounts.Add(accountTarget);
-
-                    SynchronizationStatus synchronizationStatusSource = _dataContext.SynchronizationStatuses.FirstOrDefault(s => s.Account.AccountId == accountId);
-                    if (synchronizationStatusSource != null)
-                    {
-                        SynchronizationStatus synchronizationStatus = new SynchronizationStatus
-                        {
-                            Account = accountTarget,
-                            LastUpdatedCombinedBlockHeight = accountSource.LastAggregatedRegistrations
-                        };
-
-                        _dataContext.SynchronizationStatuses.Add(synchronizationStatus);
-                    }
-
-                    _dataContext.SaveChanges();
-
-                    accountIdTarget = accountTarget.AccountId;
-
-                    if (accountIdTarget > 0)
-                    {
-                        foreach (var rootAttr in _dataContext.UserRootAttributes.Where(a => a.AccountId == accountId && !a.IsOverriden && a.NextKeyImage != string.Empty).ToList())
-                        {
-                            AddNonConfirmedRootAttribute(accountIdTarget, rootAttr.Content, rootAttr.Source, rootAttr.SchemeName, rootAttr.AssetId);
-                        }
-
-                        foreach (var groupRelation in _dataContext.UserGroupRelations.Include(a => a.Account).Where(a => a.Account.AccountId == accountId).ToList())
-                        {
-                            UserGroupRelation userGroupRelation = new UserGroupRelation
-                            {
-                                Account = accountTarget,
-                                AssetId = groupRelation.AssetId,
-                                Issuer = groupRelation.Issuer,
-                                GroupName = groupRelation.GroupName,
-                                GroupOwnerKey = groupRelation.GroupOwnerKey,
-                                GroupOwnerName = groupRelation.GroupOwnerName
-                            };
-
-                            _dataContext.UserGroupRelations.Add(userGroupRelation);
-                        }
-
-                        UserSettings userSettings = new UserSettings
-                        {
-                            Account = accountTarget,
-                            IsAutoTheftProtection = false
-                        };
-
-                        _dataContext.UserSettings.Add(userSettings);
-                    }
-
-                    _dataContext.SaveChanges();
+                    _dataContext.SynchronizationStatuses.Add(synchronizationStatus);
                 }
-            }
 
-            return accountIdTarget;
+                _dataContext.SaveChanges();
+
+                foreach (var rootAttr in _dataContext.UserRootAttributes.Where(a => a.AccountId == accountId && !a.IsOverriden && a.NextKeyImage != string.Empty).ToList())
+                {
+                    AddNonConfirmedRootAttribute(accountTarget.AccountId, rootAttr.Content, rootAttr.Source, rootAttr.SchemeName, rootAttr.AssetId);
+                }
+
+                foreach (var groupRelation in _dataContext.UserGroupRelations.Include(a => a.Account).Where(a => a.Account.AccountId == accountId).ToList())
+                {
+                    UserGroupRelation userGroupRelation = new UserGroupRelation
+                    {
+                        Account = accountTarget,
+                        AssetId = groupRelation.AssetId,
+                        Issuer = groupRelation.Issuer,
+                        GroupName = groupRelation.GroupName,
+                        GroupOwnerKey = groupRelation.GroupOwnerKey,
+                        GroupOwnerName = groupRelation.GroupOwnerName
+                    };
+
+                    _dataContext.UserGroupRelations.Add(userGroupRelation);
+                }
+
+                UserSettings userSettings = new UserSettings
+                {
+                    Account = accountTarget,
+                    IsAutoTheftProtection = false
+                };
+
+                _dataContext.UserSettings.Add(userSettings);
+
+                _dataContext.SaveChanges();
+
+                return accountTarget;
+            }
         }
 
         public byte[] GetAesInitializationVector()

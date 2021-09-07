@@ -10,6 +10,7 @@ namespace O10.Client.Web.Portal.Services
         Persistency InitializeStateExecutionServices(long accountId, byte[] secretKey, IUpdater updater = null);
         Persistency InitializeUtxoExecutionServices(long accountId, byte[] secretSpendKey, byte[] secretViewKey, byte[] pwdSecretKey, IUpdater updater = null);
         Persistency ResolveExecutionServices(long accountId);
+        bool IsStarted(long accountId);
         void UnregisterExecutionServices(long accountId);
     }
 }

@@ -235,6 +235,7 @@ namespace O10.Client.Web.Portal.Services
                 await _idenitiesHubContext.SendMessageAsync(_logger, _accountId.ToString(), "PushRegistration",
                         new ServiceProviderRegistrationExDto
                         {
+                            SessionKey = sessionKey,
                             Issuer = issuer,
                             IssuerName = issuerName,
                             RootAttributeName = rootAttributeDefinition.AttributeName,
@@ -257,6 +258,7 @@ namespace O10.Client.Web.Portal.Services
                 await _idenitiesHubContext.SendMessageAsync(_logger, _accountId.ToString(), "PushAuthorizationSucceeded",
                         new ServiceProviderRegistrationExDto
                         {
+                            SessionKey = sessionKey,
                             Issuer = issuer,
                             IssuerName = issuerName,
                             RootAttributeName = rootAttributeDefinition.AttributeName,

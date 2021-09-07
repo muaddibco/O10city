@@ -1,9 +1,7 @@
 ﻿namespace O10.Client.Web.DataContracts.User
 {
-    public class UserAccountReplicationDto
+    public class UserAccountReplicationRequestDto
     {
-        public long SourceAccountId { get; set; }
-
         public string AccountInfo { get; set; }
     }
 }

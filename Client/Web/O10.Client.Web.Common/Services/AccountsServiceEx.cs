@@ -6,6 +6,7 @@ using O10.Client.Common.Services;
 using O10.Core.HashCalculations;
 using O10.Client.Common.Entities;
 using O10.Core.Translators;
+using LanguageExt;
 
 namespace O10.Client.Web.Common.Services
 {
@@ -28,11 +29,11 @@ namespace O10.Client.Web.Common.Services
             return TranslateToAccountDescriptor(_dataAccessService.GetAccount(publicKey));
         }
 
-		public long DuplicateAccount(long id, string accountInfo)
+		public Option<AccountDescriptor> DuplicateAccount(long id, string accountInfo)
 		{
-			long accountIdNew = _dataAccessService.DuplicateUserAccount(id, accountInfo);
-            _dataAccessService.DuplicateAssociatedAttributes(id, accountIdNew);
-            return accountIdNew;
+			var account = _dataAccessService.DuplicateUserAccount(id, accountInfo);
+            _dataAccessService.DuplicateAssociatedAttributes(id, account.AccountId);
+            return TranslateToAccountDescriptor(account);
 		}
     }
 }

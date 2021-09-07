@@ -191,6 +191,11 @@ namespace O10.Client.Web.Portal.Controllers
         [HttpGet("{accountId}/BindingKey")]
         public IActionResult IsBindingKeySet(long accountId)
         {
+            if(!_executionContextManager.IsStarted(accountId))
+            {
+                return Ok(false);
+            }
+
             return Ok(_executionContextManager.ResolveExecutionServices(accountId)?.Scope.ServiceProvider.GetService<IBoundedAssetsService>().IsBindingKeySet());
         }
 
@@ -264,17 +269,14 @@ namespace O10.Client.Web.Portal.Controllers
             return Ok(accountDto);
         }
 
-        [HttpPost("DuplicateUserAccount")]
-        public IActionResult DuplicateUserAccount([FromBody] UserAccountReplicationDto userAccountReplication)
+        [HttpPost("{sourceAccountId}/Duplicate")]
+        public IActionResult DuplicateUserAccount(long sourceAccountId, [FromBody] UserAccountReplicationRequestDto userAccountReplication)
         {
-            long accountId = _accountsService.DuplicateAccount(userAccountReplication.SourceAccountId, userAccountReplication.AccountInfo);
+            var account = _accountsService.DuplicateAccount(sourceAccountId, userAccountReplication.AccountInfo);
 
-            if (accountId > 0)
-            {
-                return Ok();
-            }
-
-            return BadRequest();
+            return account.Match<IActionResult>(
+                a => Ok(_translatorsRepository.GetInstance<AccountDescriptor, AccountDto>().Translate(a)), 
+                () => BadRequest());
         }
 
         [HttpPost("RemoveAccount")]

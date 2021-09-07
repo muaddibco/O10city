@@ -121,7 +121,7 @@ namespace O10.Client.DataLayer.Services
 		bool GetAccountId(byte[] publicSpendKey, byte[] publicViewKey, out long accountId);
 		void RemoveAccount(long accountId);
 
-		long DuplicateUserAccount(long accountId, string accountInfo);
+		Account DuplicateUserAccount(long accountId, string accountInfo);
 
 		void OverrideUserAccount(long accountId, byte[] secretSpendKeyEnc, byte[] secretViewKeyEnc, byte[] publicSpendKey, byte[] publicViewKey, long lastAggregatedRegistrations);
 

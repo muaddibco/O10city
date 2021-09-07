@@ -1,4 +1,5 @@
-﻿using O10.Client.Common.Entities;
+﻿using LanguageExt;
+using O10.Client.Common.Entities;
 using O10.Client.Common.Interfaces;
 using O10.Core.Architecture;
 
@@ -9,6 +10,6 @@ namespace O10.Client.Web.Common.Services
     {
         AccountDescriptor GetByPublicKey(byte[] publicKey);
 
-        long DuplicateAccount(long id, string accountInfo);
+        Option<AccountDescriptor> DuplicateAccount(long id, string accountInfo);
 	}
 }
