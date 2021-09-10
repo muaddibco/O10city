@@ -81,6 +81,15 @@ namespace O10.Client.Web.Portal.Controllers
             return Ok(accountDto);
         }
 
+        [HttpPost("BySecrets")]
+        public IActionResult FindAccountBySecrets([FromBody] DisclosedSecretsDto disclosedSecrets)
+        {
+            var accountDescriptor = _accountsService.GetBySecrets(disclosedSecrets.SecretSpendKey.HexStringToByteArray(), disclosedSecrets.SecretViewKey.HexStringToByteArray(), disclosedSecrets.Password);
+            var accountDto = _translatorsRepository.GetInstance<AccountDescriptor, AccountDto>().Translate(accountDescriptor);
+
+            return Ok(accountDto);
+        }
+
         [HttpPost("Authenticate")]
         public IActionResult Authenticate([FromBody] AuthenticationAccountDTO accountDto)
         {
@@ -269,10 +278,10 @@ namespace O10.Client.Web.Portal.Controllers
             return Ok(accountDto);
         }
 
-        [HttpPost("{sourceAccountId}/Duplicate")]
-        public IActionResult DuplicateUserAccount(long sourceAccountId, [FromBody] UserAccountReplicationRequestDto userAccountReplication)
+        [HttpPost("{sourceAccountId}/Duplicate/{targetAccountId}")]
+        public IActionResult DuplicateUserAccount(long sourceAccountId, long targetAccountId)
         {
-            var account = _accountsService.DuplicateAccount(sourceAccountId, userAccountReplication.AccountInfo);
+            var account = _accountsService.DuplicateAccount(sourceAccountId, targetAccountId);
 
             return account.Match<IActionResult>(
                 a => Ok(_translatorsRepository.GetInstance<AccountDescriptor, AccountDto>().Translate(a)), 
@@ -299,14 +308,14 @@ namespace O10.Client.Web.Portal.Controllers
             return Ok();
         }
 
-        [HttpPut("UserAccount")]
-        public IActionResult OverrideUserAccount(long accountId, [FromBody] AccountOverrideDto accountOverride)
+        [HttpPut("{accountId}")]
+        public IActionResult OverrideUserAccount(long accountId, [FromBody] DisclosedSecretsDto accountOverride)
         {
             _logger.LogIfDebug(() => $"[{accountId}]: {nameof(OverrideUserAccount)} with {JsonConvert.SerializeObject(accountOverride, new ByteArrayJsonConverter())}");
             _accountsService.Override(AccountTypeDTO.User, accountId, accountOverride.SecretSpendKey.HexStringToByteArray(), accountOverride.SecretViewKey.HexStringToByteArray(), accountOverride.Password, accountOverride.LastCombinedBlockHeight);
 
             _executionContextManager.UnregisterExecutionServices(accountId);
-            return Ok();
+            return Ok(_translatorsRepository.GetInstance<AccountDescriptor, AccountDto>().Translate(_accountsService.GetById(accountId)));
         }
 
         [HttpGet("ResetCompromisedAccount")]

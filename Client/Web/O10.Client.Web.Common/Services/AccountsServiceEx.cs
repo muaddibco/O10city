@@ -29,10 +29,17 @@ namespace O10.Client.Web.Common.Services
             return TranslateToAccountDescriptor(_dataAccessService.GetAccount(publicKey));
         }
 
-		public Option<AccountDescriptor> DuplicateAccount(long id, string accountInfo)
+        public AccountDescriptor? GetBySecrets(byte[] secretSpendKey, byte[] secretViewKey, string password)
+        {
+            GeneratePasswordKeys(AccountTypeDTO.User, password, secretSpendKey, secretViewKey, out var publicSpendKey, out var publicViewKey);
+            return TranslateToAccountDescriptor(_dataAccessService.FindUserAccountByKeys(publicSpendKey, publicViewKey));
+        }
+
+
+        public Option<AccountDescriptor> DuplicateAccount(long sourceAccountId, long targetAccountId)
 		{
-			var account = _dataAccessService.DuplicateUserAccount(id, accountInfo);
-            _dataAccessService.DuplicateAssociatedAttributes(id, account.AccountId);
+			var account = _dataAccessService.DuplicateUserAccount(sourceAccountId, targetAccountId);
+            _dataAccessService.DuplicateAssociatedAttributes(sourceAccountId, account.AccountId);
             return TranslateToAccountDescriptor(account);
 		}
     }

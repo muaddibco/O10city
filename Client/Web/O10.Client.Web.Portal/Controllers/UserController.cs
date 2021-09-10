@@ -1558,17 +1558,22 @@ namespace O10.Client.Web.Portal.Controllers
             return requiredValidations;
         }
 
-        [HttpGet("DiscloseSecrets")]
-        public ActionResult<string> DiscloseSecrets(long accountId, string password)
+        [HttpGet("{accountId}/Secrets")]
+        public ActionResult<UserActionCodeDto> DiscloseSecrets(long accountId, string password)
         {
-            AccountDescriptor account = _accountsService.GetById(accountId);
-
-            Client.Common.Entities.AccountDescriptor accountDescriptor = _accountsService.Authenticate(accountId, password);
+            AccountDescriptor accountDescriptor = _accountsService.Authenticate(accountId, password);
 
             if (accountDescriptor != null)
             {
-                string qr = $"dis://{accountDescriptor.SecretSpendKey.ToHexString()}:{accountDescriptor.SecretViewKey.ToHexString()}:{account.LastAggregatedRegistrations}";
-                return Ok(new { qr = qr.EncodeToString64() });
+                accountDescriptor = _accountsService.GetById(accountId); // this is in order to avoid summing hash of password with secret keys
+                DisclosedSecretsDto accountOverrideDto = new DisclosedSecretsDto()
+                {
+                    SecretSpendKey = accountDescriptor.SecretSpendKey.ToHexString(),
+                    SecretViewKey = accountDescriptor.SecretViewKey.ToHexString(),
+                    LastCombinedBlockHeight = accountDescriptor.LastAggregatedRegistrations
+                };
+                string qr = $"dis://{JsonConvert.SerializeObject(accountOverrideDto)}";
+                return Ok(new UserActionCodeDto { Code = qr.EncodeToString64() });
             }
 
             return BadRequest();

@@ -88,7 +88,7 @@ namespace O10.Client.Common.Services
             return accountDescriptor;
         }
 
-        protected AccountDescriptor TranslateToAccountDescriptor(Account account, byte[]? pwdHash = null)
+        protected AccountDescriptor TranslateToAccountDescriptor(Account? account, byte[]? pwdHash = null)
         {
             var accountDescriptor = _translatorsRepository.GetInstance<Account, AccountDescriptor>()?.Translate(account);
             if (accountDescriptor != null && pwdHash != null)
@@ -203,7 +203,7 @@ namespace O10.Client.Common.Services
             secretViewKey = (accountType == AccountTypeDTO.User) ? CryptoHelper.GetRandomSeed() : null;
         }
 
-        private void GeneratePasswordKeys(AccountTypeDTO accountType, string passphrase, byte[] secretSpendKey, byte[] secretViewKey, out byte[] publicSpendKey, out byte[] publicViewKey)
+        protected void GeneratePasswordKeys(AccountTypeDTO accountType, string passphrase, byte[] secretSpendKey, byte[] secretViewKey, out byte[] publicSpendKey, out byte[] publicViewKey)
         {
             byte[] pwdHash = _hashCalculation.CalculateHash(Encoding.UTF8.GetBytes(passphrase));
             byte[] secretSpendKeyPwd = CryptoHelper.SumScalars(secretSpendKey, pwdHash);
@@ -215,15 +215,7 @@ namespace O10.Client.Common.Services
 
         private void OverrideEncryptedAccount(AccountTypeDTO accountType, long accountId, string passphrase, byte[] secretSpendKey, byte[] secretViewKey, long lastRegistryCombinedBlockHeight)
         {
-            byte[] pwdHash = _hashCalculation.CalculateHash(Encoding.UTF8.GetBytes(passphrase));
-            byte[] secretSpendKeyPwd = CryptoHelper.SumScalars(secretSpendKey, pwdHash);
-            byte[] secretViewKeyPwd = (accountType == AccountTypeDTO.User) ? CryptoHelper.SumScalars(secretViewKey, pwdHash) : null;
-
-            byte[] publicSpendKey = (accountType == AccountTypeDTO.User) ? CryptoHelper.GetPublicKey(secretSpendKeyPwd) : CryptoHelper.GetPublicKey(Ed25519.SecretKeyFromSeed(secretSpendKeyPwd));
-            byte[] publicViewKey = (accountType == AccountTypeDTO.User) ? CryptoHelper.GetPublicKey(secretViewKeyPwd) : null;
-
-            //EncryptKeys(accountType, passphrase, secretSpendKey, secretViewKey, out byte[] secretSpendKeyEnc, out byte[] secretViewKeyEnc);
-
+            GeneratePasswordKeys(accountType, passphrase, secretSpendKey, secretViewKey, out var publicSpendKey, out var publicViewKey);
             _dataAccessService.OverrideUserAccount(accountId, secretSpendKey, secretViewKey, publicSpendKey, publicViewKey, lastRegistryCombinedBlockHeight);
         }
 

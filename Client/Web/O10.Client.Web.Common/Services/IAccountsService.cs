@@ -9,7 +9,8 @@ namespace O10.Client.Web.Common.Services
     public interface IAccountsServiceEx : IAccountsService
     {
         AccountDescriptor GetByPublicKey(byte[] publicKey);
+        AccountDescriptor? GetBySecrets(byte[] secretSpendKey, byte[] secretViewKey, string password);
 
-        Option<AccountDescriptor> DuplicateAccount(long id, string accountInfo);
+        Option<AccountDescriptor> DuplicateAccount(long sourceAccountId, long targetAccountId);
 	}
 }

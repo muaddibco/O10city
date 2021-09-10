@@ -1022,6 +1022,18 @@ namespace O10.Client.DataLayer.Services
             }
         }
 
+        public Account? FindUserAccountByKeys(byte[] publicSpendKey, byte[] publicViewKey)
+        {
+            lock (_sync)
+            {
+                return _dataContext.UserSettings.Include(s => s.Account)
+                    .Where(a => a.IsAutoTheftProtection && a.Account.AccountType == AccountType.User && !a.Account.IsCompromised)
+                    .Select(a => a.Account)
+                    .AsEnumerable()
+                    .FirstOrDefault(a => a.PublicSpendKey.Equals32(publicSpendKey) && a.PublicViewKey.Equals32(publicViewKey));
+            }
+        }
+
         public List<Account> GetAccountsByType(AccountType accountType)
         {
             lock (_sync)
@@ -1180,50 +1192,24 @@ namespace O10.Client.DataLayer.Services
             }
         }
 
-        public Account? DuplicateUserAccount(long accountId, string accountInfo)
+        public Account? DuplicateUserAccount(long sourceAccountId, long targetAccountId)
         {
             lock (_sync)
             {
-                Account accountSource = _dataContext.Accounts.FirstOrDefault(a => a.AccountType == AccountType.User && a.AccountId == accountId);
+                Account accountSource = _dataContext.Accounts.FirstOrDefault(a => a.AccountType == AccountType.User && a.AccountId == sourceAccountId);
+                Account accountTarget = _dataContext.Accounts.FirstOrDefault(a => a.AccountType == AccountType.User && a.AccountId == targetAccountId);
 
-                if (accountSource == null)
+                if (accountSource == null || accountTarget == null)
                 {
                     return null;
                 }
 
-                Account accountTarget = new Account
-                {
-                    AccountInfo = accountInfo,
-                    AccountType = AccountType.User,
-                    PublicSpendKey = accountSource.PublicSpendKey,
-                    PublicViewKey = accountSource.PublicViewKey,
-                    SecretSpendKey = accountSource.SecretSpendKey,
-                    SecretViewKey = accountSource.SecretViewKey,
-                    LastAggregatedRegistrations = accountSource.LastAggregatedRegistrations
-                };
-
-                _dataContext.Accounts.Add(accountTarget);
-
-                SynchronizationStatus synchronizationStatusSource = _dataContext.SynchronizationStatuses.FirstOrDefault(s => s.Account.AccountId == accountId);
-                if (synchronizationStatusSource != null)
-                {
-                    SynchronizationStatus synchronizationStatus = new SynchronizationStatus
-                    {
-                        Account = accountTarget,
-                        LastUpdatedCombinedBlockHeight = accountSource.LastAggregatedRegistrations
-                    };
-
-                    _dataContext.SynchronizationStatuses.Add(synchronizationStatus);
-                }
-
-                _dataContext.SaveChanges();
-
-                foreach (var rootAttr in _dataContext.UserRootAttributes.Where(a => a.AccountId == accountId && !a.IsOverriden && a.NextKeyImage != string.Empty).ToList())
+                foreach (var rootAttr in _dataContext.UserRootAttributes.Where(a => a.AccountId == sourceAccountId && !a.IsOverriden && a.NextKeyImage != string.Empty).ToList())
                 {
                     AddNonConfirmedRootAttribute(accountTarget.AccountId, rootAttr.Content, rootAttr.Source, rootAttr.SchemeName, rootAttr.AssetId);
                 }
 
-                foreach (var groupRelation in _dataContext.UserGroupRelations.Include(a => a.Account).Where(a => a.Account.AccountId == accountId).ToList())
+                foreach (var groupRelation in _dataContext.UserGroupRelations.Include(a => a.Account).Where(a => a.Account.AccountId == sourceAccountId).ToList())
                 {
                     UserGroupRelation userGroupRelation = new UserGroupRelation
                     {
@@ -1237,14 +1223,6 @@ namespace O10.Client.DataLayer.Services
 
                     _dataContext.UserGroupRelations.Add(userGroupRelation);
                 }
-
-                UserSettings userSettings = new UserSettings
-                {
-                    Account = accountTarget,
-                    IsAutoTheftProtection = false
-                };
-
-                _dataContext.UserSettings.Add(userSettings);
 
                 _dataContext.SaveChanges();
 

@@ -1,6 +1,6 @@
 ﻿namespace O10.Client.Web.DataContracts.User
 {
-    public class AccountOverrideDto
+    public class DisclosedSecretsDto
     {
         public string Password { get; set; }
         public string SecretSpendKey { get; set; }

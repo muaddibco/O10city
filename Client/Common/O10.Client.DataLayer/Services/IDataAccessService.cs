@@ -106,6 +106,7 @@ namespace O10.Client.DataLayer.Services
 
 		Account GetAccount(long accountId);
 		Account? FindAccountByAlias(string alias);
+		Account? FindUserAccountByKeys(byte[] publicSpendKey, byte[] publicViewKey);
 		Account GetAccount(byte[] publicKey);
 
 		List<Account> GetAccountsByType(AccountType accountType);
@@ -121,7 +122,7 @@ namespace O10.Client.DataLayer.Services
 		bool GetAccountId(byte[] publicSpendKey, byte[] publicViewKey, out long accountId);
 		void RemoveAccount(long accountId);
 
-		Account DuplicateUserAccount(long accountId, string accountInfo);
+		Account? DuplicateUserAccount(long sourceAccountId, long targetAccountId);
 
 		void OverrideUserAccount(long accountId, byte[] secretSpendKeyEnc, byte[] secretViewKeyEnc, byte[] publicSpendKey, byte[] publicViewKey, long lastAggregatedRegistrations);
 
