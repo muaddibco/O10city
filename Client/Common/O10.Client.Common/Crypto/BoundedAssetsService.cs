@@ -116,18 +116,26 @@ namespace O10.Client.Common.Crypto
         {
             await Task.Delay(50).ConfigureAwait(false);
 
+            if (_bindingKeySource == null)
+            {
+                _bindingKeySource = new TaskCompletionSource<byte[]>();
+            }
+
             if (replace)
             {
-                if (_bindingKeySource == null || _bindingKeySource.Task.IsCompleted)
+                if (_bindingKeySource.Task.IsCompleted)
                 {
                     _bindingKeySource = new TaskCompletionSource<byte[]>();
                 }
 
                 _bindingKeySource.SetResult(GetBindingKey(pwd));
             }
-            else if (!_bindingKeySource.Task.IsCompleted)
+            else
             {
-                _bindingKeySource.SetResult(GetBindingKey(pwd));
+                if (!_bindingKeySource.Task.IsCompleted)
+                {
+                    _bindingKeySource.SetResult(GetBindingKey(pwd));
+                }
             }
         }
 

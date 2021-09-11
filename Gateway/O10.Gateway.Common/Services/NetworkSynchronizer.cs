@@ -42,7 +42,6 @@ namespace O10.Gateway.Common.Services
 	public class NetworkSynchronizer : INetworkSynchronizer
 	{
 		private readonly ConcurrentDictionary<int, TaskCompletionSource<bool>> _connectityCheckerAwaiters;
-		private readonly ConcurrentDictionary<long, TaskCompletionSource<bool>> _aggregatedRegistrationsProcessingCompleted = new ConcurrentDictionary<long, TaskCompletionSource<bool>>();
 		private readonly IDataAccessService _dataAccessService;
         private readonly ILedgerSynchronizersRepository _ledgerSynchronizersRepository;
         private readonly ISynchronizerConfiguration _synchronizerConfiguration;
@@ -205,7 +204,7 @@ namespace O10.Gateway.Common.Services
 
             _logger.LogIfDebug(() => $"[Node -> GW]: {nameof(ProcessRtPackage)}, rtPackage: {JsonConvert.SerializeObject(rtPackage, new ByteArrayJsonConverter())}");
 
-			if ((_lastSyncDescriptor?.Height ?? 0) < rtPackage.AggregatedRegistrations.With<AggregatedRegistrationsTransaction>().SyncHeight)
+			if ((_lastSyncDescriptor?.Height ?? 0) < rtPackage.AggregatedRegistrations.Transaction<AggregatedRegistrationsTransaction>().SyncHeight)
 			{
 				try
 				{
@@ -230,18 +229,15 @@ namespace O10.Gateway.Common.Services
 
 					await Task.WhenAll(transactionStoreCompletionSources).ContinueWith((t, o) =>
 					{
-						var aggregatedRegistrationsCompletion = GetAggregatedTransactionsTaskCompletion((SynchronizationPacket)o);
-
 						if (t.IsCompletedSuccessfully)
 						{
-							aggregatedRegistrationsCompletion.SetResult(true);
-							_logger.Info($"Packets were stored successfully");
+							StoreRegistryCombinedBlock((SynchronizationPacket)o);
+							_logger.Info($"Processing of the aggregated registrations with the height {((SynchronizationPacket)o).Payload.Height} completed successfull");
 							ProduceAndSendWitnessPackage(((SynchronizationPacket)o).Payload.Height, t.Result);
 						}
 						else
 						{
-							_logger.Error($"Packets were not stored successfully", t.Exception);
-							aggregatedRegistrationsCompletion.SetException(t.Exception.InnerException);
+							_logger.Error($"Processing of the aggregated registrations with the height {((SynchronizationPacket)o).Payload.Height} completed with error", t.Exception.InnerException);
 						}
 					}, rtPackage.AggregatedRegistrations, TaskScheduler.Current).ConfigureAwait(false);
 				}
@@ -269,7 +265,8 @@ namespace O10.Gateway.Common.Services
 
 					if(!res)
                     {
-						throw new InvalidOperationException("Waiting for aggregated registrations storing timed out");
+						// TODO: this approach must be replaced with a mechanism making sure that GW is fully synchronized with the Node
+						//throw new InvalidOperationException("Waiting for aggregated registrations storing timed out");
                     }
 
                     Dictionary<long, List<WitnessPacket>> witnessPackets = _dataAccessService.GetWitnessPackets(combinedBlockHeightStart, combinedBlockHeightEnd);
@@ -297,29 +294,6 @@ namespace O10.Gateway.Common.Services
 				throw;
 			}
 		}
-
-        private TaskCompletionSource<bool> GetAggregatedTransactionsTaskCompletion(SynchronizationPacket aggregatedRegistrations)
-        {
-			var t = new TaskCompletionSource<bool>(aggregatedRegistrations);
-
-			t.Task.ContinueWith(t =>
-			{
-				var aggregatedRegistrations = (SynchronizationPacket)t.AsyncState;
-
-				StoreRegistryCombinedBlock(aggregatedRegistrations);
-
-				if (t.IsCompletedSuccessfully)
-				{
-					_logger.Info($"Processing of the aggregated registrations with the height {aggregatedRegistrations.Payload.Height} completed successfull");
-				}
-				else
-				{
-					_logger.Error($"Processing of the aggregated registrations with the height {aggregatedRegistrations.Payload.Height} completed with error", t.Exception.InnerException);
-				}
-			});
-			
-			return _aggregatedRegistrationsProcessingCompleted.GetOrAdd(aggregatedRegistrations.Payload.Height, t);
-        }
 
         public async Task<IEnumerable<TransactionBase>> GetTransactions(IEnumerable<long> witnessIds)
 		{
@@ -578,7 +552,7 @@ namespace O10.Gateway.Common.Services
                                               RegistryPacket fullRegistryTransactionsPacket,
                                               List<Task<WitnessPacket>> transactionStoreCompletionSources)
         {
-			var fullRegistryTransaction = fullRegistryTransactionsPacket.With<FullRegistryTransaction>();
+			var fullRegistryTransaction = fullRegistryTransactionsPacket.Transaction<FullRegistryTransaction>();
             _logger.Info($"[Node -> GW]: Obtained {fullRegistryTransaction.Witnesses.Length} witnesses...");
 
 			if (transactionStoreCompletionSources == null)
@@ -597,15 +571,15 @@ namespace O10.Gateway.Common.Services
                                 fullRegistryTransactionsPacket.Payload.SyncHeight,
                                 fullRegistryTransactionsPacket.Payload.Height,
                                 aggregatedTransactionsPacket.Payload.Height,
-                                witness.With<RegisterTransaction>().ReferencedLedgerType,
-                                witness.With<RegisterTransaction>().ReferencedAction,
-                                witness.With<RegisterTransaction>().Parameters.OptionalKey(EvidenceDescriptor.TRANSACTION_HASH, _identityKeyProvider),
-                                witness.With<RegisterTransaction>().Parameters.OptionalKey(EvidenceDescriptor.REFERENCED_TARGET, _identityKeyProvider),
-                                witness.With<RegisterTransaction>().Parameters.OptionalKey(EvidenceDescriptor.REFERENCED_TARGET2, _identityKeyProvider),
-                                witness.With<RegisterTransaction>().Parameters.OptionalKey(EvidenceDescriptor.REFERENCED_TRANSACTION_KEY, _identityKeyProvider),
-                                witness.With<RegisterTransaction>().Parameters.OptionalKey(EvidenceDescriptor.REFERENCED_KEY_IMAGE, _identityKeyProvider));
+                                witness.Transaction<RegisterTransaction>().ReferencedLedgerType,
+                                witness.Transaction<RegisterTransaction>().ReferencedAction,
+                                witness.Transaction<RegisterTransaction>().Parameters.OptionalKey(EvidenceDescriptor.TRANSACTION_HASH, _identityKeyProvider),
+                                witness.Transaction<RegisterTransaction>().Parameters.OptionalKey(EvidenceDescriptor.REFERENCED_TARGET, _identityKeyProvider),
+                                witness.Transaction<RegisterTransaction>().Parameters.OptionalKey(EvidenceDescriptor.REFERENCED_TARGET2, _identityKeyProvider),
+                                witness.Transaction<RegisterTransaction>().Parameters.OptionalKey(EvidenceDescriptor.REFERENCED_TRANSACTION_KEY, _identityKeyProvider),
+                                witness.Transaction<RegisterTransaction>().Parameters.OptionalKey(EvidenceDescriptor.REFERENCED_KEY_IMAGE, _identityKeyProvider));
 
-                        var transactionStoreCompletionSource = ObtainAndStoreTransaction(witness.With<RegisterTransaction>(), witnessStoreCompletionSource);
+                        var transactionStoreCompletionSource = ObtainAndStoreWitnessedTransaction(witness.Transaction<RegisterTransaction>(), witnessStoreCompletionSource);
 
                         transactionStoreCompletionSources.Add(transactionStoreCompletionSource.Task);
                     }
@@ -618,11 +592,11 @@ namespace O10.Gateway.Common.Services
             }        
         }
 
-		private TaskCompletionSource<WitnessPacket> ObtainAndStoreTransaction(RegisterTransaction registerTransaction, TaskCompletionSource<WitnessPacket> witnessStoreCompletionSource)
+		private TaskCompletionSource<WitnessPacket> ObtainAndStoreWitnessedTransaction(RegisterTransaction registerTransaction, TaskCompletionSource<WitnessPacket> onceWithnessIsStoredToDB)
 		{
 			TaskCompletionSource<WitnessPacket> transactionStoreCompletionSource = new TaskCompletionSource<WitnessPacket>();
 
-			witnessStoreCompletionSource.Task.ContinueWith(async (t, o) =>
+			onceWithnessIsStoredToDB.Task.ContinueWith(async (t, o) =>
 			{
 				WitnessPacket witnessPacket = t.Result;
 				(var r, var c) = ((RegisterTransaction, TaskCompletionSource<WitnessPacket>))o;

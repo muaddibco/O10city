@@ -90,7 +90,7 @@ namespace O10.Client.Common.Services
 
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
-            packetsProvider.Initialize(scopeInitializationParams.AccountId, cancellationTokenSource.Token);
+            await packetsProvider.Initialize(scopeInitializationParams.AccountId, cancellationTokenSource.Token);
             _clientCryptoService.Initialize(scopeInitializationParams.SecretSpendKey, scopeInitializationParams.SecretViewKey);
 
             TaskCompletionSource<byte[]> pwdSource = new TaskCompletionSource<byte[]>();

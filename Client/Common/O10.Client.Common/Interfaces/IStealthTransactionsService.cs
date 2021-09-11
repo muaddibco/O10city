@@ -8,6 +8,7 @@ using O10.Transactions.Core.DTOs;
 using System.Diagnostics.CodeAnalysis;
 using O10.Core.Identity;
 using O10.Client.DataLayer.Model;
+using LanguageExt;
 
 namespace O10.Client.Common.Interfaces
 {
@@ -27,6 +28,6 @@ namespace O10.Client.Common.Interfaces
 
         IKey NextKeyImage { get; }
 
-        UserTransactionSecret PopLastTransactionSecrets();
+        Option<UserTransactionSecret> PopLastTransactionSecrets();
     }
 }

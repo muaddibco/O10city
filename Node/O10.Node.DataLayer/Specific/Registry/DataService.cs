@@ -127,7 +127,7 @@ namespace O10.Node.DataLayer.Specific.Registry
                         { 
                             SyncBlockHeight = b.State.Entity.AsPacket<RegistryPacket>().Payload.SyncHeight, 
                             Round = b.State.Entity.AsPacket<RegistryPacket>().Payload.Height, 
-                            TransactionsCount = b.State.Entity.AsPacket<RegistryPacket>().With<FullRegistryTransaction>().Witnesses.Length, 
+                            TransactionsCount = b.State.Entity.AsPacket<RegistryPacket>().Transaction<FullRegistryTransaction>().Witnesses.Length, 
                             Content = b.State.Entity.ToJson(), 
                             Hash = b.State.Key.ToString(), 
                             HashString = b.State.Key.ToString()

@@ -43,60 +43,60 @@ namespace O10.Client.Common.Communication
             await StartHubConnection();
         }
 
-        protected override void InitializeInner()
+        protected override async Task InitializeInner()
         {
-            Task.Factory.StartNew<Task>(async () =>
-            {
-                await BuildHubConnection();
-                await ProcessObtainedPackages().ConfigureAwait(false);
-            }, _cancellationToken, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+            await BuildHubConnection();
+            await ProcessObtainedPackages().ConfigureAwait(false);
         }
 
         private async Task ProcessObtainedPackages()
         {
-            try
+            Task.Factory.StartNew(async () =>
             {
-                foreach (var w in _witnessPackages.GetConsumingEnumerable(_cancellationToken))
+                try
                 {
-                    await WitnessProcessingSemaphore.WaitAsync();
-                    _logger.Debug($"==============================================>");
-                    try
+                    foreach (var w in _witnessPackages.GetConsumingEnumerable(_cancellationToken))
                     {
-                        _logger.LogIfDebug(() => $"processing witness package with {nameof(w.CombinedBlockHeight)}={w.CombinedBlockHeight} while {nameof(_lastObtainedCombinedBlockHeight)}={_lastObtainedCombinedBlockHeight}");
-                        if (w.CombinedBlockHeight > _lastObtainedCombinedBlockHeight)
+                        await WitnessProcessingSemaphore.WaitAsync();
+                        _logger.Debug($"==============================================>");
+                        try
                         {
-                            if (w.CombinedBlockHeight - _lastObtainedCombinedBlockHeight > 1)
+                            _logger.LogIfDebug(() => $"processing witness package with {nameof(w.CombinedBlockHeight)}={w.CombinedBlockHeight} while {nameof(_lastObtainedCombinedBlockHeight)}={_lastObtainedCombinedBlockHeight}");
+                            if (w.CombinedBlockHeight > _lastObtainedCombinedBlockHeight)
                             {
-                                await ObtainWitnessesRange(_lastObtainedCombinedBlockHeight + 1, w.CombinedBlockHeight - 1).ConfigureAwait(false);
+                                if (w.CombinedBlockHeight - _lastObtainedCombinedBlockHeight > 1)
+                                {
+                                    await ObtainWitnessesRange(_lastObtainedCombinedBlockHeight + 1, w.CombinedBlockHeight - 1).ConfigureAwait(false);
+                                }
+
+                                await ProcessWitnessPackage(w).ConfigureAwait(false);
+                            }
+                            else
+                            {
+                                _logger.Warning($"Skip processing - height of RegistryCombinedBlock at obtained packet is {w.CombinedBlockHeight} while last one is {_lastObtainedCombinedBlockHeight}");
                             }
 
-                            await ProcessWitnessPackage(w).ConfigureAwait(false);
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            _logger.Warning($"Skip processing - height of RegistryCombinedBlock at obtained packet is {w.CombinedBlockHeight} while last one is {_lastObtainedCombinedBlockHeight}");
+                            _logger.Error($"failure during processing witness packages", ex);
                         }
-
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.Error($"failure during processing witness packages", ex);
-                    }
-                    finally
-                    {
-                        _logger.Debug($"<==============================================");
-                        WitnessProcessingSemaphore.Release();
+                        finally
+                        {
+                            _logger.Debug($"<==============================================");
+                            WitnessProcessingSemaphore.Release();
+                        }
                     }
                 }
-            }
-            catch (OperationCanceledException)
-            {
-                _logger.Info($"{nameof(SignalRWitnessPackagesProvider)} stopped");
-            }
-            catch (Exception ex)
-            {
-                _logger.Error($"{nameof(SignalRWitnessPackagesProvider)} failed", ex);
-            }
+                catch (OperationCanceledException)
+                {
+                    _logger.Info($"{nameof(SignalRWitnessPackagesProvider)} stopped");
+                }
+                catch (Exception ex)
+                {
+                    _logger.Error($"{nameof(SignalRWitnessPackagesProvider)} failed", ex);
+                }
+            }, _cancellationToken, TaskCreationOptions.LongRunning, TaskScheduler.Current).ConfigureAwait(false);
         }
 
         private async Task BuildHubConnection()
@@ -124,14 +124,23 @@ namespace O10.Client.Common.Communication
         {
             _logger.LogIfDebug(() => $"{nameof(ProcessWitnessPackage)} {JsonConvert.SerializeObject(w, new ByteArrayJsonConverter())}");
 
-            _lastObtainedCombinedBlockHeight = w.CombinedBlockHeight;
-            _logger.Info($"Local height of aggregated transactions adjusted to {w.CombinedBlockHeight}");
-            WitnessPackageWrapper wrapper = new WitnessPackageWrapper(w);
-            await Propagator.SendAsync(wrapper).ConfigureAwait(false);
-            
-            _logger.LogIfDebug(() => $"====> waiting for completion of processing witness package at {w.CombinedBlockHeight}...");
-            bool res = await wrapper.CompletionSource.Task.ConfigureAwait(false);
-            _logger.LogIfDebug(() => $"<==== processing witness package at {w.CombinedBlockHeight} completed");
+            if(_lastObtainedCombinedBlockHeight < w.CombinedBlockHeight)
+            {
+                _logger.Info($"Local height of aggregated transactions {_lastObtainedCombinedBlockHeight} adjusted to {w.CombinedBlockHeight}");
+                _lastObtainedCombinedBlockHeight = w.CombinedBlockHeight;
+
+                WitnessPackageWrapper wrapper = new WitnessPackageWrapper(w);
+                await Propagator.SendAsync(wrapper).ConfigureAwait(false);
+
+                _logger.LogIfDebug(() => $"====> waiting for completion of processing witness package at {w.CombinedBlockHeight}...");
+                bool res = await wrapper.CompletionSource.Task.ConfigureAwait(false);
+                _logger.LogIfDebug(() => $"<==== processing witness package at {w.CombinedBlockHeight} completed");
+            }
+            else
+            {
+                _logger.Info($"Local height of aggregated transactions {_lastObtainedCombinedBlockHeight} is greater than obtained from GW {w.CombinedBlockHeight}. No processing will happen...");
+            }
+
         }
 
         private async Task StartHubConnection()

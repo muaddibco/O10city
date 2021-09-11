@@ -81,7 +81,7 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
 					break;
 			}
 
-			StoreUtxoPacket(wp.WitnessPacketId, registryCombinedBlockHeight, transaction as O10StealthTransactionBase);
+			StoreTransaction(wp.WitnessPacketId, registryCombinedBlockHeight, transaction as O10StealthTransactionBase);
 		}
 
         private void ProcessCompromizedProofs(KeyImageCompromisedTransaction transaction)
@@ -89,7 +89,7 @@ namespace O10.Gateway.Common.Services.LedgerSynchronizers
 			_dataAccessService.AddCompromisedKeyImage(transaction.KeyImage);
         }
 
-        private void StoreUtxoPacket(long witnessId, long registryCombinedBlockHeight, O10StealthTransactionBase transaction)
+        private void StoreTransaction(long witnessId, long registryCombinedBlockHeight, O10StealthTransactionBase transaction)
 		{
             if (transaction is null)
             {

@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using O10.Client.DataLayer.Services;
 using O10.Core;
 using O10.Core.Architecture;
-
 using O10.Core.Logging;
 using O10.Core.Serialization;
 

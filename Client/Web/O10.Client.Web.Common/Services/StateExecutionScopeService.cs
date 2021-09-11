@@ -76,7 +76,7 @@ namespace O10.Client.Web.Common.Services
 
             CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
-            packetsProvider.Initialize(scopeInitializationParams.AccountId, cancellationTokenSource.Token);
+            await packetsProvider.Initialize(scopeInitializationParams.AccountId, cancellationTokenSource.Token);
             _clientCryptoService.Initialize(scopeInitializationParams.SecretKey);
             await _transactionsService.Initialize(scopeInitializationParams.AccountId).ConfigureAwait(false);
             var ledgerWriter = _ledgerWriterRepository.GetInstance(LedgerType.O10State);

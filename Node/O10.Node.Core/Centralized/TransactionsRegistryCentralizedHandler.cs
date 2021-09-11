@@ -92,7 +92,7 @@ namespace O10.Node.Core.Centralized
                                         _identityKeyProvider.GetKey(_defaultTransactionHashCalculation.CalculateHash(synchronizationConfirmedBlock.ToByteArray())),
                                         synchronizationConfirmedBlock.Payload.ReportedTime,
                                         DateTime.UtcNow,
-                                        synchronizationConfirmedBlock.With<SynchronizationConfirmedTransaction>().Round));
+                                        synchronizationConfirmedBlock.Transaction<SynchronizationConfirmedTransaction>().Round));
                 }
 
                 _logger.LogIfDebug(() => $"{nameof(Initialize)}, {nameof(_lastCombinedBlock)}: {JsonConvert.SerializeObject(_lastCombinedBlock, new ByteArrayJsonConverter())}");
@@ -130,7 +130,7 @@ namespace O10.Node.Core.Centralized
                                     _identityKeyProvider.GetKey(_defaultTransactionHashCalculation.CalculateHash(synchronizationConfirmedBlock.ToByteArray())), 
                                     synchronizationConfirmedBlock.Payload.ReportedTime, 
                                     DateTime.UtcNow, 
-                                    synchronizationConfirmedBlock.With<SynchronizationConfirmedTransaction>().Round));
+                                    synchronizationConfirmedBlock.Transaction<SynchronizationConfirmedTransaction>().Round));
 							_synchronizationChainDataService.Add(synchronizationConfirmedBlock);
 						}
 

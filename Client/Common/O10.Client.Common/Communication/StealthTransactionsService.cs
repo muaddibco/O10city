@@ -24,6 +24,7 @@ using O10.Client.Common.Communication.LedgerWriters;
 using O10.Client.DataLayer.Model;
 using O10.Client.DataLayer.Services;
 using O10.Core.ExtensionMethods;
+using LanguageExt;
 
 namespace O10.Client.Common.Communication
 {
@@ -190,11 +191,17 @@ namespace O10.Client.Common.Communication
             return requestResult;
         }
 
-        public UserTransactionSecret PopLastTransactionSecrets()
+        public Option<UserTransactionSecret> PopLastTransactionSecrets()
         {
-            var secrets = _dataAccessService.GetUserTransactionSecrets(_accountId, NextKeyImage.ToString());
-            _dataAccessService.RemoveUserTransactionSecret(_accountId, NextKeyImage.ToString());
-            return secrets;
+            if (NextKeyImage != null)
+            {
+                var keyImage = NextKeyImage.ToString();
+                var secrets = _dataAccessService.GetUserTransactionSecrets(_accountId, keyImage);
+                _dataAccessService.RemoveUserTransactionSecret(_accountId, keyImage);
+                return secrets;
+            }
+
+            return null;
         }
 
         #endregion Public Functions

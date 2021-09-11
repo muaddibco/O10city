@@ -13,7 +13,7 @@ namespace O10.Client.Common.Interfaces
 
         ISourceBlock<WitnessPackageWrapper> PipeOut { get; }
 
-        bool Initialize(long accountId, CancellationToken cancellationToken);
+        Task Initialize(long accountId, CancellationToken cancellationToken);
         Task Start();
         Task Restart();
     }

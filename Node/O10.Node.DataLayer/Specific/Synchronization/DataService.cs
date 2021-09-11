@@ -200,12 +200,12 @@ namespace O10.Node.DataLayer.Specific.Synchronization
 					if (source.TryReceiveAll(out IList<TaskCompletionWrapper<IPacketBase>> wrappers))
 					{
 						Logger.Debug($"Getting from buffer and storing bulk of {nameof(AggregatedRegistrationsTransaction)} with heights {string.Join(',', wrappers.Select(b => ((SynchronizationPacket)b.State).Payload.Height))}");
-                        Service.AddSynchronizationRegistryCombinedBlocks(wrappers.Select(b => new AggregatedRegistrationsTransactionDb { AggregatedRegistrationsTransactionId = ((SynchronizationPacket)b.State).Payload.Height, SyncBlockHeight = ((SynchronizationPacket)b.State).With<AggregatedRegistrationsTransaction>().SyncHeight, Content = ((SynchronizationPacket)b.State).ToJson(), FullBlockHashes = string.Join(",", ((SynchronizationPacket)b.State).With<AggregatedRegistrationsTransaction>().BlockHashes.Select(h => h.ToHexString())) }).ToArray());
+                        Service.AddSynchronizationRegistryCombinedBlocks(wrappers.Select(b => new AggregatedRegistrationsTransactionDb { AggregatedRegistrationsTransactionId = ((SynchronizationPacket)b.State).Payload.Height, SyncBlockHeight = ((SynchronizationPacket)b.State).Transaction<AggregatedRegistrationsTransaction>().SyncHeight, Content = ((SynchronizationPacket)b.State).ToJson(), FullBlockHashes = string.Join(",", ((SynchronizationPacket)b.State).Transaction<AggregatedRegistrationsTransaction>().BlockHashes.Select(h => h.ToHexString())) }).ToArray());
 					}
 					else
 					{
 						var wrapper = source.Receive(cancellationToken);
-						var transaction = ((SynchronizationPacket)wrapper.State).With<AggregatedRegistrationsTransaction>();
+						var transaction = ((SynchronizationPacket)wrapper.State).Transaction<AggregatedRegistrationsTransaction>();
 						Logger.Debug($"Getting from buffer and storing {nameof(AggregatedRegistrationsTransaction)} with height {wrapper.State.AsPacket<SynchronizationPacket>().Payload.Height}");
 						Service.AddSynchronizationRegistryCombinedBlock(wrapper.State.AsPacket<SynchronizationPacket>().Payload.Height, transaction.SyncHeight, wrapper.State.ToJson(), transaction.BlockHashes.Select(h => h.ToHexString()).ToArray());
 					}

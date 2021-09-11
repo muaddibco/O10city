@@ -90,22 +90,22 @@ namespace O10.Client.Web.Portal.Controllers
             return Ok(accountDto);
         }
 
-        [HttpPost("Authenticate")]
-        public IActionResult Authenticate([FromBody] AuthenticationAccountDTO accountDto)
+        [HttpPost("{accountId}/Authenticate")]
+        public IActionResult Authenticate(long accountId, [FromBody] AuthenticationAccountDTO accountDto)
         {
-            _logger.LogIfDebug(() => $"[{accountDto.AccountId}]: Started authentication of the account {JsonConvert.SerializeObject(accountDto)}");
+            _logger.LogIfDebug(() => $"[{accountId}]: Started authentication of the account {JsonConvert.SerializeObject(accountDto)}");
 
-            var accountDescriptor = _accountsService.Authenticate(accountDto.AccountId, accountDto.Password);
-
+            var accountDescriptor = _accountsService.Authenticate(accountId, accountDto.Password);
+            
             if (accountDescriptor == null)
             {
-                throw new AccountAuthenticationFailedException(accountDto.AccountId);
+                throw new AccountAuthenticationFailedException(accountId);
             }
 
             if (accountDescriptor.AccountType == AccountTypeDTO.User)
             {
                 _executionContextManager.InitializeUtxoExecutionServices(accountDescriptor.AccountId, accountDescriptor.SecretSpendKey, accountDescriptor.SecretViewKey, accountDescriptor.PwdHash);
-                var persistency = _executionContextManager.ResolveExecutionServices(accountDto.AccountId);
+                var persistency = _executionContextManager.ResolveExecutionServices(accountId);
                 var relationsBindingService = persistency.Scope.ServiceProvider.GetService<IBoundedAssetsService>();
                 relationsBindingService.Initialize(accountDto.Password, false);
             }
@@ -125,7 +125,7 @@ namespace O10.Client.Web.Portal.Controllers
                 PublicViewKey = accountDescriptor.PublicViewKey.ToHexString()
             };
 
-            _logger.LogIfDebug(() => $"[{accountDto.AccountId}]: Authenticated account {JsonConvert.SerializeObject(forLog)}");
+            _logger.LogIfDebug(() => $"[{accountId}]: Authenticated account {JsonConvert.SerializeObject(forLog)}");
 
             return Ok(_translatorsRepository.GetInstance<AccountDescriptor, AccountDto>().Translate(accountDescriptor));
         }

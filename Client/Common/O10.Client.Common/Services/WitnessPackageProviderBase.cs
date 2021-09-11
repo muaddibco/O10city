@@ -48,7 +48,7 @@ namespace O10.Client.Common.Services
 
         protected SemaphoreSlim WitnessProcessingSemaphore { get; } = new SemaphoreSlim(1);
 
-        public bool Initialize(long accountId, CancellationToken cancellationToken)
+        public async Task Initialize(long accountId, CancellationToken cancellationToken)
         {
             _accountId = accountId;
             _logger.SetContext(accountId.ToString());
@@ -79,15 +79,13 @@ namespace O10.Client.Common.Services
 
             try
             {
-                InitializeInner();
+                await InitializeInner();
             }
             catch (Exception ex)
             {
                 _logger.Error("InitializeInner failed", ex);
-                return false;
+                throw;
             }
-
-            return true;
         }
 
         protected async Task ObtainWitnessesRange(long start, long end)
@@ -114,19 +112,19 @@ namespace O10.Client.Common.Services
             {
                 try
                 {
-                    foreach (var item in witnessPackages)
+                    foreach (var witnessPackage in witnessPackages)
                     {
-                        _logger.LogIfDebug(() => $"{nameof(ObtainWitnessesRange)} - witnessPackage = {JsonConvert.SerializeObject(item, new ByteArrayJsonConverter())}");
-                        WitnessPackageWrapper wrapper = new WitnessPackageWrapper(item);
+                        _logger.LogIfDebug(() => $"{nameof(ObtainWitnessesRange)} - witnessPackage = {JsonConvert.SerializeObject(witnessPackage, new ByteArrayJsonConverter())}");
+                        WitnessPackageWrapper wrapper = new WitnessPackageWrapper(witnessPackage);
                         await Propagator.SendAsync(wrapper).ConfigureAwait(false);
 
-                        _logger.LogIfDebug(() => $"====> {nameof(ObtainWitnessesRange)} - waiting for completion of processing witness package at {item.CombinedBlockHeight}...");
+                        _logger.LogIfDebug(() => $"====> {nameof(ObtainWitnessesRange)} - waiting for completion of processing witness package at {witnessPackage.CombinedBlockHeight}...");
                         bool res = await wrapper.CompletionSource.Task.ConfigureAwait(false);
-                        _logger.LogIfDebug(() => $"<==== {nameof(ObtainWitnessesRange)} - processing witness package at {item.CombinedBlockHeight} completed");
+                        _logger.LogIfDebug(() => $"<==== {nameof(ObtainWitnessesRange)} - processing witness package at {witnessPackage.CombinedBlockHeight} completed");
                     }
 
+                    _logger.Info($"Local height of aggregated transactions {_lastObtainedCombinedBlockHeight} adjusted to {end}");
                     _lastObtainedCombinedBlockHeight = end;
-                    _logger.Info($"Local height of aggregated transactions adjusted to {end}");
                 }
                 catch (Exception ex)
                 {
@@ -178,7 +176,7 @@ namespace O10.Client.Common.Services
         public abstract Task Start();
         public abstract Task Restart();
 
-        protected abstract void InitializeInner();
+        protected abstract Task InitializeInner();
 
         protected abstract Task OnStop();
     }

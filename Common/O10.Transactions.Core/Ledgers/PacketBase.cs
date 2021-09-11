@@ -19,7 +19,7 @@ namespace O10.Transactions.Core.Ledgers
 
         public TPayload Payload { get; set; }
 
-        public T? With<T>() where T : TTransaction
+        public T? Transaction<T>() where T : TTransaction
         {
             return Payload.GetTransaction() as T;
         }

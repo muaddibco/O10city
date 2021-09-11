@@ -54,7 +54,7 @@ namespace O10.Node.Core.Centralized
 
         public void PostPackets(SynchronizationPacket aggregatedRegistrationsPacket, RegistryPacket registrationsPacket)
         {
-			var registryTransaction = registrationsPacket.With<FullRegistryTransaction>();
+			var registryTransaction = registrationsPacket.Transaction<FullRegistryTransaction>();
 
 			_logger.Debug($"Received combined and registryFullBlock with {registryTransaction.Witnesses.Length} Witnesses. Wait for transaction packets...");
 

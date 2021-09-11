@@ -99,7 +99,6 @@ namespace O10.Client.Common.Communication
         {
             if (transactionBase is UniversalStealthTransaction transaction)
             {
-                var transactionSecrets = _stealthTransactionsService.PopLastTransactionSecrets();
                 string oldKeyImage = transaction.KeyImage.ToString();
                 string keyImage = ((IStealthClientCryptoService)_clientCryptoService).GetKeyImage(transaction.TransactionPublicKey).ToHexString();
                 bool res = _dataAccessService.UpdateUserAttribute(_accountId, oldKeyImage, keyImage, transaction.AssetCommitment, transaction.TransactionPublicKey, transaction.DestinationKey);
@@ -109,14 +108,19 @@ namespace O10.Client.Common.Communication
                     _logger.Error("Failed to save last update");
                 }
 
-                NotifyObservers(new UserAttributeStateUpdate
-                {
-                    Issuer = transactionSecrets.Issuer.HexStringToByteArray(),
-                    AssetId = transactionSecrets.AssetId.HexStringToByteArray(),
-                    AssetCommitment = transaction.AssetCommitment,
-                    TransactionKey = transaction.TransactionPublicKey,
-                    DestinationKey = transaction.DestinationKey
-                });
+                _stealthTransactionsService
+                    .PopLastTransactionSecrets()
+                    .IfSome(s =>
+                    {
+                        NotifyObservers(new UserAttributeStateUpdate
+                        {
+                            Issuer = s.Issuer.HexStringToByteArray(),
+                            AssetId = s.AssetId.HexStringToByteArray(),
+                            AssetCommitment = transaction.AssetCommitment,
+                            TransactionKey = transaction.TransactionPublicKey,
+                            DestinationKey = transaction.DestinationKey
+                        });
+                    });
             }
         }
 
