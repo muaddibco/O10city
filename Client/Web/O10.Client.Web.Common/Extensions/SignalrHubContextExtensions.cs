@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using Newtonsoft.Json;
 using O10.Core.Logging;
+using O10.Core.Serialization;
 using System;
 using System.Threading.Tasks;
 
@@ -14,7 +16,7 @@ namespace O10.Client.Web.Common.Extensions
                 throw new ArgumentNullException(nameof(hubContext));
             }
 
-            logger?.LogIfDebug(() => $"SignalR sending to {target} method {method}...");
+            logger?.LogIfDebug(() => $"SignalR sending to {target} method {method}...\r\nPayload: { (payload != null ? JsonConvert.SerializeObject(payload, new ByteArrayJsonConverter(), new MemoryByteJsonConverter(), new KeyJsonConverter()) : "NULL")}");
 
             if (payload == null)
             {

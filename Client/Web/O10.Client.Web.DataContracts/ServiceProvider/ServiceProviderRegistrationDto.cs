@@ -6,6 +6,6 @@
 
         public string Commitment { get; set; }
 
-        public SpUserTransactionDto[] Transactions { get; set; }
+        public SpUserTransactionDto[]? Transactions { get; set; }
     }
 }

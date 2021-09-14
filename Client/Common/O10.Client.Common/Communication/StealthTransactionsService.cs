@@ -110,7 +110,11 @@ namespace O10.Client.Common.Communication
 
             NextKeyImage = packet.KeyImage;
 
-            var completionResult = PropagateTransaction(packet);
+            var completionResult = PropagateTransaction(
+                packet,
+                new StealthPropagationArgument(
+                    _identityKeyProvider.GetKey(requestInput.PrevDestinationKey),
+                    _identityKeyProvider.GetKey(requestInput.PrevTransactionKey)));
 
             RequestResult requestResult = new RequestResult
             {
@@ -129,7 +133,11 @@ namespace O10.Client.Common.Communication
 
             NextKeyImage = transaction.KeyImage;
 
-            var completionResult = PropagateTransaction(transaction);
+            var completionResult = PropagateTransaction(
+                transaction, 
+                new StealthPropagationArgument(
+                    _identityKeyProvider.GetKey(requestInput.PrevDestinationKey),
+                    _identityKeyProvider.GetKey(requestInput.PrevTransactionKey)));
 
             RequestResult requestResult = new RequestResult
             {

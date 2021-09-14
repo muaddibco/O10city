@@ -226,7 +226,7 @@ namespace O10.Client.Web.Portal.Controllers
             };
         }
 
-        [HttpPost("CompromisedProofs")]
+        [HttpPost("{accountId}/Compromised")]
         public async Task<IActionResult> SendCompromisedProofs(long accountId, [FromBody] UnauthorizedUseDto unauthorizedUse)
         {
             var userSettings = _dataAccessService.GetUserSettings(accountId);
@@ -787,26 +787,26 @@ namespace O10.Client.Web.Portal.Controllers
             return (issuer, requestInput);
         }
 
-        [HttpGet("UserDetails")]
+        [HttpGet("{accountId}/Details")]
         public IActionResult GetUserDetails(long accountId)
         {
             AccountDescriptor account = _accountsService.GetById(accountId);
 
             if (account != null)
             {
-                return Ok(new
+                return Ok(new UserAccountDetailsDto
                 {
-                    Id = accountId.ToString(CultureInfo.InvariantCulture),
-                    account.AccountInfo,
-                    PublicSpendKey = account.PublicSpendKey.ToHexString(),
-                    PublicViewKey = account.PublicViewKey.ToHexString(),
-                    account.IsCompromised,
+                    Id = accountId,
+                    AccountInfo = account.AccountInfo,
+                    PublicSpendKey = account.PublicSpendKey,
+                    PublicViewKey = account.PublicViewKey,
+                    IsCompromised = account.IsCompromised,
                     IsAutoTheftProtection = _dataAccessService.GetUserSettings(account.AccountId)?.IsAutoTheftProtection ?? false,
                     ConsentManagementHub = _restApiConfiguration.ConsentManagementUri.AppendPathSegment("consentHub").ToString()
                 });
             }
 
-            return BadRequest();
+            return NotFound();
         }
 
         [HttpDelete("DeleteNonConfirmedRootAttribute")]

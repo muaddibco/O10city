@@ -35,6 +35,7 @@
     <PackageReference Include="Microsoft.AspNetCore.JsonPatch" Version="3.1.16" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="3.1.16" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="3.1.16" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.NewtonsoftJson" Version="3.1.16" />
     <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="3.1.16" />
     <PackageReference Include="Microsoft.AspNetCore.ApiAuthorization.IdentityServer" Version="3.1.16" />
     <PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="3.1.16" />

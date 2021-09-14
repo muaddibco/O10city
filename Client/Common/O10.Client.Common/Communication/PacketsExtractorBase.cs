@@ -10,6 +10,7 @@ using O10.Core.Logging;
 using O10.Core.Models;
 using O10.Core.Serialization;
 using O10.Crypto.Models;
+using System.Threading;
 
 namespace O10.Client.Common.Communication
 {
@@ -21,6 +22,7 @@ namespace O10.Client.Common.Communication
         private readonly IPropagatorBlock<TaskCompletionWrapper<TransactionBase>, TaskCompletionWrapper<TransactionBase>> _propagator;
         private readonly IPropagatorBlock<WitnessPackage, WitnessPackage> _propagatorProcessed;
         private readonly ITargetBlock<WitnessPackageWrapper> _pipeIn;
+        private readonly SemaphoreSlim _witnessProcessingSemaphore = new SemaphoreSlim(1);
         protected readonly IClientCryptoService _clientCryptoService;
 
         public PacketsExtractorBase(
@@ -38,6 +40,8 @@ namespace O10.Client.Common.Communication
 
             _pipeIn = new ActionBlock<WitnessPackageWrapper>(async wrapper =>
             {
+                await _witnessProcessingSemaphore.WaitAsync();
+
                 WitnessPackage witnessPackage = wrapper.WitnessPackage;
 
                 _logger.Debug($"[{AccountId}]: ****************>");
@@ -124,6 +128,10 @@ namespace O10.Client.Common.Communication
                 {
                     _logger.Error($"[{AccountId}]: Failure during packet extraction", ex);
                     wrapper.CompletionSource.TrySetException(ex);
+                }
+                finally
+                {
+                    _witnessProcessingSemaphore.Release();
                 }
             });
         }

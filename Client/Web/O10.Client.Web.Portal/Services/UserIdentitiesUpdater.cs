@@ -21,6 +21,7 @@ using O10.Core.Notifications;
 using O10.Crypto.Models;
 using O10.Transactions.Core.Ledgers.O10State.Transactions;
 using O10.Client.Web.DataContracts;
+using O10.Client.Web.Common.Extensions;
 
 namespace O10.Client.Web.Portal.Services
 {
@@ -56,7 +57,7 @@ namespace O10.Client.Web.Portal.Services
                 {
                     if (p is TransferAssetToStealthTransaction transaction)
                     {
-                        _logger.LogIfDebug(() => $"[{_accountId}]: Processing {nameof(TransferAssetToStealthTransaction)}");
+                        _logger.LogIfDebug(() => $"Processing {nameof(TransferAssetToStealthTransaction)}");
                         UserRootAttribute userRootAttribute = _dataAccessService.GetRootAttributeByOriginalCommitment(_accountId, transaction.TransferredAsset.AssetCommitment);
                         if (userRootAttribute != null)
                         {
@@ -83,7 +84,7 @@ namespace O10.Client.Web.Portal.Services
                         }
                         else
                         {
-                            _logger.Error($"[{_accountId}]: No Root Attribute found by commitment {transaction.TransferredAsset.AssetCommitment}");
+                            _logger.Error($"No Root Attribute found by commitment {transaction.TransferredAsset.AssetCommitment}");
                         }
                     }
                 }
@@ -93,18 +94,17 @@ namespace O10.Client.Web.Portal.Services
                 }
             });
 
-            PipeInNotifications = new ActionBlock<NotificationBase>(n =>
+            PipeInNotifications = new ActionBlock<NotificationBase>(async n =>
             {
                 try
                 {
-                    _logger.LogIfDebug(() => $"[{_accountId}]: notification {n.GetType().Name} {JsonConvert.SerializeObject(n, new ByteArrayJsonConverter())}");
+                    _logger.LogIfDebug(() => $"notification {n.GetType().Name} {JsonConvert.SerializeObject(n, new ByteArrayJsonConverter(), new MemoryByteJsonConverter(), new KeyJsonConverter())}");
 
-                    ProcessEligibilityCommitmentsDisabled(n);
+                    await ProcessEligibilityCommitmentsDisabled(n);
 
-                    NotifyUserAttributeLastUpdate(n);
+                    await NotifyUserAttributeLastUpdate(n);
 
-                    NotifyCompromisedKeyImage(n);
-
+                    await NotifyCompromisedKeyImage(n);
                 }
                 catch (Exception ex)
                 {
@@ -115,7 +115,7 @@ namespace O10.Client.Web.Portal.Services
 
         private async Task RecoverRegistrations(TransferAssetToStealthTransaction transaction, byte[] assetId)
         {
-            _logger.Debug($"[{_accountId}]: {nameof(RecoverRegistrations)}");
+            _logger.Debug($"{nameof(RecoverRegistrations)}");
             IEnumerable<RegistrationKeyDescriptionStore> userRegistrations = await _schemeResolverService.GetRegistrationCommitments(transaction.Source.ToString(), assetId.ToHexString()).ConfigureAwait(false);
             if(userRegistrations == null)
             {
@@ -144,7 +144,7 @@ namespace O10.Client.Web.Portal.Services
 
         private async Task RecoverRelations(TransferAssetToStealthTransaction transaction, byte[] assetId)
         {
-            _logger.Debug($"[{_accountId}]: {nameof(RecoverRelations)}");
+            _logger.Debug($"{nameof(RecoverRelations)}");
             IEnumerable<RegistrationKeyDescriptionStore> groupRelations = await _schemeResolverService.GetGroupRelations(transaction.Source.ToString(), assetId.ToHexString()).ConfigureAwait(false);
             if(groupRelations == null)
             {
@@ -176,7 +176,7 @@ namespace O10.Client.Web.Portal.Services
         public ITargetBlock<TransactionBase> PipeIn { get; set; }
         public ITargetBlock<NotificationBase> PipeInNotifications { get; }
 
-        private void ProcessEligibilityCommitmentsDisabled(NotificationBase value)
+        private async Task ProcessEligibilityCommitmentsDisabled(NotificationBase value)
         {
             if (value is EligibilityCommitmentsDisabled eligibilityCommitmentsDisabled)
             {
@@ -185,34 +185,31 @@ namespace O10.Client.Web.Portal.Services
 
                 foreach (UserRootAttribute userAttribute in userRootAttributes)
                 {
-                    NotifyAttributeUpdate(userAttribute);
+                    await NotifyAttributeUpdate(userAttribute);
                 }
             }
         }
 
-        private void NotifyCompromisedKeyImage(NotificationBase value)
+        private async Task NotifyCompromisedKeyImage(NotificationBase value)
         {
             if (value is CompromisedKeyImage compromisedKeyImage)
             {
                 _dataAccessService.SetAccountCompromised(_accountId);
-                _idenitiesHubContext.Clients
-                    .Group(_accountId.ToString(CultureInfo.InvariantCulture))
-                    .SendAsync("PushUnauthorizedUse",
-                    new UnauthorizedUseDto
-                    {
-                        KeyImage = compromisedKeyImage.KeyImage,
-                        TransactionKey = compromisedKeyImage.TransactionKey,
-                        DestinationKey = compromisedKeyImage.DestinationKey,
-                        Target = compromisedKeyImage.Target
-                    });
+                await _idenitiesHubContext.SendMessageAsync(_logger, _accountId.ToString(), "PushUnauthorizedUse", new UnauthorizedUseDto
+                {
+                    KeyImage = compromisedKeyImage.KeyImage,
+                    TransactionKey = compromisedKeyImage.TransactionKey,
+                    DestinationKey = compromisedKeyImage.DestinationKey,
+                    Target = compromisedKeyImage.Target
+                });
             }
         }
 
-        private void NotifyUserAttributeLastUpdate(NotificationBase value)
+        private async Task NotifyUserAttributeLastUpdate(NotificationBase value)
         {
             if (value is UserAttributeStateUpdate userAttributeStateUpdate)
             {
-                _idenitiesHubContext.Clients.Group(_accountId.ToString(CultureInfo.InvariantCulture)).SendAsync("PushUserAttributeLastUpdate",
+                await _idenitiesHubContext.Clients.Group(_accountId.ToString()).SendAsync("PushUserAttributeLastUpdate",
                     new UserAttributeLastUpdateDto
                     {
                         Issuer = userAttributeStateUpdate.Issuer.ToHexString(),
@@ -224,7 +221,7 @@ namespace O10.Client.Web.Portal.Services
             }
         }
 
-        private void NotifyAttributeUpdate(UserRootAttribute userAttribute)
+        private async Task NotifyAttributeUpdate(UserRootAttribute userAttribute)
         {
             UserAttributeDto userAttributeDto = new UserAttributeDto
             {
@@ -234,12 +231,13 @@ namespace O10.Client.Web.Portal.Services
                 State = AttributeState.Disabled
             };
 
-            _idenitiesHubContext.Clients.Group(_accountId.ToString(CultureInfo.InvariantCulture)).SendAsync("PushUserAttributeUpdate", userAttributeDto);
+            await _idenitiesHubContext.Clients.Group(_accountId.ToString()).SendAsync("PushUserAttributeUpdate", userAttributeDto);
         }
 
         public void Initialize(long accountId, CancellationToken cancellationToken)
         {
             _accountId = accountId;
+            _logger.SetContext(_accountId.ToString());
             _cancellationToken = cancellationToken;
 
             _cancellationToken.Register(() =>

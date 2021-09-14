@@ -107,7 +107,22 @@ namespace O10.Client.Web.Portal
             //    configuration.RootPath = "ClientApp/dist";
             //});
 
-            services.AddSignalR();
+            services.AddSignalR()
+                .AddNewtonsoftJsonProtocol(o => 
+                {
+                    var jsonSettings = new JsonSerializerSettings
+                    {
+                        TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
+                        NullValueHandling = NullValueHandling.Ignore,
+                        ContractResolver = new CamelCasePropertyNamesContractResolver()
+                    };
+
+                    jsonSettings.Converters.Add(new StringEnumConverter());
+                    jsonSettings.Converters.Add(new KeyJsonConverter());
+                    jsonSettings.Converters.Add(new ByteArrayJsonConverter());
+
+                    o.PayloadSerializerSettings = jsonSettings;
+                });
             //services.TryAddTransient<IClaimsService, ClaimsService>();
 
             services.AddBootstrapper<WebApiBootstrapper>(_logger);
