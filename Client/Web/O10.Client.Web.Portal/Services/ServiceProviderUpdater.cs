@@ -33,6 +33,7 @@ using O10.Transactions.Core.Ledgers.Stealth.Transactions;
 using O10.Client.DataLayer.Model.ServiceProviders;
 using O10.Transactions.Core.Ledgers.O10State.Transactions;
 using O10.Client.Web.Common.Extensions;
+using System.Collections.Concurrent;
 
 namespace O10.Client.Web.Portal.Services
 {
@@ -54,7 +55,7 @@ namespace O10.Client.Web.Portal.Services
         private readonly IUniversalProofsPool _universalProofsPool;
         private readonly IElectionCommitteeService _electionCommitteeService;
         private readonly IIdentityKeyProvider _identityKeyProvider;
-        private readonly Dictionary<IKey, string> _keyImageToSessonKeyMap = new Dictionary<IKey, string>(new KeyEqualityComparer());
+        private readonly ConcurrentDictionary<IKey, string> _keyImageToSessonKeyMap = new ConcurrentDictionary<IKey, string>(new KeyEqualityComparer());
 
         public ServiceProviderUpdater(
                                 IStateClientCryptoService clientCryptoService,
@@ -535,25 +536,22 @@ namespace O10.Client.Web.Portal.Services
                 return;
             }
 
-            if (_keyImageToSessonKeyMap.ContainsKey(compromisedKeyImage))
+            if (_keyImageToSessonKeyMap.TryGetValue(compromisedKeyImage, out var sessionKey))
             {
-                string sessionKey = _keyImageToSessonKeyMap[compromisedKeyImage];
                 _logger.Debug($"Compromised session found: {sessionKey}");
                 await _idenitiesHubContext.SendMessageAsync(_logger, sessionKey, "PushAuthorizationCompromised").ConfigureAwait(false);
             }
             else
             {
-                _logger.Error($"Compromised session not found");
+                _logger.Error($"Compromised session by KeyImage {compromisedKeyImage} not found");
             }
         }
 
         private async Task ProceedCorrectAuthentication(IKey keyImage, string sessionKey, long registrationId)
         {
             _logger.LogIfDebug(() => $"{nameof(ProceedCorrectAuthentication)}, storing {nameof(sessionKey)} {sessionKey} with {nameof(keyImage)} {keyImage}");
-            if (!_keyImageToSessonKeyMap.ContainsKey(keyImage))
-            {
-                _keyImageToSessonKeyMap.Add(keyImage, sessionKey);
-            }
+            _keyImageToSessonKeyMap.AddOrUpdate(keyImage, sessionKey, (k, v) => sessionKey);
+            _logger.LogIfDebug(() => $"KeyImageToSessonKeyMap added KeyImage {keyImage} and sessionKey {sessionKey}");
 
             await _idenitiesHubContext.SendMessageAsync(_logger, sessionKey, "PushSpAuthorizationSucceeded", new { RegistrationId = registrationId }).ConfigureAwait(false);
         }

@@ -118,6 +118,7 @@ namespace O10.Client.Web.Portal
                     };
 
                     jsonSettings.Converters.Add(new StringEnumConverter());
+                    jsonSettings.Converters.Add(new MemoryByteJsonConverter());
                     jsonSettings.Converters.Add(new KeyJsonConverter());
                     jsonSettings.Converters.Add(new ByteArrayJsonConverter());
 
@@ -133,7 +134,7 @@ namespace O10.Client.Web.Portal
                 var jsonSettings = new JsonSerializerSettings 
                 { 
                     TypeNameHandling = TypeNameHandling.All,
-                    //ContractResolver = _suppressItemTypeNameContractResolver,
+                    //ContractResolver = new CamelCasePropertyNamesContractResolver(),
                     TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
                     NullValueHandling = NullValueHandling.Ignore,
                     Formatting = Formatting.Indented,

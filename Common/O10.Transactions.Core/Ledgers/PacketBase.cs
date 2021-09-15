@@ -24,6 +24,11 @@ namespace O10.Transactions.Core.Ledgers
             return Payload.GetTransaction() as T;
         }
 
+        public bool IsTransaction<T>() where T : TTransaction
+        {
+            return (Payload.GetTransaction() as T) != null;
+        }
+
         public T? AsPacket<T>() where T : class, IPacketBase
         {
             return this as T;

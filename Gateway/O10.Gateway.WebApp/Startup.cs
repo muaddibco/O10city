@@ -55,7 +55,24 @@ namespace O10.Gateway.WebApp
 
             services.AddCors();
 
-            services.AddSignalR();
+            services.AddSignalR()
+                .AddNewtonsoftJsonProtocol(o =>
+                {
+                    var jsonSettings = new JsonSerializerSettings
+                    {
+                        TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
+                        NullValueHandling = NullValueHandling.Ignore,
+                        ContractResolver = new CamelCasePropertyNamesContractResolver()
+                    };
+
+                    jsonSettings.Converters.Add(new StringEnumConverter());
+                    jsonSettings.Converters.Add(new MemoryByteJsonConverter());
+                    jsonSettings.Converters.Add(new KeyJsonConverter());
+                    jsonSettings.Converters.Add(new ByteArrayJsonConverter());
+
+                    o.PayloadSerializerSettings = jsonSettings;
+                });
+
             services.AddBootstrapper<GatewayCommonBootstrapper>(_logger);
             services.Replace(new ServiceDescriptor(typeof(IAppConfig), _ => new JsonAppConfig(Configuration), ServiceLifetime.Singleton));
 

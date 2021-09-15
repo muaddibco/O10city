@@ -234,7 +234,7 @@ namespace O10.Client.Web.Portal.Controllers
 
             if (userSettings?.IsAutoTheftProtection == false)
             {
-                _logger.Info("Sending compromised proofs abandoned");
+                _logger.Info($"[{accountId}]: Sending compromised proofs abandoned");
                 return Ok();
             }
 
@@ -247,7 +247,7 @@ namespace O10.Client.Web.Portal.Controllers
             byte[] transactionKeyCompromized = unauthorizedUse.TransactionKey.ToByteArray();
             byte[] destinationKeyCompromized = unauthorizedUse.DestinationKey.ToByteArray();
 
-            rootAttribute = GetRootAttributeOnTransactionKeyArriving(accountId, transactionKeyCompromized);
+            rootAttribute = GetRootAttributeOnTransactionKeyArriving(accountId, destinationKeyCompromized);
 
             if (rootAttribute == null)
             {
@@ -262,7 +262,7 @@ namespace O10.Client.Web.Portal.Controllers
             byte[][] issuanceCommitments = await _gatewayService.GetIssuanceCommitments(issuer, _restApiConfiguration.RingSize + 1).ConfigureAwait(false);
             RequestResult requestResult = transactionsService.SendCompromisedProofs(requestInput, keyImageCompromized, transactionKeyCompromized, destinationKeyCompromized, outputModels, issuanceCommitments).Result;
 
-            rootAttribute = GetRootAttributeOnTransactionKeyArriving(accountId, requestResult.NewTransactionKey);
+            rootAttribute = GetRootAttributeOnTransactionKeyArriving(accountId, requestResult.NewDestinationKey);
 
             IEnumerable<UserRootAttribute> userRootAttributes = _dataAccessService.GetUserAttributes(accountId).Where(u => !u.IsOverriden);
 
@@ -299,14 +299,14 @@ namespace O10.Client.Web.Portal.Controllers
             };
         }
 
-        private UserRootAttribute GetRootAttributeOnTransactionKeyArriving(long accountId, Memory<byte> transactionKey)
+        private UserRootAttribute GetRootAttributeOnTransactionKeyArriving(long accountId, Memory<byte> destinationKey)
         {
             UserRootAttribute rootAttribute;
             int counter = 0;
             do
             {
                 IEnumerable<UserRootAttribute> userAttributes = _dataAccessService.GetUserAttributes(accountId).Where(u => !u.IsOverriden && !u.LastCommitment.Equals32(new byte[32]));
-                rootAttribute = userAttributes.FirstOrDefault(a => transactionKey.Equals32(a.LastTransactionKey));
+                rootAttribute = userAttributes.FirstOrDefault(a => destinationKey.Equals32(a.LastDestinationKey));
 
                 if (rootAttribute == null)
                 {

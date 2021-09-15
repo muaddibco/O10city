@@ -137,7 +137,7 @@ namespace O10.Client.Common.Communication
                 transaction, 
                 new StealthPropagationArgument(
                     _identityKeyProvider.GetKey(requestInput.PrevDestinationKey),
-                    _identityKeyProvider.GetKey(requestInput.PrevTransactionKey)));
+                    _identityKeyProvider.GetKey(compromisedTransactionKey)));
 
             RequestResult requestResult = new RequestResult
             {

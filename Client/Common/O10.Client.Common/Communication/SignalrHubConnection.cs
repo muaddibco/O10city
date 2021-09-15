@@ -3,6 +3,11 @@ using O10.Core.Logging;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using Newtonsoft.Json.Converters;
+using O10.Core.Serialization;
 
 namespace O10.Client.Common.Communication
 {
@@ -50,6 +55,22 @@ namespace O10.Client.Common.Communication
 
             _hubConnection = new HubConnectionBuilder()
                 .WithUrl(_uri)
+                .AddNewtonsoftJsonProtocol(o =>
+                {
+                    var jsonSettings = new JsonSerializerSettings
+                    {
+                        TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
+                        NullValueHandling = NullValueHandling.Ignore,
+                        ContractResolver = new CamelCasePropertyNamesContractResolver()
+                    };
+
+                    jsonSettings.Converters.Add(new StringEnumConverter());
+                    jsonSettings.Converters.Add(new MemoryByteJsonConverter());
+                    jsonSettings.Converters.Add(new KeyJsonConverter());
+                    jsonSettings.Converters.Add(new ByteArrayJsonConverter());
+
+                    o.PayloadSerializerSettings = jsonSettings;
+                })
                 .WithAutomaticReconnect()
                 .Build();
 

@@ -8,6 +8,7 @@ using O10.Core.Models;
 using O10.Core.Architecture;
 using O10.Client.Common.Communication.Notifications;
 using O10.Core.Notifications;
+using O10.Core.Identity;
 
 namespace O10.Client.Common.Communication
 {
@@ -17,12 +18,14 @@ namespace O10.Client.Common.Communication
         private readonly IDataAccessService _dataAccessService;
         private readonly IStealthTransactionsService _stealthTransactionsService;
         private readonly IPropagatorBlock<NotificationBase, NotificationBase> _propagatorBlockNotifications;
+        private readonly IIdentityKeyProvider _identityKeyProvider;
         private bool _isProtected;
 
         public StealthWalletPacketsExtractor(
             IDataAccessService dataAccessService,
             IStealthClientCryptoService clientCryptoService,
             IStealthTransactionsService stealthTransactionsService,
+            IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
             IGatewayService syncStateProvider,
             ILoggerService loggerService)
             : base(syncStateProvider, clientCryptoService, dataAccessService, loggerService)
@@ -30,6 +33,7 @@ namespace O10.Client.Common.Communication
             _dataAccessService = dataAccessService;
             _stealthTransactionsService = stealthTransactionsService;
             _propagatorBlockNotifications = new TransformBlock<NotificationBase, NotificationBase>(p => p);
+            _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
         }
 
         public override string Name => "StealthWallet";
@@ -64,7 +68,7 @@ namespace O10.Client.Common.Communication
                     if (!(_stealthTransactionsService.NextKeyImage?.Equals(nextKeyImage) ?? false) && (packetWitness.KeyImage?.Equals(nextKeyImage) ?? false))
                     {
                         _logger.LogIfDebug(() => $"[{AccountId}]: KeyImage {nextKeyImage?.ToHexString() ?? "NULL"} is compromised");
-                        _propagatorBlockNotifications.SendAsync(new CompromisedKeyImage { KeyImage = packetWitness.KeyImage, TransactionKey = packetWitness.TransactionKey, DestinationKey = packetWitness.DestinationKey, Target = packetWitness.DestinationKey2 });
+                        _propagatorBlockNotifications.SendAsync(new CompromisedKeyImage { KeyImage = packetWitness.KeyImage, TransactionKey = _identityKeyProvider.GetKey(item.LastTransactionKey), DestinationKey = packetWitness.DestinationKey, Target = packetWitness.DestinationKey2 });
                         break;
                     }
                 }

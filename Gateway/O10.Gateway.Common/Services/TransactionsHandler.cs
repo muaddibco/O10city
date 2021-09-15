@@ -22,6 +22,7 @@ using System.Threading.Tasks.Dataflow;
 using O10.Transactions.Core.Ledgers;
 using O10.Transactions.Core.Exceptions;
 using FizzWare.NBuilder;
+using O10.Transactions.Core.Ledgers.Stealth.Transactions;
 
 namespace O10.Gateway.Common.Services
 {
@@ -95,7 +96,6 @@ namespace O10.Gateway.Common.Services
         private bool ValidatePacket(IPacketBase packet)
         {
             bool res = true;
-            string existingHash = null;
 
             if(packet == null)
             {
@@ -109,19 +109,21 @@ namespace O10.Gateway.Common.Services
             }
             else if (packet is StealthPacket stealth)
             {
-                var keyImage = stealth.Payload.Transaction.KeyImage.ToString();
-
-                _logger.LogIfDebug(() => $"Sending to Node {_synchronizerConfiguration.NodeApiUri} request for finding hash by a key image {keyImage}");
-                var packetHashResponse = AsyncUtil.RunSync(async () => await _synchronizerConfiguration.NodeApiUri.AppendPathSegments("HashByKeyImage", keyImage).GetJsonAsync<PacketHashResponse>().ConfigureAwait(false));
-
-
-                if (!string.IsNullOrEmpty(packetHashResponse.Hash))
+                if (!stealth.IsTransaction<KeyImageCompromisedTransaction>() && !stealth.IsTransaction<RevokeIdentityTransaction>())
                 {
-                    _logger.Error($"It was found that key image {keyImage} already was witnessed for the packet with hash {packetHashResponse.Hash}");
-                    res = false;
-                    existingHash = packetHashResponse.Hash;
-                    _completions[packet].SetResult(new KeyImageViolatedNotification { ExistingHash = existingHash });
-                    _completions.Remove(packet);
+                    var keyImage = stealth.Payload.Transaction.KeyImage.ToString();
+
+                    _logger.LogIfDebug(() => $"Sending to Node {_synchronizerConfiguration.NodeApiUri} request for finding hash by a key image {keyImage}");
+                    var packetHashResponse = AsyncUtil.RunSync(async () => await _synchronizerConfiguration.NodeApiUri.AppendPathSegments("HashByKeyImage", keyImage).GetJsonAsync<PacketHashResponse>().ConfigureAwait(false));
+
+
+                    if (!string.IsNullOrEmpty(packetHashResponse.Hash))
+                    {
+                        _logger.Error($"It was found that key image {keyImage} already was witnessed for the packet with hash {packetHashResponse.Hash}");
+                        res = false;
+                        _completions[packet].SetResult(new KeyImageViolatedNotification { ExistingHash = packetHashResponse.Hash });
+                        _completions.Remove(packet);
+                    }
                 }
             }
             else if(packet.LedgerType != LedgerType.O10State)
