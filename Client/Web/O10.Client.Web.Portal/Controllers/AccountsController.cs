@@ -91,7 +91,7 @@ namespace O10.Client.Web.Portal.Controllers
         }
 
         [HttpPost("{accountId}/Authenticate")]
-        public IActionResult Authenticate(long accountId, [FromBody] AuthenticationAccountDTO accountDto)
+        public IActionResult Authenticate(long accountId, [FromBody] AuthenticateAccountDTO accountDto)
         {
             _logger.LogIfDebug(() => $"[{accountId}]: Started authentication of the account {JsonConvert.SerializeObject(accountDto)}");
 
@@ -318,17 +318,22 @@ namespace O10.Client.Web.Portal.Controllers
             return Ok(_translatorsRepository.GetInstance<AccountDescriptor, AccountDto>().Translate(_accountsService.GetById(accountId)));
         }
 
-        [HttpGet("ResetCompromisedAccount")]
-        public IActionResult ResetCompromisedAccount(long accountId, string password)
+        [HttpPost("{accountId}/Reset")]
+        public IActionResult ResetCompromisedAccount(long accountId, [FromBody] AuthenticateAccountDTO authenticateAccount)
         {
-            AccountDescriptor accountDescriptor = _accountsService.Authenticate(accountId, password);
+            if (authenticateAccount is null)
+            {
+                throw new ArgumentNullException(nameof(authenticateAccount));
+            }
+
+            AccountDescriptor accountDescriptor = _accountsService.Authenticate(accountId, authenticateAccount.Password);
 
             if (accountDescriptor != null)
             {
-                _accountsService.ResetAccount(accountId, password);
+                _accountsService.ResetAccount(accountId, authenticateAccount.Password);
                 _executionContextManager.UnregisterExecutionServices(accountId);
 
-                accountDescriptor = _accountsService.Authenticate(accountId, password);
+                accountDescriptor = _accountsService.Authenticate(accountId, authenticateAccount.Password);
 
                 if (accountDescriptor.AccountType == AccountTypeDTO.User)
                 {
@@ -339,7 +344,7 @@ namespace O10.Client.Web.Portal.Controllers
                     _executionContextManager.InitializeStateExecutionServices(accountId, accountDescriptor.SecretSpendKey);
                 }
 
-                return Ok();
+                return Ok(_translatorsRepository.GetInstance<AccountDescriptor, AccountDto>().Translate(accountDescriptor));
             }
             else
             {

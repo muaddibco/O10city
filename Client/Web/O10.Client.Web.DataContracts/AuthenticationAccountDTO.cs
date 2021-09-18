@@ -1,7 +1,7 @@
 ﻿namespace O10.Client.Web.DataContracts
 {
-    public class AuthenticationAccountDTO
+    public class AuthenticateAccountDTO
     {
-        public string? Password { get; set; }
+        public string Password { get; set; }
     }
 }
