@@ -188,7 +188,7 @@ namespace O10.Client.Common.Crypto
                 } : null;
         }
 
-        public async Task<AttributeProofs> GetAssociatedAttributeProofs(BlindingAssetInput assetInput, BlindingAssetInput parentAssetInput, string attributeSchemeName)
+        public async Task<AttributeProofs> GetAssociatedAttributeProofs(BlindingAssetInput assetInput, BlindingAssetInput parentAssetInput, string attributeSchemeName, byte[]? externalBindingKey = null)
         {
             if (assetInput is null)
             {
@@ -203,7 +203,7 @@ namespace O10.Client.Common.Crypto
             byte[] commitmentToParentNB = CryptoHelper.GetNonblindedAssetCommitment(parentAssetInput.AssetId);
             byte[] commitmentToParent = CryptoHelper.BlindAssetCommitment(commitmentToParentNB, parentAssetInput.BlindingFactor);
 
-            byte[] bindingKey = await GetBindingKey().ConfigureAwait(false);
+            byte[] bindingKey = externalBindingKey ?? await GetBindingKey().ConfigureAwait(false);
             (byte[] bfToParent, byte[] blindingPointParent) = _assetsService.GetBlindingFactorAndPoint(bindingKey, parentAssetInput.AssetId);
             (byte[] bfValueBounded, byte[] blindingPointValue) = _assetsService.GetBlindingFactorAndPoint(bindingKey, parentAssetInput.AssetId, assetInput.AssetId);
 
@@ -236,7 +236,7 @@ namespace O10.Client.Common.Crypto
             return associatedAttribute;
         }
 
-        public async Task<AttributeProofs> GetProtectionAttributeProofs(BlindingAssetInput rootAssetInput, string issuer)
+        public async Task<AttributeProofs> GetProtectionAttributeProofs(BlindingAssetInput rootAssetInput, string issuer, byte[]? externalBindingKey = null)
         {
             if (rootAssetInput is null)
             {
@@ -254,7 +254,7 @@ namespace O10.Client.Common.Crypto
                 BlindingFactor = CryptoHelper.GetRandomSeed()
             };
 
-            return await GetAssociatedAttributeProofs(protectionAssetInput, rootAssetInput, AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD).ConfigureAwait(false);
+            return await GetAssociatedAttributeProofs(protectionAssetInput, rootAssetInput, AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD, externalBindingKey).ConfigureAwait(false);
         }
 
         public async Task<SurjectionProof> GenerateBindingProofToRoot(BlindingAssetInput assetInput, BlindingAssetInput parentAssetInput)
@@ -289,7 +289,7 @@ namespace O10.Client.Common.Crypto
             return surjectionProofRoot;
         }
 
-        public async Task<RootIssuer> GetAttributeProofs(byte[] bf, UserRootAttribute rootAttribute, IKey? target = null, IEnumerable<UserAssociatedAttribute>? associatedAttributes = null, bool withProtectionAttribute = false)
+        public async Task<RootIssuer> GetAttributeProofs(byte[] bf, UserRootAttribute rootAttribute, IKey? target = null, IEnumerable<UserAssociatedAttribute>? associatedAttributes = null, byte[]? externalBindingKey = null)
         {
             if (rootAttribute is null)
             {
@@ -306,7 +306,7 @@ namespace O10.Client.Common.Crypto
             // ================================================================================
             // Prepare proof of Password
             // ================================================================================
-            if (withProtectionAttribute)
+            if (externalBindingKey != null)
             {
                 var protectionAssetInput = new BlindingAssetInput
                 {
@@ -314,7 +314,7 @@ namespace O10.Client.Common.Crypto
                     BlindingFactor = bf
                 };
 
-                var protectionAttribute = await GetProtectionAttributeProofs(protectionAssetInput, rootAttribute.Source).ConfigureAwait(false);
+                var protectionAttribute = await GetProtectionAttributeProofs(protectionAssetInput, rootAttribute.Source, externalBindingKey).ConfigureAwait(false);
                 rootAttributeByIssuer.Attributes.Add(protectionAttribute);
             }
             // ================================================================================

@@ -12,7 +12,6 @@ using O10.Core.Configuration;
 using O10.Crypto.ConfidentialAssets;
 using System.Text;
 using O10.Client.Common.Interfaces.Inputs;
-using System.Globalization;
 using Flurl;
 using Flurl.Http;
 using O10.Client.DataLayer.Model;
@@ -175,7 +174,7 @@ namespace O10.Client.Web.Portal.Controllers
             await _schemeResolverService.ResolveIssuer(issuer)
                 .ContinueWith(t =>
                 {
-                    if (t.IsCompletedSuccessfully)
+                    if (t.IsCompletedSuccessfully && !string.IsNullOrEmpty(t.Result))
                     {
                         _dataAccessService.AddOrUpdateUserIdentityIsser(issuer, t.Result, string.Empty);
                         issuerName = t.Result;
@@ -537,7 +536,7 @@ namespace O10.Client.Web.Portal.Controllers
             RequestInput requestInput = null;
             foreach (var pool in request.IdentityPools)
             {
-                var rootIssuer = await GenerateFromIdentityPool(accountId, pool, request.Target).ConfigureAwait(false);
+                var rootIssuer = await GenerateFromIdentityPool(accountId, pool, request.Target, request.Password).ConfigureAwait(false);
                 universalProofs.RootIssuers.Add(rootIssuer);
 
                 if(request.RootAttributeId == pool.RootAttributeId)
@@ -565,7 +564,7 @@ namespace O10.Client.Web.Portal.Controllers
             return Ok();
         }
 
-        private async Task<RootIssuer> GenerateFromIdentityPool(long accountId, UniversalProofsSendingRequest.IdentityPool identityPool, IKey target)
+        private async Task<RootIssuer> GenerateFromIdentityPool(long accountId, UniversalProofsSendingRequest.IdentityPool identityPool, IKey target, string pwd)
         {
             var persistency = _executionContextManager.ResolveExecutionServices(accountId);
 
@@ -577,7 +576,7 @@ namespace O10.Client.Web.Portal.Controllers
                                                                            rootAttribute,
                                                                            target,
                                                                            associatedAttributes,
-                                                                           true).ConfigureAwait(false);
+                                                                           _hashCalculation.CalculateHash(Encoding.UTF8.GetBytes(pwd))).ConfigureAwait(false);
             
             return rootIssuer;
         }
@@ -943,10 +942,12 @@ namespace O10.Client.Web.Portal.Controllers
 
                 if (attributesIssuanceRequest.MasterRootAttributeId == null)
                 {
+                    byte[] bindingKey = await boundedAssetsService.GetBindingKey().ConfigureAwait(false);
+
                     // Need only in case when _rootAttribute is null
                     // =======================================================================================================================
                     byte[] protectionAssetId = await assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD, rootAssetId.ToHexString(), issuer).ConfigureAwait(false);
-                    assetsService.GetBlindingPoint(await boundedAssetsService.GetBindingKey().ConfigureAwait(false), rootAssetId, protectionAssetId, out byte[] blindingPoint, out byte[] blindingFactor);
+                    assetsService.GetBlindingPointAndFactor(bindingKey, rootAssetId, protectionAssetId, out byte[] blindingPoint, out byte[] blindingFactor);
                     byte[] protectionAssetNonBlindedCommitment = CryptoHelper.GetNonblindedAssetCommitment(protectionAssetId);
                     byte[] protectionAssetCommitment = CryptoHelper.SumCommitments(protectionAssetNonBlindedCommitment, blindingPoint);
                     byte[] sessionBlindingFactor = CryptoHelper.GetRandomSeed();
@@ -955,7 +956,6 @@ namespace O10.Client.Web.Portal.Controllers
                     SurjectionProof surjectionProof = CryptoHelper.CreateSurjectionProof(sessionCommitment, new byte[][] { protectionAssetCommitment }, 0, diffBlindingFactor);
                     // =======================================================================================================================
 
-                    byte[] bindingKey = await boundedAssetsService.GetBindingKey().ConfigureAwait(false);
                     byte[] blindingPointAssociatedToParent = assetsService.GetBlindingPoint(bindingKey, rootAssetId);
                     request.Attributes.Add(AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD, new IssueAttributesRequestDTO.AttributeValue
                     {
@@ -963,6 +963,7 @@ namespace O10.Client.Web.Portal.Controllers
                         BlindingPointRoot = blindingPointAssociatedToParent,
                         Value = rootAssetId.ToHexString()
                     });
+
                     request.Protection = new IssuanceProtection
                     {
                         SessionCommitment = sessionCommitment.ToHexString(),
@@ -1685,7 +1686,11 @@ namespace O10.Client.Web.Portal.Controllers
 
             var clientCryptoService = persistency.Scope.ServiceProvider.GetService<IStealthClientCryptoService>();
             var bfBase = clientCryptoService.GetBlindingFactor(rootAttributePoll.LastTransactionKey); // TODO: bfBase prevoiusly had a different generated value from the `bf`
-            var rootIssuerBase = await boundedAssetsService.GetAttributeProofs(bfBase, rootAttribute, withProtectionAttribute: true).ConfigureAwait(false);
+            
+            
+            //TODO: it must be with a password! old variant: var rootIssuerBase = await boundedAssetsService.GetAttributeProofs(bfBase, rootAttribute, withProtectionAttribute: true).ConfigureAwait(false);
+            
+            var rootIssuerBase = await boundedAssetsService.GetAttributeProofs(bfBase, rootAttribute).ConfigureAwait(false);
             
             var bf = clientCryptoService.GetBlindingFactor(rootAttributePoll.LastTransactionKey);
             var rootIssuerPoll = await boundedAssetsService.GetAttributeProofs(bf, rootAttributePoll).ConfigureAwait(false);

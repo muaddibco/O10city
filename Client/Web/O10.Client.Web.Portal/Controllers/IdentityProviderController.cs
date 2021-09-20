@@ -453,7 +453,7 @@ namespace O10.Client.Web.Portal.Controllers
 
             var issuanceInputDetails = GetValidatedIssuanceDetails(request, attributeDefinitions);
 
-            Identity identity = CreateIdentityInDb(account, issuanceInputDetails);
+            Identity identityDB = GetOrCreateIdentityInDb(account, issuanceInputDetails);
 
             IssuanceDetailsDto issuanceDetails;
             if (!string.IsNullOrEmpty(request.PublicSpendKey) && !string.IsNullOrEmpty(request.PublicViewKey))
@@ -464,11 +464,11 @@ namespace O10.Client.Web.Portal.Controllers
                     PublicViewKey = request.PublicViewKey.HexStringToByteArray()
                 };
 
-                issuanceDetails = await IssueIdpAttributesAsRoot(issuer, request.Protection, identity, issuanceInputDetails, account, targetAccount, persistency.Scope.ServiceProvider).ConfigureAwait(false);
+                issuanceDetails = await IssueIdpAttributesAsRoot(issuer, request.Protection, identityDB, issuanceInputDetails, account, targetAccount, persistency.Scope.ServiceProvider).ConfigureAwait(false);
             }
             else
             {
-                issuanceDetails = await IssueIdpAttributesAsAssociated(issuer, identity, issuanceInputDetails, persistency.Scope.ServiceProvider).ConfigureAwait(false);
+                issuanceDetails = await IssueIdpAttributesAsAssociated(issuer, identityDB, issuanceInputDetails, persistency.Scope.ServiceProvider).ConfigureAwait(false);
             }
 
             await IssueAttributesInIntegratedLayer(account, issuanceDetails).ConfigureAwait(false);
@@ -504,7 +504,7 @@ namespace O10.Client.Web.Portal.Controllers
             async Task<IssuanceDetailsDto> IssueIdpAttributesAsRoot(
                 string issuer,
                 IssuanceProtection protection,
-                Identity identity,
+                Identity identityDB,
                 IEnumerable<AttributeIssuanceDetails> attributeIssuanceDetails,
                 AccountDescriptor account,
                 ConfidentialAccount targetAccount,
@@ -518,10 +518,10 @@ namespace O10.Client.Web.Portal.Controllers
                 var rootAttributeDetails = attributeIssuanceDetails.First(a => a.Definition.IsRoot);
 
                 byte[] rootAssetId = await _assetsService.GenerateAssetId(rootAttributeDetails.Definition.SchemeName, rootAttributeDetails.Value.Value, issuer).ConfigureAwait(false);
-                IdentityAttribute rootAttribute = identity.Attributes.FirstOrDefault(a => a.AttributeName == rootAttributeDetails.Definition.AttributeName);
+                IdentityAttribute rootAttribute = identityDB.Attributes.FirstOrDefault(a => a.AttributeName == rootAttributeDetails.Definition.AttributeName);
                 if (!await CreateRootAttributeIfNeeded(transactionsService, rootAttribute, rootAssetId).ConfigureAwait(false))
                 {
-                    var protectionAttribute = identity.Attributes.FirstOrDefault(a => a.AttributeName == AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD);
+                    var protectionAttribute = identityDB.Attributes.FirstOrDefault(a => a.AttributeName == AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD);
                     bool res = VerifyProtectionAttribute(protectionAttribute,
                                        protection.SignatureE.HexStringToByteArray(),
                                        protection.SignatureS.HexStringToByteArray(),
@@ -538,7 +538,7 @@ namespace O10.Client.Web.Portal.Controllers
                     issuanceDetails.AssociatedAttributes
                         = await IssueAssociatedAttributes(
                             attributeIssuanceDetails.Where(a => !a.Definition.IsRoot)
-                                .ToDictionary(d => identity.Attributes.First(a => a.AttributeName == d.Definition.AttributeName).AttributeId, d => d),
+                                .ToDictionary(d => identityDB.Attributes.First(a => a.AttributeName == d.Definition.AttributeName).AttributeId, d => d),
                             transactionsService,
                             issuer, rootAssetId).ConfigureAwait(false);
                 }
@@ -551,7 +551,7 @@ namespace O10.Client.Web.Portal.Controllers
                     throw new RootAttributeTransferFailedException();
                 }
 
-                _dataAccessService.AddOrUpdateIdentityTarget(identity.IdentityId, targetAccount.PublicSpendKey.ToHexString(), targetAccount.PublicViewKey.ToHexString());
+                _dataAccessService.AddOrUpdateIdentityTarget(identityDB.IdentityId, targetAccount.PublicSpendKey.ToHexString(), targetAccount.PublicViewKey.ToHexString());
 
                 issuanceDetails.RootAttribute = new IssuanceDetailsDto.IssuanceDetailsRoot
                 {
@@ -622,7 +622,7 @@ namespace O10.Client.Web.Portal.Controllers
                 return attributeIssuanceDetails;
             }
 
-            Identity CreateIdentityInDb(AccountDescriptor account, IEnumerable<AttributeIssuanceDetails> issuanceInputDetails)
+            Identity GetOrCreateIdentityInDb(AccountDescriptor account, IEnumerable<AttributeIssuanceDetails> issuanceInputDetails)
             {
                 var rootAttributeDetails = issuanceInputDetails.First(a => a.Definition.IsRoot);
                 Identity identity = _dataAccessService.GetIdentityByAttribute(account.AccountId, rootAttributeDetails.Definition.AttributeName, rootAttributeDetails.Value.Value);
@@ -770,16 +770,21 @@ namespace O10.Client.Web.Portal.Controllers
 
             if (attributes.Any(kv => kv.Value.Definition.IsRoot))
             {
-                var rootKv = attributes.FirstOrDefault(kv => kv.Value.Definition.IsRoot);
-                var packet = await IssueAssociatedAttribute(rootKv.Value.Definition.SchemeName, rootKv.Value.Value.Value, rootKv.Value.Value.BlindingPointValue, rootKv.Value.Value.BlindingPointRoot, issuer, transactionsService).ConfigureAwait(false);
-                _dataAccessService.UpdateIdentityAttributeCommitment(rootKv.Key, packet.AssetCommitment);
+                var rootAttributeIssuanceDetails = attributes.FirstOrDefault(kv => kv.Value.Definition.IsRoot);
+                var packet = await IssueAssociatedAttribute(rootAttributeIssuanceDetails.Value.Definition.SchemeName,
+                                                            rootAttributeIssuanceDetails.Value.Value.Value,
+                                                            rootAttributeIssuanceDetails.Value.Value.BlindingPointValue,
+                                                            rootAttributeIssuanceDetails.Value.Value.BlindingPointRoot,
+                                                            issuer,
+                                                            transactionsService).ConfigureAwait(false);
+                _dataAccessService.UpdateIdentityAttributeCommitment(rootAttributeIssuanceDetails.Key, packet.AssetCommitment);
                 issuanceDetails.Add(new IssuanceDetailsDto.IssuanceDetailsAssociated
                 {
-                    AttributeName = rootKv.Value.Definition.AttributeName,
+                    AttributeName = rootAttributeIssuanceDetails.Value.Definition.AttributeName,
                     AssetCommitment = packet.AssetCommitment.ToString(),
                     BindingToRootCommitment = packet.RootAssetCommitment.ToString()
                 });
-                rootAssetId = _assetsService.GenerateAssetId(rootKv.Value.Definition.SchemeId, rootKv.Value.Value.Value);
+                rootAssetId = _assetsService.GenerateAssetId(rootAttributeIssuanceDetails.Value.Definition.SchemeId, rootAttributeIssuanceDetails.Value.Value.Value);
             }
 
             if (rootAssetId == null)
@@ -791,7 +796,12 @@ namespace O10.Client.Web.Portal.Controllers
             {
                 byte[] rootCommitment = _assetsService.GetCommitmentBlindedByPoint(rootAssetId, kv.Value.Value.BlindingPointRoot);
 
-                var packet = await IssueAssociatedAttribute(kv.Value.Definition.SchemeName, kv.Value.Value.Value, kv.Value.Value.BlindingPointValue, rootCommitment, issuer, transactionsService).ConfigureAwait(false);
+                var packet = await IssueAssociatedAttribute(kv.Value.Definition.SchemeName,
+                                                            kv.Value.Value.Value,
+                                                            kv.Value.Value.BlindingPointValue,
+                                                            rootCommitment,
+                                                            issuer,
+                                                            transactionsService).ConfigureAwait(false);
                 issuanceDetails.Add(new IssuanceDetailsDto.IssuanceDetailsAssociated
                 {
                     AttributeName = kv.Value.Definition.AttributeName,

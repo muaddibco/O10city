@@ -129,35 +129,35 @@ namespace O10.Client.Common.Services
                 throw new AssociatedAttrProofsAreMissingException(schemeName);
             }
 
-            AttributeProofs attr = rootIssuer.IssuersAttributes?.FirstOrDefault(a => a.Issuer.Equals(rootIssuer.Issuer))?.Attributes.FirstOrDefault(a => a.SchemeName == schemeName);
+            AttributeProofs attrProtection = rootIssuer.IssuersAttributes?.FirstOrDefault(a => a.Issuer.Equals(rootIssuer.Issuer))?.Attributes.FirstOrDefault(a => a.SchemeName == schemeName);
 
-            if (attr == null)
+            if (attrProtection == null)
             {
                 throw new AssociatedAttrProofsAreMissingException(schemeName);
             }
 
-            if (attr.CommitmentProof.SurjectionProof.AssetCommitments.Length != attr.BindingProof.AssetCommitments.Length)
+            if (attrProtection.CommitmentProof.SurjectionProof.AssetCommitments.Length != attrProtection.BindingProof.AssetCommitments.Length)
             {
                 throw new AssociatedAttrProofsMalformedException(schemeName);
             }
 
-            if (!CryptoHelper.VerifySurjectionProof(attr.CommitmentProof.SurjectionProof, attr.Commitment.ArraySegment.Array))
+            if (!CryptoHelper.VerifySurjectionProof(attrProtection.CommitmentProof.SurjectionProof, attrProtection.Commitment.ArraySegment.Array))
             {
                 throw new AssociatedAttrProofToValueKnowledgeIncorrectException(schemeName);
             }
 
-            IKey commitmentKey = rootIssuer.IssuersAttributes.FirstOrDefault(a => a.Issuer.Equals(rootIssuer.Issuer))?.RootAttribute.Commitment;
-            byte[] commitment = CryptoHelper.SumCommitments(commitmentKey.Value.Span, attr.Commitment.Value.Span);
-            if (!CryptoHelper.VerifySurjectionProof(attr.BindingProof, commitment))
+            IKey commitmentRoot = rootIssuer.IssuersAttributes.FirstOrDefault(a => a.Issuer.Equals(rootIssuer.Issuer))?.RootAttribute.Commitment;
+            byte[] commitment = CryptoHelper.SumCommitments(commitmentRoot.Value.Span, attrProtection.Commitment.Value.Span);
+            if (!CryptoHelper.VerifySurjectionProof(attrProtection.BindingProof, commitment))
             {
                 throw new AssociatedAttrProofToBindingIncorrectException(schemeName);
             }
 
-            (Memory<byte> issuanceCommitment, Memory<byte> commitmentToRoot)[] attrs = new (Memory<byte>, Memory<byte>)[attr.BindingProof.AssetCommitments.Length];
-            for (int i = 0; i < attr.BindingProof.AssetCommitments.Length; i++)
+            (Memory<byte> issuanceCommitment, Memory<byte> commitmentToRoot)[] attrs = new (Memory<byte>, Memory<byte>)[attrProtection.BindingProof.AssetCommitments.Length];
+            for (int i = 0; i < attrProtection.BindingProof.AssetCommitments.Length; i++)
             {
-                attrs[i].issuanceCommitment = attr.CommitmentProof.SurjectionProof.AssetCommitments[i];
-                attrs[i].commitmentToRoot = attr.BindingProof.AssetCommitments[i];
+                attrs[i].issuanceCommitment = attrProtection.CommitmentProof.SurjectionProof.AssetCommitments[i];
+                attrs[i].commitmentToRoot = attrProtection.BindingProof.AssetCommitments[i];
             }
 
             bool res = await _gatewayService.AreAssociatedAttributesExist(rootIssuer.Issuer.Value, attrs).ConfigureAwait(false);

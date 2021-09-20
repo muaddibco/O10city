@@ -285,6 +285,31 @@ namespace O10.Client.DataLayer.Services
 
         public long AddNonConfirmedRootAttribute(long accountId, string content, string issuer, string schemeName, byte[] assetId)
         {
+            if (string.IsNullOrEmpty(content))
+            {
+                throw new ArgumentException($"'{nameof(content)}' cannot be null or empty.", nameof(content));
+            }
+
+            if (string.IsNullOrEmpty(issuer))
+            {
+                throw new ArgumentException($"'{nameof(issuer)}' cannot be null or empty.", nameof(issuer));
+            }
+
+            if (string.IsNullOrEmpty(schemeName))
+            {
+                throw new ArgumentException($"'{nameof(schemeName)}' cannot be null or empty.", nameof(schemeName));
+            }
+
+            if (assetId is null)
+            {
+                throw new ArgumentNullException(nameof(assetId));
+            }
+
+            if (assetId.Length != Globals.DEFAULT_HASH_SIZE)
+            {
+                throw new ArgumentOutOfRangeException(nameof(assetId));
+            }
+
             lock (_sync)
             {
                 UserRootAttribute userRootAttribute = new UserRootAttribute
@@ -316,6 +341,31 @@ namespace O10.Client.DataLayer.Services
 
         public long AddUserRootAttribute(long accountId, UserRootAttribute attribute)
         {
+            if (string.IsNullOrEmpty(attribute.Content))
+            {
+                throw new ArgumentException($"'{nameof(attribute.Content)}' cannot be null or empty.", nameof(attribute.Content));
+            }
+
+            if (string.IsNullOrEmpty(attribute.Source))
+            {
+                throw new ArgumentException($"'{nameof(attribute.Source)}' cannot be null or empty.", nameof(attribute.Source));
+            }
+
+            if (string.IsNullOrEmpty(attribute.SchemeName))
+            {
+                throw new ArgumentException($"'{nameof(attribute.SchemeName)}' cannot be null or empty.", nameof(attribute.SchemeName));
+            }
+
+            if (attribute.AssetId is null)
+            {
+                throw new ArgumentNullException(nameof(attribute.AssetId));
+            }
+
+            if (attribute.AssetId.Length != Globals.DEFAULT_HASH_SIZE)
+            {
+                throw new ArgumentOutOfRangeException(nameof(attribute.AssetId));
+            }
+
             lock (_sync)
             {
                 _logger.Info($"Adding user attribute with keyImage = {attribute.NextKeyImage}");

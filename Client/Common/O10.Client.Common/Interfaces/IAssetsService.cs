@@ -19,7 +19,7 @@ namespace O10.Client.Common.Interfaces
         Task<AttributeDefinition> GetAttributeDefinition(byte[] assetId, string issuer);
 
         void GetBlindingPoint(byte[] bindingKey, byte[] rootAssetId, out byte[] blindingPoint, out byte[] blindingFactor);
-        void GetBlindingPoint(byte[] bindingKey, byte[] rootAssetId, byte[] assetId, out byte[] blindingPoint, out byte[] blindingFactor);
+        void GetBlindingPointAndFactor(byte[] bindingKey, byte[] rootAssetId, byte[] assetId, out byte[] blindingPoint, out byte[] blindingFactor);
         byte[] GetBlindingPoint(params byte[][] scalars);
         byte[] GetBlindingFactor(params byte[][] scalars);
         (byte[] blindingFactor, byte[] blindingPoint) GetBlindingFactorAndPoint(params byte[][] scalars);

@@ -17,7 +17,9 @@ namespace O10.Client.Web.DataContracts.User
         
         [JsonConverter(typeof(KeyJsonConverter))]
         public IKey? Target { get; set; }
-        
+
+        public string Password { get; set; }
+
         public string SessionKey { get; set; }
         public UniversalProofsMission? Mission { get; set; }
         public string ServiceProviderInfo { get; set; }

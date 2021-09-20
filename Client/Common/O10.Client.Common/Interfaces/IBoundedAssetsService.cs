@@ -30,12 +30,12 @@ namespace O10.Client.Common.Interfaces
 
         Task<AttributeProofs> GetRootAttributeProofs(Memory<byte> bf, UserRootAttribute rootAttribute, IKey? target = null, IEnumerable<Memory<byte>>? assetIds = null);
         
-        Task<AttributeProofs> GetAssociatedAttributeProofs(BlindingAssetInput assetInput, BlindingAssetInput parentAssetInput, string attributeSchemeName);
+        Task<AttributeProofs> GetAssociatedAttributeProofs(BlindingAssetInput assetInput, BlindingAssetInput parentAssetInput, string attributeSchemeName, byte[]? externalBindingKey = null);
 
-        Task<AttributeProofs> GetProtectionAttributeProofs(BlindingAssetInput rootAssetInput, string issuer);
+        Task<AttributeProofs> GetProtectionAttributeProofs(BlindingAssetInput rootAssetInput, string issuer, byte[]? externalBindingKey = null);
 
         Task<SurjectionProof> GenerateBindingProofToRoot(BlindingAssetInput assetInput, BlindingAssetInput parentAssetInput);
 
-        Task<RootIssuer> GetAttributeProofs(byte[] bf, UserRootAttribute rootAttribute, IKey? target = null, IEnumerable<UserAssociatedAttribute>? associatedAttributes = null, bool withProtectionAttribute = false);
+        Task<RootIssuer> GetAttributeProofs(byte[] bf, UserRootAttribute rootAttribute, IKey? target = null, IEnumerable<UserAssociatedAttribute>? associatedAttributes = null, byte[]? externalBindingKey = null);
     }
 }

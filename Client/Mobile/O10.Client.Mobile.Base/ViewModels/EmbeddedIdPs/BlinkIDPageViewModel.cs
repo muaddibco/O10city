@@ -414,7 +414,7 @@ namespace O10.Client.Mobile.Base.ViewModels
                         // Need only in case when _rootAttribute is null, i.e. BlinkID is the Root Attribute
                         // =======================================================================================================================
                         byte[] protectionAssetId = await _assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD, rootAssetId.ToHexString(), issuerBlinkID).ConfigureAwait(false);
-                        _assetsService.GetBlindingPoint(await _bindingKeySource.Task.ConfigureAwait(false), rootAssetId, protectionAssetId, out byte[] blindingPoint, out byte[] blindingFactor);
+                        _assetsService.GetBlindingPointAndFactor(await _bindingKeySource.Task.ConfigureAwait(false), rootAssetId, protectionAssetId, out byte[] blindingPoint, out byte[] blindingFactor);
                         byte[] protectionAssetNonBlindedCommitment = CryptoHelper.GetNonblindedAssetCommitment(protectionAssetId);
                         byte[] protectionAssetCommitment = CryptoHelper.SumCommitments(protectionAssetNonBlindedCommitment, blindingPoint);
                         byte[] sessionBlindingFactor = CryptoHelper.GetRandomSeed();

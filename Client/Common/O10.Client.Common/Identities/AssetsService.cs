@@ -102,7 +102,7 @@ namespace O10.Client.Common.Identities
             blindingPoint = CryptoHelper.GetPublicKey(blindingFactor);
         }
 
-        public void GetBlindingPoint(byte[] bindingKey, byte[] rootAssetId, byte[] assetId, out byte[] blindingPoint, out byte[] blindingFactor)
+        public void GetBlindingPointAndFactor(byte[] bindingKey, byte[] rootAssetId, byte[] assetId, out byte[] blindingPoint, out byte[] blindingFactor)
         {
             byte[] blindingFactorSeed = CryptoHelper.FastHash256(bindingKey, rootAssetId, assetId);
             blindingFactor = CryptoHelper.ReduceScalar32(blindingFactorSeed);
