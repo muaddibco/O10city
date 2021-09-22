@@ -110,7 +110,7 @@ namespace O10.Client.Web.Portal.Controllers
             {
                 var issuer = rootAttribute.Source;
                 var userAttributeScheme = userAttributeSchemes.Find(i => i.IssuerAddress == issuer && i.RootAssetId == rootAttribute.AssetId.ToHexString());
-                if(userAttributeScheme == null)
+                if (userAttributeScheme == null)
                 {
                     userAttributeScheme = new UserAttributeSchemeDto
                     {
@@ -127,9 +127,8 @@ namespace O10.Client.Web.Portal.Controllers
                     {
                         userAttributeScheme.IssuerName = await ResolveIssuerName(issuer).ConfigureAwait(false);
                     }
-                    userAttributeScheme.RootAttributes.Add(await GetUserAttributeDto(rootAttribute).ConfigureAwait(false));
 
-                    var associatedAttributesGrouped = _dataAccessService.GetUserAssociatedAttributes(accountId).Where(a => a.RootAssetId.Equals32(rootAttribute.AssetId)) .GroupBy(a => a.Source);
+                    var associatedAttributesGrouped = _dataAccessService.GetUserAssociatedAttributes(accountId).Where(a => a.RootAssetId.Equals32(rootAttribute.AssetId)).GroupBy(a => a.Source);
 
                     foreach (var group in associatedAttributesGrouped)
                     {
@@ -156,8 +155,9 @@ namespace O10.Client.Web.Portal.Controllers
                             });
                         }
                     }
-
                 }
+
+                userAttributeScheme.RootAttributes.Add(await GetUserAttributeDto(rootAttribute).ConfigureAwait(false));
             }
 
             foreach (var attributeScheme in userAttributeSchemes)
