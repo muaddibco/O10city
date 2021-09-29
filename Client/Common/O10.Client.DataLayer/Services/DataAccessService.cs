@@ -277,6 +277,7 @@ namespace O10.Client.DataLayer.Services
                 return _dataContext
                     .UserRootAttributes
                     .Where(r => r.AccountId == accountId)
+                    .OrderByDescending(r => r.UserAttributeId)
                     .ToList()
                     .Where(r => new byte[Globals.DEFAULT_HASH_SIZE].Equals32(r.LastCommitment))
                     .ToList();
@@ -343,7 +344,8 @@ namespace O10.Client.DataLayer.Services
         {
             if (string.IsNullOrEmpty(attribute.Content))
             {
-                throw new ArgumentException($"'{nameof(attribute.Content)}' cannot be null or empty.", nameof(attribute.Content));
+                attribute.Content = " ";
+                //throw new ArgumentException($"'{nameof(attribute.Content)}' cannot be null or empty.", nameof(attribute.Content));
             }
 
             if (string.IsNullOrEmpty(attribute.Source))
@@ -395,7 +397,7 @@ namespace O10.Client.DataLayer.Services
         {
             lock (_sync)
             {
-                return _dataContext.UserRootAttributes.Where(u => u.AccountId == accountId)?.ToList();
+                return _dataContext.UserRootAttributes.Where(u => u.AccountId == accountId)?.OrderByDescending(r => r.UserAttributeId).ToList();
             }
         }
 
