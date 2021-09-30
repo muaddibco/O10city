@@ -290,22 +290,24 @@ namespace O10.Client.Common.Communication
         {
             Url url = _gatewayUri.AppendPathSegments("api", "synchronization", "AreAssociatedAttributesExist", issuer.ToHexString());
             bool res = false;
-            await _restClientService.Request(url)
-                .PostJsonAsync(attrs.ToDictionary(a => a.issuanceCommitment.ToHexString(), a => a.commitmenttoRoot.ToHexString()))
-                .ContinueWith(t =>
+            try
+            {
+                await _restClientService.Request(url).PostJsonAsync(attrs.ToDictionary(a => a.issuanceCommitment.ToHexString(), a => a.commitmenttoRoot.ToHexString())).ConfigureAwait(false);
+                res = true;
+            }
+            catch (Exception ex)
+            {
+                if (ex is FlurlHttpException fex)
                 {
-                    if (t.IsCompletedSuccessfully)
-                    {
-                        res = true;
-                    }
-                    else
-                    {
-                        string response = AsyncUtil.RunSync(async () => await t.Result.ResponseMessage.Content.ReadAsStringAsync().ConfigureAwait(false));
-                        _logger.Error($"Request {url} failed with response {response}");
-                    }
-                }, TaskScheduler.Current)
-                .ConfigureAwait(false);
-
+                    string response = await fex.Call.HttpResponseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
+                    _logger.Error($"Request {url} failed with response {response}", fex);
+                }
+                else
+                {
+                    _logger.Error($"Request {url} failed", ex);
+                }
+            }
+            
             return res;
         }
 

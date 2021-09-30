@@ -345,6 +345,8 @@ namespace O10.Client.DataLayer.Services
             if (string.IsNullOrEmpty(attribute.Content))
             {
                 attribute.Content = " ";
+                attribute.LastBlindingFactor = new byte[Globals.DEFAULT_HASH_SIZE];
+                attribute.OriginalBlindingFactor = new byte[Globals.DEFAULT_HASH_SIZE];
                 //throw new ArgumentException($"'{nameof(attribute.Content)}' cannot be null or empty.", nameof(attribute.Content));
             }
 
