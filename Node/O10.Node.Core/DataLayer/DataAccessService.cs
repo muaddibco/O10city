@@ -4,16 +4,15 @@ using System.Linq;
 using System.Net;
 using O10.Core.Architecture;
 using O10.Core.Configuration;
-using O10.Core.DataLayer;
+using O10.Core.Persistency;
 using O10.Core.ExtensionMethods;
 using O10.Core.Identity;
 using O10.Core.Logging;
-using O10.Core.Tracking;
 using O10.Node.Core.DataLayer.DataContexts;
 
 namespace O10.Node.Core.DataLayer
 {
-    [RegisterExtension(typeof(IDataAccessService), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IDataAccessService), Lifetime = LifetimeManagement.Scoped)]
     public class DataAccessService : DataAccessServiceBase<InternalDataContextBase>
     {
         private readonly IIdentityKeyProvider _identityKeyProvider;
@@ -22,19 +21,13 @@ namespace O10.Node.Core.DataLayer
 
         public DataAccessService(IDataContextRepository dataContextRepository,
                                     IConfigurationService configurationService,
-                                    ITrackingService trackingService,
                                     ILoggerService loggerService,
                                     IIdentityKeyProvidersRegistry identityKeyProvidersRegistry)
-            : base(configurationService, trackingService, loggerService)
+            : base(configurationService, loggerService)
         {
             if (configurationService is null)
             {
                 throw new System.ArgumentNullException(nameof(configurationService));
-            }
-
-            if (trackingService is null)
-            {
-                throw new System.ArgumentNullException(nameof(trackingService));
             }
 
             if (loggerService is null)
@@ -52,35 +45,15 @@ namespace O10.Node.Core.DataLayer
             _keyToNodeMap = new ConcurrentDictionary<IKey, NodeRecord>(new KeyEqualityComparer());
         }
 
-        protected override InternalDataContextBase GetDataContext(string connectionType)
+        protected override InternalDataContextBase GetDataContext()
         {
-            return _dataContextRepository.GetInstance<InternalDataContextBase>(connectionType);
+            return _dataContextRepository.GetInstance<InternalDataContextBase>(_configuration.ConnectionType);
         }
 
         protected override void PostInitTasks()
         {
             LoadAllKnownNodeIPs();
             base.PostInitTasks();
-        }
-
-        public bool AddNode(IKey key, byte nodeRole, string ipAddressExpression = null)
-        {
-            if (key is null)
-            {
-                throw new System.ArgumentNullException(nameof(key));
-            }
-
-            if (string.IsNullOrEmpty(ipAddressExpression))
-            {
-                throw new System.ArgumentException($"'{nameof(ipAddressExpression)}' cannot be null or empty", nameof(ipAddressExpression));
-            }
-
-            if (IPAddress.TryParse(ipAddressExpression ?? "127.0.0.1", out IPAddress ipAddress))
-            {
-                return AddNode(key, nodeRole, ipAddress);
-            }
-
-            return false;
         }
 
         public bool RemoveNodeByIp(IPAddress ipAddress)
@@ -92,19 +65,18 @@ namespace O10.Node.Core.DataLayer
 
             string addr = ipAddress.ToString();
 
-            lock (Sync)
+            using var dbContext = GetDataContext();
+
+            List<NodeRecord> nodeRecords = dbContext.NodeRecords.Where(n => n.IPAddress == addr).ToList();
+
+            foreach (var item in nodeRecords)
             {
-                List<NodeRecord> nodeRecords = DataContext.NodeRecords.Where(n => n.IPAddress == addr).ToList();
-
-                foreach (var item in nodeRecords)
-                {
-                    DataContext.NodeRecords.Remove(item);
-                }
-
-                DataContext.SaveChanges();
-
-                return nodeRecords.Count > 0;
+                dbContext.NodeRecords.Remove(item);
             }
+
+            dbContext.SaveChanges();
+
+            return nodeRecords.Count > 0;
         }
 
         public bool AddNode(IKey key, byte nodeRole, IPAddress ipAddress)
@@ -121,18 +93,17 @@ namespace O10.Node.Core.DataLayer
 
             string publicKey = key.ToString();
 
-            lock (Sync)
-            {
-                NodeRecord node = DataContext.NodeRecords.FirstOrDefault(n => n.PublicKey == key.ToString() && n.NodeRole == nodeRole);
+            using var dbContext = GetDataContext();
 
-                if (node == null)
-                {
-                    node = new NodeRecord { PublicKey = publicKey, IPAddress = ipAddress.ToString(), NodeRole = nodeRole };
-                    DataContext.NodeRecords.Add(node);
-                    DataContext.SaveChanges();
-                    _keyToNodeMap.AddOrUpdate(key, node, (_, __) => node);
-                    return true;
-                }
+            NodeRecord node = dbContext.NodeRecords.FirstOrDefault(n => n.PublicKey == key.ToString() && n.NodeRole == nodeRole);
+
+            if (node == null)
+            {
+                node = new NodeRecord { PublicKey = publicKey, IPAddress = ipAddress.ToString(), NodeRole = nodeRole };
+                dbContext.NodeRecords.Add(node);
+                dbContext.SaveChanges();
+                _keyToNodeMap.AddOrUpdate(key, node, (_, __) => node);
+                return true;
             }
 
             return false;
@@ -160,53 +131,40 @@ namespace O10.Node.Core.DataLayer
                 throw new System.ArgumentNullException(nameof(ipAddress));
             }
 
-            lock (Sync)
-            {
-                foreach (var node in DataContext.NodeRecords.Where(n => n.PublicKey == key.ToString()))
-                {
-                    node.IPAddress = ipAddress.ToString();
-                    _keyToNodeMap.AddOrUpdate(key, node, (_, __) => node);
-                    DataContext.Update(node);
-                }
+            using var dbContext = GetDataContext();
 
-                DataContext.SaveChanges();
+            foreach (var node in dbContext.NodeRecords.Where(n => n.PublicKey == key.ToString()))
+            {
+                node.IPAddress = ipAddress.ToString();
+                _keyToNodeMap.AddOrUpdate(key, node, (_, __) => node);
+                dbContext.Update(node);
             }
+
+            dbContext.SaveChanges();
 
             return false;
         }
 
         public void LoadAllKnownNodeIPs()
         {
-            lock (Sync)
+            using var dbContext = GetDataContext();
+
+            _keyToNodeMap.Clear();
+            foreach (var node in dbContext.NodeRecords)
             {
-                _keyToNodeMap.Clear();
-                foreach (var node in DataContext.NodeRecords)
+                IKey key = _identityKeyProvider.GetKey(node.PublicKey.HexStringToByteArray());
+                if (!_keyToNodeMap.ContainsKey(key))
                 {
-                    IKey key = _identityKeyProvider.GetKey(node.PublicKey.HexStringToByteArray());
-                    if (!_keyToNodeMap.ContainsKey(key))
-                    {
-                        _keyToNodeMap.AddOrUpdate(key, node, (_, __) => node);
-                    }
+                    _keyToNodeMap.AddOrUpdate(key, node, (_, __) => node);
                 }
             }
         }
 
-        public IPAddress GetNodeIpAddress(IKey key)
-        {
-            if (_keyToNodeMap.ContainsKey(key))
-            {
-                return IPAddress.Parse(_keyToNodeMap[key].IPAddress);
-            }
-
-            return IPAddress.None;
-        }
-
         public IEnumerable<NodeRecord> GetAllNodes()
         {
-            lock (Sync)
-            {
-                return DataContext.NodeRecords.ToList();
-            }
+            using var dbContext = GetDataContext();
+
+            return dbContext.NodeRecords.ToList();
         }
 
         public NodeRecord GetNode(IKey key)
@@ -221,55 +179,52 @@ namespace O10.Node.Core.DataLayer
 
         public IEnumerable<Gateway> GetGateways()
         {
-            lock(Sync)
-            {
-                return DataContext.Gateways;
-            }
+            using var dbContext = GetDataContext();
+
+            return dbContext.Gateways;
         }
 
         public Gateway RemoveGateway(long gatewayId)
         {
-            lock(Sync)
-            {
-                var gateway = DataContext.Gateways.FirstOrDefault(gateway => gateway.GatewayId == gatewayId);
-                if(gateway != null)
-                {
-                    DataContext.Gateways.Remove(gateway);
-                    DataContext.SaveChanges();
-                }
+            using var dbContext = GetDataContext();
 
-                return gateway;
+            var gateway = dbContext.Gateways.FirstOrDefault(gateway => gateway.GatewayId == gatewayId);
+            if (gateway != null)
+            {
+                dbContext.Gateways.Remove(gateway);
+                dbContext.SaveChanges();
             }
+
+            return gateway;
         }
 
         public bool AddGateway(string alias, string uri)
         {
-            lock(Sync)
+            using var dbContext = GetDataContext();
+
+            Gateway gateway = dbContext.Gateways.FirstOrDefault(g => g.BaseUri == uri);
+
+            if (gateway != null)
             {
-                Gateway gateway = DataContext.Gateways.FirstOrDefault(g => g.BaseUri == uri);
-
-                if(gateway != null)
+                if (gateway.Alias != alias)
                 {
-                    if (gateway.Alias != alias)
-                    {
-                        gateway.Alias = alias;
+                    gateway.Alias = alias;
 
-                        DataContext.SaveChanges();
-                        return true;
-                    }
-                }
-                else
-                {
-                    gateway = new Gateway
-                    {
-                        Alias = alias,
-                        BaseUri = uri
-                    };
-
-                    DataContext.Gateways.Add(gateway);
-                    DataContext.SaveChanges();
+                    dbContext.SaveChanges();
                     return true;
                 }
+            }
+            else
+            {
+                gateway = new Gateway
+                {
+                    Alias = alias,
+                    BaseUri = uri
+                };
+
+                dbContext.Gateways.Add(gateway);
+                dbContext.SaveChanges();
+                return true;
             }
 
             return false;

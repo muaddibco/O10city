@@ -3,10 +3,11 @@ using System.Linq;
 using O10.Transactions.Core.Enums;
 using O10.Node.DataLayer.Exceptions;
 using O10.Core.Architecture;
+using System;
 
 namespace O10.Node.DataLayer.DataAccess
 {
-    [RegisterDefaultImplementation(typeof(INodeDataContextRepository), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterDefaultImplementation(typeof(INodeDataContextRepository), Lifetime = LifetimeManagement.Scoped)]
     public class NodeDataContextRepository : INodeDataContextRepository
     {
         private readonly IEnumerable<INodeDataContext> _nodeDataContexts;
@@ -25,7 +26,7 @@ namespace O10.Node.DataLayer.DataAccess
                 throw new NodeDataContextNotFoundException(ledgerType, dataProvider);
             }
 
-            return dctx;
+            return (INodeDataContext)Activator.CreateInstance(dctx.GetType());
         }
     }
 }

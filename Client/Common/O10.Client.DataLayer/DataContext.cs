@@ -6,7 +6,7 @@ using O10.Client.DataLayer.Model.Inherence;
 using O10.Client.DataLayer.Model.Scenarios;
 using O10.Client.DataLayer.Model.ServiceProviders;
 using O10.Client.DataLayer.Model.Users;
-using O10.Core.DataLayer;
+using O10.Core.Persistency;
 
 namespace O10.Client.DataLayer
 {

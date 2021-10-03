@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using Microsoft.EntityFrameworkCore;
 
-namespace O10.Core.DataLayer
+namespace O10.Core.Persistency
 {
     public abstract class DataContextBase : DbContext, IDataContext
     {
@@ -10,11 +10,22 @@ namespace O10.Core.DataLayer
 
         protected ManualResetEventSlim ManualResetEventSlim { get; } = new ManualResetEventSlim(false);
 
-        public void EnsureConfigurationCompleted()
+        public IDataContext EnsureConfigurationCompleted()
         {
             ManualResetEventSlim.Wait();
+            return this;
         }
 
-        public void Initialize(string connectionString) => ConnectionString = connectionString;
+        public IDataContext Initialize(string connectionString)
+        {
+            ConnectionString = connectionString;
+            return this;
+        }
+
+        public DataContextBase Migrate()
+        {
+            Database.Migrate();
+            return this;
+        }
     }
 }

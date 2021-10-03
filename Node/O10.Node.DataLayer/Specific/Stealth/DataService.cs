@@ -24,7 +24,7 @@ using O10.Core.ExtensionMethods;
 
 namespace O10.Node.DataLayer.Specific.Stealth
 {
-    [RegisterExtension(typeof(IChainDataService), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IChainDataService), Lifetime = LifetimeManagement.Scoped)]
     public class DataService : ChainDataServiceBase<DataAccessService>, IStealthDataService
     {
         private readonly IHashCalculation _defaultHashCalculation;
@@ -56,20 +56,21 @@ namespace O10.Node.DataLayer.Specific.Stealth
                 Logger?.LogIfDebug(() => $"Storing {packet.GetType().Name} with hash [{hashKey}]: {JsonConvert.SerializeObject(packet, new ByteArrayJsonConverter())}");
 
                 var addCompletionWrapper = new TaskCompletionWrapper<IPacketBase>(packet);
-                var addCompletion = Service.AddStealthBlock(stealth.Payload.Transaction.KeyImage, stealth.Payload.Transaction.TransactionType, stealth.Payload.Transaction.DestinationKey, stealth.ToJson(), hash.ToHexString());
-                addCompletion.Task.ContinueWith((t, o) =>
-                {
-                    var w = ((Tuple<TaskCompletionWrapper<IPacketBase>, IKey>)o).Item1;
-                    var h = ((Tuple<TaskCompletionWrapper<IPacketBase>, IKey>)o).Item2;
-                    if (t.IsCompletedSuccessfully)
+                Service
+                    .AddStealthBlock(stealth.Payload.Transaction.KeyImage, stealth.Payload.Transaction.TransactionType, stealth.Payload.Transaction.DestinationKey, stealth.ToJson(), hash.ToHexString())
+                    .ContinueWith((t, o) =>
                     {
-                        w.TaskCompletion.SetResult(new ItemAddedNotification(new HashAndIdKey(h, t.Result.StealthTransactionId)));
-                    }
-                    else
-                    {
-                        w.TaskCompletion.SetException(t.Exception.InnerException);
-                    }
-                }, new Tuple<TaskCompletionWrapper<IPacketBase>, IKey>(addCompletionWrapper, hashKey), TaskScheduler.Default);
+                        var w = ((Tuple<TaskCompletionWrapper<IPacketBase>, IKey>)o).Item1;
+                        var h = ((Tuple<TaskCompletionWrapper<IPacketBase>, IKey>)o).Item2;
+                        if (t.IsCompletedSuccessfully)
+                        {
+                            w.TaskCompletion.SetResult(new ItemAddedNotification(new HashAndIdKey(h, t.Result.StealthTransactionId)));
+                        }
+                        else
+                        {
+                            w.TaskCompletion.SetException(t.Exception.InnerException);
+                        }
+                    }, new Tuple<TaskCompletionWrapper<IPacketBase>, IKey>(addCompletionWrapper, hashKey), TaskScheduler.Default);
 
                 Logger?.LogIfDebug(() => $"Storing of {packet.GetType().Name} with hash [{hashKey}] completed");
                 return addCompletionWrapper;

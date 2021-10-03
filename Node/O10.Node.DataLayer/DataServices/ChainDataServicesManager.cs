@@ -5,7 +5,7 @@ using O10.Core.Architecture;
 
 namespace O10.Node.DataLayer.DataServices
 {
-    [RegisterDefaultImplementation(typeof(IChainDataServicesManager), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterDefaultImplementation(typeof(IChainDataServicesManager), Lifetime = LifetimeManagement.Scoped)]
     public class ChainDataServicesManager : IChainDataServicesManager
     {
         private readonly IEnumerable<IChainDataService> _chainDataServices;

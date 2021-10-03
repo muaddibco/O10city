@@ -23,7 +23,7 @@ using O10.Core.Identity;
 
 namespace O10.Node.DataLayer.Specific.O10Id
 {
-    [RegisterExtension(typeof(IChainDataService), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IChainDataService), Lifetime = LifetimeManagement.Scoped)]
     public class DataService : ChainDataServiceBase<DataAccessService>
     {
         private readonly IHashCalculation _defaultHashCalculation;
@@ -55,16 +55,17 @@ namespace O10.Node.DataLayer.Specific.O10Id
                 Logger?.LogIfDebug(() => $"Storing {packet.GetType().Name} with hash [{hashKey}]: {JsonConvert.SerializeObject(packet, new ByteArrayJsonConverter())}");
 
                 var addCompletionWrapper = new TaskCompletionWrapper<IPacketBase>(packet);
-                var addCompletion = Service.AddTransaction(statePacket.Payload.Transaction.Source, statePacket.Payload.Transaction.TransactionType, statePacket.Payload.Height, packet.ToJson(), hash);
-                addCompletion.Task.ContinueWith((t, o) => 
-                {
-                    var w = ((Tuple<TaskCompletionWrapper<IPacketBase>, IKey>)o).Item1;
-                    var h = ((Tuple<TaskCompletionWrapper<IPacketBase>, IKey>)o).Item2;
-                    if(t.IsCompletedSuccessfully)
+                Service
+                    .AddTransaction(statePacket.Payload.Transaction.Source, statePacket.Payload.Transaction.TransactionType, statePacket.Payload.Height, packet.ToJson(), hash)
+                    .ContinueWith((t, o) => 
                     {
-                        w.TaskCompletion.SetResult(new ItemAddedNotification(new HashAndIdKey(h, t.Result.O10TransactionId)));
-                    }
-                }, new Tuple<TaskCompletionWrapper<IPacketBase>, IKey>(addCompletionWrapper, hashKey), TaskScheduler.Default);
+                        var w = ((Tuple<TaskCompletionWrapper<IPacketBase>, IKey>)o).Item1;
+                        var h = ((Tuple<TaskCompletionWrapper<IPacketBase>, IKey>)o).Item2;
+                        if (t.IsCompletedSuccessfully)
+                        {
+                            w.TaskCompletion.SetResult(new ItemAddedNotification(new HashAndIdKey(h, t.Result.O10TransactionId)));
+                        }
+                    }, new Tuple<TaskCompletionWrapper<IPacketBase>, IKey>(addCompletionWrapper, hashKey), TaskScheduler.Default);
 
                 Logger?.LogIfDebug(() => $"Storing of {packet.GetType().Name} with hash [{hashKey}] completed");
                 return addCompletionWrapper;

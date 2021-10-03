@@ -8,7 +8,7 @@ using O10.Core.Identity;
 using O10.Core.ExtensionMethods;
 using System;
 using O10.Network.Topology;
-using O10.Core.DataLayer;
+using O10.Core.Persistency;
 using O10.Core.Models;
 using O10.Core.Notifications;
 

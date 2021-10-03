@@ -25,7 +25,7 @@ using O10.Node.DataLayer.DataServices.Notifications;
 
 namespace O10.Node.DataLayer.Specific.Registry
 {
-    [RegisterExtension(typeof(IChainDataService), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IChainDataService), Lifetime = LifetimeManagement.Scoped)]
     public class DataService : ChainDataServiceBase<DataAccessService>
     {
         private readonly IHashCalculation _defaultHashCalculation;
@@ -140,7 +140,7 @@ namespace O10.Node.DataLayer.Specific.Registry
                         _registryFullBlocks[registryFullBlock.SyncBlockHeight].Add(registryFullBlock);
                     }
 
-                    Service.AddRegistryFullBlocks(registryFullBlocks);
+                    await Service.AddRegistryFullBlocks(registryFullBlocks);
 
                     foreach (var item in blocks)
                     {

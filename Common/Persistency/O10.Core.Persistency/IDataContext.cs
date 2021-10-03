@@ -7,8 +7,8 @@ namespace O10.Core
 	{
 		string DataProvider { get; }
 
-		void Initialize(string connectionString);
+		IDataContext Initialize(string connectionString);
 
-		void EnsureConfigurationCompleted();
+		IDataContext EnsureConfigurationCompleted();
 	}
 }

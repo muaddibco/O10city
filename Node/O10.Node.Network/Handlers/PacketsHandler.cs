@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using O10.Core.Tracking;
 using O10.Transactions.Core.Ledgers;
 using O10.Network.Interfaces;
+using System;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace O10.Network.Handlers
 {
@@ -15,14 +17,15 @@ namespace O10.Network.Handlers
     {
         private readonly ILogger _log;
         private readonly BlockingCollection<IPacketBase> _packets;
-        private readonly PacketHandlingFlow[] _handlingFlows;
+        private readonly IServiceScope[] _handlingFlowScopes;
         private readonly int _maxDegreeOfParallelism;
         private readonly ITrackingService _trackingService;
         private CancellationToken _cancellationToken;
 
         public bool IsInitialized { get; private set; }
 
-        public PacketsHandler(IPacketVerifiersRepository packetTypeHandlersFactory,
+        public PacketsHandler(IServiceProvider serviceProvider,
+                              IPacketVerifiersRepository packetTypeHandlersFactory,
                               IPacketsHandlersRegistry blocksProcessorFactory,
                               ICoreVerifiersBulkFactory coreVerifiersBulkFactory,
                               ITrackingService trackingService,
@@ -33,16 +36,17 @@ namespace O10.Network.Handlers
 
             _maxDegreeOfParallelism = 4;
 
-            _handlingFlows = new PacketHandlingFlow[_maxDegreeOfParallelism];
+            _handlingFlowScopes = new IServiceScope[_maxDegreeOfParallelism];
 
             for (int i = 0; i < _maxDegreeOfParallelism; i++)
             {
-                _handlingFlows[i] = new PacketHandlingFlow(i,
+                _handlingFlowScopes[i] = serviceProvider.CreateScope();
+                /*_handlingFlowScopes[i] = new PacketHandlingFlow(i,
                                                            coreVerifiersBulkFactory,
                                                            packetTypeHandlersFactory,
                                                            blocksProcessorFactory,
                                                            trackingService,
-                                                           loggerService);
+                                                           loggerService);*/
             }
 
             _trackingService = trackingService;
@@ -89,12 +93,14 @@ namespace O10.Network.Handlers
             {
                 _trackingService.TrackMetric("ParallelProcesses", 1);
 
+                var handlingFlow = ActivatorUtilities.CreateInstance<PacketHandlingFlow>(_handlingFlowScopes[iteration].ServiceProvider, iteration);
+
                 foreach (var packet in _packets.GetConsumingEnumerable(_cancellationToken))
                 {
                     _log.Debug(() => $"Picked for handling flow #{iteration} packet {packet.GetType().Name}");
 
                     _trackingService.TrackMetric("MessagesQueueSize", -1);
-                    _handlingFlows[iteration].PostPacket(packet);
+                    handlingFlow.PostPacket(packet);
                 }
             }
             finally

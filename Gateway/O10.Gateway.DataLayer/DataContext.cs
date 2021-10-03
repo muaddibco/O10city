@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using O10.Gateway.DataLayer.Model;
-using O10.Core.DataLayer;
+using O10.Core.Persistency;
 
 namespace O10.Gateway.DataLayer
 {

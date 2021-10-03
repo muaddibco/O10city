@@ -4,7 +4,7 @@ using O10.Core.Architecture;
 
 namespace O10.Gateway.DataLayer.SqlServer
 {
-    [RegisterExtension(typeof(IDataContext), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IDataContext), Lifetime = LifetimeManagement.Transient)]
 	public class SqlServerDataContext : DataContext
 	{
 		public override string DataProvider => "SqlServer";

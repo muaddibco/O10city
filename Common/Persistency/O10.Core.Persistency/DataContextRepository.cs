@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using O10.Core.Architecture;
 
 
-namespace O10.Core.DataLayer
+namespace O10.Core.Persistency
 {
     [RegisterDefaultImplementation(typeof(IDataContextRepository), Lifetime = LifetimeManagement.Singleton)]
     public class DataContextRepository : IDataContextRepository
@@ -19,7 +20,7 @@ namespace O10.Core.DataLayer
         {
             T dc = (T)_dataContexts.FirstOrDefault(s => s is T && s.DataProvider == key);
 
-            return dc;
+            return (T)Activator.CreateInstance(dc.GetType());
         }
     }
 }

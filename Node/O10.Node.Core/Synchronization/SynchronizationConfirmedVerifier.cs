@@ -1,6 +1,5 @@
 ﻿using O10.Transactions.Core.Enums;
 using O10.Core.Architecture;
-using O10.Core.ExtensionMethods;
 using O10.Core.States;
 using O10.Core.Synchronization;
 using O10.Core;
@@ -11,7 +10,7 @@ using O10.Transactions.Core.Ledgers.Synchronization;
 
 namespace O10.Node.Core.Synchronization
 {
-    [RegisterExtension(typeof(IPacketVerifier), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IPacketVerifier), Lifetime = LifetimeManagement.Scoped)]
     public class SynchronizationConfirmedVerifier : IPacketVerifier
     {
         private readonly ISynchronizationContext _synchronizationContext;

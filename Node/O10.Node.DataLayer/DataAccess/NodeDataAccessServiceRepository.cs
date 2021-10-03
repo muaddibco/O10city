@@ -2,12 +2,12 @@
 using System.Linq;
 using O10.Transactions.Core.Enums;
 using O10.Core.Architecture;
-using O10.Core.DataLayer;
+using O10.Core.Persistency;
 using O10.Node.DataLayer.Exceptions;
 
 namespace O10.Node.DataLayer.DataAccess
 {
-    [RegisterDefaultImplementation(typeof(INodeDataAccessServiceRepository), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterDefaultImplementation(typeof(INodeDataAccessServiceRepository), Lifetime = LifetimeManagement.Scoped)]
     public class NodeDataAccessServiceRepository : INodeDataAccessServiceRepository
     {
         private readonly IEnumerable<INodeDataAccessService> _dataAccessServices;

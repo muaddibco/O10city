@@ -5,7 +5,7 @@ using O10.Core.Logging;
 
 namespace O10.Network.Handlers
 {
-    [RegisterDefaultImplementation(typeof(IPacketVerifiersRepository), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterDefaultImplementation(typeof(IPacketVerifiersRepository), Lifetime = LifetimeManagement.Scoped)]
     public class PacketVerifiersRepository : IPacketVerifiersRepository
     {
         private readonly ILogger _log;

@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using O10.Core;
-using O10.Core.DataLayer;
+using O10.Core.Persistency;
 using O10.IdentityProvider.DataLayer.Model;
 
 namespace O10.IdentityProvider.DataLayer

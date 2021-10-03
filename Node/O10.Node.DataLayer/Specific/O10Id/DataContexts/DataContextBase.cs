@@ -15,7 +15,7 @@ namespace O10.Node.DataLayer.Specific.O10Id.DataContexts
 
         public DbSet<O10Transaction> TransactionalBlocks { get; set; }
 
-        public DbSet<O10TransactionSource> TransactionalIdentities { get; set; }
+        public DbSet<O10TransactionSource> TransactionSources { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

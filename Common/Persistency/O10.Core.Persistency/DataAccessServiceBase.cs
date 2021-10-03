@@ -1,17 +1,15 @@
 ﻿using O10.Core.Configuration;
 using O10.Core.Logging;
 using System;
-using Microsoft.EntityFrameworkCore;
-using O10.Core.Tracking;
-using O10.Core.DataLayer.Configuration;
+using O10.Core.Persistency.Configuration;
 
-namespace O10.Core.DataLayer
+namespace O10.Core.Persistency
 {
     public abstract class DataAccessServiceBase<T> : IDataAccessService where T : DataContextBase
 	{
-        private readonly IDataLayerConfiguration _configuration;
+        protected readonly IDataLayerConfiguration _configuration;
 
-        protected DataAccessServiceBase(IConfigurationService configurationService, ITrackingService trackingService, ILoggerService loggerService)
+        protected DataAccessServiceBase(IConfigurationService configurationService, ILoggerService loggerService)
 		{
             if (configurationService is null)
             {
@@ -24,19 +22,14 @@ namespace O10.Core.DataLayer
             }
 
 			_configuration = configurationService.Get<IDataLayerConfiguration>();
-			TrackingService = trackingService;
 			ContextName = GetType().FullName;
 			Logger = loggerService.GetLogger(ContextName);
 		}
 
 		public bool IsInitialized { get; private set; }
 
-        protected static object Sync { get; } = new object();
-
         protected string ContextName { get; }
-        protected T DataContext { get; private set; }
-
-        protected ITrackingService TrackingService { get; }
+        //protected T DataContext { get; private set; }
 
         protected ILogger Logger { get; }
 
@@ -47,15 +40,16 @@ namespace O10.Core.DataLayer
                 return;
             }
 
-            try
+			try
 			{
 				Logger.Info($"{ContextName} Initialize started");
 
-				DataContext = GetDataContext(_configuration.ConnectionType);
-				DataContext.Initialize(_configuration.ConnectionString);
-				DataContext.Database.Migrate();
-				Logger.Info($"ConnectionString = {DataContext.Database.GetDbConnection().ConnectionString}");
-				DataContext.EnsureConfigurationCompleted();
+				Logger.Info($"ConnectionString = {_configuration.ConnectionString}");
+
+				var dbContext = GetDataContext();
+				dbContext.Initialize(_configuration.ConnectionString);
+				dbContext.Migrate();
+				dbContext.EnsureConfigurationCompleted();
 
 				PostInitTasks();
 
@@ -70,7 +64,7 @@ namespace O10.Core.DataLayer
 			}
 		}
 
-		protected abstract T GetDataContext(string connectionType);
+		protected abstract T GetDataContext();
 
 		protected virtual void PostInitTasks() { }
 	}

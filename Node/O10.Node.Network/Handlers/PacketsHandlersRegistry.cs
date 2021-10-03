@@ -7,7 +7,7 @@ using System;
 
 namespace O10.Network.Handlers
 {
-    [RegisterDefaultImplementation(typeof(IPacketsHandlersRegistry), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterDefaultImplementation(typeof(IPacketsHandlersRegistry), Lifetime = LifetimeManagement.Scoped)]
     public class PacketsHandlersRegistry : IPacketsHandlersRegistry
     {
         private readonly Dictionary<string, ILedgerPacketsHandler> _packetHandlers;

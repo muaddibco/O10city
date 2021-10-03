@@ -22,7 +22,7 @@ using O10.Transactions.Core.Ledgers;
 
 namespace O10.Node.Core.Centralized
 {
-    [RegisterDefaultImplementation(typeof(IRealTimeRegistryService), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterDefaultImplementation(typeof(IRealTimeRegistryService), Lifetime = LifetimeManagement.Scoped)]
     public class RealTimeRegistryService : IRealTimeRegistryService
     {
 		private readonly IIdentityKeyProvider _identityKeyProvider;
@@ -87,10 +87,10 @@ namespace O10.Node.Core.Centralized
                 if (t.IsCompletedSuccessfully)
                 {
                     var syncPacket = o as SynchronizationPacket;
-                        _chainDataServices.First(s => s.LedgerType == t.Result.Value.LedgerType)
-                            .AddDataKey(
-                                t.Result.Key, 
-                                new CombinedHashKey(syncPacket.Payload.Height, t.Result.Key.HashKey));
+                    _chainDataServices.First(s => s.LedgerType == t.Result.Value.LedgerType)
+                        .AddDataKey(
+                            t.Result.Key,
+                            new CombinedHashKey(syncPacket.Payload.Height, t.Result.Key.HashKey));
                 }
                 else
                 {

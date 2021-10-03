@@ -26,7 +26,7 @@ using O10.Transactions.Core.Ledgers.Registry;
 
 namespace O10.Node.DataLayer.Specific.Synchronization
 {
-    [RegisterExtension(typeof(IChainDataService), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IChainDataService), Lifetime = LifetimeManagement.Scoped)]
     public class DataService : ChainDataServiceBase<DataAccessService>
 	{
 		private readonly BlockingCollection<TaskCompletionWrapper<IPacketBase>> _packets = new BlockingCollection<TaskCompletionWrapper<IPacketBase>>();
@@ -175,13 +175,13 @@ namespace O10.Node.DataLayer.Specific.Synchronization
 					if (source.TryReceiveAll(out IList<TaskCompletionWrapper<IPacketBase>> packets))
 					{
 						Logger.Debug($"Getting from buffer and storing bulk of {nameof(SynchronizationConfirmedTransaction)} with heights {string.Join(',', packets.Select(b => ((SynchronizationPacket)b.State).Payload.Height))}");
-						Service.AddSynchronizationBlocks(packets.Select(b => new SynchronizationPacketDb { SynchronizationPacketId = ((SynchronizationPacket)b.State).Payload.Height, ReceiveTime = DateTime.Now, MedianTime = ((SynchronizationPacket)b.State).Payload.ReportedTime, Content = ((SynchronizationPacket)b.State).ToJson() }).ToArray());
+						await Service.AddSynchronizationBlocks(packets.Select(b => new SynchronizationPacketDb { SynchronizationPacketId = ((SynchronizationPacket)b.State).Payload.Height, ReceiveTime = DateTime.Now, MedianTime = ((SynchronizationPacket)b.State).Payload.ReportedTime, Content = ((SynchronizationPacket)b.State).ToJson() }).ToArray());
 					}
 					else
 					{
 						var wrapper = source.Receive(cancellationToken);
 						Logger.Debug($"Getting from buffer and storing {nameof(SynchronizationConfirmedTransaction)} with height {wrapper.State.AsPacket<SynchronizationPacket>().Payload.Height}");
-						Service.AddSynchronizationBlock(wrapper.State.AsPacket<SynchronizationPacket>().Payload.Height, DateTime.Now, wrapper.State.AsPacket<SynchronizationPacket>().Payload.ReportedTime, wrapper.State.ToJson());
+						await Service.AddSynchronizationBlock(wrapper.State.AsPacket<SynchronizationPacket>().Payload.Height, DateTime.Now, wrapper.State.AsPacket<SynchronizationPacket>().Payload.ReportedTime, wrapper.State.ToJson());
 					}
 				}
 				catch (Exception ex)
@@ -200,14 +200,14 @@ namespace O10.Node.DataLayer.Specific.Synchronization
 					if (source.TryReceiveAll(out IList<TaskCompletionWrapper<IPacketBase>> wrappers))
 					{
 						Logger.Debug($"Getting from buffer and storing bulk of {nameof(AggregatedRegistrationsTransaction)} with heights {string.Join(',', wrappers.Select(b => ((SynchronizationPacket)b.State).Payload.Height))}");
-                        Service.AddSynchronizationRegistryCombinedBlocks(wrappers.Select(b => new AggregatedRegistrationsTransactionDb { AggregatedRegistrationsTransactionId = ((SynchronizationPacket)b.State).Payload.Height, SyncBlockHeight = ((SynchronizationPacket)b.State).Transaction<AggregatedRegistrationsTransaction>().SyncHeight, Content = ((SynchronizationPacket)b.State).ToJson(), FullBlockHashes = string.Join(",", ((SynchronizationPacket)b.State).Transaction<AggregatedRegistrationsTransaction>().BlockHashes.Select(h => h.ToHexString())) }).ToArray());
+                        await Service.AddSynchronizationRegistryCombinedBlocks(wrappers.Select(b => new AggregatedRegistrationsTransactionDb { AggregatedRegistrationsTransactionId = ((SynchronizationPacket)b.State).Payload.Height, SyncBlockHeight = ((SynchronizationPacket)b.State).Transaction<AggregatedRegistrationsTransaction>().SyncHeight, Content = ((SynchronizationPacket)b.State).ToJson(), FullBlockHashes = string.Join(",", ((SynchronizationPacket)b.State).Transaction<AggregatedRegistrationsTransaction>().BlockHashes.Select(h => h.ToHexString())) }).ToArray());
 					}
 					else
 					{
 						var wrapper = source.Receive(cancellationToken);
 						var transaction = ((SynchronizationPacket)wrapper.State).Transaction<AggregatedRegistrationsTransaction>();
 						Logger.Debug($"Getting from buffer and storing {nameof(AggregatedRegistrationsTransaction)} with height {wrapper.State.AsPacket<SynchronizationPacket>().Payload.Height}");
-						Service.AddSynchronizationRegistryCombinedBlock(wrapper.State.AsPacket<SynchronizationPacket>().Payload.Height, transaction.SyncHeight, wrapper.State.ToJson(), transaction.BlockHashes.Select(h => h.ToHexString()).ToArray());
+						await Service.AddSynchronizationRegistryCombinedBlock(wrapper.State.AsPacket<SynchronizationPacket>().Payload.Height, transaction.SyncHeight, wrapper.State.ToJson(), transaction.BlockHashes.Select(h => h.ToHexString()).ToArray());
 					}
 				}
 				catch (Exception ex)

@@ -6,7 +6,7 @@ using O10.Core.Architecture;
 
 using O10.Core.Logging;
 
-namespace O10.Core.DataLayer
+namespace O10.Core.Persistency
 {
     [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Singleton)]
     public class DataLayerInitializer : InitializerBase

@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Common\O10.Core\O10.Core.csproj" />
+    <ProjectReference Include="..\..\..\..\Common\Persistency\O10.Core.Persistency\O10.Core.Persistency.csproj" />
   </ItemGroup>
 
 </Project>

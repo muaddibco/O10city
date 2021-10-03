@@ -1,10 +1,9 @@
 ﻿using O10.Core.Architecture;
-
 using O10.Core.Configuration;
 
-namespace O10.Core.DataLayer.Configuration
+namespace O10.Core.Persistency.Configuration
 {
-	[RegisterExtension(typeof(IConfigurationSection), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IConfigurationSection), Lifetime = LifetimeManagement.Singleton)]
     public class DataLayerConfiguration : ConfigurationSectionBase, IDataLayerConfiguration
     {
         public const string SECTION_NAME = "dataLayer";
@@ -16,6 +15,6 @@ namespace O10.Core.DataLayer.Configuration
         [Tokenized]
         public string ConnectionString { get; set; }
 
-		public string ConnectionType { get; set; }
-	}
+        public string ConnectionType { get; set; }
+    }
 }

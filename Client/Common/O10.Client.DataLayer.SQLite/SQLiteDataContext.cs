@@ -5,7 +5,7 @@ using O10.Core.Architecture;
 
 namespace O10.Client.DataLayer.SQLite
 {
-    [RegisterExtension(typeof(IDataContext), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IDataContext), Lifetime = LifetimeManagement.Transient)]
 	public class SQLiteDataContext : DataContext
 	{
 		public override string DataProvider => "SQLite";

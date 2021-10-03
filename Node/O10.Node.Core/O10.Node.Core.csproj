@@ -38,6 +38,7 @@
     <ProjectReference Include="..\..\Common\O10.Core\O10.Core.csproj">
       <Private>true</Private>
     </ProjectReference>
+    <ProjectReference Include="..\..\Common\Persistency\O10.Core.Persistency\O10.Core.Persistency.csproj" />
     <ProjectReference Include="..\O10.Node.DataLayer\O10.Node.DataLayer.csproj" />
     <ProjectReference Include="..\O10.Node.Network\O10.Node.Network.csproj">
       <Private>true</Private>

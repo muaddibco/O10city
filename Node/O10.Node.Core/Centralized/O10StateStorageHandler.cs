@@ -7,7 +7,7 @@ using O10.Network.Interfaces;
 
 namespace O10.Node.Core.Centralized
 {
-    [RegisterExtension(typeof(ILedgerPacketsHandler), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(ILedgerPacketsHandler), Lifetime = LifetimeManagement.Scoped)]
     public class O10StateStorageHandler : StorageHandlerBase<O10StatePacket>
     {
         public const string NAME = "O10StateStorage";

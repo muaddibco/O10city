@@ -5,7 +5,7 @@ using O10.Core.Exceptions;
 
 namespace O10.Core.States
 {
-    [RegisterDefaultImplementation(typeof(IStatesRepository), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterDefaultImplementation(typeof(IStatesRepository), Lifetime = LifetimeManagement.Scoped)]
     public class StatesRepository : IStatesRepository
     {
         private readonly Dictionary<string, IState> _states;

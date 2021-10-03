@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace O10.Network.Handlers
 {
-    [RegisterDefaultImplementation(typeof(ICoreVerifiersBulkFactory), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterDefaultImplementation(typeof(ICoreVerifiersBulkFactory), Lifetime = LifetimeManagement.Scoped)]
     internal class CoreVerifiersBulkFactory : ICoreVerifiersBulkFactory
     {
         private readonly IEnumerable<ICoreVerifier> _coreVerifiers;

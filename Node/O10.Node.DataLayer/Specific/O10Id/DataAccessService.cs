@@ -12,25 +12,23 @@ using O10.Core.Configuration;
 using O10.Core.ExtensionMethods;
 using O10.Core.Identity;
 using O10.Core.Logging;
-using O10.Core.Tracking;
-using O10.Core.DataLayer;
+using O10.Core.Persistency;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace O10.Node.DataLayer.Specific.O10Id
 {
-    [RegisterExtension(typeof(IDataAccessService), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IDataAccessService), Lifetime = LifetimeManagement.Scoped)]
     public class DataAccessService : NodeDataAccessServiceBase<O10IdDataContextBase>
     {
         private Dictionary<IKey, AccountIdentity> _keyIdentityMap;
         private readonly IIdentityKeyProvider _identityKeyProvider;
-        private readonly Dictionary<O10Transaction, TaskCompletionSource<O10Transaction>> _addCompletions = new Dictionary<O10Transaction, TaskCompletionSource<O10Transaction>>();
 
         public DataAccessService(IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
                                  INodeDataContextRepository dataContextRepository,
-                                 ITrackingService trackingService,
                                  IConfigurationService configurationService,
                                  ILoggerService loggerService)
-            : base(dataContextRepository, configurationService, trackingService, loggerService)
+            : base(dataContextRepository, configurationService, loggerService)
         {
             if (identityKeyProvidersRegistry is null)
             {
@@ -49,22 +47,12 @@ namespace O10.Node.DataLayer.Specific.O10Id
             base.PostInitTasks();
         }
 
-        protected override void ProcessEntitySaved(object entity)
-        {
-            if(entity is O10Transaction o10Transaction)
-            {
-                _addCompletions[o10Transaction].SetResult(o10Transaction);
-            }
-        }
-
         #region Account Identities
 
         public void LoadAllIdentities()
         {
-            lock (Sync)
-            {
-                _keyIdentityMap = DataContext.AccountIdentities.ToDictionary(i => _identityKeyProvider.GetKey(i.PublicKey.HexStringToByteArray()), i => i);
-            }
+            using var dbContext = GetDataContext();
+            _keyIdentityMap = dbContext.AccountIdentities.ToDictionary(i => _identityKeyProvider.GetKey(i.PublicKey.HexStringToByteArray()), i => i);
         }
 
         public IEnumerable<IKey> GetAllAccountIdentities()
@@ -82,7 +70,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
             return null;
         }
 
-        public AccountIdentity GetOrAddAccountIdentity(IKey key)
+        private async Task<AccountIdentity> GetOrAddAccountIdentity(IKey key, CancellationToken cancellationToken = default)
         {
             if (key is null)
             {
@@ -95,17 +83,16 @@ namespace O10.Node.DataLayer.Specific.O10Id
             {
                 identity = new AccountIdentity { PublicKey = key.Value.ToArray().ToHexString() };
 
-                lock (Sync)
-                {
-                    DataContext.AccountIdentities.Add(identity);
-                    _keyIdentityMap.Add(key, identity);
-                }
+                using var dbContext = GetDataContext();
+                dbContext.AccountIdentities.Add(identity);
+                await dbContext.SaveChangesAsync(cancellationToken);
+                _keyIdentityMap.Add(key, identity);
             }
 
             return identity;
         }
 
-#endregion Account Identities
+        #endregion Account Identities
 
         public O10TransactionSource GetTransactionSource(IKey key)
         {
@@ -124,48 +111,45 @@ namespace O10.Node.DataLayer.Specific.O10Id
             return GetTransactionalIdentity(accountIdentity);
         }
 
-        public O10TransactionSource GetTransactionalIdentity(AccountIdentity accountIdentity)
+        private O10TransactionSource GetTransactionalIdentity(AccountIdentity accountIdentity)
         {
             if (accountIdentity == null)
             {
                 throw new ArgumentNullException(nameof(accountIdentity));
             }
 
-            lock (Sync)
-            {
-                return DataContext.TransactionalIdentities.Include(r => r.Identity).FirstOrDefault(g => g.Identity == accountIdentity);
-            }
+            using var dbContext = GetDataContext();
+
+            return dbContext.TransactionSources.Include(r => r.Identity).FirstOrDefault(g => g.Identity == accountIdentity);
         }
 
-        public O10TransactionSource AddTransactionSource(AccountIdentity accountIdentity)
+        private async Task<O10TransactionSource> AddTransactionSource(AccountIdentity accountIdentity, CancellationToken cancellationToken = default)
         {
             O10TransactionSource transactionalIdentity = new O10TransactionSource
             {
                 Identity = accountIdentity
             };
 
-            lock (Sync)
-            {
-                DataContext.TransactionalIdentities.Add(transactionalIdentity);
-            }
+            using var dbContext = GetDataContext();
+            dbContext.TransactionSources.Add(transactionalIdentity);
+            await dbContext.SaveChangesAsync(cancellationToken);
 
             return transactionalIdentity;
         }
 
         public void UpdateRegistryInfo(long o10transactionId, long aggregatedRegistrationHeight)
         {
-            var o10transaction = GetLocalAwareO10TransactionPacketById(o10transactionId);
-            if(o10transaction != null)
+            using var dbContext = GetDataContext();
+            var o10transaction = GetLocalAwareO10TransactionPacketById(dbContext, o10transactionId);
+            if (o10transaction != null)
             {
-                lock(Sync)
-                {
-                    o10transaction.RegistryHeight = aggregatedRegistrationHeight;
-                    o10transaction.HashKey.RegistryHeight = aggregatedRegistrationHeight;
-                }
+
+                o10transaction.RegistryHeight = aggregatedRegistrationHeight;
+                o10transaction.HashKey.RegistryHeight = aggregatedRegistrationHeight;
             }
         }
 
-        public TaskCompletionSource<O10Transaction> AddTransaction(IKey source, ushort packetType, long height, string content, byte[] hash)
+        public async Task<O10Transaction> AddTransaction(IKey source, ushort packetType, long height, string content, byte[] hash, CancellationToken cancellationToken = default)
         {
             if (source == null)
             {
@@ -181,8 +165,8 @@ namespace O10.Node.DataLayer.Specific.O10Id
 
             if (transactionSource == null)
             {
-                AccountIdentity accountIdentity = GetOrAddAccountIdentity(source);
-                transactionSource = AddTransactionSource(accountIdentity);
+                AccountIdentity accountIdentity = await GetOrAddAccountIdentity(source, cancellationToken);
+                transactionSource = await AddTransactionSource(accountIdentity);
             }
 
             O10TransactionHashKey transactionHashKey = new O10TransactionHashKey
@@ -199,16 +183,14 @@ namespace O10.Node.DataLayer.Specific.O10Id
                 PacketType = packetType
             };
 
-            var addCompletion = new TaskCompletionSource<O10Transaction>();
-            _addCompletions.Add(o10Transaction, addCompletion);
+            using var dbContext = GetDataContext();
 
-            lock (Sync)
-            {
-                DataContext.BlockHashKeys.Add(transactionHashKey);
-                DataContext.TransactionalBlocks.Add(o10Transaction);
-            }
+            dbContext.BlockHashKeys.Add(transactionHashKey);
+            dbContext.TransactionalBlocks.Add(o10Transaction);
 
-            return addCompletion;
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            return o10Transaction;
         }
 
         public O10Transaction GetLastTransactionalBlock(O10TransactionSource transactionalIdentity)
@@ -218,10 +200,9 @@ namespace O10.Node.DataLayer.Specific.O10Id
                 throw new ArgumentNullException(nameof(transactionalIdentity));
             }
 
-            lock (Sync)
-            {
-                return DataContext.TransactionalBlocks.Where(b => b.Source == transactionalIdentity).OrderByDescending(b => b.Height).FirstOrDefault();
-            }
+            using var dbContext = GetDataContext();
+
+            return dbContext.TransactionalBlocks.Where(b => b.Source == transactionalIdentity).OrderByDescending(b => b.Height).FirstOrDefault();
         }
 
         public O10Transaction GetLastTransactionalBlock(IKey key)
@@ -245,10 +226,9 @@ namespace O10.Node.DataLayer.Specific.O10Id
 
         public IEnumerable<O10TransactionSource> GetAllTransctionalIdentities()
         {
-            lock (Sync)
-            {
-                return DataContext.TransactionalIdentities.ToList();
-            }
+            using var dbContext = GetDataContext();
+
+            return dbContext.TransactionSources.ToList();
         }
 
         public O10Transaction GetTransaction(IKey hash, long registryHeight)
@@ -259,16 +239,16 @@ namespace O10.Node.DataLayer.Specific.O10Id
             }
 
             string hashString = hash.ToString();
-            lock (Sync)
+            using var dbContext = GetDataContext();
             {
-                O10TransactionHashKey hashKey = GetLocalAwareHashKey(hashString, registryHeight);
+                O10TransactionHashKey hashKey = GetLocalAwareHashKey(dbContext, hashString, registryHeight);
                 if (hashKey == null)
                 {
                     Logger.Error($"Failed to find Hash Key {hashString} with Registry Height {registryHeight}");
                     return null;
                 }
 
-                O10Transaction transactionalBlock = GetLocalAwareTransactionalPacketByHashKey(hashKey.O10TransactionHashKeyId);
+                O10Transaction transactionalBlock = GetLocalAwareTransactionalPacketByHashKey(dbContext, hashKey.O10TransactionHashKeyId);
                 return transactionalBlock;
             }
         }
@@ -281,34 +261,33 @@ namespace O10.Node.DataLayer.Specific.O10Id
             }
 
             string hashString = hash.ToString();
-            lock (Sync)
-            {
-                O10TransactionHashKey hashKey = GetLocalAwareHashKey(hashString);
-                if (hashKey == null)
-                {
-                    Logger.Error($"Failed to find Hash Key {hashString}");
-                    return null;
-                }
+            using var dbContext = GetDataContext();
 
-                O10Transaction transactionalBlock = GetLocalAwareTransactionalPacketByHashKey(hashKey.O10TransactionHashKeyId);
-                return transactionalBlock;
+            O10TransactionHashKey hashKey = GetLocalAwareHashKey(dbContext, hashString);
+            if (hashKey == null)
+            {
+                Logger.Error($"Failed to find Hash Key {hashString}");
+                return null;
             }
+
+            O10Transaction transactionalBlock = GetLocalAwareTransactionalPacketByHashKey(dbContext, hashKey.O10TransactionHashKeyId);
+            return transactionalBlock;
         }
 
         #region Private Functions
 
-        private O10Transaction GetLocalAwareTransactionalPacketByHashKey(long hashKeyId)
+        private O10Transaction GetLocalAwareTransactionalPacketByHashKey(O10IdDataContextBase dbContext, long hashKeyId)
         {
             Logger.LogIfDebug(() => $"{nameof(GetLocalAwareTransactionalPacketByHashKey)}({hashKeyId})");
             O10Transaction transactionalBlock =
-                DataContext.TransactionalBlocks.Local.FirstOrDefault(b => b.HashKey != null && b.HashKey.O10TransactionHashKeyId == hashKeyId);
+                dbContext.TransactionalBlocks.Local.FirstOrDefault(b => b.HashKey != null && b.HashKey.O10TransactionHashKeyId == hashKeyId);
 
             if (transactionalBlock == null)
             {
                 Logger.LogIfDebug(() => $"{nameof(GetLocalAwareTransactionalPacketByHashKey)} not found in local");
 
                 transactionalBlock =
-                    DataContext.TransactionalBlocks.FirstOrDefault(b => b.HashKey != null && b.HashKey.O10TransactionHashKeyId == hashKeyId);
+                    dbContext.TransactionalBlocks.FirstOrDefault(b => b.HashKey != null && b.HashKey.O10TransactionHashKeyId == hashKeyId);
             }
             else
             {
@@ -327,11 +306,11 @@ namespace O10.Node.DataLayer.Specific.O10Id
             return transactionalBlock;
         }
 
-        private O10Transaction GetLocalAwareO10TransactionPacketById(long o10transactionId)
+        private O10Transaction GetLocalAwareO10TransactionPacketById(O10IdDataContextBase dbContext, long o10transactionId)
         {
             Logger.LogIfDebug(() => $"{nameof(GetLocalAwareO10TransactionPacketById)}({o10transactionId})");
             O10Transaction transactionalBlock =
-                DataContext.TransactionalBlocks.Local
+                dbContext.TransactionalBlocks.Local
                     .FirstOrDefault(b => b.O10TransactionId == o10transactionId);
 
             if (transactionalBlock == null)
@@ -339,7 +318,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
                 Logger.LogIfDebug(() => $"{nameof(GetLocalAwareO10TransactionPacketById)} not found in local");
 
                 transactionalBlock =
-                    DataContext.TransactionalBlocks
+                    dbContext.TransactionalBlocks
                         .FirstOrDefault(b => b.O10TransactionId == o10transactionId);
             }
             else
@@ -359,19 +338,19 @@ namespace O10.Node.DataLayer.Specific.O10Id
             return transactionalBlock;
         }
 
-        private O10TransactionHashKey GetLocalAwareHashKey(string hashString, long registryHeight)
+        private O10TransactionHashKey GetLocalAwareHashKey(O10IdDataContextBase dbContext, string hashString, long registryHeight)
         {
             Logger.LogIfDebug(() => $"GetLocalAwareHashKey({hashString}, {registryHeight})");
 
             O10TransactionHashKey hashKey 
-                = DataContext.BlockHashKeys.Local
+                = dbContext.BlockHashKeys.Local
                     .FirstOrDefault(h => h.RegistryHeight == registryHeight && h.Hash == hashString);
 
             if (hashKey == null)
             {
                 Logger.LogIfDebug(() => "GetLocalAwareHashKey: not found in local");
                 hashKey 
-                    = DataContext.BlockHashKeys
+                    = dbContext.BlockHashKeys
                         .FirstOrDefault(h => h.RegistryHeight == registryHeight && h.Hash == hashString);
             }
             else
@@ -383,19 +362,19 @@ namespace O10.Node.DataLayer.Specific.O10Id
             return hashKey;
         }
 
-        private O10TransactionHashKey GetLocalAwareHashKey(string hashString)
+        private O10TransactionHashKey GetLocalAwareHashKey(O10IdDataContextBase dbContext, string hashString)
         {
             Logger.LogIfDebug(() => $"GetLocalAwareHashKey({hashString})");
 
             O10TransactionHashKey hashKey
-                = DataContext.BlockHashKeys.Local
+                = dbContext.BlockHashKeys.Local
                     .FirstOrDefault(h => h.Hash == hashString);
 
             if (hashKey == null)
             {
                 Logger.LogIfDebug(() => "GetLocalAwareHashKey: not found in local");
                 hashKey
-                    = DataContext.BlockHashKeys
+                    = dbContext.BlockHashKeys
                         .FirstOrDefault(h => h.Hash == hashString);
             }
             else

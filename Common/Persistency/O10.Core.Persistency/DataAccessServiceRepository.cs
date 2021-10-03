@@ -3,7 +3,7 @@ using System.Linq;
 using O10.Core.Architecture;
 
 
-namespace O10.Core.DataLayer
+namespace O10.Core.Persistency
 {
     [RegisterDefaultImplementation(typeof(IDataAccessServiceRepository), Lifetime = LifetimeManagement.Singleton)]
     public class DataAccessServiceRepository : IDataAccessServiceRepository

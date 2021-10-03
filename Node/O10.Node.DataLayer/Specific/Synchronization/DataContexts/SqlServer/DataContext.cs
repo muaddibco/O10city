@@ -4,7 +4,7 @@ using O10.Node.DataLayer.DataAccess;
 
 namespace O10.Node.DataLayer.Specific.Synchronization.DataContexts.SqlServer
 {
-    [RegisterExtension(typeof(INodeDataContext), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(INodeDataContext), Lifetime = LifetimeManagement.Transient)]
     public class DataContext : SynchronizationDataContextBase
     {
         public override string DataProvider => "SqlServer";
