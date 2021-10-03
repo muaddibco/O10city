@@ -9,7 +9,5 @@ namespace O10.Node.DataLayer.DataServices
     public interface IChainDataService : IDataService<IPacketBase>
     {
         LedgerType LedgerType { get; }
-
-        long GetScalar(IDataKey dataKey);
     }
 }
