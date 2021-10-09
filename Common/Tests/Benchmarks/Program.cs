@@ -1,4 +1,5 @@
-﻿using BenchmarkDotNet.Running;
+﻿using Benchmark.DataAccess;
+using BenchmarkDotNet.Running;
 using O10.Core.ExtensionMethods;
 using System;
 
@@ -9,7 +10,8 @@ namespace Benchmarks
         static void Main(string[] args)
         {
             //BenchmarkRunner.Run<ByteArrayMemoryKeyBenchy>();
-            BenchmarkRunner.Run<JsonDeserializeBenchy>();
+            //BenchmarkRunner.Run<JsonDeserializeBenchy>();
+            BenchmarkRunner.Run<DataAccessBenchy>();
         }
     }
 }
