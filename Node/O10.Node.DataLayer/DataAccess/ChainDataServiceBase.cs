@@ -36,17 +36,6 @@ namespace O10.Node.DataLayer.DataAccess
         public abstract IEnumerable<IPacketBase> Get(IDataKey key);
         public abstract void Initialize(CancellationToken cancellationToken);
 
-        //TODO: not clear why does this virtual exists?
-        public virtual long GetScalar(IDataKey dataKey)
-        {
-            if (dataKey == null)
-            {
-                throw new System.ArgumentNullException(nameof(dataKey));
-            }
-
-            throw new DataKeyNotSupportedException(dataKey);
-        }
-
         public abstract void AddDataKey(IDataKey key, IDataKey newKey);
     }
 }

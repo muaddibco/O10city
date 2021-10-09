@@ -67,21 +67,6 @@ namespace O10.Node.DataLayer.Specific.Synchronization
 			return wrapperOfKey;
         }
 
-        public override long GetScalar(IDataKey key)
-        {
-			if (key == null)
-			{
-				throw new ArgumentNullException(nameof(key));
-			}
-
-            if (key is SingleByBlockTypeAndHeight blockTypeAndHeight && blockTypeAndHeight.BlockType == TransactionTypes.Synchronization_RegistryCombinationBlock)
-            {
-                return Service.GetRegistryCombinedBlockByHeight(blockTypeAndHeight.Height)?.SyncBlockHeight ?? 0L;
-            }
-
-            return base.GetScalar(key);
-		}
-
         override public IEnumerable<IPacketBase> Get(IDataKey key)
         {
 			if (key == null)
@@ -89,48 +74,57 @@ namespace O10.Node.DataLayer.Specific.Synchronization
 				throw new ArgumentNullException(nameof(key));
 			}
 
-			if (key is SingleByBlockTypeKey singleByBlockTypeKey)
+            switch (key)
             {
-				switch (singleByBlockTypeKey.BlockType)
-				{
-					case TransactionTypes.Synchronization_RegistryCombinationBlock:
-						{
-                            AggregatedRegistrationsTransactionDb block = Service.GetLastRegistryCombinedBlock();
-							return new List<IPacketBase> { TranslatorsRepository.GetInstance<AggregatedRegistrationsTransactionDb, SynchronizationPacket>().Translate(block) };
-						}
-					case TransactionTypes.Synchronization_ConfirmedBlock:
-						{
-                            SynchronizationPacketDb block = Service.GetLastSynchronizationBlock();
-							return new List<IPacketBase> { TranslatorsRepository.GetInstance<SynchronizationPacketDb, SynchronizationPacket>().Translate(block) };
-						}
-					default:
-						return null;
-				}
-			}
-			else if (key is BlockTypeLowHeightKey blockTypeLowHeightKey)
-			{
-				if (blockTypeLowHeightKey.BlockType == TransactionTypes.Synchronization_ConfirmedBlock)
-				{
-					return Service.GetAllLastSynchronizationBlocks(blockTypeLowHeightKey.Height).Select(b => TranslatorsRepository.GetInstance<SynchronizationPacketDb, SynchronizationPacket>().Translate(b));
-				}
-				else if (blockTypeLowHeightKey.BlockType == TransactionTypes.Synchronization_RegistryCombinationBlock)
-				{
-					return Service.GetAllLastRegistryCombinedBlocks(blockTypeLowHeightKey.Height).OrderBy(b => b.AggregatedRegistrationsTransactionId).Select(b => TranslatorsRepository.GetInstance<AggregatedRegistrationsTransactionDb, SynchronizationPacket>().Translate(b));
-				}
-			}
-			else if (key is BlockTypeKey blockTypeKey)
-			{
-				if (blockTypeKey.BlockType == TransactionTypes.Synchronization_ConfirmedBlock)
-				{
-					return Service.GetAllSynchronizationBlocks().Select(b => TranslatorsRepository.GetInstance<SynchronizationPacketDb, SynchronizationPacket>().Translate(b));
-				}
-				else if (blockTypeKey.BlockType == TransactionTypes.Synchronization_RegistryCombinationBlock)
-				{
-					return Service.GetAllRegistryCombinedBlocks().Select(b => TranslatorsRepository.GetInstance<AggregatedRegistrationsTransactionDb, SynchronizationPacket>().Translate(b));
-				}
-			}
+                case SingleByBlockTypeKey singleByBlockTypeKey:
+                    {
+                        switch (singleByBlockTypeKey.BlockType)
+                        {
+                            case TransactionTypes.Synchronization_RegistryCombinationBlock:
+                                {
+                                    AggregatedRegistrationsTransactionDb block = Service.GetLastRegistryCombinedBlock();
+                                    return new List<IPacketBase> { TranslatorsRepository.GetInstance<AggregatedRegistrationsTransactionDb, SynchronizationPacket>().Translate(block) };
+                                }
+                            case TransactionTypes.Synchronization_ConfirmedBlock:
+                                {
+                                    SynchronizationPacketDb block = Service.GetLastSynchronizationBlock();
+                                    return new List<IPacketBase> { TranslatorsRepository.GetInstance<SynchronizationPacketDb, SynchronizationPacket>().Translate(block) };
+                                }
+                            default:
+                                return null;
+                        }
+                    }
 
-			throw new DataKeyNotSupportedException(key);
+                case BlockTypeLowHeightKey blockTypeLowHeightKey:
+                    {
+                        if (blockTypeLowHeightKey.BlockType == TransactionTypes.Synchronization_ConfirmedBlock)
+                        {
+                            return Service.GetAllLastSynchronizationBlocks(blockTypeLowHeightKey.Height).Select(b => TranslatorsRepository.GetInstance<SynchronizationPacketDb, SynchronizationPacket>().Translate(b));
+                        }
+                        else if (blockTypeLowHeightKey.BlockType == TransactionTypes.Synchronization_RegistryCombinationBlock)
+                        {
+                            return Service.GetAllLastRegistryCombinedBlocks(blockTypeLowHeightKey.Height).OrderBy(b => b.AggregatedRegistrationsTransactionId).Select(b => TranslatorsRepository.GetInstance<AggregatedRegistrationsTransactionDb, SynchronizationPacket>().Translate(b));
+                        }
+
+                        break;
+                    }
+
+                case BlockTypeKey blockTypeKey:
+                    {
+                        if (blockTypeKey.BlockType == TransactionTypes.Synchronization_ConfirmedBlock)
+                        {
+                            return Service.GetAllSynchronizationBlocks().Select(b => TranslatorsRepository.GetInstance<SynchronizationPacketDb, SynchronizationPacket>().Translate(b));
+                        }
+                        else if (blockTypeKey.BlockType == TransactionTypes.Synchronization_RegistryCombinationBlock)
+                        {
+                            return Service.GetAllRegistryCombinedBlocks().Select(b => TranslatorsRepository.GetInstance<AggregatedRegistrationsTransactionDb, SynchronizationPacket>().Translate(b));
+                        }
+
+                        break;
+                    }
+            }
+
+            throw new DataKeyNotSupportedException(key);
 		}
 
 		override public void Initialize(CancellationToken cancellationToken)
