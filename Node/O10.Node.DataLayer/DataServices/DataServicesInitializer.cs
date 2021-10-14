@@ -6,7 +6,7 @@ using O10.Core.Logging;
 
 namespace O10.Node.DataLayer.DataServices
 {
-    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Scoped)]
 	public class DataServicesInitializer : InitializerBase
 	{
 		private readonly IChainDataServicesManager _chainDataServicesManager;

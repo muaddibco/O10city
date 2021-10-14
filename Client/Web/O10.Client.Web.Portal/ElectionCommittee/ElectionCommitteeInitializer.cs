@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace O10.Client.Web.Portal.ElectionCommittee
 {
-    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Scoped)]
     public class ElectionCommitteeInitializer : InitializerBase
     {
         private readonly IElectionCommitteeService _electionCommitteeService;

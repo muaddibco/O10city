@@ -6,7 +6,7 @@ using O10.Core.Architecture;
 
 namespace O10.Client.DataLayer.Services
 {
-    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Scoped)]
     public class DataAccessServiceInitializer : IInitializer
     {
         private readonly IDataAccessService _dataAccessService;

@@ -33,6 +33,8 @@ namespace O10.Core.Persistency
 
         protected ILogger Logger { get; }
 
+		protected T DataContext { get; private set; }
+
         public void Initialize()
 		{
 			if (IsInitialized)
@@ -46,10 +48,10 @@ namespace O10.Core.Persistency
 
 				Logger.Info($"ConnectionString = {_configuration.ConnectionString}");
 
-				var dbContext = GetDataContext();
-				dbContext.Initialize(_configuration.ConnectionString);
-				dbContext.Migrate();
-				dbContext.EnsureConfigurationCompleted();
+				DataContext = GetDataContext();
+				DataContext.Initialize(_configuration.ConnectionString);
+				DataContext.Migrate();
+				DataContext.EnsureConfigurationCompleted();
 
 				PostInitTasks();
 

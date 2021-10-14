@@ -49,10 +49,9 @@ namespace O10.Node.DataLayer.Specific.O10Id
 
         #region Account Identities
 
-        public void LoadAllIdentities()
+        private void LoadAllIdentities()
         {
-            using var dbContext = GetDataContext();
-            _keyIdentityMap = dbContext.AccountIdentities.ToDictionary(i => _identityKeyProvider.GetKey(i.PublicKey.HexStringToByteArray()), i => i);
+            _keyIdentityMap = DataContext.AccountIdentities.ToDictionary(i => _identityKeyProvider.GetKey(i.PublicKey.HexStringToByteArray()), i => i);
         }
 
         public IEnumerable<IKey> GetAllAccountIdentities()
@@ -83,9 +82,13 @@ namespace O10.Node.DataLayer.Specific.O10Id
             {
                 identity = new AccountIdentity { PublicKey = key.Value.ToArray().ToHexString() };
 
-                using var dbContext = GetDataContext();
-                dbContext.AccountIdentities.Add(identity);
-                await dbContext.SaveChangesAsync(cancellationToken);
+                //using var dbContext = GetDataContext();
+
+                string sql = "INSERT INTO O10AccountIdentity (KeyHash, PublicKey) OUTPUT Inserted.AccountIdentityId VALUES (0, @PublicKey)";
+                identity.AccountIdentityId = (long)await DataContext.ExecuteScalarAsync(sql, identity, cancellationToken: cancellationToken);
+
+                //dbContext.AccountIdentities.Add(identity);
+                //await dbContext.SaveChangesAsync(cancellationToken);
                 _keyIdentityMap.Add(key, identity);
             }
 

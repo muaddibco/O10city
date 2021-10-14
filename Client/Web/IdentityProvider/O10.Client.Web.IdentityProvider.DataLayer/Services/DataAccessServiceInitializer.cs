@@ -6,7 +6,7 @@ using O10.Core.Architecture;
 
 namespace O10.IdentityProvider.DataLayer.Services
 {
-	[RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Singleton)]
+	[RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Scoped)]
 	public class DataAccessServiceInitializer : InitializerBase
 	{
 		private readonly IDataAccessService _dataAccessService;

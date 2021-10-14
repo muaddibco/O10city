@@ -10,7 +10,7 @@ using O10.Node.Core.DataLayer;
 
 namespace O10.Node.Core.Common
 {
-    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Scoped)]
     public class CommonTopologyInitializer : InitializerBase
     {
         private readonly INeighborhoodState _neighborhoodState;

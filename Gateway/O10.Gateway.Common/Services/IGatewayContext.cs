@@ -1,13 +1,13 @@
-﻿using O10.Core.Cryptography;
+﻿using O10.Core.Architecture;
+using O10.Core.Cryptography;
 using O10.Core.Identity;
-using O10.Core.States;
 using O10.Transactions.Core.DTOs;
-using System;
 using System.Threading.Tasks;
 
 namespace O10.Gateway.Common.Services
 {
-    public interface IGatewayContext : IState, IDisposable
+    [ServiceContract]
+    public interface IGatewayContext
     {
         IKey AccountKey { get; }
 

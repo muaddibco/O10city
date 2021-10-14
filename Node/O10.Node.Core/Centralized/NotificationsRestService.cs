@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using O10.Transactions.Core.Ledgers;
-using O10.Transactions.Core.Enums;
 using O10.Core.Architecture;
 using O10.Core.Logging;
 using O10.Node.Core.Centralized;
@@ -12,15 +10,15 @@ using Flurl;
 using Flurl.Http;
 using Newtonsoft.Json;
 using O10.Node.Core.DataLayer;
-using O10.Core.DataLayer;
 using O10.Core.Models;
 using System.Net.Http;
 using O10.Core.Serialization;
 using O10.Transactions.Core.DTOs;
+using O10.Core.Persistency;
 
 namespace O10.Node.Worker.Services
 {
-    [RegisterDefaultImplementation(typeof(INotificationsService), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterDefaultImplementation(typeof(INotificationsService), Lifetime = LifetimeManagement.Scoped)]
 	public class NotificationsRestService : INotificationsService
 	{
 		private readonly IRealTimeRegistryService _realTimeRegistryService;

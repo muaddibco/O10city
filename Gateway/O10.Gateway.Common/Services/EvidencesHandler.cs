@@ -29,7 +29,7 @@ namespace O10.Gateway.Common.Services
         public EvidencesHandler(ITranslatorsRepository translatorsRepository,
                                 IAccessorProvider accessorProvider,
                                 INetworkSynchronizer networkSynchronizer,
-                                IStatesRepository statesRepository)
+                                IGatewayContext gatewayContext)
         {
             _inputPipe 
                 = new TransformBlock<DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase>, DependingTaskCompletionWrapper<EvidenceDescriptor, IPacketBase>>(d => d);
@@ -41,7 +41,7 @@ namespace O10.Gateway.Common.Services
             _inputPipe.LinkTo(_produceRegistrationPacket, ValidateEvidence);
             _accessorProvider = accessorProvider;
             _networkSynchronizer = networkSynchronizer;
-            _gatewayContext = statesRepository.GetInstance<IGatewayContext>();
+            _gatewayContext = gatewayContext;
         }
 
         public ISourceBlock<T> GetSourcePipe<T>(string name = null)

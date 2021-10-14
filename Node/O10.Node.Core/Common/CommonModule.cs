@@ -5,7 +5,7 @@ using O10.Network.Interfaces;
 
 namespace O10.Node.Core.Common
 {
-    [RegisterExtension(typeof(IModule), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IModule), Lifetime = LifetimeManagement.Scoped)]
     public class CommonModule : ModuleBase
     {
         public const string NAME = nameof(CommonModule);

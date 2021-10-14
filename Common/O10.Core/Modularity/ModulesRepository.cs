@@ -7,7 +7,7 @@ using O10.Core.Exceptions;
 
 namespace O10.Core.Modularity
 {
-    [RegisterDefaultImplementation(typeof(IModulesRepository), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterDefaultImplementation(typeof(IModulesRepository), Lifetime = LifetimeManagement.Scoped)]
     public class ModulesRepository : IModulesRepository
     {
         private readonly Dictionary<string, IModule> _roles;

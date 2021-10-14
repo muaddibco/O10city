@@ -9,7 +9,7 @@ using O10.Core.Configuration;
 
 namespace O10.Core.Tracking
 {
-    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Scoped)]
     public class TrackingInitializer : InitializerBase
     {
         private readonly IEnumerable<ITrackingReporter> _trackingReporters;

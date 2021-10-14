@@ -11,7 +11,7 @@ using O10.Core.Serialization;
 
 namespace O10.Client.Web.Portal.Services
 {
-    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Scoped)]
     public class AutoLoginsInitializer : InitializerBase
     {
         private readonly IDataAccessService _dataAccessService;

@@ -12,7 +12,7 @@ namespace O10.Network.Handlers
     {
         private readonly IEnumerable<ICoreVerifier> _coreVerifiers;
         private readonly IPacketVerifiersRepository _chainTypeValidationHandlersFactory;
-        private readonly IPacketsHandlersRegistry _blocksHandlersRegistry;
+        private readonly IPacketsHandlersRegistry _packetsHandlersRegistry;
         private readonly ITrackingService _trackingService;
         private readonly ILogger _log;
 
@@ -21,14 +21,14 @@ namespace O10.Network.Handlers
         public PacketHandlingFlow(int iteration,
                                   ICoreVerifiersBulkFactory coreVerifiersBulkFactory,
                                   IPacketVerifiersRepository packetTypeHandlersFactory,
-                                  IPacketsHandlersRegistry blocksProcessorFactory,
+                                  IPacketsHandlersRegistry packetsHandlersRegistry,
                                   ITrackingService trackingService,
                                   ILoggerService loggerService)
         {
             _coreVerifiers = coreVerifiersBulkFactory.Create();
             _log = loggerService.GetLogger($"{nameof(PacketHandlingFlow)}#{iteration}");
             _chainTypeValidationHandlersFactory = packetTypeHandlersFactory;
-            _blocksHandlersRegistry = blocksProcessorFactory;
+            _packetsHandlersRegistry = packetsHandlersRegistry;
             _trackingService = trackingService;
             _processBlock = new ActionBlock<IPacketBase>(DispatchBlock, new ExecutionDataflowBlockOptions() { MaxDegreeOfParallelism = 1, BoundedCapacity = 1000000 });
         }
@@ -89,7 +89,7 @@ namespace O10.Network.Handlers
                 {
                     _log.Debug(() => $"Dispatching block {packet.GetType().Name}");
 
-                    foreach (ILedgerPacketsHandler handler in _blocksHandlersRegistry.GetBulkInstances(packet.LedgerType))
+                    foreach (ILedgerPacketsHandler handler in _packetsHandlersRegistry.GetBulkInstances(packet.LedgerType))
 					{
                         _log.Debug(() => $"Dispatching block {packet.GetType().Name} to {handler.GetType().Name}");
 						handler.ProcessPacket(packet);

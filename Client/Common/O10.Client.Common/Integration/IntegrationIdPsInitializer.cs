@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace O10.Client.Common.Integration
 {
-    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Scoped)]
     public class IntegrationIdPsInitializer : InitializerBase
     {
         private readonly IIntegrationIdPRepository _integrationIdPRepository;

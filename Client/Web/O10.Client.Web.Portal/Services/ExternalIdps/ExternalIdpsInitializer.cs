@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 
 namespace O10.Client.Web.Portal.Services.ExternalIdps
 {
-    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Scoped)]
     public class ExternalIdpsInitializer : InitializerBase
     {
         private readonly IAzureConfiguration _azureConfiguration;

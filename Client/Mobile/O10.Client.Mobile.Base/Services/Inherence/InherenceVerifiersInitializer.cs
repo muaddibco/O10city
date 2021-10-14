@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace O10.Client.Mobile.Base.Services.Inherence
 {
-    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Scoped)]
     public class InherenceVerifiersInitializer : InitializerBase
     {
         private readonly IVerifierInteractionsManager _verifierInteractionsManager;

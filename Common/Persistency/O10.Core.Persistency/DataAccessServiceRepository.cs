@@ -5,7 +5,7 @@ using O10.Core.Architecture;
 
 namespace O10.Core.Persistency
 {
-    [RegisterDefaultImplementation(typeof(IDataAccessServiceRepository), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterDefaultImplementation(typeof(IDataAccessServiceRepository), Lifetime = LifetimeManagement.Scoped)]
     public class DataAccessServiceRepository : IDataAccessServiceRepository
     {
         private readonly IEnumerable<IDataAccessService> _dataAccessServices;

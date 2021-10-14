@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace O10.Client.Mobile.Base.Services
 {
-    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Scoped)]
     public class DbConnectionInitializer : InitializerBase
     {
         private readonly IClientDataContextConfiguration _configuration;

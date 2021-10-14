@@ -1,7 +1,7 @@
 ﻿using O10.Core.Architecture;
 using O10.Core.Configuration;
 
-namespace O10.Node.Core.Configuration
+namespace O10.Node.Network.Configuration
 {
     [RegisterExtension(typeof(IConfigurationSection), Lifetime = LifetimeManagement.Singleton)]
     public class NodeConfiguration : ConfigurationSectionBase, INodeConfiguration

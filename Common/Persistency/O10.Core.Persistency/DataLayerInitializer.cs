@@ -8,7 +8,7 @@ using O10.Core.Logging;
 
 namespace O10.Core.Persistency
 {
-    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Scoped)]
     public class DataLayerInitializer : InitializerBase
     {
         private readonly IEnumerable<IDataAccessService> _dataAccessServices;

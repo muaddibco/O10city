@@ -1,14 +1,12 @@
 ﻿using O10.Network.Interfaces;
 using O10.Network.Communication;
-using System;
 using System.Net;
 using O10.Core.Configuration;
 using System.Threading;
-using O10.Node.Core.Configuration;
 using O10.Core.Logging;
-using O10.Core.Modularity;
 using O10.Network.Configuration;
 using O10.Network.Handlers;
+using O10.Node.Network.Configuration;
 
 namespace O10.Node.Core
 {
@@ -26,14 +24,11 @@ namespace O10.Node.Core
         private readonly IServerCommunicationServicesRepository _communicationServicesFactory;
         private readonly IServerCommunicationServicesRegistry _communicationServicesRegistry;
         private readonly IConfigurationService _configurationService;
-        private readonly IModulesRepository _modulesRepository;
         private readonly IPacketsHandler _packetsHandler;
-        private readonly CancellationTokenSource _cancellationTokenSource;
 
         public NodeMain(IServerCommunicationServicesRepository communicationServicesFactory,
                         IServerCommunicationServicesRegistry communicationServicesRegistry,
                         IConfigurationService configurationService,
-                        IModulesRepository modulesRepository,
                         IPacketsHandler packetsHandler,
                         ILoggerService loggerService)
         {
@@ -41,21 +36,10 @@ namespace O10.Node.Core
             _communicationServicesFactory = communicationServicesFactory;
             _communicationServicesRegistry = communicationServicesRegistry;
             _configurationService = configurationService;
-            _modulesRepository = modulesRepository;
             _packetsHandler = packetsHandler;
-            _cancellationTokenSource = new CancellationTokenSource();
         }
 
         public void Initialize(CancellationToken ct)
-        {
-            InitializeCommunicationLayer();
-
-            ObtainConfiguredModules();
-
-            InitializeModules(ct);
-        }
-
-        private void InitializeCommunicationLayer()
         {
             INodeConfiguration nodeConfiguration = _configurationService.Get<INodeConfiguration>();
 
@@ -67,44 +51,7 @@ namespace O10.Node.Core
                 _communicationServicesRegistry.RegisterInstance(serverCommunicationService, communicationConfiguration.CommunicationServiceName);
             }
 
-            _packetsHandler.Initialize(_cancellationTokenSource.Token);
-        }
-
-        private void InitializeModules(CancellationToken ct)
-        {
-            foreach (IModule module in _modulesRepository.GetBulkInstances())
-            {
-                try
-                {
-                    module.Initialize(ct);
-                }
-                catch (Exception ex)
-                {
-                    _log.Error($"Failed to initialize Module '{module.Name}'", ex);
-                }
-            }
-        }
-
-        private void ObtainConfiguredModules()
-        {
-            INodeConfiguration nodeConfiguration = _configurationService.Get<INodeConfiguration>();
-
-            string[] moduleNames = nodeConfiguration.Modules;
-            if (moduleNames != null)
-            {
-                foreach (string moduleName in moduleNames)
-                {
-                    try
-                    {
-                        IModule module = _modulesRepository.GetInstance(moduleName);
-                        _modulesRepository.RegisterInstance(module);
-                    }
-                    catch (Exception ex)
-                    {
-                        _log.Error($"Failed to register Module with name '{moduleName}'.", ex);
-                    }
-                }
-            }
+            _packetsHandler.Initialize(ct);
         }
 
         internal void Start()
@@ -117,11 +64,6 @@ namespace O10.Node.Core
             }
 
             _packetsHandler.Start();
-
-            foreach (IModule module in _modulesRepository.GetBulkInstances())
-            {
-                module.StartModule();
-            }
         }
     }
 }

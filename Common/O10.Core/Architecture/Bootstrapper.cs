@@ -67,7 +67,10 @@ namespace O10.Core.Architecture
 
         protected virtual IEnumerable<string> EnumerateCatalogItems(string rootFolder)
         {
-            return new string[] { "O10.Core.dll" }.Concat(Directory.EnumerateFiles(rootFolder, "O10.Tracking.*.dll").Select(f => new FileInfo(f).Name));
+            return 
+                new string[] { "O10.Core.dll" }
+                .Concat(Directory.EnumerateFiles(rootFolder, "O10.Core.*.dll").Select(f => new FileInfo(f).Name))
+                .Concat(Directory.EnumerateFiles(rootFolder, "O10.Tracking.*.dll").Select(f => new FileInfo(f).Name));
         }
 
         #region Private Functions

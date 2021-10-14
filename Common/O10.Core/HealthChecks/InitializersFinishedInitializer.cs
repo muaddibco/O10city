@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace O10.Core.HealthChecks
 {
-    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Scoped)]
     public class InitializersFinishedInitializer : InitializerBase
     {
         private readonly IHealthChecksProvider _healthChecksProvider;

@@ -6,7 +6,7 @@ using O10.Core.Architecture;
 
 namespace O10.Client.Web.Portal.Services
 {
-    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Scoped)]
     public class ConsentManagementInitializer : InitializerBase
     {
         private readonly IConsentManagementService _consentManagementService;

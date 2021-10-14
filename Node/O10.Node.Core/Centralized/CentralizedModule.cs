@@ -8,11 +8,11 @@ using O10.Network.Interfaces;
 
 namespace O10.Node.Core.Centralized
 {
-    [RegisterExtension(typeof(IModule), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IModule), Lifetime = LifetimeManagement.Scoped)]
     public class CentralizedModule : ModuleBase
     {
         private readonly ILoggerService _loggerService;
-        private readonly IPacketsHandlersRegistry _blocksHandlersRegistry;
+        private readonly IPacketsHandlersRegistry _packetsHandlersRegistry;
 		private readonly INotificationsService _notificationsService;
 		private readonly IRealTimeRegistryService _realTimeRegistryService;
         private readonly IChainDataServicesManager _chainDataServicesManager;
@@ -21,7 +21,7 @@ namespace O10.Node.Core.Centralized
 
 
         public CentralizedModule(ILoggerService loggerService,
-                                 IPacketsHandlersRegistry blocksHandlersFactory,
+                                 IPacketsHandlersRegistry packetsHandlersRegistry,
                                  INotificationsService notificationsService,
                                  IRealTimeRegistryService realTimeRegistryService,
                                  IChainDataServicesManager chainDataServicesManager,
@@ -29,7 +29,7 @@ namespace O10.Node.Core.Centralized
                                  IHashCalculationsRepository hashCalculationsRepository) : base(loggerService)
         {
             _loggerService = loggerService;
-            _blocksHandlersRegistry = blocksHandlersFactory;
+            _packetsHandlersRegistry = packetsHandlersRegistry;
 			_notificationsService = notificationsService;
 			_realTimeRegistryService = realTimeRegistryService;
             _chainDataServicesManager = chainDataServicesManager;
@@ -48,16 +48,16 @@ namespace O10.Node.Core.Centralized
 
         protected override void InitializeInner()
         {
-            ILedgerPacketsHandler blocksHandler = _blocksHandlersRegistry.GetInstance(TransactionsRegistryCentralizedHandler.NAME);
-            _blocksHandlersRegistry.RegisterInstance(blocksHandler);
+            ILedgerPacketsHandler blocksHandler = _packetsHandlersRegistry.GetInstance(TransactionsRegistryCentralizedHandler.NAME);
+            _packetsHandlersRegistry.RegisterInstance(blocksHandler);
             blocksHandler.Initialize(_cancellationToken);
 
-			blocksHandler = _blocksHandlersRegistry.GetInstance(O10StateStorageHandler.NAME);
-			_blocksHandlersRegistry.RegisterInstance(blocksHandler);
+			blocksHandler = _packetsHandlersRegistry.GetInstance(O10StateStorageHandler.NAME);
+			_packetsHandlersRegistry.RegisterInstance(blocksHandler);
 			blocksHandler.Initialize(_cancellationToken);
 
-			blocksHandler = _blocksHandlersRegistry.GetInstance(StealthStorageHandler.NAME);
-			_blocksHandlersRegistry.RegisterInstance(blocksHandler);
+			blocksHandler = _packetsHandlersRegistry.GetInstance(StealthStorageHandler.NAME);
+			_packetsHandlersRegistry.RegisterInstance(blocksHandler);
 			blocksHandler.Initialize(_cancellationToken);
 		}
 	}

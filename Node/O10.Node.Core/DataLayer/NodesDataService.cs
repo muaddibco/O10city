@@ -15,7 +15,7 @@ using O10.Core.Notifications;
 namespace O10.Node.Core.DataLayer
 {
 
-    [RegisterDefaultImplementation(typeof(INodesDataService), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterDefaultImplementation(typeof(INodesDataService), Lifetime = LifetimeManagement.Scoped)]
     public class NodesDataService : INodesDataService
     {
         private readonly IIdentityKeyProvider _identityKeyProvider;
@@ -37,7 +37,7 @@ namespace O10.Node.Core.DataLayer
             _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
         }
 
-        public TaskCompletionWrapper<Network.Topology.Node> Add(Network.Topology.Node item)
+        public TaskCompletionWrapper<NodeEntity> Add(NodeEntity item)
         {
             if (item is null)
             {
@@ -46,7 +46,7 @@ namespace O10.Node.Core.DataLayer
 
             _dataAccessService.AddNode(item.Key, (byte)item.NodeRole, item.IPAddress);
 
-            var wrapper = new TaskCompletionWrapper<Network.Topology.Node>(item);
+            var wrapper = new TaskCompletionWrapper<NodeEntity>(item);
             wrapper.TaskCompletion.SetResult(new SucceededNotification());
 
             return wrapper;
@@ -56,14 +56,14 @@ namespace O10.Node.Core.DataLayer
         {
         }
 
-        public IEnumerable<Network.Topology.Node> Get(IDataKey key)
+        public IEnumerable<NodeEntity> Get(IDataKey key)
         {
             if (key == null)
             {
                 return _dataAccessService
                     .GetAllNodes()
                     .Select(n =>
-                    new Network.Topology.Node
+                    new NodeEntity
                     {
                         Key = _identityKeyProvider.GetKey(n.PublicKey.HexStringToByteArray()),
                         IPAddress = IPAddress.Parse(n.IPAddress),
@@ -77,7 +77,7 @@ namespace O10.Node.Core.DataLayer
 
                 if (node != null)
                 {
-                    return new List<Network.Topology.Node> { new Network.Topology.Node { Key = uniqueKey.IdentityKey, IPAddress = IPAddress.Parse(node.IPAddress) } };
+                    return new List<NodeEntity> { new NodeEntity { Key = uniqueKey.IdentityKey, IPAddress = IPAddress.Parse(node.IPAddress) } };
                 }
             }
 

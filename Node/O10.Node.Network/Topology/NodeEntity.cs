@@ -4,7 +4,7 @@ using O10.Core.Models;
 
 namespace O10.Network.Topology
 {
-    public class Node : SerializableEntity
+    public class NodeEntity : SerializableEntity
     {
         public IKey Key { get; set; }
 

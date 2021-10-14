@@ -8,7 +8,7 @@ using O10.Core.Logging;
 
 namespace O10.Client.Web.Portal.Services.Inherence
 {
-    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Scoped)]
     public class InherenceServicesInitializer : InitializerBase
     {
         private readonly IInherenceServicesManager _inherenceServicesManager;

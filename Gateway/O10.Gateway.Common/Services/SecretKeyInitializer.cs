@@ -7,14 +7,13 @@ using O10.Core.Logging;
 using O10.Core.ExtensionMethods;
 using O10.Core.Configuration;
 using O10.Core.Identity;
-using O10.Core.States;
 using O10.Gateway.Common.Configuration;
 using O10.Crypto.Services;
 using System.Threading.Tasks;
 
 namespace O10.Gateway.Common.Services
 {
-    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Scoped)]
 	public class SecretKeyInitializer : InitializerBase
 	{
         private readonly IIdentityKeyProvider _identityKeyProvider;
@@ -24,18 +23,13 @@ namespace O10.Gateway.Common.Services
         private readonly ISecretConfiguration _secretConfiguration;
         private readonly ILogger _logger;
 
-        public SecretKeyInitializer(IStatesRepository statesRepository,
+        public SecretKeyInitializer(IGatewayContext gatewayContext,
                               ISigningServicesRepository signingServicesRepository,
                               IConfigurationService configurationService,
                               IAppConfig appConfig,
                               IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
                               ILoggerService loggerService)
 		{
-            if (statesRepository is null)
-            {
-                throw new ArgumentNullException(nameof(statesRepository));
-            }
-
             if (configurationService is null)
             {
                 throw new ArgumentNullException(nameof(configurationService));
@@ -54,7 +48,7 @@ namespace O10.Gateway.Common.Services
             _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
             _signingServicesRepository = signingServicesRepository ?? throw new ArgumentNullException(nameof(signingServicesRepository));
             _appConfig = appConfig;
-            _gatewayContext = statesRepository.GetInstance<IGatewayContext>();
+            _gatewayContext = gatewayContext;
 			_secretConfiguration = configurationService.Get<ISecretConfiguration>();
             _logger = loggerService.GetLogger(nameof(SecretKeyInitializer));
 		}

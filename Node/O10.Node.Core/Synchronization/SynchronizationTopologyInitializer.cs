@@ -10,7 +10,7 @@ using O10.Node.Core.DataLayer;
 
 namespace O10.Node.Core.Synchronization
 {
-    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Singleton)]
+    [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Scoped)]
     public class SynchronizationTopologyInitializer : InitializerBase
     {
         private readonly ISynchronizationGroupState _synchronizationGroupState;
