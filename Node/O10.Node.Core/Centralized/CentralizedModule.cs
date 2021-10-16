@@ -5,6 +5,7 @@ using O10.Core.Identity;
 using O10.Core.Logging;
 using O10.Core.Modularity;
 using O10.Network.Interfaces;
+using System.Threading.Tasks;
 
 namespace O10.Node.Core.Centralized
 {
@@ -46,7 +47,7 @@ namespace O10.Node.Core.Centralized
             _log.Info($"{nameof(CentralizedModule)} started");
         }
 
-        protected override void InitializeInner()
+        protected override async Task InitializeInner()
         {
             ILedgerPacketsHandler blocksHandler = _packetsHandlersRegistry.GetInstance(TransactionsRegistryCentralizedHandler.NAME);
             _packetsHandlersRegistry.RegisterInstance(blocksHandler);

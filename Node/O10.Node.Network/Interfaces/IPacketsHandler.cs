@@ -2,6 +2,7 @@
 using O10.Transactions.Core.Enums;
 using O10.Core.Architecture;
 using O10.Transactions.Core.Ledgers;
+using System.Threading.Tasks;
 
 namespace O10.Network.Interfaces
 {
@@ -12,7 +13,7 @@ namespace O10.Network.Interfaces
 
         LedgerType LedgerType { get; }
 
-        void Initialize(CancellationToken ct);
+        Task Initialize(CancellationToken ct);
 
         void ProcessPacket(IPacketBase blockBase);
     }

@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using O10.Core.Modularity;
 using O10.Core.Configuration;
 using O10.Node.Network.Configuration;
+using O10.Core.ExtensionMethods;
 
 namespace O10.Network.Handlers
 {
@@ -43,7 +44,7 @@ namespace O10.Network.Handlers
 
             for (int i = 0; i < _maxDegreeOfParallelism; i++)
             {
-                _handlingFlowScopes[i] = serviceProvider.CreateScope();
+                _handlingFlowScopes.Add(serviceProvider.CreateScope());
             }
         }
 
@@ -53,16 +54,16 @@ namespace O10.Network.Handlers
             {
                 _cancellationToken = ct;
 
-                _handlingFlowScopes.ForEach(s =>
+                _handlingFlowScopes.AsyncParallelForEach(async s =>
                 {
-                    InitModules(s, ct);
+                    await InitModules(s, ct);
                 });
 
                 IsInitialized = true;
             }
         }
 
-        private void InitModules(IServiceScope s, CancellationToken ct)
+        private async Task InitModules(IServiceScope s, CancellationToken ct)
         {
             var modulesRepo = s.ServiceProvider.GetRequiredService<IModulesRepository>();
             ObtainConfiguredModules(modulesRepo);
@@ -70,7 +71,7 @@ namespace O10.Network.Handlers
             {
                 try
                 {
-                    module.Initialize(ct);
+                    await module.Initialize(ct);
                 }
                 catch (Exception ex)
                 {

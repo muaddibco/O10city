@@ -5,10 +5,10 @@ using O10.Node.DataLayer.DataServices;
 using O10.Node.DataLayer.DataServices.Keys;
 using O10.Core.Logging;
 using O10.Core.Translators;
-using O10.Node.DataLayer.Exceptions;
 using O10.Transactions.Core.Ledgers;
 using O10.Core.Models;
 using O10.Core.Identity;
+using System.Threading.Tasks;
 
 namespace O10.Node.DataLayer.DataAccess
 {
@@ -29,12 +29,16 @@ namespace O10.Node.DataLayer.DataAccess
         protected ITranslatorsRepository TranslatorsRepository { get; }
         protected IIdentityKeyProvider IdentityKeyProvider { get; }
         protected ILogger Logger { get; }
-
+        protected CancellationToken CancellationToken { get; private set; }
         public abstract LedgerType LedgerType { get; }
 
         public abstract TaskCompletionWrapper<IPacketBase> Add(IPacketBase item);
-        public abstract IEnumerable<IPacketBase> Get(IDataKey key);
-        public abstract void Initialize(CancellationToken cancellationToken);
+        public abstract Task<IEnumerable<IPacketBase>> Get(IDataKey key, CancellationToken cancellationToken);
+        
+        public virtual async Task Initialize(CancellationToken cancellationToken)
+        {
+            CancellationToken = cancellationToken;
+        }
 
         public abstract void AddDataKey(IDataKey key, IDataKey newKey);
     }

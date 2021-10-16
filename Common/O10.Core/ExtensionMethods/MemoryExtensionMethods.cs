@@ -79,6 +79,32 @@ namespace O10.Core.ExtensionMethods
             return new string(result);
         }
 
+
+        public static unsafe string ToHexString(this ReadOnlyMemory<byte> arr, int offset = 0, int length = 0)
+        {
+            if (!MemoryMarshal.TryGetArray(arr, out ArraySegment<byte> byteArray))
+            {
+                throw new FailedToMarshalToByteArrayException(nameof(arr));
+            }
+
+            var arrLength = (length == 0 ? arr.Length : length);
+            var lookupP = _lookup32UnsafeP;
+            var result = new char[arrLength * 2];
+            fixed (byte* bytesP = byteArray.Array)
+            {
+                byte* bytesP1 = bytesP + byteArray.Offset;
+                fixed (char* resultP = result)
+                {
+                    uint* resultP2 = (uint*)resultP;
+                    for (int i = 0; i < arrLength; i++)
+                    {
+                        resultP2[i] = lookupP[bytesP1[i + offset]];
+                    }
+                }
+            }
+            return new string(result);
+        }
+
         /// <summary>
         /// Checks equality of hash values. Function checks only hash values with sizes multiple of 16.
         /// </summary>

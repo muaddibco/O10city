@@ -2,6 +2,7 @@
 using O10.Core.Logging;
 using O10.Core.Modularity;
 using O10.Network.Interfaces;
+using System.Threading.Tasks;
 
 namespace O10.Node.Core.Common
 {
@@ -22,7 +23,7 @@ namespace O10.Node.Core.Common
         {
         }
 
-        protected override void InitializeInner()
+        protected override async Task InitializeInner()
         {
             //IPacketsHandler blocksHandler = _blocksHandlersFactory.GetInstance(SynchronizationReceivingHandler.NAME);
             //_blocksHandlersFactory.RegisterInstance(blocksHandler);

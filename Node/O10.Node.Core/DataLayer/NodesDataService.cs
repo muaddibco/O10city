@@ -11,6 +11,7 @@ using O10.Network.Topology;
 using O10.Core.Persistency;
 using O10.Core.Models;
 using O10.Core.Notifications;
+using System.Threading.Tasks;
 
 namespace O10.Node.Core.DataLayer
 {
@@ -20,6 +21,7 @@ namespace O10.Node.Core.DataLayer
     {
         private readonly IIdentityKeyProvider _identityKeyProvider;
         private readonly DataAccessService _dataAccessService;
+        private CancellationToken _cancellationToken;
 
         public NodesDataService(IIdentityKeyProvidersRegistry identityKeyProvidersRegistry, IDataAccessServiceRepository dataAccessServiceRepository)
         {
@@ -56,12 +58,11 @@ namespace O10.Node.Core.DataLayer
         {
         }
 
-        public IEnumerable<NodeEntity> Get(IDataKey key)
+        public async Task<IEnumerable<NodeEntity>> Get(IDataKey key, CancellationToken cancellationToken)
         {
             if (key == null)
             {
-                return _dataAccessService
-                    .GetAllNodes()
+                return (await _dataAccessService.GetAllNodes(cancellationToken))
                     .Select(n =>
                     new NodeEntity
                     {
@@ -84,8 +85,9 @@ namespace O10.Node.Core.DataLayer
             throw new ArgumentOutOfRangeException(nameof(key));
         }
 
-        public void Initialize(CancellationToken cancellationToken)
+        public async Task Initialize(CancellationToken cancellationToken)
         {
+            _cancellationToken = cancellationToken;
         }
     }
 }

@@ -2,12 +2,13 @@
 using System.Threading;
 using O10.Node.DataLayer.DataServices.Keys;
 using O10.Core.Models;
+using System.Threading.Tasks;
 
 namespace O10.Node.DataLayer.DataServices
 {
     public interface IDataService<T> where T : class, ISerializableEntity
     {
-        void Initialize(CancellationToken cancellationToken);
+        Task Initialize(CancellationToken cancellationToken);
 
         /// <summary>
         /// Initiates the process of saving of the passed entity and returns a wrapper of a 
@@ -20,6 +21,6 @@ namespace O10.Node.DataLayer.DataServices
 
         void AddDataKey(IDataKey key, IDataKey newKey);
 
-        IEnumerable<T> Get(IDataKey key);
+        Task<IEnumerable<T>> Get(IDataKey key, CancellationToken cancellationToken);
     }
 }

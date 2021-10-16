@@ -9,9 +9,14 @@ namespace Benchmarks
     {
         static void Main(string[] args)
         {
-            //BenchmarkRunner.Run<ByteArrayMemoryKeyBenchy>();
-            //BenchmarkRunner.Run<JsonDeserializeBenchy>();
-            BenchmarkRunner.Run<DataAccessBenchy>();
+            /*var c = new JsonDeserializeBenchy();
+            c.Init();
+
+            var v1 = c.MemoryTextJson();
+            var v2 = c.KeyTextJson();*/
+            BenchmarkRunner.Run<ByteArrayMemoryKeyBenchy>();
+            BenchmarkRunner.Run<JsonDeserializeBenchy>();
+            //BenchmarkRunner.Run<DataAccessBenchy>();
         }
     }
 }

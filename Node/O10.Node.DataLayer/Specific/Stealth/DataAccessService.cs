@@ -13,7 +13,6 @@ using O10.Core.ExtensionMethods;
 using O10.Core.HashCalculations;
 using O10.Core.Identity;
 using O10.Core.Logging;
-using O10.Core.Tracking;
 using O10.Core.Persistency;
 using System.Threading.Tasks;
 using O10.Transactions.Core.Exceptions;
@@ -51,16 +50,18 @@ namespace O10.Node.DataLayer.Specific.Stealth
 
         public override LedgerType LedgerType => LedgerType.Stealth;
 
-        protected override void PostInitTasks()
+        protected override async Task PostInitTasks()
         {
-            LoadAllImageKeys();
-            base.PostInitTasks();
+            await LoadAllImageKeys();
+            await base.PostInitTasks();
         }
 
-        public void LoadAllImageKeys()
+        public async Task LoadAllImageKeys()
         {
-            using var dbContext = GetDataContext();
-            _keyImages = new HashSet<IKey>(dbContext.StealthKeyImages.Select(k => _identityKeyProvider.GetKey(k.Value.HexStringToByteArray())).AsEnumerable(), new Key32());
+            string sql = "SELECT Value FROM KeyImages";
+            var keyImageValues = await DataContext.QueryAsync<string>(sql, cancellationToken: CancellationToken);
+
+            _keyImages = new HashSet<IKey>(keyImageValues.Select(k => _identityKeyProvider.GetKey(k.HexStringToByteArray())).AsEnumerable(), new Key32());
         }
 
         public bool IsStealthImageKeyExist(IKey keyImage)

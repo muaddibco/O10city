@@ -75,7 +75,7 @@ namespace O10.Node.DataLayer.Specific.Registry
             return null;
         }
 
-        public override IEnumerable<IPacketBase> Get(IDataKey key)
+        public override async Task<IEnumerable<IPacketBase>> Get(IDataKey key, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
             //if (key is SyncHashKey syncTransactionKey)
@@ -98,11 +98,13 @@ namespace O10.Node.DataLayer.Specific.Registry
             //throw new ArgumentException(nameof(key));
         }
 
-        public override void Initialize(CancellationToken cancellationToken)
+        public override async Task Initialize(CancellationToken cancellationToken)
         {
+            await base.Initialize(cancellationToken);
+
             _packets = new BufferBlock<TaskCompletionWrapper<KeyedEntity<IPacketBase>>>(new DataflowBlockOptions { CancellationToken = cancellationToken });
 
-            foreach (var registryFullBlock in Service.GetAllRegistryFullBlocks())
+            foreach (var registryFullBlock in await Service.GetAllRegistryFullBlocks())
             {
                 _registryFullBlocks.AddOrUpdate(registryFullBlock.SyncBlockHeight, new ConcurrentBag<RegistryFullBlockDb>(), (_, v) => v);
                 _registryFullBlocks[registryFullBlock.SyncBlockHeight].Add(registryFullBlock);

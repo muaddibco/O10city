@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using O10.Node.DataLayer.DataServices.Keys;
 using O10.Transactions.Core.Ledgers;
 
@@ -8,7 +10,7 @@ namespace O10.Node.DataLayer.DataServices
 {
     public static class ChainDataServiceExtensions
     {
-        public static IEnumerable<T> Get<T>(this IChainDataService service, IDataKey key) where T : IPacketBase
+        public static async Task<IEnumerable<T>> Get<T>(this IChainDataService service, IDataKey key, CancellationToken cancellationToken) where T : IPacketBase
         {
             if (service is null)
             {
@@ -20,7 +22,7 @@ namespace O10.Node.DataLayer.DataServices
                 throw new ArgumentNullException(nameof(key));
             }
 
-            IEnumerable<IPacketBase> packets = service.Get(key);
+            IEnumerable<IPacketBase> packets = await service.Get(key, cancellationToken);
 
             if(packets != null)
             {
@@ -30,7 +32,7 @@ namespace O10.Node.DataLayer.DataServices
             return null;
         }
 
-        public static T Single<T>(this IChainDataService service, IDataKey key) where T : IPacketBase
+        public static async Task<T> Single<T>(this IChainDataService service, IDataKey key, CancellationToken cancellationToken) where T : IPacketBase
         {
             if (service == null)
             {
@@ -42,7 +44,7 @@ namespace O10.Node.DataLayer.DataServices
                 throw new ArgumentNullException(nameof(key));
             }
 
-            IEnumerable<IPacketBase> packets = service.Get(key);
+            IEnumerable<IPacketBase> packets = await service.Get(key, cancellationToken);
 
             if (packets != null)
             {

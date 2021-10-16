@@ -1,4 +1,5 @@
 ﻿using System.Threading;
+using System.Threading.Tasks;
 using O10.Core.Architecture;
 
 namespace O10.Core.Modularity
@@ -10,7 +11,7 @@ namespace O10.Core.Modularity
 
         string Name { get; }
 
-        void Initialize(CancellationToken ct);
+        Task Initialize(CancellationToken ct);
 
         void StartModule();
     }

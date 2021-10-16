@@ -9,6 +9,8 @@ using O10.Core.ExtensionMethods;
 using O10.Core.Identity;
 using O10.Core.Logging;
 using O10.Node.Core.DataLayer.DataContexts;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace O10.Node.Core.DataLayer
 {
@@ -50,36 +52,27 @@ namespace O10.Node.Core.DataLayer
             return _dataContextRepository.GetInstance<InternalDataContextBase>(_configuration.ConnectionType);
         }
 
-        protected override void PostInitTasks()
+        protected override async Task PostInitTasks()
         {
-            LoadAllKnownNodeIPs();
-            base.PostInitTasks();
+            await LoadAllKnownNodeIPs();
+            await base.PostInitTasks();
         }
 
-        public bool RemoveNodeByIp(IPAddress ipAddress)
+        public async Task<bool> RemoveNodeByIp(IPAddress ipAddress)
         {
             if (ipAddress is null)
             {
                 throw new System.ArgumentNullException(nameof(ipAddress));
             }
 
-            string addr = ipAddress.ToString();
+            string sql = "DELETE FROM NodeRecords WHERE IPAddress=@IPAddress";
 
-            using var dbContext = GetDataContext();
+            var res = await DataContext.ExecuteAsync(sql, new { IPAddress = ipAddress.ToString() }, cancellationToken: CancellationToken);
 
-            List<NodeRecord> nodeRecords = dbContext.NodeRecords.Where(n => n.IPAddress == addr).ToList();
-
-            foreach (var item in nodeRecords)
-            {
-                dbContext.NodeRecords.Remove(item);
-            }
-
-            dbContext.SaveChanges();
-
-            return nodeRecords.Count > 0;
+            return res > 0;
         }
 
-        public bool AddNode(IKey key, byte nodeRole, IPAddress ipAddress)
+        public async Task<bool> AddNode(IKey key, byte nodeRole, IPAddress ipAddress)
         {
             if (key == null)
             {
@@ -91,17 +84,16 @@ namespace O10.Node.Core.DataLayer
                 throw new System.ArgumentNullException(nameof(ipAddress));
             }
 
-            string publicKey = key.ToString();
+            string sql = "IF NOT EXISTS (SELECT * FROM NodeRecords WHERE PublicKey=@PublicKey AND NodeRole=@NodeRole)\r\n";
+            sql += "BEGIN\r\n";
+            sql += "INSERT INTO NodeRecords(PublicKey, IPAddress, NodeRole) VALUES (@PublicKey, @IPAddress, @NodeRole)\r\n";
+            sql += "END\r\n";
 
-            using var dbContext = GetDataContext();
+            var node = new NodeRecord { PublicKey = key.ToString(), IPAddress = ipAddress.ToString(), NodeRole = nodeRole };
+            var res = await DataContext.ExecuteAsync(sql, node, cancellationToken: CancellationToken);
 
-            NodeRecord node = dbContext.NodeRecords.FirstOrDefault(n => n.PublicKey == key.ToString() && n.NodeRole == nodeRole);
-
-            if (node == null)
+            if (res > 0)
             {
-                node = new NodeRecord { PublicKey = publicKey, IPAddress = ipAddress.ToString(), NodeRole = nodeRole };
-                dbContext.NodeRecords.Add(node);
-                dbContext.SaveChanges();
                 _keyToNodeMap.AddOrUpdate(key, node, (_, __) => node);
                 return true;
             }
@@ -145,12 +137,13 @@ namespace O10.Node.Core.DataLayer
             return false;
         }
 
-        public void LoadAllKnownNodeIPs()
+        private async Task LoadAllKnownNodeIPs()
         {
-            using var dbContext = GetDataContext();
-
             _keyToNodeMap.Clear();
-            foreach (var node in dbContext.NodeRecords)
+
+            string sql = "SELECT * from NodeRecords";
+            var nodeRecords = await DataContext.QueryAsync<NodeRecord>(sql, cancellationToken: CancellationToken);
+            foreach (var node in nodeRecords)
             {
                 IKey key = _identityKeyProvider.GetKey(node.PublicKey.HexStringToByteArray());
                 if (!_keyToNodeMap.ContainsKey(key))
@@ -160,11 +153,11 @@ namespace O10.Node.Core.DataLayer
             }
         }
 
-        public IEnumerable<NodeRecord> GetAllNodes()
+        public async Task<IEnumerable<NodeRecord>> GetAllNodes(CancellationToken cancellationToken)
         {
-            using var dbContext = GetDataContext();
 
-            return dbContext.NodeRecords.ToList();
+            string sql = "SELECT * FROM NodeRecords";
+            return await DataContext.QueryAsync<NodeRecord>(sql, cancellationToken: cancellationToken);
         }
 
         public NodeRecord GetNode(IKey key)

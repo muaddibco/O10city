@@ -30,12 +30,12 @@ namespace O10.Node.Core.Synchronization
 
         protected override async Task InitializeInner(CancellationToken cancellationToken)
         {
-            foreach (var node in _nodesDataService.Get(null).Where(n => n.NodeRole == NodeRole.SynchronizationLayer))
+            foreach (var node in (await _nodesDataService.Get(null, cancellationToken)).Where(n => n.NodeRole == NodeRole.SynchronizationLayer))
             {
                 _synchronizationGroupState.AddNeighbor(node.Key);
             }
 
-            foreach (var node in _nodesDataService.Get(null).Where(n => n.NodeRole == NodeRole.TransactionsRegistrationLayer))
+            foreach (var node in (await _nodesDataService.Get(null, cancellationToken)).Where(n => n.NodeRole == NodeRole.TransactionsRegistrationLayer))
             {
                 _syncRegistryNeighborhoodState.AddNeighbor(node.Key);
             }

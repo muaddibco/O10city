@@ -2,15 +2,19 @@
 using O10.Core.Logging;
 using System;
 using O10.Core.Persistency.Configuration;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace O10.Core.Persistency
 {
     public abstract class DataAccessServiceBase<T> : IDataAccessService where T : DataContextBase
-	{
+    {
         protected readonly IDataLayerConfiguration _configuration;
+        private T _dataContext;
+        private readonly object _sync = new object();
 
         protected DataAccessServiceBase(IConfigurationService configurationService, ILoggerService loggerService)
-		{
+        {
             if (configurationService is null)
             {
                 throw new ArgumentNullException(nameof(configurationService));
@@ -21,53 +25,71 @@ namespace O10.Core.Persistency
                 throw new ArgumentNullException(nameof(loggerService));
             }
 
-			_configuration = configurationService.Get<IDataLayerConfiguration>();
-			ContextName = GetType().FullName;
-			Logger = loggerService.GetLogger(ContextName);
-		}
+            _configuration = configurationService.Get<IDataLayerConfiguration>();
+            ContextName = GetType().FullName;
+            Logger = loggerService.GetLogger(ContextName);
+        }
 
-		public bool IsInitialized { get; private set; }
+        public bool IsInitialized { get; private set; }
 
         protected string ContextName { get; }
         //protected T DataContext { get; private set; }
 
         protected ILogger Logger { get; }
 
-		protected T DataContext { get; private set; }
+        protected T DataContext 
+        { 
+            get
+            {
+                if(_dataContext == null)
+                {
+                    lock(_sync)
+                    {
+                        if(_dataContext == null)
+                        {
+                            Logger.Info($"ConnectionString = {_configuration.ConnectionString}");
+                            _dataContext = GetDataContext();
+                            _dataContext.Initialize(_configuration.ConnectionString);
+                            _dataContext.EnsureConfigurationCompleted();
+                        }
+                    }
+                }
+                return _dataContext; 
+            } 
+        }
 
-        public void Initialize()
-		{
-			if (IsInitialized)
+        protected CancellationToken CancellationToken { get; private set; }
+
+        public async Task Initialize(CancellationToken cancellationToken)
+        {
+            if (IsInitialized)
             {
                 return;
             }
 
-			try
-			{
-				Logger.Info($"{ContextName} Initialize started");
+            CancellationToken = cancellationToken;
 
-				Logger.Info($"ConnectionString = {_configuration.ConnectionString}");
+            try
+            {
+                Logger.Info($"{ContextName} Initialize started");
 
-				DataContext = GetDataContext();
-				DataContext.Initialize(_configuration.ConnectionString);
-				DataContext.Migrate();
-				DataContext.EnsureConfigurationCompleted();
+                DataContext.Migrate();
 
-				PostInitTasks();
+                await PostInitTasks();
 
-				IsInitialized = true;
-				Logger.Info($"{ContextName} Initialize completed");
-			}
-			catch (Exception ex)
-			{
-				Logger.Error($"{ContextName} Initialize failed", ex);
+                IsInitialized = true;
+                Logger.Info($"{ContextName} Initialize completed");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error($"{ContextName} Initialize failed", ex);
 
-				throw;
-			}
-		}
+                throw;
+            }
+        }
 
-		protected abstract T GetDataContext();
+        protected abstract T GetDataContext();
 
-		protected virtual void PostInitTasks() { }
-	}
+        protected virtual async Task PostInitTasks() => await Task.CompletedTask;
+    }
 }

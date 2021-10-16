@@ -19,8 +19,9 @@ using O10.Core.Synchronization;
 using O10.Network.Handlers;
 using O10.Transactions.Core.DTOs;
 using O10.Transactions.Core.Ledgers;
-using O10.Transactions.Core.Ledgers.Synchronization.Transactions;
 using O10.Crypto.Models;
+using System.Threading.Tasks;
+using System.Threading;
 
 namespace O10.Node.WebApp.Common.Controllers
 {
@@ -81,15 +82,15 @@ namespace O10.Node.WebApp.Common.Controllers
 		}
 
 		[HttpGet("LastAggregatedRegistrations")]
-		public ActionResult<AggregatedRegistrationsTransactionDTO> LastAggregatedRegistrations()
+		public async Task<ActionResult<AggregatedRegistrationsTransactionDTO>> LastAggregatedRegistrations(CancellationToken cancellationToken)
 		{
-			var packet = _synchronizationDataService.Single<SynchronizationPacket>(new SingleByBlockTypeKey(TransactionTypes.Synchronization_RegistryCombinationBlock));
+			var packet = await _synchronizationDataService.Single<SynchronizationPacket>(new SingleByBlockTypeKey(TransactionTypes.Synchronization_RegistryCombinationBlock), cancellationToken);
 
 			return Ok(new AggregatedRegistrationsTransactionDTO { Height = packet?.Payload?.Height ?? 0 });
 		}
 
 		[HttpGet("GetLastStatePacketInfo")]
-		public ActionResult<StatePacketInfo> GetLastStatePacketInfo([FromQuery] string publicKey)
+		public async Task<ActionResult<StatePacketInfo>> GetLastStatePacketInfo([FromQuery] string publicKey, CancellationToken cancellationToken)
 		{
 			byte[] keyBytes = publicKey.HexStringToByteArray();
 
@@ -99,7 +100,7 @@ namespace O10.Node.WebApp.Common.Controllers
 			}
 
 			IKey key = _identityKeyProvider.GetKey(keyBytes);
-			O10StatePacket transactionalBlockBase = _transactionalDataService.Single<O10StatePacket>(new UniqueKey(key));
+			O10StatePacket transactionalBlockBase = await _transactionalDataService.Single<O10StatePacket>(new UniqueKey(key), cancellationToken);
 
 			return new StatePacketInfo
 			{
@@ -110,7 +111,7 @@ namespace O10.Node.WebApp.Common.Controllers
 		}
 
 		[HttpGet("Ledger/{ledgerType}/Transaction")]
-		public ActionResult<TransactionBase> GetTransaction([FromRoute]LedgerType ledgerType, [FromQuery] string combinedBlockHeight, [FromQuery] string hash)
+		public async Task<ActionResult<TransactionBase>> GetTransaction([FromRoute]LedgerType ledgerType, [FromQuery] string combinedBlockHeight, [FromQuery] string hash, CancellationToken cancellationToken)
 		{
 			_logger.LogIfDebug(() => $"{nameof(GetTransaction)}({ledgerType}, {combinedBlockHeight}, {hash})");
 
@@ -123,11 +124,11 @@ namespace O10.Node.WebApp.Common.Controllers
 					return BadRequest($"Ledger Type {ledgerType} is not supported");
                 }
 
-				var blockBase = dataService.Get(string.IsNullOrEmpty(combinedBlockHeight) ? (IDataKey)(new HashKey(hashKey)) : new CombinedHashKey(long.Parse(combinedBlockHeight), hashKey)).Single();
+				var blockBase = (await dataService.Get(string.IsNullOrEmpty(combinedBlockHeight) ? (IDataKey)(new HashKey(hashKey)) : new CombinedHashKey(long.Parse(combinedBlockHeight), hashKey), cancellationToken)).Single();
 
 				if (blockBase == null && !string.IsNullOrEmpty(combinedBlockHeight))
 				{
-					blockBase = dataService.Get(new CombinedHashKey(long.Parse(combinedBlockHeight) - 1, hashKey)).Single();
+					blockBase = (await dataService.Get(new CombinedHashKey(long.Parse(combinedBlockHeight) - 1, hashKey), cancellationToken)).Single();
 				}
 
 				if (blockBase != null)
@@ -149,18 +150,18 @@ namespace O10.Node.WebApp.Common.Controllers
 		}
 
 		[HttpGet("O10StateTransaction")]
-		public ActionResult<IPacketBase> GetO10StateTransaction([FromQuery] string combinedBlockHeight, [FromQuery] string hash)
+		public async Task<ActionResult<IPacketBase>> GetO10StateTransaction([FromQuery] string combinedBlockHeight, [FromQuery] string hash, CancellationToken cancellationToken)
 		{
 			_logger.LogIfDebug(() => $"{nameof(GetO10StateTransaction)}({combinedBlockHeight}, {hash})");
 
 			IKey hashKey = _identityKeyProvider.GetKey(hash.HexStringToByteArray());
 			try
 			{
-				var blockBase = _transactionalDataService.Get(new CombinedHashKey(long.Parse(combinedBlockHeight), hashKey)).Single();
+				var blockBase = (await _transactionalDataService.Get(new CombinedHashKey(long.Parse(combinedBlockHeight), hashKey), cancellationToken)).Single();
 
 				if(blockBase == null)
 				{
-					blockBase = _transactionalDataService.Get(new CombinedHashKey(long.Parse(combinedBlockHeight) - 1, hashKey)).Single();
+					blockBase = (await _transactionalDataService.Get(new CombinedHashKey(long.Parse(combinedBlockHeight) - 1, hashKey), cancellationToken)).Single();
 				}
 			
 				if(blockBase != null)
@@ -182,17 +183,17 @@ namespace O10.Node.WebApp.Common.Controllers
 		}
 
 		[HttpGet("StealthTransaction")]
-		public ActionResult<IPacketBase> GetStealthTransaction([FromQuery] string combinedBlockHeight, [FromQuery] string hash)
+		public async Task<ActionResult<IPacketBase>> GetStealthTransaction([FromQuery] string combinedBlockHeight, [FromQuery] string hash, CancellationToken cancellationToken)
 		{
 			byte[] hashBytes = hash.HexStringToByteArray();
 			IKey hashKey = _identityKeyProvider.GetKey(hash.HexStringToByteArray());
 			try
 			{
-				IPacketBase blockBase = _stealthDataService.Get(new CombinedHashKey(long.Parse(combinedBlockHeight), hashKey)).Single();
+				IPacketBase blockBase = (await _stealthDataService.Get(new CombinedHashKey(long.Parse(combinedBlockHeight), hashKey), cancellationToken)).Single();
 
 				if(blockBase == null)
 				{
-					blockBase = _stealthDataService.Get(new CombinedHashKey(long.Parse(combinedBlockHeight) - 1, hashKey)).Single();
+					blockBase = (await _stealthDataService.Get(new CombinedHashKey(long.Parse(combinedBlockHeight) - 1, hashKey), cancellationToken)).Single();
 				}
 
 				if (blockBase != null)

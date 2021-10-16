@@ -6,6 +6,7 @@ using O10.Node.DataLayer.DataServices;
 using O10.Core.Logging;
 using O10.Transactions.Core.Ledgers;
 using O10.Network.Interfaces;
+using System.Threading.Tasks;
 
 namespace O10.Node.Core.Centralized
 {
@@ -31,7 +32,7 @@ namespace O10.Node.Core.Centralized
 
         public abstract LedgerType LedgerType { get; }
 
-        public void Initialize(CancellationToken ct)
+        public async Task Initialize(CancellationToken ct)
         {
             _cancellationToken = ct;
             _storeBlock = new ActionBlock<T>(StoreBlock, new ExecutionDataflowBlockOptions { BoundedCapacity = int.MaxValue,  CancellationToken = _cancellationToken, MaxDegreeOfParallelism = 1 });

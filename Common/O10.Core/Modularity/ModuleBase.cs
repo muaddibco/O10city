@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Tasks;
 using O10.Core.Logging;
 
 namespace O10.Core.Modularity
 {
     public abstract class ModuleBase : IModule
     {
-        private readonly object _sync = new object();
+        private readonly SemaphoreSlim _sync = new SemaphoreSlim(1);
         protected readonly ILogger _log;
         protected CancellationToken _cancellationToken;
 
@@ -19,25 +20,32 @@ namespace O10.Core.Modularity
 
         public bool IsInitialized { get; private set; }
 
-        public void Initialize(CancellationToken ct)
+        public async Task Initialize(CancellationToken ct)
         {
             if (IsInitialized)
                 return;
 
             _cancellationToken = ct;
 
-            lock (_sync)
+            await _sync.WaitAsync();
+
+            try
             {
                 if (IsInitialized)
                     return;
 
-                InitializeInner();
+                await InitializeInner();
 
                 IsInitialized = true;
+
+            }
+            finally
+            {
+                _sync.Release();
             }
         }
 
-        protected abstract void InitializeInner();
+        protected abstract Task InitializeInner();
         protected abstract void Start();
 
         public void StartModule()

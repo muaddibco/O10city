@@ -75,7 +75,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
             throw new Exception($"Attempt to store an improper packet type {packet.GetType().FullName}");
         }
 
-        public override IEnumerable<IPacketBase> Get(IDataKey key) 
+        public override async Task<IEnumerable<IPacketBase>> Get(IDataKey key, CancellationToken cancellationToken) 
             => key is null
                 ? throw new ArgumentNullException(nameof(key))
                 : key switch
@@ -152,8 +152,9 @@ namespace O10.Node.DataLayer.Specific.O10Id
             return new List<IPacketBase>();
         }
 
-        public override void Initialize(CancellationToken cancellationToken)
+        public override async Task Initialize(CancellationToken cancellationToken)
         {
+            await base.Initialize(cancellationToken);
         }
 
         public override void AddDataKey(IDataKey key, IDataKey newKey)

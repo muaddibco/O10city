@@ -67,7 +67,7 @@ namespace O10.Node.DataLayer.Specific.Synchronization
 			return wrapperOfKey;
         }
 
-        override public IEnumerable<IPacketBase> Get(IDataKey key)
+        override public async Task<IEnumerable<IPacketBase>> Get(IDataKey key, CancellationToken cancellationToken)
         {
 			if (key == null)
 			{
@@ -82,7 +82,7 @@ namespace O10.Node.DataLayer.Specific.Synchronization
                         {
                             case TransactionTypes.Synchronization_RegistryCombinationBlock:
                                 {
-                                    AggregatedRegistrationsTransactionDb block = Service.GetLastRegistryCombinedBlock();
+                                    AggregatedRegistrationsTransactionDb block = await Service.GetLastRegistryCombinedBlock(cancellationToken);
                                     return new List<IPacketBase> { TranslatorsRepository.GetInstance<AggregatedRegistrationsTransactionDb, SynchronizationPacket>().Translate(block) };
                                 }
                             case TransactionTypes.Synchronization_ConfirmedBlock:
@@ -127,8 +127,10 @@ namespace O10.Node.DataLayer.Specific.Synchronization
             throw new DataKeyNotSupportedException(key);
 		}
 
-		override public void Initialize(CancellationToken cancellationToken)
+		override public async Task Initialize(CancellationToken cancellationToken)
         {
+			await base.Initialize(cancellationToken);
+
 			_bufferSyncConfirmedPackets = new BufferBlock<TaskCompletionWrapper<IPacketBase>>(new DataflowBlockOptions { CancellationToken = cancellationToken });
 			_bufferCombinedPackets = new BufferBlock<TaskCompletionWrapper<IPacketBase>>(new DataflowBlockOptions { CancellationToken = cancellationToken });
 

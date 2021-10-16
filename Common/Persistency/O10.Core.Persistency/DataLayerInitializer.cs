@@ -35,7 +35,7 @@ namespace O10.Core.Persistency
             {
                 foreach (var dataAccessService in _dataAccessServices)
                 {
-                    dataAccessService.Initialize();
+                    await dataAccessService.Initialize(cancellationToken);
                 }
             }
             catch (Exception ex)

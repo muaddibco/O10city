@@ -80,17 +80,17 @@ namespace O10.Node.DataLayer.Specific.Stealth
             throw new Exception($"Attempt to store an improper packet type {packet.GetType().FullName}");
         }
 
-        public override IEnumerable<IPacketBase> Get(IDataKey key) 
+        public override async Task<IEnumerable<IPacketBase>> Get(IDataKey key, CancellationToken cancellationToken) 
             => key == null
                 ? throw new ArgumentNullException(nameof(key))
                 : key switch 
                 { 
-                    CombinedHashKey combinedHashKey => Get(combinedHashKey),
+                    CombinedHashKey combinedHashKey => await Get(combinedHashKey),
                     HashKey hashKey => Get(hashKey),
                     _ => throw new DataKeyNotSupportedException(key) 
                 };
 
-        private IEnumerable<IPacketBase> Get(CombinedHashKey combinedHashKey)
+        private async Task<IEnumerable<IPacketBase>> Get(CombinedHashKey combinedHashKey)
         {
             var stealth = Service.GetTransaction(combinedHashKey.CombinedBlockHeight, combinedHashKey.Hash);
 
@@ -138,8 +138,9 @@ namespace O10.Node.DataLayer.Specific.Stealth
             return new List<IPacketBase>();
         }
 
-        public override void Initialize(CancellationToken cancellationToken)
+        public override async Task Initialize(CancellationToken cancellationToken)
         {
+            await base.Initialize(cancellationToken);
         }
 
         public string GetPacketHash(IDataKey dataKey)

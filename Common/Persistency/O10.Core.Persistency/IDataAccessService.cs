@@ -1,4 +1,6 @@
 ﻿using O10.Core.Architecture;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace O10.Core.Persistency
 {
@@ -6,6 +8,6 @@ namespace O10.Core.Persistency
     public interface IDataAccessService
     {
         bool IsInitialized { get; }
-        void Initialize();
+        Task Initialize(CancellationToken cancellationToken);
     }
 }

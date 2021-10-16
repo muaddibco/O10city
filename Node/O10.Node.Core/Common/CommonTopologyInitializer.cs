@@ -30,7 +30,7 @@ namespace O10.Node.Core.Common
 
         protected override async Task InitializeInner(CancellationToken cancellationToken)
         {
-            foreach (var node in _nodesDataService.Get(null))
+            foreach (var node in await _nodesDataService.Get(null, cancellationToken))
             {
                 _neighborhoodState.AddNeighbor(node.Key);
 				_nodesResolutionService.AddNode(new NodeAddress(node.Key, node.IPAddress), node.NodeRole);

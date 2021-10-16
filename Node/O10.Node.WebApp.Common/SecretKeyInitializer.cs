@@ -90,10 +90,10 @@ namespace O10.Node.WebApp.Common
 
                 if (nodeRecord == null)
                 {
-                    _dataAccessService.RemoveNodeByIp(IPAddress.Parse("127.0.0.1"));
-                    _dataAccessService.AddNode(key, (byte)NodeRole.TransactionsRegistrationLayer, IPAddress.Parse("127.0.0.1"));
-                    _dataAccessService.AddNode(key, (byte)NodeRole.StorageLayer, IPAddress.Parse("127.0.0.1"));
-                    _dataAccessService.AddNode(key, (byte)NodeRole.SynchronizationLayer, IPAddress.Parse("127.0.0.1"));
+                    await _dataAccessService.RemoveNodeByIp(IPAddress.Parse("127.0.0.1"));
+                    await _dataAccessService.AddNode(key, (byte)NodeRole.TransactionsRegistrationLayer, IPAddress.Parse("127.0.0.1"));
+                    await _dataAccessService.AddNode(key, (byte)NodeRole.StorageLayer, IPAddress.Parse("127.0.0.1"));
+                    await _dataAccessService.AddNode(key, (byte)NodeRole.SynchronizationLayer, IPAddress.Parse("127.0.0.1"));
                 }
             }
             catch (Exception ex)

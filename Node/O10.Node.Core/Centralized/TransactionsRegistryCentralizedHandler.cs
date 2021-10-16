@@ -36,7 +36,7 @@ namespace O10.Node.Core.Centralized
 
         public LedgerType LedgerType => LedgerType.Registry;
 
-        private readonly object _sync = new object();
+        private readonly SemaphoreSlim _sync = new SemaphoreSlim(1);
         private readonly IRealTimeRegistryService _realTimeRegistryService;
         private readonly INodeContext _nodeContext;
         private readonly ISynchronizationContext _synchronizationContext;
@@ -67,24 +67,26 @@ namespace O10.Node.Core.Centralized
             _logger = loggerService.GetLogger(nameof(TransactionsRegistryCentralizedHandler));
         }
 
-        public void Initialize(CancellationToken ct)
+        public async Task Initialize(CancellationToken ct)
         {
             if(_isInitialized)
             {
                 return;
             }
 
-            lock(_sync)
+            await _sync.WaitAsync();
+
+            try
             {
-                if(_isInitialized)
+                if (_isInitialized)
                 {
                     return;
                 }
 
                 _packetsBuffer = new BufferBlock<IPacketBase>(new DataflowBlockOptions() { CancellationToken = ct });
-                _lastCombinedBlock = _synchronizationChainDataService.Single<SynchronizationPacket>(new SingleByBlockTypeKey(TransactionTypes.Synchronization_RegistryCombinationBlock));
+                _lastCombinedBlock = await _synchronizationChainDataService.Single<SynchronizationPacket>(new SingleByBlockTypeKey(TransactionTypes.Synchronization_RegistryCombinationBlock), ct);
                 _synchronizationContext.LastRegistrationCombinedBlockHeight = _lastCombinedBlock?.Payload.Height ?? 0;
-                var synchronizationConfirmedBlock = _synchronizationChainDataService.Single<SynchronizationPacket>(new SingleByBlockTypeKey(TransactionTypes.Synchronization_ConfirmedBlock));
+                var synchronizationConfirmedBlock = await _synchronizationChainDataService.Single<SynchronizationPacket>(new SingleByBlockTypeKey(TransactionTypes.Synchronization_ConfirmedBlock), ct);
                 if (synchronizationConfirmedBlock != null)
                 {
                     _synchronizationContext.UpdateLastSyncBlockDescriptor(new SynchronizationDescriptor(
@@ -100,6 +102,11 @@ namespace O10.Node.Core.Centralized
                 ConsumePackets(_packetsBuffer, ct);
 
                 _isInitialized = true;
+
+            }
+            finally
+            {
+                _sync.Release();
             }
         }
 

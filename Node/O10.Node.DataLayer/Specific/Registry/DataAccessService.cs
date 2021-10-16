@@ -33,11 +33,11 @@ namespace O10.Node.DataLayer.Specific.Registry
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 
-        public IEnumerable<RegistryFullBlock> GetAllRegistryFullBlocks()
+        public async Task<IEnumerable<RegistryFullBlock>> GetAllRegistryFullBlocks()
         {
-            using var dbContext = GetDataContext();
+            string sql = "SELECT * FROM RegistryFullBlocks";
 
-            return dbContext.RegistryFullBlocks;
+            return await DataContext.QueryAsync<RegistryFullBlock>(sql, cancellationToken: CancellationToken);
         }
     }
 }

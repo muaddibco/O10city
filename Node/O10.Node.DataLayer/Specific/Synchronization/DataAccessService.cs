@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
 using O10.Transactions.Core.Enums;
 using O10.Node.DataLayer.DataAccess;
@@ -10,7 +8,6 @@ using O10.Node.DataLayer.Specific.Synchronization.Model;
 using O10.Core.Architecture;
 using O10.Core.Configuration;
 using O10.Core.Logging;
-using O10.Core.Tracking;
 using O10.Core.Persistency;
 using System.Threading.Tasks;
 using System.Threading;
@@ -115,11 +112,11 @@ namespace O10.Node.DataLayer.Specific.Synchronization
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 
-        public AggregatedRegistrationsTransaction GetLastRegistryCombinedBlock()
+        public async Task<AggregatedRegistrationsTransaction> GetLastRegistryCombinedBlock(CancellationToken cancellationToken)
         {
-            using var dbContext = GetDataContext();
+            string sql = "SELECT TOP 1 * FROM AggregatedRegistrationsTransactions ORDER BY AggregatedRegistrationsTransactionId DESC";
 
-            return dbContext.RegistryCombinedBlocks.OrderByDescending(b => b.AggregatedRegistrationsTransactionId).FirstOrDefault();
+            return await DataContext.QueryFirstOrDefaultAsync<AggregatedRegistrationsTransaction>(sql, cancellationToken: cancellationToken);
         }
 
         public AggregatedRegistrationsTransaction GetRegistryCombinedBlockByHeight(ulong combinedBlockHeight)

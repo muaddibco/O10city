@@ -40,11 +40,11 @@ namespace O10.Node.DataLayer.Specific.O10Id
 
         public override LedgerType LedgerType => LedgerType.O10State;
 
-        protected override void PostInitTasks()
+        protected override async Task PostInitTasks()
         {
             LoadAllIdentities();
 
-            base.PostInitTasks();
+            await base.PostInitTasks();
         }
 
         #region Account Identities
