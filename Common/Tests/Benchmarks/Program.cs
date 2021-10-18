@@ -14,9 +14,9 @@ namespace Benchmarks
 
             var v1 = c.MemoryTextJson();
             var v2 = c.KeyTextJson();*/
-            BenchmarkRunner.Run<ByteArrayMemoryKeyBenchy>();
-            BenchmarkRunner.Run<JsonDeserializeBenchy>();
-            //BenchmarkRunner.Run<DataAccessBenchy>();
+            //BenchmarkRunner.Run<ByteArrayMemoryKeyBenchy>();
+            //BenchmarkRunner.Run<JsonDeserializeBenchy>();
+            BenchmarkRunner.Run<DataAccessBenchy>();
         }
     }
 }

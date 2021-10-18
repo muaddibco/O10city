@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace Benchmark.DataAccess
 {
     [MemoryDiagnoser]
-    [SimpleJob(invocationCount: 5, targetCount: 20)]
+    [SimpleJob(invocationCount: 5, targetCount: 10)]
     public class DataAccessBenchy
     {
         private DataContextTracking _dataContextNoSave;
@@ -40,7 +40,7 @@ namespace Benchmark.DataAccess
         }
 
         [Benchmark]
-        public async Task<int> EfCoreInsertNoSaveWithTracking()
+        public async Task<int> EfCoreInsertBulkSaveWithTracking()
         {
             for (int i = 0; i < Length; i++)
             {
@@ -54,7 +54,7 @@ namespace Benchmark.DataAccess
         }
 
         [Benchmark]
-        public async Task<int> EfCoreInsertNoSaveWithNoTracking()
+        public async Task<int> EfCoreInsertBulkSaveWithNoTracking()
         {
             for (int i = 0; i < Length; i++)
             {
@@ -69,7 +69,7 @@ namespace Benchmark.DataAccess
         }
 
         [Benchmark]
-        public async Task<int> EfCoreInsertSave()
+        public async Task<int> EfCoreInsertSaveOnEveryInsert()
         {
             using var dbContext = new DataContextTracking();
             int c = 0;
@@ -87,7 +87,7 @@ namespace Benchmark.DataAccess
         }
 
         [Benchmark]
-        public int DapperInsert()
+        public int DapperInsertCreateConnectionOnce()
         {
             using var dbConnection = new SqlConnection("Data Source=localhost,1434;Database=benchmark;User ID=sa;Password=p@ssword1;MultipleActiveResultSets=true;");
             int c = 0;
@@ -100,7 +100,7 @@ namespace Benchmark.DataAccess
         }
 
         [Benchmark]
-        public int DapperInsert2()
+        public int DapperInsertCreateConnectionAlways()
         {
             int c = 0;
             for (int i = 0; i < Length; i++)

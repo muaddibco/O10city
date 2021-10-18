@@ -50,7 +50,6 @@ namespace O10.Core.Persistency
                             Logger.Info($"ConnectionString = {_configuration.ConnectionString}");
                             _dataContext = GetDataContext();
                             _dataContext.Initialize(_configuration.ConnectionString);
-                            _dataContext.EnsureConfigurationCompleted();
                         }
                     }
                 }
@@ -74,6 +73,7 @@ namespace O10.Core.Persistency
                 Logger.Info($"{ContextName} Initialize started");
 
                 DataContext.Migrate();
+                DataContext.EnsureConfigurationCompleted();
 
                 await PostInitTasks();
 

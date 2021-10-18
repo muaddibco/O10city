@@ -87,7 +87,7 @@ namespace O10.Node.DataLayer.Specific.Synchronization
                                 }
                             case TransactionTypes.Synchronization_ConfirmedBlock:
                                 {
-                                    SynchronizationPacketDb block = Service.GetLastSynchronizationBlock();
+                                    SynchronizationPacketDb block = await Service.GetLastSynchronizationBlock(cancellationToken);
                                     return new List<IPacketBase> { TranslatorsRepository.GetInstance<SynchronizationPacketDb, SynchronizationPacket>().Translate(block) };
                                 }
                             default:

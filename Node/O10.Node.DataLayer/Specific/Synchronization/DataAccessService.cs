@@ -50,10 +50,10 @@ namespace O10.Node.DataLayer.Specific.Synchronization
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 
-        public SynchronizationPacket GetLastSynchronizationBlock()
+        public async Task<SynchronizationPacket> GetLastSynchronizationBlock(CancellationToken cancellationToken)
         {
-            using var dbContext = GetDataContext();
-            return dbContext.SynchronizationBlocks.OrderByDescending(b => b.SynchronizationPacketId).FirstOrDefault();
+            string sql = "SELECT TOP 1 * FROM SynchronizationPackets ORDER BY SynchronizationPacketId DESC";
+            return await DataContext.QueryFirstOrDefaultAsync<SynchronizationPacket>(sql, cancellationToken: cancellationToken);
         }
 
         public IEnumerable<SynchronizationPacket> GetAllLastSynchronizationBlocks(ulong height)

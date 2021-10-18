@@ -8,9 +8,9 @@ namespace O10.Node.Core.Centralized
 	[ServiceContract]
 	public interface INotificationsService
 	{
-		void Initialize(CancellationToken cancellationToken);
+		Task Initialize(CancellationToken cancellationToken);
 
-		void UpdateGateways();
+		Task UpdateGateways(CancellationToken cancellationToken);
 
 		Task GatewaysConnectivityCheck(InfoMessage message);
 	}

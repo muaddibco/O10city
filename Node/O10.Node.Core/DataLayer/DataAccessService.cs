@@ -1,6 +1,5 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using O10.Core.Architecture;
 using O10.Core.Configuration;
@@ -101,17 +100,17 @@ namespace O10.Node.Core.DataLayer
             return false;
         }
 
-        public bool UpdateNode(IKey key, string ipAddressExpression = null)
+        public async Task<bool> UpdateNode(IKey key, string ipAddressExpression = null)
         {
             if (IPAddress.TryParse(ipAddressExpression ?? "127.0.0.1", out IPAddress ipAddress))
             {
-                return UpdateNode(key, ipAddress);
+                return await UpdateNode(key, ipAddress);
             }
 
             return false;
         }
 
-        public bool UpdateNode(IKey key, IPAddress ipAddress)
+        public async Task<bool> UpdateNode(IKey key, IPAddress ipAddress)
         {
             if (key == null)
             {
@@ -122,17 +121,17 @@ namespace O10.Node.Core.DataLayer
             {
                 throw new System.ArgumentNullException(nameof(ipAddress));
             }
-
-            using var dbContext = GetDataContext();
-
-            foreach (var node in dbContext.NodeRecords.Where(n => n.PublicKey == key.ToString()))
+            
+            if(_keyToNodeMap.TryGetValue(key, out var node))
             {
                 node.IPAddress = ipAddress.ToString();
-                _keyToNodeMap.AddOrUpdate(key, node, (_, __) => node);
-                dbContext.Update(node);
-            }
 
-            dbContext.SaveChanges();
+                string sql = "UPDATE NodeRecords SET IPAddress=@IPAddress WHERE PublicKey=@PublicKey";
+
+                await DataContext.ExecuteAsync(sql, node);
+
+                return true;
+            }
 
             return false;
         }
@@ -141,7 +140,7 @@ namespace O10.Node.Core.DataLayer
         {
             _keyToNodeMap.Clear();
 
-            string sql = "SELECT * from NodeRecords";
+            string sql = "SELECT * FROM NodeRecords";
             var nodeRecords = await DataContext.QueryAsync<NodeRecord>(sql, cancellationToken: CancellationToken);
             foreach (var node in nodeRecords)
             {
@@ -170,57 +169,37 @@ namespace O10.Node.Core.DataLayer
             return null;
         }
 
-        public IEnumerable<Gateway> GetGateways()
+        public async Task<IEnumerable<Gateway>> GetGateways(CancellationToken cancellationToken)
         {
-            using var dbContext = GetDataContext();
-
-            return dbContext.Gateways;
+            string sql = "SELECT * FROM gateways";
+            return await DataContext.QueryAsync<Gateway>(sql, cancellationToken: cancellationToken);
         }
 
-        public Gateway RemoveGateway(long gatewayId)
+        public async Task<Gateway> RemoveGateway(long gatewayId)
         {
-            using var dbContext = GetDataContext();
-
-            var gateway = dbContext.Gateways.FirstOrDefault(gateway => gateway.GatewayId == gatewayId);
-            if (gateway != null)
-            {
-                dbContext.Gateways.Remove(gateway);
-                dbContext.SaveChanges();
-            }
-
-            return gateway;
+            string sql = "DELETE FROM gateways OUTPUT DELETED.* WHERE GatewayId=@GatewayId";
+            return await DataContext.QueryFirstOrDefaultAsync<Gateway>(sql, new { GatewayId = gatewayId });
         }
 
-        public bool AddGateway(string alias, string uri)
+        public async Task<bool> AddGateway(string alias, string uri, CancellationToken cancellationToken)
         {
             using var dbContext = GetDataContext();
 
-            Gateway gateway = dbContext.Gateways.FirstOrDefault(g => g.BaseUri == uri);
+            string sql = "BEGIN TRANSACTION;\r\n" +
+                "UPDATE Gateways WITH (UPDLOCK, SERIALIZABLE) SET Alias = @Alias WHERE BaseUri = @BaseUri;\r\n" +
+                "IF @@ROWCOUNT = 0\r\n" +
+                "BEGIN\r\n" +
+                "   INSERT Gateways(BaseUri, Alias) VALUES(@BaseUri, @Alias);\r\n" +
+                "END\r\n" +
+                "COMMIT TRANSACTION;";
 
-            if (gateway != null)
+            var gateway = new Gateway
             {
-                if (gateway.Alias != alias)
-                {
-                    gateway.Alias = alias;
+                Alias = alias,
+                BaseUri = uri
+            };
 
-                    dbContext.SaveChanges();
-                    return true;
-                }
-            }
-            else
-            {
-                gateway = new Gateway
-                {
-                    Alias = alias,
-                    BaseUri = uri
-                };
-
-                dbContext.Gateways.Add(gateway);
-                dbContext.SaveChanges();
-                return true;
-            }
-
-            return false;
+            return await DataContext.ExecuteAsync(sql, gateway, cancellationToken: cancellationToken) > 0;
         }
     }
 }

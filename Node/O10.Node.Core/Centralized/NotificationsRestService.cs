@@ -38,9 +38,9 @@ namespace O10.Node.Worker.Services
 			_logger = loggerService.GetLogger(nameof(NotificationsRestService));
 		}
 
-		public void Initialize(CancellationToken cancellationToken)
+		public async Task Initialize(CancellationToken cancellationToken)
 		{
-			UpdateGateways();
+			await UpdateGateways(cancellationToken);
 
 			if(_gatewayUris.Count == 0)
 			{
@@ -109,7 +109,7 @@ namespace O10.Node.Worker.Services
 			}, cancellationToken, cancellationToken, TaskCreationOptions.LongRunning, TaskScheduler.Default);
 		}
 
-		public void UpdateGateways() => _gatewayUris = _dataAccessService.GetGateways().Select(g => g.BaseUri).ToList();
+		public async Task UpdateGateways(CancellationToken cancellationToken) => _gatewayUris = (await _dataAccessService.GetGateways(cancellationToken)).Select(g => g.BaseUri).ToList();
 
 		public async Task GatewaysConnectivityCheck(InfoMessage message)
         {
