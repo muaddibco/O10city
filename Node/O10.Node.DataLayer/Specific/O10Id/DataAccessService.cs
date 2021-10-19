@@ -42,16 +42,18 @@ namespace O10.Node.DataLayer.Specific.O10Id
 
         protected override async Task PostInitTasks()
         {
-            LoadAllIdentities();
+            await LoadAllIdentities(CancellationToken);
 
             await base.PostInitTasks();
         }
 
         #region Account Identities
 
-        private void LoadAllIdentities()
+        private async Task LoadAllIdentities(CancellationToken cancellationToken)
         {
-            _keyIdentityMap = DataContext.AccountIdentities.ToDictionary(i => _identityKeyProvider.GetKey(i.PublicKey.HexStringToByteArray()), i => i);
+            string sql = "SELECT * FROM O10AccountIdentity";
+            var identities = await DataContext.QueryAsync<AccountIdentity>(sql, cancellationToken: cancellationToken);
+            _keyIdentityMap = identities.ToDictionary(i => _identityKeyProvider.GetKey(i.PublicKey.HexStringToByteArray()), i => i);
         }
 
         public IEnumerable<IKey> GetAllAccountIdentities()
@@ -69,7 +71,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
             return null;
         }
 
-        private async Task<AccountIdentity> GetOrAddAccountIdentity(IKey key, CancellationToken cancellationToken = default)
+        private async Task<AccountIdentity> GetOrAddAccountIdentity(IKey key, CancellationToken cancellationToken)
         {
             if (key is null)
             {
@@ -80,15 +82,11 @@ namespace O10.Node.DataLayer.Specific.O10Id
 
             if (identity == null)
             {
-                identity = new AccountIdentity { PublicKey = key.Value.ToArray().ToHexString() };
-
-                //using var dbContext = GetDataContext();
+                identity = new AccountIdentity { PublicKey = key.ToString() };
 
                 string sql = "INSERT INTO O10AccountIdentity (KeyHash, PublicKey) OUTPUT Inserted.AccountIdentityId VALUES (0, @PublicKey)";
-                identity.AccountIdentityId = (long)await DataContext.ExecuteScalarAsync(sql, identity, cancellationToken: cancellationToken);
+                identity.AccountIdentityId = await DataContext.ExecuteScalarAsync<long>(sql, identity, cancellationToken: cancellationToken);
 
-                //dbContext.AccountIdentities.Add(identity);
-                //await dbContext.SaveChangesAsync(cancellationToken);
                 _keyIdentityMap.Add(key, identity);
             }
 
@@ -97,7 +95,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
 
         #endregion Account Identities
 
-        public O10TransactionSource GetTransactionSource(IKey key)
+        private async Task<O10TransactionSource> GetTransactionSource(IKey key, CancellationToken cancellationToken)
         {
             if (key == null)
             {
@@ -111,31 +109,40 @@ namespace O10.Node.DataLayer.Specific.O10Id
                 return null;
             }
 
-            return GetTransactionalIdentity(accountIdentity);
+            return await GetTransactionalIdentity(accountIdentity, cancellationToken);
         }
 
-        private O10TransactionSource GetTransactionalIdentity(AccountIdentity accountIdentity)
+        private async Task<O10TransactionSource> GetTransactionalIdentity(AccountIdentity accountIdentity, CancellationToken cancellationToken)
         {
             if (accountIdentity == null)
             {
                 throw new ArgumentNullException(nameof(accountIdentity));
             }
 
-            using var dbContext = GetDataContext();
+            string sql = "SELECT * FROM O10TransactionSources TS " +
+                "LEFT JOIN O10AccountIdentity AI ON TS.IdentityAccountIdentityId=AI.AccountIdentityId " +
+                "WHERE AI.AccountIdentityId=@AccountIdentityId";
 
-            return dbContext.TransactionSources.Include(r => r.Identity).FirstOrDefault(g => g.Identity == accountIdentity);
+            var transactionSource = await DataContext
+                .QueryFirstOrDefaultAsync<O10TransactionSource, AccountIdentity, O10TransactionSource>(
+                    sql,
+                    (t, i) => { t.Identity = i; return t; },
+                    "AccountIdentityId",
+                    accountIdentity);
+
+            return transactionSource;
         }
 
-        private async Task<O10TransactionSource> AddTransactionSource(AccountIdentity accountIdentity, CancellationToken cancellationToken = default)
+        private async Task<O10TransactionSource> AddTransactionSource(AccountIdentity accountIdentity, CancellationToken cancellationToken)
         {
             O10TransactionSource transactionalIdentity = new O10TransactionSource
             {
                 Identity = accountIdentity
             };
 
-            using var dbContext = GetDataContext();
-            dbContext.TransactionSources.Add(transactionalIdentity);
-            await dbContext.SaveChangesAsync(cancellationToken);
+            string sql = "INSERT O10TransactionSources(Identity) OUTPUT Inserted.O10TransactionSourceId VALUES (@Identity)";
+
+            transactionalIdentity.O10TransactionSourceId = await DataContext.ExecuteScalarAsync<long>(sql, transactionalIdentity, cancellationToken: cancellationToken);
 
             return transactionalIdentity;
         }
@@ -164,12 +171,12 @@ namespace O10.Node.DataLayer.Specific.O10Id
                 throw new ArgumentNullException(nameof(content));
             }
 
-            O10TransactionSource transactionSource = GetTransactionSource(source);
+            O10TransactionSource transactionSource = await GetTransactionSource(source, cancellationToken);
 
             if (transactionSource == null)
             {
                 AccountIdentity accountIdentity = await GetOrAddAccountIdentity(source, cancellationToken);
-                transactionSource = await AddTransactionSource(accountIdentity);
+                transactionSource = await AddTransactionSource(accountIdentity, cancellationToken);
             }
 
             O10TransactionHashKey transactionHashKey = new O10TransactionHashKey
@@ -208,7 +215,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
             return dbContext.TransactionalBlocks.Where(b => b.Source == transactionalIdentity).OrderByDescending(b => b.Height).FirstOrDefault();
         }
 
-        public O10Transaction GetLastTransactionalBlock(IKey key)
+        public async Task<O10Transaction> GetLastTransactionalBlock(IKey key, CancellationToken cancellationToken)
         {
             O10Transaction transactionalBlock = null;
 
@@ -217,7 +224,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
                 throw new ArgumentNullException(nameof(key));
             }
 
-            O10TransactionSource transactionalIdentity = GetTransactionSource(key);
+            O10TransactionSource transactionalIdentity = await GetTransactionSource(key, cancellationToken);
 
             if (transactionalIdentity != null)
             {

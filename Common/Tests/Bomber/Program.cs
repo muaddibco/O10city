@@ -3,6 +3,7 @@ using NBomber.CSharp;
 using Flurl;
 using Flurl.Http;
 using System;
+using System.Threading;
 
 namespace Bomber
 {
@@ -15,15 +16,22 @@ namespace Bomber
         {
             var addGateway = Step.Create("Add Gateway", async c =>
             {
-                var res = await _nodeApiUrl
-                    .AppendPathSegments("service", "gateways")
-                    .PostJsonAsync(new
-                    {
-                        uri = $"http://host{_gatewayNameIndex}/",
-                        alias = $"GW{_gatewayNameIndex}"
-                    })
-                    .ReceiveString();
-                return Response.Ok();
+                var id = Interlocked.Increment(ref _gatewayNameIndex);
+                try
+                {
+                    var res = await _nodeApiUrl
+                        .AppendPathSegments("service", "gateways")
+                        .PostJsonAsync(new
+                        {
+                            uri = $"http://host{id}/",
+                            alias = $"GW{id}"
+                        });
+                    return Response.Ok();
+                }
+                catch (Exception ex)
+                {
+                    return Response.Fail(ex);
+                }
             });
 
             var scenario = ScenarioBuilder
@@ -46,7 +54,8 @@ namespace Bomber
                     } while (!succeeded);
                 })
                 .WithLoadSimulations(
-                    Simulation.InjectPerSec(10, TimeSpan.FromSeconds(10))
+                    Simulation.RampConstant(100, TimeSpan.FromSeconds(10)),
+                    Simulation.KeepConstant(100, TimeSpan.FromSeconds(50))
                 );
 
             NBomberRunner

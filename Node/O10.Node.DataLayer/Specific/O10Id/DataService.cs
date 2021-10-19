@@ -80,15 +80,15 @@ namespace O10.Node.DataLayer.Specific.O10Id
                 ? throw new ArgumentNullException(nameof(key))
                 : key switch
                 {
-                    UniqueKey uniqueKey => Get(uniqueKey),
+                    UniqueKey uniqueKey => await Get(uniqueKey, cancellationToken),
                     CombinedHashKey combinedHashKey => Get(combinedHashKey),
                     HashKey hashKey => Get(hashKey),
                     _ => throw new DataKeyNotSupportedException(key),
                 };
 
-        private IEnumerable<IPacketBase> Get(UniqueKey uniqueKey)
+        private async Task<IEnumerable<IPacketBase>> Get(UniqueKey uniqueKey, CancellationToken cancellationToken)
         {
-            O10Transaction transactionalBlock = Service.GetLastTransactionalBlock(uniqueKey.IdentityKey);
+            O10Transaction transactionalBlock = await Service.GetLastTransactionalBlock(uniqueKey.IdentityKey, cancellationToken);
 
             if (transactionalBlock != null)
             {
