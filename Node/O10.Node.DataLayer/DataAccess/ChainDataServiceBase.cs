@@ -40,6 +40,6 @@ namespace O10.Node.DataLayer.DataAccess
             CancellationToken = cancellationToken;
         }
 
-        public abstract void AddDataKey(IDataKey key, IDataKey newKey);
+        public abstract Task AddDataKey(IDataKey key, IDataKey newKey, CancellationToken cancellationToken);
     }
 }

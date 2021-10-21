@@ -50,7 +50,17 @@ namespace O10.Core.Persistency
             return (await Database.GetDbConnection().QueryAsync<T>(sql, param, transaction)).AsList();
         }
 
-        public async Task<IReadOnlyList<T>> QueryAsync<T1, T2, T>(string sql, Func<T1, T2, T> map, string splitOn, object param = null, IDbTransaction transaction = null, CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyList<T>> QueryAsync<T1, T2, T>(string sql, Func<T1, T2, T> map, string splitOn = null, object param = null, IDbTransaction transaction = null, CancellationToken cancellationToken = default)
+        {
+            return (await Database.GetDbConnection().QueryAsync(sql, map, param, transaction, splitOn: splitOn)).AsList();
+        }
+
+        public async Task<IReadOnlyList<T>> QueryAsync<T1, T2, T3, T>(string sql, Func<T1, T2, T3, T> map, string splitOn = null, object param = null, IDbTransaction transaction = null, CancellationToken cancellationToken = default)
+        {
+            return (await Database.GetDbConnection().QueryAsync(sql, map, param, transaction, splitOn: splitOn)).AsList();
+        }
+
+        public async Task<IReadOnlyList<T>> QueryAsync<T1, T2, T3, T4, T>(string sql, Func<T1, T2, T3, T4, T> map, string splitOn = null, object param = null, IDbTransaction transaction = null, CancellationToken cancellationToken = default)
         {
             return (await Database.GetDbConnection().QueryAsync(sql, map, param, transaction, splitOn: splitOn)).AsList();
         }
@@ -60,7 +70,17 @@ namespace O10.Core.Persistency
             return await Database.GetDbConnection().QueryFirstOrDefaultAsync<T>(sql, param, transaction);
         }
 
-        public async Task<T> QueryFirstOrDefaultAsync<T1, T2, T>(string sql, Func<T1, T2, T> map, string splitOn, object param = null, IDbTransaction transaction = null, CancellationToken cancellationToken = default)
+        public async Task<T> QueryFirstOrDefaultAsync<T1, T2, T>(string sql, Func<T1, T2, T> map, string splitOn = null, object param = null, IDbTransaction transaction = null, CancellationToken cancellationToken = default)
+        {
+            return (await Database.GetDbConnection().QueryAsync(sql, map, param, transaction, splitOn: splitOn)).FirstOrDefault();
+        }
+
+        public async Task<T> QueryFirstOrDefaultAsync<T1, T2, T3, T>(string sql, Func<T1, T2, T3, T> map, string splitOn = null, object param = null, IDbTransaction transaction = null, CancellationToken cancellationToken = default)
+        {
+            return (await Database.GetDbConnection().QueryAsync(sql, map, param, transaction, splitOn: splitOn)).FirstOrDefault();
+        }
+
+        public async Task<T> QueryFirstOrDefaultAsync<T1, T2, T3, T4, T>(string sql, Func<T1, T2, T3, T4, T> map, string splitOn = null, object param = null, IDbTransaction transaction = null, CancellationToken cancellationToken = default)
         {
             return (await Database.GetDbConnection().QueryAsync(sql, map, param, transaction, splitOn: splitOn)).FirstOrDefault();
         }

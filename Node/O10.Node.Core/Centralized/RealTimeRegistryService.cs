@@ -52,7 +52,7 @@ namespace O10.Node.Core.Centralized
             return _registrationPackets.GetConsumingEnumerable(cancellationToken);
         }
 
-        public void PostPackets(SynchronizationPacket aggregatedRegistrationsPacket, RegistryPacket registrationsPacket)
+        public async Task PostPackets(SynchronizationPacket aggregatedRegistrationsPacket, RegistryPacket registrationsPacket, CancellationToken cancellationToken)
         {
 			var registryTransaction = registrationsPacket.Transaction<FullRegistryTransaction>();
 
@@ -68,7 +68,7 @@ namespace O10.Node.Core.Centralized
                     _logger.LogIfDebug(() => $"Adding Witness TaskCompletionSource by hash {hashString}");
                     taskCompletionSource = _packetTriggers.GetOrAdd(_identityKeyProvider.GetKey(hash), taskCompletionSource);
 
-                    WaitForPacketStoredAndUpdateIt(aggregatedRegistrationsPacket, taskCompletionSource);
+                    await WaitForPacketStoredAndUpdateIt(aggregatedRegistrationsPacket, taskCompletionSource, cancellationToken);
                 }
             }
 
@@ -80,23 +80,19 @@ namespace O10.Node.Core.Centralized
 			}
         }
 
-        private void WaitForPacketStoredAndUpdateIt(SynchronizationPacket aggregatedRegistrationsPacket, TaskCompletionSource<KeyValuePair<HashAndIdKey, IPacketBase>> taskCompletionSource)
+        private async Task WaitForPacketStoredAndUpdateIt(SynchronizationPacket aggregatedRegistrationsPacket, TaskCompletionSource<KeyValuePair<HashAndIdKey, IPacketBase>> taskCompletionSource, CancellationToken cancellationToken)
         {
-            taskCompletionSource.Task.ContinueWith((t, o) =>
+            try
             {
-                if (t.IsCompletedSuccessfully)
-                {
-                    var syncPacket = o as SynchronizationPacket;
-                    _chainDataServices.First(s => s.LedgerType == t.Result.Value.LedgerType)
-                        .AddDataKey(
-                            t.Result.Key,
-                            new CombinedHashKey(syncPacket.Payload.Height, t.Result.Key.HashKey));
-                }
-                else
-                {
-                    _logger.Error($"Failed to update the height of {nameof(AggregatedRegistrationsTransaction)} due to an error", t.Exception.InnerException);
-                }
-            }, aggregatedRegistrationsPacket, TaskScheduler.Default);
+                var res = await taskCompletionSource.Task;
+                await _chainDataServices
+                    .First(s => s.LedgerType == res.Value.LedgerType)
+                    .AddDataKey(res.Key, new CombinedHashKey(aggregatedRegistrationsPacket.Payload.Height, res.Key.HashKey), cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Failed to update the height of {nameof(AggregatedRegistrationsTransaction)} due to an error", ex);
+            }
         }
 
         public void PostTransaction(TaskCompletionWrapper<IPacketBase> completionWrapper)

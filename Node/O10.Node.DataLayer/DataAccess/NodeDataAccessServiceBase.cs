@@ -15,16 +15,6 @@ namespace O10.Node.DataLayer.DataAccess
                                             ILoggerService loggerService)
 			: base(configurationService, loggerService)
 		{
-            if (configurationService is null)
-            {
-                throw new ArgumentNullException(nameof(configurationService));
-            }
-
-            if (loggerService is null)
-            {
-                throw new ArgumentNullException(nameof(loggerService));
-            }
-
             _dataContextRepository = dataContextRepository ?? throw new ArgumentNullException(nameof(dataContextRepository));
 		}
 

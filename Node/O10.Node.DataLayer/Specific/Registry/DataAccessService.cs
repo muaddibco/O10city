@@ -16,7 +16,7 @@ namespace O10.Node.DataLayer.Specific.Registry
     [RegisterExtension(typeof(IDataAccessService), Lifetime = LifetimeManagement.Scoped)]
     public class DataAccessService : NodeDataAccessServiceBase<RegistryDataContextBase>
     {
-        public DataAccessService(INodeDataContextRepository dataContextRepository,
+        public DataAccessService(INodeDataContextRepository dataContextRepository, 
                                  IConfigurationService configurationService,
                                  ILoggerService loggerService)
                 : base(dataContextRepository, configurationService, loggerService)

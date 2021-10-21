@@ -19,7 +19,7 @@ namespace O10.Node.DataLayer.DataServices
         /// <returns></returns>
         TaskCompletionWrapper<T> Add(T item);
 
-        void AddDataKey(IDataKey key, IDataKey newKey);
+        Task AddDataKey(IDataKey key, IDataKey newKey, CancellationToken cancellationToken);
 
         Task<IEnumerable<T>> Get(IDataKey key, CancellationToken cancellationToken);
     }

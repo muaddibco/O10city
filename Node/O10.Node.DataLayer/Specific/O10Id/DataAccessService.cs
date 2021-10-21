@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using O10.Transactions.Core.Enums;
 using O10.Node.DataLayer.DataAccess;
@@ -61,7 +60,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
             return _keyIdentityMap.Select(m => m.Key).ToList();
         }
 
-        public AccountIdentity GetAccountIdentity(IKey key)
+        private AccountIdentity GetAccountIdentity(IKey key)
         {
             if (_keyIdentityMap.ContainsKey(key))
             {
@@ -147,19 +146,19 @@ namespace O10.Node.DataLayer.Specific.O10Id
             return transactionalIdentity;
         }
 
-        public void UpdateRegistryInfo(long o10transactionId, long aggregatedRegistrationHeight)
+        public async Task UpdateRegistryInfo(long o10transactionId, long aggregatedRegistrationHeight, CancellationToken cancellationToken)
         {
             using var dbContext = GetDataContext();
-            var o10transaction = GetLocalAwareO10TransactionPacketById(dbContext, o10transactionId);
-            if (o10transaction != null)
-            {
 
-                o10transaction.RegistryHeight = aggregatedRegistrationHeight;
-                o10transaction.HashKey.RegistryHeight = aggregatedRegistrationHeight;
-            }
+            string sql = 
+                "UPDATE O10Transactions SET RegistryHeight=@RegistryHeight WHERE O10TransactionId=@O10TransactionId;\r\n" +
+                "UPDATE K SET K.RegistryHeight=@RegistryHeight FROM O10TransactionHashKeys K " +
+                "INNER JOIN O10Transactions T ON T.HashKeyO10TransactionHashKeyId=K.O10TransactionHashKeyId " +
+                "WHERE T.O10TransactionId=@O10TransactionId;";
+            await DataContext.ExecuteAsync(sql, new { O10TransactionId = o10transactionId, RegistryHeight = aggregatedRegistrationHeight }, cancellationToken: cancellationToken);
         }
 
-        public async Task<O10Transaction> AddTransaction(IKey source, ushort packetType, long height, string content, byte[] hash, CancellationToken cancellationToken = default)
+        public async Task<O10Transaction> AddTransaction(IKey source, ushort packetType, long height, string content, byte[] hash, CancellationToken cancellationToken)
         {
             if (source == null)
             {
@@ -171,34 +170,57 @@ namespace O10.Node.DataLayer.Specific.O10Id
                 throw new ArgumentNullException(nameof(content));
             }
 
-            O10TransactionSource transactionSource = await GetTransactionSource(source, cancellationToken);
+            string sql = 
+                "BEGIN TRANSACTION;\r\n" +
+                "   DECLARE @O10AccountIdentityID BIGINT\r\n" +
+                "   SELECT @O10AccountIdentityID=AccountIdentityId FROM O10AccountIdentity WHERE PublicKey=@PublicKey)\r\n" +
+                "   IF @@rowcount = 0\r\n" +
+                "   BEGIN" +
+                "       INSERT O10AccountIdentity(KeyHash, PublicKey) VALUES (0, @PublicKey);\r\n" +
+                "       SET @O10AccountIdentityID = scope_identity();\r\n" +
+                "   END\r\n" +
+                "   \r\n" +
+                "   DECLARE @O10TransactionSourceID BIGINT\r\n" +
+                "   \r\n" +
+                "   SELECT TOP 1" +
+                "       @O10TransactionSourceID = O10TransactionSourceId " +
+                "   FROM O10TransactionSources TS " +
+                "   INNER JOIN O10AccountIdentity AI " +
+                "       ON TS.IdentityAccountIdentityId=AI.AccountIdentityId " +
+                "   WHERE AI.AccountIdentityId=@O10AccountIdentityID\r\n" +
+                "   IF @@rowcount = 0\r\n" +
+                "   BEGIN" +
+                "       INSERT O10TransactionSources(IdentityAccountIdentityId) VALUES (@O10AccountIdentityID);\r\n" +
+                "       SET @O10TransactionSourceID = scope_identity();\r\n" +
+                "   END\r\n" +
+                "   \r\n" +
+                "   DECLARE @O10TransactionHashKeyID BIGINT\r\n" +
+                "   \r\n" +
+                "   INSERT O10TransactionHashKeys(Hash) VALUES (@Hash);\r\n" +
+                "   SET @O10TransactionHashKeyID = scope_identity();\r\n" +
+                "   \r\n" +
+                "   DECLARE @O10TransactionID BIGINT\r\n" +
+                "   \r\n" +
+                "   INSERT INTO O10Transactions(SourceO10TransactionSourceId, HashKeyO10TransactionHashKeyId, Content, Height, PacketType) VALUES(@O10TransactionSourceID, @O10TransactionHashKeyID, @Content, @Height, @PacketType)\r\n" +
+                "   SET @O10TransactionID = scope_identity();\r\n" +
+                "END TRANSACTION;\r\n" +
+                "\r\n" +
+                "SELECT T.*, HK.*, TS.*, AI.* FROM O10Transactions T\r\n" +
+                "INNER JOIN O10TransactionHashKeys HK ON T.HashKeyO10TransactionHashKeyId=HK.O10TransactionHashKeyId\r\n" +
+                "INNER JOIN O10TransactionSources TS ON T.SourceO10TransactionSourceId=TS.O10TransactionSourceId\r\n" +
+                "INNER JOIN O10AccountIdentity AI ON TS.IdentityAccountIdentityId=AI.AccountIdentityId\r\n" +
+                "WHERE T.O10TransactionId=@O10TransactionID";
 
-            if (transactionSource == null)
-            {
-                AccountIdentity accountIdentity = await GetOrAddAccountIdentity(source, cancellationToken);
-                transactionSource = await AddTransactionSource(accountIdentity, cancellationToken);
-            }
-
-            O10TransactionHashKey transactionHashKey = new O10TransactionHashKey
-            {
-                Hash = hash.ToHexString()
-            };
-
-            O10Transaction o10Transaction = new O10Transaction()
-            {
-                Source = transactionSource,
-                HashKey = transactionHashKey,
-                Content = content,
-                Height = height,
-                PacketType = packetType
-            };
-
-            using var dbContext = GetDataContext();
-
-            dbContext.BlockHashKeys.Add(transactionHashKey);
-            dbContext.TransactionalBlocks.Add(o10Transaction);
-
-            await dbContext.SaveChangesAsync(cancellationToken);
+            var o10Transaction = await DataContext.QueryFirstOrDefaultAsync<O10Transaction, O10TransactionHashKey, O10TransactionSource, AccountIdentity, O10Transaction>(
+                sql, 
+                (t, hk, ts, ai) => 
+                {
+                    ts.Identity = ai;
+                    t.HashKey = hk;
+                    t.Source = ts;
+                    return t;
+                }, 
+                param: new { PublicKey = source.ToString(), Content = content, Height = height, PacketType = packetType }, cancellationToken: cancellationToken);
 
             return o10Transaction;
         }

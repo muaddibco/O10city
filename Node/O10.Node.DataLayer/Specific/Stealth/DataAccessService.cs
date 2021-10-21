@@ -27,11 +27,11 @@ namespace O10.Node.DataLayer.Specific.Stealth
         private readonly IHashCalculation _defaultHashCalculation;
         private HashSet<IKey> _keyImages = new HashSet<IKey>(new Key32());
 
-        public DataAccessService(INodeDataContextRepository dataContextRepository,
-                                    IConfigurationService configurationService,
-                                    ILoggerService loggerService,
-                                    IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
-                                    IHashCalculationsRepository hashCalculationsRepository)
+        public DataAccessService(INodeDataContextRepository dataContextRepository, 
+                                 IConfigurationService configurationService,
+                                 ILoggerService loggerService,
+                                 IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
+                                 IHashCalculationsRepository hashCalculationsRepository)
             : base(dataContextRepository, configurationService, loggerService)
         {
             if (identityKeyProvidersRegistry is null)

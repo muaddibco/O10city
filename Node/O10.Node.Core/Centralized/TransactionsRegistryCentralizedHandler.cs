@@ -158,7 +158,7 @@ namespace O10.Node.Core.Centralized
 						_synchronizationChainDataService.Add(aggregatedRegistrationsPacket);
 						_registryChainDataService.Add(fullRegistrationsPacket);
 
-						_realTimeRegistryService.PostPackets(aggregatedRegistrationsPacket, fullRegistrationsPacket);
+						await _realTimeRegistryService.PostPackets(aggregatedRegistrationsPacket, fullRegistrationsPacket, cancellationToken);
 					}
 				}
 				catch (Exception ex)

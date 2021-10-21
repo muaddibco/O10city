@@ -165,7 +165,7 @@ namespace O10.Node.DataLayer.Specific.Registry
         //    return transactionsRegistryBlock;
         //}
 
-        public override void AddDataKey(IDataKey key, IDataKey newKey)
+        public override Task AddDataKey(IDataKey key, IDataKey newKey, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }

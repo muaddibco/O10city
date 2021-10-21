@@ -56,7 +56,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
 
                 var addCompletionWrapper = new TaskCompletionWrapper<IPacketBase>(packet);
                 Service
-                    .AddTransaction(statePacket.Payload.Transaction.Source, statePacket.Payload.Transaction.TransactionType, statePacket.Payload.Height, packet.ToJson(), hash)
+                    .AddTransaction(statePacket.Payload.Transaction.Source, statePacket.Payload.Transaction.TransactionType, statePacket.Payload.Height, packet.ToJson(), hash, CancellationToken)
                     .ContinueWith((t, o) => 
                     {
                         var w = ((Tuple<TaskCompletionWrapper<IPacketBase>, IKey>)o).Item1;
@@ -157,11 +157,11 @@ namespace O10.Node.DataLayer.Specific.O10Id
             await base.Initialize(cancellationToken);
         }
 
-        public override void AddDataKey(IDataKey key, IDataKey newKey)
+        public override async Task AddDataKey(IDataKey key, IDataKey newKey, CancellationToken cancellationToken)
         {
             if(key is IdKey idKey && newKey is CombinedHashKey combined)
             {
-                Service.UpdateRegistryInfo(idKey.Id, combined.CombinedBlockHeight);
+                await Service.UpdateRegistryInfo(idKey.Id, combined.CombinedBlockHeight, cancellationToken);
             }
         }
     }

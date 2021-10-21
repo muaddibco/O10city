@@ -158,7 +158,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
             throw new DataKeyNotSupportedException(dataKey);
         }
 
-        public override void AddDataKey(IDataKey key, IDataKey newKey)
+        public override async Task AddDataKey(IDataKey key, IDataKey newKey, CancellationToken cancellationToken)
         {
             if (key is IdKey idKey && newKey is CombinedHashKey combined)
             {

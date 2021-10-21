@@ -8,6 +8,7 @@ using O10.Node.DataLayer.DataServices;
 using O10.Core.Models;
 using O10.Core.Identity;
 using O10.Transactions.Core.Ledgers;
+using System.Threading.Tasks;
 
 namespace O10.Node.Core.Centralized
 {
@@ -16,7 +17,7 @@ namespace O10.Node.Core.Centralized
     {
         IEnumerable<Tuple<SynchronizationPacket, RegistryPacket>> GetRegistryConsumingEnumerable(CancellationToken cancellationToken);
 
-        void PostPackets(SynchronizationPacket aggregatedRegistrationsPacket, RegistryPacket registrationsPacket);
+        Task PostPackets(SynchronizationPacket aggregatedRegistrationsPacket, RegistryPacket registrationsPacket, CancellationToken cancellationToken);
         void PostTransaction(TaskCompletionWrapper<IPacketBase> completionWrapper);
 		long GetLowestCombinedBlockHeight();
         void RegisterInternalChainDataService(IChainDataService chainDataService);

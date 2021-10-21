@@ -17,7 +17,7 @@ namespace O10.Node.DataLayer.Specific.Synchronization
     [RegisterExtension(typeof(IDataAccessService), Lifetime = LifetimeManagement.Scoped)]
     public class DataAccessService : NodeDataAccessServiceBase<SynchronizationDataContextBase>
     {
-        public DataAccessService(INodeDataContextRepository dataContextRepository,
+        public DataAccessService(INodeDataContextRepository dataContextRepository, 
                                  IConfigurationService configurationService,
                                  ILoggerService loggerService)
             : base(dataContextRepository, configurationService, loggerService)
