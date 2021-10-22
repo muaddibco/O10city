@@ -13,6 +13,6 @@ namespace O10.Node.DataLayer.Specific.O10Id.Model
         public ulong KeyHash { get; set; }
 
 		[Column(TypeName = "varbinary(64)")]
-        public string PublicKey { get; set; }
+        public byte[] PublicKey { get; set; }
     }
 }

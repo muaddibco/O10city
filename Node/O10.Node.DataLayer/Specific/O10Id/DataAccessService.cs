@@ -52,7 +52,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
         {
             string sql = "SELECT * FROM O10AccountIdentity";
             var identities = await DataContext.QueryAsync<AccountIdentity>(sql, cancellationToken: cancellationToken);
-            _keyIdentityMap = identities.ToDictionary(i => _identityKeyProvider.GetKey(i.PublicKey.HexStringToByteArray()), i => i);
+            _keyIdentityMap = identities.ToDictionary(i => _identityKeyProvider.GetKey(i.PublicKey), i => i);
         }
 
         public IEnumerable<IKey> GetAllAccountIdentities()
@@ -81,7 +81,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
 
             if (identity == null)
             {
-                identity = new AccountIdentity { PublicKey = key.ToString() };
+                identity = new AccountIdentity { PublicKey = key.ToByteArray() };
 
                 string sql = "INSERT INTO O10AccountIdentity (KeyHash, PublicKey) OUTPUT Inserted.AccountIdentityId VALUES (0, @PublicKey)";
                 identity.AccountIdentityId = await DataContext.ExecuteScalarAsync<long>(sql, identity, cancellationToken: cancellationToken);
@@ -173,10 +173,11 @@ namespace O10.Node.DataLayer.Specific.O10Id
             string sql = 
                 "BEGIN TRANSACTION;\r\n" +
                 "   DECLARE @O10AccountIdentityID BIGINT\r\n" +
-                "   SELECT @O10AccountIdentityID=AccountIdentityId FROM O10AccountIdentity WHERE PublicKey=@PublicKey)\r\n" +
+                "   DECLARE @PublicKeyConverted VARBINARY(64) = CONVERT(VARBINARY(64), @PublicKey, 1)\r\n" +
+                "   SELECT @O10AccountIdentityID=AccountIdentityId FROM O10AccountIdentity WHERE PublicKey=CONVERT(VARBINARY(64), @PublicKeyConverted, 1)\r\n" +
                 "   IF @@rowcount = 0\r\n" +
                 "   BEGIN" +
-                "       INSERT O10AccountIdentity(KeyHash, PublicKey) VALUES (0, @PublicKey);\r\n" +
+                "       INSERT O10AccountIdentity(KeyHash, PublicKey) VALUES (0, @PublicKeyConverted);\r\n" +
                 "       SET @O10AccountIdentityID = scope_identity();\r\n" +
                 "   END\r\n" +
                 "   \r\n" +
@@ -189,21 +190,22 @@ namespace O10.Node.DataLayer.Specific.O10Id
                 "       ON TS.IdentityAccountIdentityId=AI.AccountIdentityId " +
                 "   WHERE AI.AccountIdentityId=@O10AccountIdentityID\r\n" +
                 "   IF @@rowcount = 0\r\n" +
-                "   BEGIN" +
+                "   BEGIN\r\n" +
                 "       INSERT O10TransactionSources(IdentityAccountIdentityId) VALUES (@O10AccountIdentityID);\r\n" +
                 "       SET @O10TransactionSourceID = scope_identity();\r\n" +
                 "   END\r\n" +
                 "   \r\n" +
                 "   DECLARE @O10TransactionHashKeyID BIGINT\r\n" +
                 "   \r\n" +
-                "   INSERT O10TransactionHashKeys(Hash) VALUES (@Hash);\r\n" +
+                "   DECLARE @HashConverted VARBINARY(64) = CONVERT(VARBINARY(64), @Hash, 1)\r\n" +
+                "   INSERT O10TransactionHashKeys(RegistryHeight, Hash) VALUES (0, @HashConverted);\r\n" +
                 "   SET @O10TransactionHashKeyID = scope_identity();\r\n" +
                 "   \r\n" +
                 "   DECLARE @O10TransactionID BIGINT\r\n" +
                 "   \r\n" +
-                "   INSERT INTO O10Transactions(SourceO10TransactionSourceId, HashKeyO10TransactionHashKeyId, Content, Height, PacketType) VALUES(@O10TransactionSourceID, @O10TransactionHashKeyID, @Content, @Height, @PacketType)\r\n" +
+                "   INSERT INTO O10Transactions(RegistryHeight, SourceO10TransactionSourceId, HashKeyO10TransactionHashKeyId, Content, Height, PacketType) VALUES(0, @O10TransactionSourceID, @O10TransactionHashKeyID, @Content, @Height, @PacketType)\r\n" +
                 "   SET @O10TransactionID = scope_identity();\r\n" +
-                "END TRANSACTION;\r\n" +
+                "COMMIT TRANSACTION;\r\n" +
                 "\r\n" +
                 "SELECT T.*, HK.*, TS.*, AI.* FROM O10Transactions T\r\n" +
                 "INNER JOIN O10TransactionHashKeys HK ON T.HashKeyO10TransactionHashKeyId=HK.O10TransactionHashKeyId\r\n" +
@@ -219,8 +221,9 @@ namespace O10.Node.DataLayer.Specific.O10Id
                     t.HashKey = hk;
                     t.Source = ts;
                     return t;
-                }, 
-                param: new { PublicKey = source.ToString(), Content = content, Height = height, PacketType = packetType }, cancellationToken: cancellationToken);
+                },
+                "O10TransactionHashKeyId,O10TransactionSourceId,AccountIdentityId",
+                param: new { PublicKey = $"0x{source}", Content = content, Height = height, PacketType = (short)packetType, Hash = $"0x{hash.ToHexString()}"}, cancellationToken: cancellationToken);
 
             return o10Transaction;
         }
@@ -376,14 +379,14 @@ namespace O10.Node.DataLayer.Specific.O10Id
 
             O10TransactionHashKey hashKey 
                 = dbContext.BlockHashKeys.Local
-                    .FirstOrDefault(h => h.RegistryHeight == registryHeight && h.Hash == hashString);
+                    .FirstOrDefault(h => h.RegistryHeight == registryHeight && h.Hash.ToHexString() == hashString);
 
             if (hashKey == null)
             {
                 Logger.LogIfDebug(() => "GetLocalAwareHashKey: not found in local");
                 hashKey 
-                    = dbContext.BlockHashKeys
-                        .FirstOrDefault(h => h.RegistryHeight == registryHeight && h.Hash == hashString);
+                    = dbContext.BlockHashKeys.AsEnumerable()
+                        .FirstOrDefault(h => h.RegistryHeight == registryHeight && h.Hash.ToHexString() == hashString);
             }
             else
             {
@@ -400,14 +403,14 @@ namespace O10.Node.DataLayer.Specific.O10Id
 
             O10TransactionHashKey hashKey
                 = dbContext.BlockHashKeys.Local
-                    .FirstOrDefault(h => h.Hash == hashString);
+                    .FirstOrDefault(h => h.Hash.ToHexString() == hashString);
 
             if (hashKey == null)
             {
                 Logger.LogIfDebug(() => "GetLocalAwareHashKey: not found in local");
                 hashKey
-                    = dbContext.BlockHashKeys
-                        .FirstOrDefault(h => h.Hash == hashString);
+                    = dbContext.BlockHashKeys.AsEnumerable()
+                        .FirstOrDefault(h => h.Hash.ToHexString() == hashString);
             }
             else
             {

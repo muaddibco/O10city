@@ -11,6 +11,7 @@ namespace O10.Client.DataLayer.SQLite
 		public override string DataProvider => "SQLite";
 		protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 		{
+			base.OnConfiguring(optionsBuilder);
 			optionsBuilder.UseSqlite(ConnectionString ?? "Filename=client.dat");
 		}
 	}

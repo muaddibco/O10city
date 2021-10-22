@@ -12,6 +12,7 @@ namespace O10.Client.DataLayer.SqlServer
 
 		protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 		{
+			base.OnConfiguring(optionsBuilder);
 			optionsBuilder.UseSqlServer(ConnectionString ?? @"Server=localhost\SQLEXPRESS;Database=client;Trusted_Connection=True;");
 		}
 	}

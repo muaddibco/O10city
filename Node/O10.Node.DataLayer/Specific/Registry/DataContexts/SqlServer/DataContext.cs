@@ -10,10 +10,7 @@ namespace O10.Node.DataLayer.Specific.Registry.DataContexts.SqlServer
         public override string DataProvider => "SqlServer";
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            if (optionsBuilder is null)
-            {
-                throw new System.ArgumentNullException(nameof(optionsBuilder));
-            }
+            base.OnConfiguring(optionsBuilder);
 
             optionsBuilder.UseSqlServer(ConnectionString ?? @"Server=localhost\SQLEXPRESS;Database=core;Trusted_Connection=True;");
             ManualResetEventSlim.Set();

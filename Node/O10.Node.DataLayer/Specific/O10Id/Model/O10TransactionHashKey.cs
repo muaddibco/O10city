@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace O10.Node.DataLayer.Specific.O10Id.Model
@@ -13,6 +14,6 @@ namespace O10.Node.DataLayer.Specific.O10Id.Model
         public long RegistryHeight { get; set; }
 
 		[Column(TypeName = "varbinary(64)")]
-		public string Hash { get; set; }
+		public byte[] Hash { get; set; }
     }
 }

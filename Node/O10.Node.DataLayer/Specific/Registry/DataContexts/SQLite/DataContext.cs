@@ -10,10 +10,7 @@ namespace O10.Node.DataLayer.Specific.Registry.DataContexts.SQLite
         public override string DataProvider => "SQLite";
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            if (optionsBuilder is null)
-            {
-                throw new System.ArgumentNullException(nameof(optionsBuilder));
-            }
+            base.OnConfiguring(optionsBuilder);
 
             optionsBuilder.UseSqlite(ConnectionString ?? "Filename=core.dat");
             ManualResetEventSlim.Set();

@@ -10,6 +10,7 @@ namespace O10.Node.DataLayer.Specific.Stealth.DataContexts.SqlServer
         public override string DataProvider => "SqlServer";
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
+            base.OnConfiguring(optionsBuilder);
             optionsBuilder.UseSqlServer(ConnectionString ?? @"Server=localhost\SQLEXPRESS;Database=core;Trusted_Connection=True;");
             ManualResetEventSlim.Set();
         }

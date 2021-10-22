@@ -6,11 +6,19 @@ using Dapper;
 using System.Collections.Generic;
 using System;
 using System.Linq;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Debug;
 
 namespace O10.Core.Persistency
 {
     public abstract class DataContextBase : DbContext, IDataContext
     {
+        public static readonly LoggerFactory _myLoggerFactory =
+            new LoggerFactory(new[] {
+                new DebugLoggerProvider()
+            });
+        private SqlClientListener _sqlClientListener;
+
         public IDataContext EnsureConfigurationCompleted()
         {
             ManualResetEventSlim.Wait();
@@ -24,7 +32,8 @@ namespace O10.Core.Persistency
         protected ManualResetEventSlim ManualResetEventSlim { get; } = new ManualResetEventSlim(false);
 
         public IDataContext Initialize(string connectionString)
-        {  
+        {
+            _sqlClientListener = new SqlClientListener();
             ConnectionString = connectionString;
             return this;
         }
@@ -88,6 +97,12 @@ namespace O10.Core.Persistency
         public async Task<T> QuerySingleAsync<T>(string sql, object param = null, IDbTransaction transaction = null, CancellationToken cancellationToken = default)
         {
             return await Database.GetDbConnection().QuerySingleAsync<T>(sql, param, transaction);
+        }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            base.OnConfiguring(optionsBuilder);
+            optionsBuilder.UseLoggerFactory(_myLoggerFactory);
         }
     }
 }

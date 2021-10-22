@@ -11,6 +11,7 @@ namespace O10.IdentityProvider.DataLayer.SQLite
 		public override string DataProvider => "IdpSQLite";
 		protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 		{
+			base.OnConfiguring(optionsBuilder);
 			optionsBuilder.UseSqlite(ConnectionString ?? "Filename=idp.dat");
 		}
 	}

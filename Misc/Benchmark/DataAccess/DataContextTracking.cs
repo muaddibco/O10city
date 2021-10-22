@@ -8,6 +8,7 @@ namespace Benchmark.DataAccess
         public DbSet<Transaction> Transactions { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
+            base.OnConfiguring(optionsBuilder);
             optionsBuilder
                 .UseSqlServer("Data Source=localhost,1434;Database=benchmark;User ID=sa;Password=p@ssword1;MultipleActiveResultSets=true;");
         }
