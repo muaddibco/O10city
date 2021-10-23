@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using Newtonsoft.Json;
 using O10.Transactions.Core.Enums;
 using O10.Node.DataLayer.DataAccess;
 using O10.Node.DataLayer.Specific.O10Id.DataContexts;
@@ -39,117 +37,12 @@ namespace O10.Node.DataLayer.Specific.O10Id
 
         public override LedgerType LedgerType => LedgerType.O10State;
 
-        protected override async Task PostInitTasks()
-        {
-            await LoadAllIdentities(CancellationToken);
-
-            await base.PostInitTasks();
-        }
-
         #region Account Identities
-
-        private async Task LoadAllIdentities(CancellationToken cancellationToken)
-        {
-            string sql = "SELECT * FROM O10AccountIdentity";
-            var identities = await DataContext.QueryAsync<AccountIdentity>(sql, cancellationToken: cancellationToken);
-            _keyIdentityMap = identities.ToDictionary(i => _identityKeyProvider.GetKey(i.PublicKey), i => i);
-        }
-
-        public IEnumerable<IKey> GetAllAccountIdentities()
-        {
-            return _keyIdentityMap.Select(m => m.Key).ToList();
-        }
-
-        private AccountIdentity GetAccountIdentity(IKey key)
-        {
-            if (_keyIdentityMap.ContainsKey(key))
-            {
-                return _keyIdentityMap[key];
-            }
-
-            return null;
-        }
-
-        private async Task<AccountIdentity> GetOrAddAccountIdentity(IKey key, CancellationToken cancellationToken)
-        {
-            if (key is null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-
-            AccountIdentity identity = GetAccountIdentity(key);
-
-            if (identity == null)
-            {
-                identity = new AccountIdentity { PublicKey = key.ToByteArray() };
-
-                string sql = "INSERT INTO O10AccountIdentity (KeyHash, PublicKey) OUTPUT Inserted.AccountIdentityId VALUES (0, @PublicKey)";
-                identity.AccountIdentityId = await DataContext.ExecuteScalarAsync<long>(sql, identity, cancellationToken: cancellationToken);
-
-                _keyIdentityMap.Add(key, identity);
-            }
-
-            return identity;
-        }
 
         #endregion Account Identities
 
-        private async Task<O10TransactionSource> GetTransactionSource(IKey key, CancellationToken cancellationToken)
-        {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-
-            AccountIdentity accountIdentity = GetAccountIdentity(key);
-
-            if (accountIdentity == null)
-            {
-                return null;
-            }
-
-            return await GetTransactionalIdentity(accountIdentity, cancellationToken);
-        }
-
-        private async Task<O10TransactionSource> GetTransactionalIdentity(AccountIdentity accountIdentity, CancellationToken cancellationToken)
-        {
-            if (accountIdentity == null)
-            {
-                throw new ArgumentNullException(nameof(accountIdentity));
-            }
-
-            string sql = "SELECT * FROM O10TransactionSources TS " +
-                "LEFT JOIN O10AccountIdentity AI ON TS.IdentityAccountIdentityId=AI.AccountIdentityId " +
-                "WHERE AI.AccountIdentityId=@AccountIdentityId";
-
-            var transactionSource = await DataContext
-                .QueryFirstOrDefaultAsync<O10TransactionSource, AccountIdentity, O10TransactionSource>(
-                    sql,
-                    (t, i) => { t.Identity = i; return t; },
-                    "AccountIdentityId",
-                    accountIdentity);
-
-            return transactionSource;
-        }
-
-        private async Task<O10TransactionSource> AddTransactionSource(AccountIdentity accountIdentity, CancellationToken cancellationToken)
-        {
-            O10TransactionSource transactionalIdentity = new O10TransactionSource
-            {
-                Identity = accountIdentity
-            };
-
-            string sql = "INSERT O10TransactionSources(Identity) OUTPUT Inserted.O10TransactionSourceId VALUES (@Identity)";
-
-            transactionalIdentity.O10TransactionSourceId = await DataContext.ExecuteScalarAsync<long>(sql, transactionalIdentity, cancellationToken: cancellationToken);
-
-            return transactionalIdentity;
-        }
-
         public async Task UpdateRegistryInfo(long o10transactionId, long aggregatedRegistrationHeight, CancellationToken cancellationToken)
         {
-            using var dbContext = GetDataContext();
-
             string sql = 
                 "UPDATE O10Transactions SET RegistryHeight=@RegistryHeight WHERE O10TransactionId=@O10TransactionId;\r\n" +
                 "UPDATE K SET K.RegistryHeight=@RegistryHeight FROM O10TransactionHashKeys K " +
@@ -228,199 +121,66 @@ namespace O10.Node.DataLayer.Specific.O10Id
             return o10Transaction;
         }
 
-        public O10Transaction GetLastTransactionalBlock(O10TransactionSource transactionalIdentity)
-        {
-            if (transactionalIdentity == null)
-            {
-                throw new ArgumentNullException(nameof(transactionalIdentity));
-            }
-
-            using var dbContext = GetDataContext();
-
-            return dbContext.TransactionalBlocks.Where(b => b.Source == transactionalIdentity).OrderByDescending(b => b.Height).FirstOrDefault();
-        }
-
         public async Task<O10Transaction> GetLastTransactionalBlock(IKey key, CancellationToken cancellationToken)
         {
-            O10Transaction transactionalBlock = null;
-
             if (key == null)
             {
                 throw new ArgumentNullException(nameof(key));
             }
 
-            O10TransactionSource transactionalIdentity = await GetTransactionSource(key, cancellationToken);
+            string sql = 
+                "SELECT TOP 1 T.*, TS.*, AI.* FROM O10Transactions T\r\n" +
+                "INNER JOIN O10TransactionSources TS ON T.SourceO10TransactionSourceId=TS.O10TransactionSourceId\r\n" +
+                "INNER JOIN O10AccountIdentity AI ON TS.IdentityAccountIdentityId=AI.AccountIdentityId\r\n" +
+                "WHERE AI.PublicKey=@PublicKey\r\n" +
+                "ORDER BY T.Height DESC";
 
-            if (transactionalIdentity != null)
-            {
-                transactionalBlock = GetLastTransactionalBlock(transactionalIdentity);
-            }
+            var transaction =
+                await DataContext.QueryFirstOrDefaultAsync<O10Transaction, O10TransactionSource, AccountIdentity, O10Transaction>(sql,
+                    (t, ts, ai) =>
+                    {
+                        t.Source = ts;
+                        ts.Identity = ai;
+                        return t;
+                    },
+                    "O10TransactionSourceId,AccountIdentityId",
+                    new { PublicKey = key.ToByteArray() });
 
-            return transactionalBlock;
+            return transaction;
         }
 
-        public IEnumerable<O10TransactionSource> GetAllTransctionalIdentities()
-        {
-            using var dbContext = GetDataContext();
-
-            return dbContext.TransactionSources.ToList();
-        }
-
-        public O10Transaction GetTransaction(IKey hash, long registryHeight)
-        {
-            if (hash is null)
-            {
-                throw new ArgumentNullException(nameof(hash));
-            }
-
-            string hashString = hash.ToString();
-            using var dbContext = GetDataContext();
-            {
-                O10TransactionHashKey hashKey = GetLocalAwareHashKey(dbContext, hashString, registryHeight);
-                if (hashKey == null)
-                {
-                    Logger.Error($"Failed to find Hash Key {hashString} with Registry Height {registryHeight}");
-                    return null;
-                }
-
-                O10Transaction transactionalBlock = GetLocalAwareTransactionalPacketByHashKey(dbContext, hashKey.O10TransactionHashKeyId);
-                return transactionalBlock;
-            }
-        }
-
-        public O10Transaction GetTransaction(IKey hash)
+        public async Task<O10Transaction> GetTransaction(IKey hash, long registryHeight, CancellationToken cancellationToken)
         {
             if (hash is null)
             {
                 throw new ArgumentNullException(nameof(hash));
             }
 
-            string hashString = hash.ToString();
-            using var dbContext = GetDataContext();
+            string sql = 
+                "SELECT TOP 1 * FROM O10Transactions T\r\n" +
+                "INNER JOIN O10TransactionHashKeys HK ON T.HashKeyO10TransactionHashKeyId=HK.O10TransactionHashKeyId AND HK.RegistryHeight=@RegistryHeight\r\n" +
+                "WHERE HK.Hash=@Hash";
 
-            O10TransactionHashKey hashKey = GetLocalAwareHashKey(dbContext, hashString);
-            if (hashKey == null)
-            {
-                Logger.Error($"Failed to find Hash Key {hashString}");
-                return null;
-            }
+            var transaction = await DataContext.QueryFirstOrDefaultAsync<O10Transaction>(sql, new { Hash = hash.ToByteArray(), RegistryHeight = registryHeight }, cancellationToken: cancellationToken);
 
-            O10Transaction transactionalBlock = GetLocalAwareTransactionalPacketByHashKey(dbContext, hashKey.O10TransactionHashKeyId);
-            return transactionalBlock;
+            return transaction;
         }
 
-        #region Private Functions
-
-        private O10Transaction GetLocalAwareTransactionalPacketByHashKey(O10IdDataContextBase dbContext, long hashKeyId)
+        public async Task<O10Transaction> GetTransaction(IKey hash, CancellationToken cancellationToken)
         {
-            Logger.LogIfDebug(() => $"{nameof(GetLocalAwareTransactionalPacketByHashKey)}({hashKeyId})");
-            O10Transaction transactionalBlock =
-                dbContext.TransactionalBlocks.Local.FirstOrDefault(b => b.HashKey != null && b.HashKey.O10TransactionHashKeyId == hashKeyId);
-
-            if (transactionalBlock == null)
+            if (hash is null)
             {
-                Logger.LogIfDebug(() => $"{nameof(GetLocalAwareTransactionalPacketByHashKey)} not found in local");
-
-                transactionalBlock =
-                    dbContext.TransactionalBlocks.FirstOrDefault(b => b.HashKey != null && b.HashKey.O10TransactionHashKeyId == hashKeyId);
-            }
-            else
-            {
-                Logger.LogIfDebug(() => $"{nameof(GetLocalAwareTransactionalPacketByHashKey)} found in local");
+                throw new ArgumentNullException(nameof(hash));
             }
 
-            if (transactionalBlock != null)
-            {
-                Logger.LogIfDebug(() => $"{nameof(GetLocalAwareTransactionalPacketByHashKey)}: {transactionalBlock.O10TransactionId}");
-            }
-            else
-            {
-                Logger.Warning($"{nameof(GetLocalAwareTransactionalPacketByHashKey)}: TransactionalBlock not found");
-            }
+            string sql =
+                "SELECT TOP 1 * FROM O10Transactions T\r\n" +
+                "INNER JOIN O10TransactionHashKeys HK ON T.HashKeyO10TransactionHashKeyId=HK.O10TransactionHashKeyId\r\n" +
+                "WHERE HK.Hash=@Hash";
 
-            return transactionalBlock;
+            var transaction = await DataContext.QueryFirstOrDefaultAsync<O10Transaction>(sql, new { Hash = hash.ToByteArray() }, cancellationToken: cancellationToken);
+
+            return transaction;
         }
-
-        private O10Transaction GetLocalAwareO10TransactionPacketById(O10IdDataContextBase dbContext, long o10transactionId)
-        {
-            Logger.LogIfDebug(() => $"{nameof(GetLocalAwareO10TransactionPacketById)}({o10transactionId})");
-            O10Transaction transactionalBlock =
-                dbContext.TransactionalBlocks.Local
-                    .FirstOrDefault(b => b.O10TransactionId == o10transactionId);
-
-            if (transactionalBlock == null)
-            {
-                Logger.LogIfDebug(() => $"{nameof(GetLocalAwareO10TransactionPacketById)} not found in local");
-
-                transactionalBlock =
-                    dbContext.TransactionalBlocks
-                        .FirstOrDefault(b => b.O10TransactionId == o10transactionId);
-            }
-            else
-            {
-                Logger.LogIfDebug(() => $"{nameof(GetLocalAwareO10TransactionPacketById)} found in local");
-            }
-
-            if (transactionalBlock != null)
-            {
-                Logger.LogIfDebug(() => $"{nameof(GetLocalAwareO10TransactionPacketById)}: {transactionalBlock.O10TransactionId}");
-            }
-            else
-            {
-                Logger.Warning($"{nameof(GetLocalAwareO10TransactionPacketById)}: {nameof(O10Transaction)} not found");
-            }
-
-            return transactionalBlock;
-        }
-
-        private O10TransactionHashKey GetLocalAwareHashKey(O10IdDataContextBase dbContext, string hashString, long registryHeight)
-        {
-            Logger.LogIfDebug(() => $"GetLocalAwareHashKey({hashString}, {registryHeight})");
-
-            O10TransactionHashKey hashKey 
-                = dbContext.BlockHashKeys.Local
-                    .FirstOrDefault(h => h.RegistryHeight == registryHeight && h.Hash.ToHexString() == hashString);
-
-            if (hashKey == null)
-            {
-                Logger.LogIfDebug(() => "GetLocalAwareHashKey: not found in local");
-                hashKey 
-                    = dbContext.BlockHashKeys.AsEnumerable()
-                        .FirstOrDefault(h => h.RegistryHeight == registryHeight && h.Hash.ToHexString() == hashString);
-            }
-            else
-            {
-                Logger.LogIfDebug(() => "GetLocalAwareHashKey: found in local");
-            }
-
-            Logger.LogIfDebug(() => $"{nameof(hashKey)}={JsonConvert.SerializeObject(hashKey)}");
-            return hashKey;
-        }
-
-        private O10TransactionHashKey GetLocalAwareHashKey(O10IdDataContextBase dbContext, string hashString)
-        {
-            Logger.LogIfDebug(() => $"GetLocalAwareHashKey({hashString})");
-
-            O10TransactionHashKey hashKey
-                = dbContext.BlockHashKeys.Local
-                    .FirstOrDefault(h => h.Hash.ToHexString() == hashString);
-
-            if (hashKey == null)
-            {
-                Logger.LogIfDebug(() => "GetLocalAwareHashKey: not found in local");
-                hashKey
-                    = dbContext.BlockHashKeys.AsEnumerable()
-                        .FirstOrDefault(h => h.Hash.ToHexString() == hashString);
-            }
-            else
-            {
-                Logger.LogIfDebug(() => "GetLocalAwareHashKey: found in local");
-            }
-
-            Logger.LogIfDebug(() => $"{nameof(hashKey)}={JsonConvert.SerializeObject(hashKey)}");
-            return hashKey;
-        }
-
-        #endregion Private Function
     }
 }

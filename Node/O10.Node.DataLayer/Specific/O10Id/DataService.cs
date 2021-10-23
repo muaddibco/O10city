@@ -81,8 +81,8 @@ namespace O10.Node.DataLayer.Specific.O10Id
                 : key switch
                 {
                     UniqueKey uniqueKey => await Get(uniqueKey, cancellationToken),
-                    CombinedHashKey combinedHashKey => Get(combinedHashKey),
-                    HashKey hashKey => Get(hashKey),
+                    CombinedHashKey combinedHashKey => await Get(combinedHashKey, cancellationToken),
+                    HashKey hashKey => await Get(hashKey, cancellationToken),
                     _ => throw new DataKeyNotSupportedException(key),
                 };
 
@@ -102,20 +102,20 @@ namespace O10.Node.DataLayer.Specific.O10Id
             return new List<IPacketBase>();
         }
 
-        private IEnumerable<IPacketBase> Get(CombinedHashKey combinedHashKey)
+        private async Task<IEnumerable<IPacketBase>> Get(CombinedHashKey combinedHashKey, CancellationToken cancellationToken)
         {
-            O10Transaction transactionalBlock = Service.GetTransaction(combinedHashKey.Hash, combinedHashKey.CombinedBlockHeight);
+            O10Transaction transactionalBlock = await Service.GetTransaction(combinedHashKey.Hash, combinedHashKey.CombinedBlockHeight, cancellationToken);
 
             //TODO: this is very ugly implementation!!!
             if (transactionalBlock == null)
             {
                 Task.Delay(200).Wait();
-                transactionalBlock = Service.GetTransaction(combinedHashKey.Hash, combinedHashKey.CombinedBlockHeight);
+                transactionalBlock = await Service.GetTransaction(combinedHashKey.Hash, combinedHashKey.CombinedBlockHeight, cancellationToken);
 
                 if (transactionalBlock == null)
                 {
                     Task.Delay(200).Wait();
-                    transactionalBlock = Service.GetTransaction(combinedHashKey.Hash, combinedHashKey.CombinedBlockHeight);
+                    transactionalBlock = await Service.GetTransaction(combinedHashKey.Hash, combinedHashKey.CombinedBlockHeight, cancellationToken);
                 }
             }
 
@@ -127,20 +127,20 @@ namespace O10.Node.DataLayer.Specific.O10Id
             return new List<IPacketBase>();
         }
 
-        private IEnumerable<IPacketBase> Get(HashKey combinedHashKey)
+        private async Task<IEnumerable<IPacketBase>> Get(HashKey combinedHashKey, CancellationToken cancellationToken)
         {
-            O10Transaction transactionalBlock = Service.GetTransaction(combinedHashKey.Hash);
+            O10Transaction transactionalBlock = await Service.GetTransaction(combinedHashKey.Hash, cancellationToken);
 
             //TODO: this is very ugly implementation!!!
             if (transactionalBlock == null)
             {
                 Task.Delay(200).Wait();
-                transactionalBlock = Service.GetTransaction(combinedHashKey.Hash);
+                transactionalBlock = await Service.GetTransaction(combinedHashKey.Hash, cancellationToken);
 
                 if (transactionalBlock == null)
                 {
                     Task.Delay(200).Wait();
-                    transactionalBlock = Service.GetTransaction(combinedHashKey.Hash);
+                    transactionalBlock = await Service.GetTransaction(combinedHashKey.Hash, cancellationToken);
                 }
             }
 
