@@ -19,7 +19,7 @@ namespace O10.Node.DataLayer.Specific.Stealth.Model
         public ushort BlockType { get; set; }
 
 		[Column(TypeName = "varbinary(64)")]
-        public string DestinationKey { get; set; }
+        public byte[] DestinationKey { get; set; }
 
 		public string Content { get; set; }
     }

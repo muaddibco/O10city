@@ -11,8 +11,6 @@ namespace O10.Node.DataLayer.Specific.Stealth.Model
         public long KeyImageId { get; set; }
 
 		[Column(TypeName = "varbinary(64)")]
-        public string Value { get; set; }
-
-        public string ValueString { get; set; }
+        public byte[] Value { get; set; }
 	}
 }

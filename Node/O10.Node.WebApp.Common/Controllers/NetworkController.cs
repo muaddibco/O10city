@@ -219,7 +219,7 @@ namespace O10.Node.WebApp.Common.Controllers
 		{
 			try
 			{
-				string hash = _stealthDataService.GetPacketHash(new KeyImageKey(keyImage));
+				var hash = _stealthDataService.GetPacketHash(new KeyImageKey(keyImage.HexStringToByteArray()));
 
 				var response = new PacketHashResponse { Hash = hash };
 

@@ -57,7 +57,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
 
                 var addCompletionWrapper = new TaskCompletionWrapper<IPacketBase>(packet);
                 Service
-                    .AddStealthBlock(stealth.Payload.Transaction.KeyImage, stealth.Payload.Transaction.TransactionType, stealth.Payload.Transaction.DestinationKey, stealth.ToJson(), hash.ToHexString())
+                    .AddStealthBlock(stealth.Payload.Transaction.KeyImage, stealth.Payload.Transaction.TransactionType, stealth.Payload.Transaction.DestinationKey, stealth.ToJson(), hash)
                     .ContinueWith((t, o) =>
                     {
                         var w = ((Tuple<TaskCompletionWrapper<IPacketBase>, IKey>)o).Item1;
@@ -143,7 +143,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
             await base.Initialize(cancellationToken);
         }
 
-        public string GetPacketHash(IDataKey dataKey)
+        public byte[] GetPacketHash(IDataKey dataKey)
         {
             if (dataKey == null)
             {

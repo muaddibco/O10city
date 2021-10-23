@@ -25,7 +25,6 @@ namespace O10.Node.DataLayer.Specific.Stealth
     {
         private readonly IIdentityKeyProvider _identityKeyProvider;
         private readonly IHashCalculation _defaultHashCalculation;
-        private HashSet<IKey> _keyImages = new HashSet<IKey>(new Key32());
 
         public DataAccessService(INodeDataContextRepository dataContextRepository, 
                                  IConfigurationService configurationService,
@@ -50,77 +49,67 @@ namespace O10.Node.DataLayer.Specific.Stealth
 
         public override LedgerType LedgerType => LedgerType.Stealth;
 
-        protected override async Task PostInitTasks()
-        {
-            await LoadAllImageKeys();
-            await base.PostInitTasks();
-        }
-
-        public async Task LoadAllImageKeys()
-        {
-            string sql = "SELECT Value FROM KeyImages";
-            var keyImageValues = await DataContext.QueryAsync<string>(sql, cancellationToken: CancellationToken);
-
-            _keyImages = new HashSet<IKey>(keyImageValues.Select(k => _identityKeyProvider.GetKey(k.HexStringToByteArray())).AsEnumerable(), new Key32());
-        }
-
-        public bool IsStealthImageKeyExist(IKey keyImage)
-        {
-            return _keyImages.Contains(keyImage);
-        }
-
-        public async Task<StealthTransaction> AddStealthBlock(IKey keyImage, ushort blockType, IKey destinationKey, string content, string hashString, CancellationToken cancellationToken = default)
+        public async Task<StealthTransaction> AddStealthBlock(IKey keyImage, ushort blockType, IKey destinationKey, string content, byte[] hash, CancellationToken cancellationToken = default)
         {
             if (keyImage is null)
             {
                 throw new ArgumentNullException(nameof(keyImage));
             }
 
-            // TODO: need to make sure that Key Image is checked where it is required to be checked!
-            bool isService = blockType == TransactionTypes.Stealth_KeyImageCompromised || blockType == TransactionTypes.Stealth_RevokeIdentity;
-            bool keyImageExist = _keyImages.Contains(keyImage);
-            if (keyImageExist)
-            {
-                Logger.Warning($"KeyImage {keyImage} already exist");
-                if (isService)
+            string sql =
+                "DECLARE @KeyImageId BIGINT\r\n" +
+                "DECALRE @IsKeyImageViolated BIT\r\n" +
+                "DECLARE @StealthTransactionHashKeyId BIGINT\r\n" +
+                "DECLARE @StealthTransactionId BIGINT\r\n" +
+                "\r\n" +
+                "SELECT @KeyImageId=KeyImageId, @IsKeyImageViolated = CASE @BlockType IN (@BlockTypesAllowed) THEN 0 ELSE 1 END FROM KeyImages WHERE Value=@KeyImage\r\n" +
+                "IF @IsKeyImageViolated\r\n" +
+                "   GOTO EndQuery\r\n" +
+                "\r\n" +
+                "BEGIN TRANSACTION;\r\n" +
+                "   IF @@rowcount = 0\r\n" +
+                "   BEGIN\r\n" +
+                "       INSERT KeyImages(Value) VALUES(@KeyImage);\r\n" +
+                "       SET @KeyImageId=scope_identity();\r\n" +
+                "   END\r\n" +
+                "   \r\n" +
+                "   INSERT StealthTransactionHashKeys(RegistryHeight, Hash) VALUES (0, @Hash);\r\n" +
+                "   SET @StealthTransactionHashKeyId=scope_identity();\r\n" +
+                "   \r\n" +
+                "   INSERT StealthTransactions(KeyImageId, HashKeyStealthTransactionHashKeyId, RegistryHeight, BlockType, DestinationKey, Content)\r\n" +
+                "       VALUES(@KeyImageId, @StealthTransactionHashKeyId, 0, @BlockType, @DestinationKey, @Content)" +
+                "COMMIT TRANSACTION;\r\n" +
+                "\r\n" +
+                "EndQuery:\r\n" +
+                "SELECT TOP 1 ST.*, KI.KeyImageId AS KIID, KI.Value, HK.* FROM StealthTransactions ST\r\n" +
+                "INNER JOIN KeyImages KI ON ST.KeyImageId=KI.KeyImageId\r\n" +
+                "INNER JOIN StealthTransactionHashKeys HK ON ST.HashKeyStealthTransactionHashKeyId=HK.StealthTransactionHashKeyId\r\n" +
+                "WHERE ST.StealthTransactionId=@StealthTransactionId";
+
+            var stealthBlock = await DataContext.QueryFirstOrDefaultAsync<StealthTransaction, KeyImage, StealthTransactionHashKey, StealthTransaction>(
+                sql,
+                (t, ki, hk) =>
                 {
-                    Logger.Info($"Service packet {blockType} stored");
-                }
-                else
-                {
-                    throw new WitnessedKeyImageException(keyImage);
-                }
+                    t.KeyImage = ki;
+                    t.HashKey = hk;
+                    return t;
+                },
+                "KIID,StealthTransactionHashKeyId",
+                new 
+                { 
+                    BlockTypesAllowed = new[] { TransactionTypes.Stealth_KeyImageCompromised, TransactionTypes.Stealth_RevokeIdentity },
+                    KeyImage = keyImage.ToByteArray(),
+                    Hash = hash,
+                    BlockType = (short)blockType,
+                    DestinationKey = destinationKey.ToByteArray(),
+                    Content = content
+                },
+                cancellationToken: cancellationToken);
+
+            if(stealthBlock == null)
+            {
+                throw new WitnessedKeyImageException(keyImage);
             }
-            else
-            {
-                Logger.Info($"KeyImage {keyImage} witnessed");
-                _keyImages.Add(keyImage);
-            }
-
-            var keyImageValue = keyImage.ToString();
-            KeyImage StealthKeyImage = new KeyImage { Value = keyImageValue, ValueString = keyImageValue };
-
-            StealthTransactionHashKey blockHashKey = new StealthTransactionHashKey
-            {
-                Hash = hashString,
-                HashString = hashString
-            };
-
-            StealthTransaction stealthBlock = new StealthTransaction
-            {
-                KeyImage = StealthKeyImage,
-                HashKey = blockHashKey,
-                BlockType = blockType,
-                DestinationKey = destinationKey.ToString(),
-                Content = content
-            };
-
-            using var dbContext = GetDataContext();
-
-            dbContext.StealthKeyImages.Add(StealthKeyImage);
-            dbContext.StealthTransactionHashKeys.Add(blockHashKey);
-            dbContext.StealthBlocks.Add(stealthBlock);
-            await dbContext.SaveChangesAsync(cancellationToken);
 
             return stealthBlock;
         }
@@ -198,10 +187,10 @@ namespace O10.Node.DataLayer.Specific.Stealth
             dbContext.StealthBlocks.Local.FirstOrDefault(b => b.HashKey.StealthTransactionHashKeyId == hashKeyId) ??
             dbContext.StealthBlocks.FirstOrDefault(b => b.HashKey.StealthTransactionHashKeyId == hashKeyId);
 
-        public string GetHashByKeyImage(string keyImage)
+        public byte[] GetHashByKeyImage(byte[] keyImage)
         {
             using var dbContext = GetDataContext();
-            return dbContext.StealthBlocks.Include(s => s.KeyImage).Include(s => s.HashKey).FirstOrDefault(p => p.KeyImage.Value == keyImage)?.HashKey.HashString;
+            return dbContext.StealthBlocks.Include(s => s.KeyImage).Include(s => s.HashKey).FirstOrDefault(p => p.KeyImage.Value == keyImage)?.HashKey.Hash;
         }
 
         private StealthTransactionHashKey GetLocalAwareHashKey(StealthDataContextBase dbContext, string hashString, long aggregatedRegistryHeight)

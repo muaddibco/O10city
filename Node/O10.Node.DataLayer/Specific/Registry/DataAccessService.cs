@@ -6,7 +6,6 @@ using O10.Node.DataLayer.Specific.Registry.Model;
 using O10.Core.Architecture;
 using O10.Core.Configuration;
 using O10.Core.Logging;
-using O10.Core.Tracking;
 using O10.Core.Persistency;
 using System.Threading.Tasks;
 using System.Threading;
@@ -27,10 +26,8 @@ namespace O10.Node.DataLayer.Specific.Registry
 
         public async Task AddRegistryFullBlocks(RegistryFullBlock[] blocks, CancellationToken cancellationToken = default)
         {
-            using var dbContext = GetDataContext();
-
-            dbContext.RegistryFullBlocks.AddRange(blocks);
-            await dbContext.SaveChangesAsync(cancellationToken);
+            DataContext.RegistryFullBlocks.AddRange(blocks);
+            await DataContext.SaveChangesAsync(cancellationToken);
         }
 
         public async Task<IEnumerable<RegistryFullBlock>> GetAllRegistryFullBlocks()

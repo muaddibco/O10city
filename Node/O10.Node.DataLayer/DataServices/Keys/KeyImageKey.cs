@@ -2,11 +2,11 @@
 {
 	public class KeyImageKey : IDataKey
 	{
-		public KeyImageKey(string keyImage)
+		public KeyImageKey(byte[] keyImage)
 		{
 			KeyImage = keyImage;
 		}
 
-		public string KeyImage { get; }
+		public byte[] KeyImage { get; }
 	}
 }
