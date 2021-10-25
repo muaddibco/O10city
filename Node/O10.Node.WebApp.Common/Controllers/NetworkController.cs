@@ -215,11 +215,11 @@ namespace O10.Node.WebApp.Common.Controllers
 		}
 
 		[HttpGet("HashByKeyImage/{keyImage}")]
-		public IActionResult GetHashByKeyImage(string keyImage)
+		public async Task<IActionResult> GetHashByKeyImage(string keyImage, CancellationToken cancellationToken)
 		{
 			try
 			{
-				var hash = _stealthDataService.GetPacketHash(new KeyImageKey(keyImage.HexStringToByteArray()));
+				var hash = await _stealthDataService.GetPacketHash(new KeyImageKey(keyImage.HexStringToByteArray()), cancellationToken);
 
 				var response = new PacketHashResponse { Hash = hash };
 

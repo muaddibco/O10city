@@ -47,7 +47,7 @@ namespace O10.Node.DataLayer.Tests
             _nodeDataContext = GetNodeDataContext();
 
             var dataContextRepository = Substitute.For<INodeDataContextRepository>();
-            dataContextRepository.GetInstance(Transactions.Core.Enums.LedgerType.O10State, "SqlServer").Returns(_nodeDataContext);
+            dataContextRepository.GetInstance(Transactions.Core.Enums.LedgerType.O10State, "SqlServer").ReturnsForAnyArgs(_nodeDataContext);
 
             _coreFixture.ServiceCollection.AddSingleton(dataContextRepository);
 

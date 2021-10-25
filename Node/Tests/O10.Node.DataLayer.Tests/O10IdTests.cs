@@ -20,15 +20,9 @@ namespace O10.Node.DataLayer.Tests
     {
         private readonly DataContext _dataContext;
 
-        public O10IdTests(SqlServerDockerCollectionFixture fixture, CoreFixture coreFixture) : base(fixture, coreFixture)
-        {
-            _dataContext = new DataContext();
-        }
+        public O10IdTests(SqlServerDockerCollectionFixture fixture, CoreFixture coreFixture) : base(fixture, coreFixture) => _dataContext = new DataContext();
 
-        protected override NodeDataContextBase GetNodeDataContext()
-        {
-            return _dataContext;
-        }
+        protected override NodeDataContextBase GetNodeDataContext() => _dataContext;
 
         protected override void RegisterServices()
         {
@@ -113,7 +107,7 @@ namespace O10.Node.DataLayer.Tests
         }
 
         [Fact]
-        public async Task GetTransaction()
+        public async Task GetTransactionTest()
         {
             var dataAccessService = _coreFixture.ServiceProvider.GetRequiredService<IDataAccessService>() as DataAccessService;
 

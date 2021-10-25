@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.EntityFrameworkCore;
 using O10.Transactions.Core.Enums;
 using O10.Node.DataLayer.DataAccess;
 using O10.Node.DataLayer.Specific.Stealth.DataContexts;
@@ -23,33 +20,16 @@ namespace O10.Node.DataLayer.Specific.Stealth
     [RegisterExtension(typeof(IDataAccessService), Lifetime = LifetimeManagement.Scoped)]
     public class DataAccessService : NodeDataAccessServiceBase<StealthDataContextBase>
     {
-        private readonly IIdentityKeyProvider _identityKeyProvider;
-        private readonly IHashCalculation _defaultHashCalculation;
-
         public DataAccessService(INodeDataContextRepository dataContextRepository, 
                                  IConfigurationService configurationService,
-                                 ILoggerService loggerService,
-                                 IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
-                                 IHashCalculationsRepository hashCalculationsRepository)
+                                 ILoggerService loggerService)
             : base(dataContextRepository, configurationService, loggerService)
         {
-            if (identityKeyProvidersRegistry is null)
-            {
-                throw new ArgumentNullException(nameof(identityKeyProvidersRegistry));
-            }
-
-            if (hashCalculationsRepository is null)
-            {
-                throw new ArgumentNullException(nameof(hashCalculationsRepository));
-            }
-
-            _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
-            _defaultHashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
         }
 
         public override LedgerType LedgerType => LedgerType.Stealth;
 
-        public async Task<StealthTransaction> AddStealthBlock(IKey keyImage, ushort blockType, IKey destinationKey, string content, byte[] hash, CancellationToken cancellationToken = default)
+        public async Task<StealthTransaction> AddTransaction(IKey keyImage, ushort blockType, IKey destinationKey, string content, byte[] hash, CancellationToken cancellationToken = default)
         {
             if (keyImage is null)
             {
@@ -58,13 +38,13 @@ namespace O10.Node.DataLayer.Specific.Stealth
 
             string sql =
                 "DECLARE @KeyImageId BIGINT\r\n" +
-                "DECALRE @IsKeyImageViolated BIT\r\n" +
+                "DECLARE @IsKeyImageViolated BIT\r\n" +
                 "DECLARE @StealthTransactionHashKeyId BIGINT\r\n" +
                 "DECLARE @StealthTransactionId BIGINT\r\n" +
                 "\r\n" +
-                "SELECT @KeyImageId=KeyImageId, @IsKeyImageViolated = CASE @BlockType IN (@BlockTypesAllowed) THEN 0 ELSE 1 END FROM KeyImages WHERE Value=@KeyImage\r\n" +
-                "IF @IsKeyImageViolated\r\n" +
-                "   GOTO EndQuery\r\n" +
+                "SELECT @KeyImageId=KeyImageId, @IsKeyImageViolated = CASE WHEN @BlockType IN @BlockTypesAllowed THEN 0 ELSE 1 END FROM KeyImages WHERE Value=@KeyImage\r\n" +
+                "IF @IsKeyImageViolated = 1\r\n" +
+                "   GOTO EndQuery;\r\n" +
                 "\r\n" +
                 "BEGIN TRANSACTION;\r\n" +
                 "   IF @@rowcount = 0\r\n" +
@@ -77,7 +57,8 @@ namespace O10.Node.DataLayer.Specific.Stealth
                 "   SET @StealthTransactionHashKeyId=scope_identity();\r\n" +
                 "   \r\n" +
                 "   INSERT StealthTransactions(KeyImageId, HashKeyStealthTransactionHashKeyId, RegistryHeight, BlockType, DestinationKey, Content)\r\n" +
-                "       VALUES(@KeyImageId, @StealthTransactionHashKeyId, 0, @BlockType, @DestinationKey, @Content)" +
+                "       VALUES(@KeyImageId, @StealthTransactionHashKeyId, 0, @BlockType, @DestinationKey, @Content)\r\n" +
+                "   SET @StealthTransactionId=scope_identity();\r\n" +
                 "COMMIT TRANSACTION;\r\n" +
                 "\r\n" +
                 "EndQuery:\r\n" +
@@ -97,7 +78,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
                 "KIID,StealthTransactionHashKeyId",
                 new 
                 { 
-                    BlockTypesAllowed = new[] { TransactionTypes.Stealth_KeyImageCompromised, TransactionTypes.Stealth_RevokeIdentity },
+                    BlockTypesAllowed = new int[] { TransactionTypes.Stealth_KeyImageCompromised, TransactionTypes.Stealth_RevokeIdentity },
                     KeyImage = keyImage.ToByteArray(),
                     Hash = hash,
                     BlockType = (short)blockType,
@@ -114,137 +95,83 @@ namespace O10.Node.DataLayer.Specific.Stealth
             return stealthBlock;
         }
 
-        public void UpdateRegistryInfo(long transactionId, long aggregatedRegistrationHeight)
+        public async Task UpdateRegistryInfo(long transactionId, long aggregatedRegistrationHeight, CancellationToken cancellationToken)
         {
-            using var dbContext = GetDataContext();
-            var transaction = GetLocalAwareStealthTransactionPacketById(dbContext, transactionId);
-            if (transaction != null)
-            {
-                transaction.RegistryHeight = aggregatedRegistrationHeight;
-                transaction.HashKey.RegistryHeight = aggregatedRegistrationHeight;
+            string sql =
+                "UPDATE StealthTransactions SET RegistryHeight=@RegistryHeight WHERE StealthTransactionId=@StealthTransactionId;" +
+                "UPDATE HK SET HK.RegistryHeight=@RegistryHeight FROM StealthTransactionHashKeys HK\r\n" +
+                "INNER JOIN StealthTransactions ST ON ST.HashKeyStealthTransactionHashKeyId=HK.StealthTransactionHashKeyId\r\n" +
+                "WHERE ST.StealthTransactionId=@StealthTransactionId";
 
-                dbContext.SaveChanges();
-            }
+            await DataContext.ExecuteAsync(sql, new { StealthTransactionId = transactionId, RegistryHeight = aggregatedRegistrationHeight }, cancellationToken: cancellationToken);
         }
 
-        public StealthTransaction GetTransaction(long aggregatedRegistryHeight, IKey hash)
+        public async Task<StealthTransaction> GetTransaction(long aggregatedRegistryHeight, IKey hash, CancellationToken cancellationToken)
         {
             if (hash is null)
             {
                 throw new ArgumentNullException(nameof(hash));
             }
 
-            string hashString = hash.ToString();
-            try
-            {
-                using var dbContext = GetDataContext();
+            string sql = 
+                "SELECT TOP 1 * FROM StealthTransactions ST\r\n" +
+                "INNER JOIN StealthTransactionHashKeys HK ON ST.HashKeyStealthTransactionHashKeyId=HK.StealthTransactionHashKeyId\r\n" +
+                "WHERE HK.RegistryHeight=@RegistryHeight AND HK.Hash=@Hash";
 
-                StealthTransactionHashKey hashKey = GetLocalAwareHashKey(dbContext, hashString, aggregatedRegistryHeight);
-                if (hashKey == null)
+            var transaction = await DataContext.QueryFirstOrDefaultAsync<StealthTransaction, StealthTransactionHashKey, StealthTransaction>(
+                sql,
+                (st, hk) =>
                 {
-                    Logger.Error($"Failed to find Hash Key {hashString} with Aggregated Regsitry Height {aggregatedRegistryHeight} or {aggregatedRegistryHeight - 1}");
-                    return null;
-                }
-
-                return GetLocalAwareConfidentialPacket(dbContext, hashKey.StealthTransactionHashKeyId);
-            }
-            catch (Exception ex)
-            {
-                Logger.Error($"Failure during obtaining Stealth Packet with hash {hashString} and Aggregated Registry Height {aggregatedRegistryHeight} or {aggregatedRegistryHeight - 1}", ex);
-                return null;
-            }
-        }
-
-        public StealthTransaction GetTransaction(IKey hash)
-        {
-            if (hash is null)
-            {
-                throw new ArgumentNullException(nameof(hash));
-            }
-
-            string hashString = hash.ToString();
-            try
-            {
-                using var dbContext = GetDataContext();
-
-                StealthTransactionHashKey hashKey = GetLocalAwareHashKey(dbContext, hashString);
-                if (hashKey == null)
-                {
-                    Logger.Error($"Failed to find Hash Key {hashString}");
-                    return null;
-                }
-
-                return GetLocalAwareConfidentialPacket(dbContext, hashKey.StealthTransactionHashKeyId);
-            }
-            catch (Exception ex)
-            {
-                Logger.Error($"Failure during obtaining Stealth Packet with hash {hashString}", ex);
-                return null;
-            }
-        }
-
-        private StealthTransaction GetLocalAwareConfidentialPacket(StealthDataContextBase dbContext, long hashKeyId) =>
-            dbContext.StealthBlocks.Local.FirstOrDefault(b => b.HashKey.StealthTransactionHashKeyId == hashKeyId) ??
-            dbContext.StealthBlocks.FirstOrDefault(b => b.HashKey.StealthTransactionHashKeyId == hashKeyId);
-
-        public byte[] GetHashByKeyImage(byte[] keyImage)
-        {
-            using var dbContext = GetDataContext();
-            return dbContext.StealthBlocks.Include(s => s.KeyImage).Include(s => s.HashKey).FirstOrDefault(p => p.KeyImage.Value == keyImage)?.HashKey.Hash;
-        }
-
-        private StealthTransactionHashKey GetLocalAwareHashKey(StealthDataContextBase dbContext, string hashString, long aggregatedRegistryHeight)
-        {
-            StealthTransactionHashKey hashKey = dbContext.StealthTransactionHashKeys.Local.FirstOrDefault(h =>
-                        (h.RegistryHeight == aggregatedRegistryHeight || h.RegistryHeight == (aggregatedRegistryHeight - 1))
-                        && h.Hash == hashString);
-
-            if (hashKey == null)
-            {
-                hashKey = dbContext.StealthTransactionHashKeys.FirstOrDefault(h =>
-                        (h.RegistryHeight == aggregatedRegistryHeight || h.RegistryHeight == (aggregatedRegistryHeight - 1))
-                        && h.Hash == hashString);
-            }
-            return hashKey;
-        }
-
-        private StealthTransactionHashKey GetLocalAwareHashKey(StealthDataContextBase dbContext, string hashString)
-        {
-            StealthTransactionHashKey hashKey = dbContext.StealthTransactionHashKeys.Local.FirstOrDefault(h => h.Hash == hashString);
-
-            return hashKey;
-        }
-
-        private StealthTransaction GetLocalAwareStealthTransactionPacketById(StealthDataContextBase dbContext, long transactionId)
-        {
-            Logger.LogIfDebug(() => $"{nameof(GetLocalAwareStealthTransactionPacketById)}({transactionId})");
-            var transaction =
-                dbContext.StealthBlocks.Local
-                    .FirstOrDefault(b => b.StealthTransactionId == transactionId);
-
-            if (transaction == null)
-            {
-                Logger.LogIfDebug(() => $"{nameof(GetLocalAwareStealthTransactionPacketById)} not found in local");
-
-                transaction =
-                    dbContext.StealthBlocks
-                        .FirstOrDefault(b => b.StealthTransactionId == transactionId);
-            }
-            else
-            {
-                Logger.LogIfDebug(() => $"{nameof(GetLocalAwareStealthTransactionPacketById)} found in local");
-            }
-
-            if (transaction != null)
-            {
-                Logger.LogIfDebug(() => $"{nameof(GetLocalAwareStealthTransactionPacketById)}: {transaction.StealthTransactionId}");
-            }
-            else
-            {
-                Logger.Warning($"{nameof(GetLocalAwareStealthTransactionPacketById)}: {nameof(StealthTransaction)} not found");
-            }
+                    st.HashKey = hk;
+                    return st;
+                },
+                "StealthTransactionHashKeyId",
+                new { RegistryHeight = aggregatedRegistryHeight, Hash = hash.ToByteArray() },
+                cancellationToken: cancellationToken);
 
             return transaction;
+        }
+
+        public async Task<StealthTransaction> GetTransaction(IKey hash, CancellationToken cancellationToken)
+        {
+            if (hash is null)
+            {
+                throw new ArgumentNullException(nameof(hash));
+            }
+
+            string sql =
+                "SELECT TOP 1 * FROM StealthTransactions ST\r\n" +
+                "INNER JOIN StealthTransactionHashKeys HK ON ST.HashKeyStealthTransactionHashKeyId=HK.StealthTransactionHashKeyId\r\n" +
+                "WHERE HK.Hash=@Hash";
+
+            var transaction = await DataContext.QueryFirstOrDefaultAsync<StealthTransaction, StealthTransactionHashKey, StealthTransaction>(
+                sql,
+                (st, hk) =>
+                {
+                    st.HashKey = hk;
+                    return st;
+                },
+                "StealthTransactionHashKeyId",
+                new { Hash = hash.ToByteArray() },
+                cancellationToken: cancellationToken);
+
+            return transaction;
+        }
+
+        public async Task<byte[]> GetHashByKeyImage(byte[] keyImage, CancellationToken cancellationToken)
+        {
+            string sql =
+                "SELECT TOP 1 HK.* FROM StealthTransactionHashKeys HK\r\n" +
+                "INNER JOIN StealthTransactions ST ON ST.HashKeyStealthTransactionHashKeyId=HK.StealthTransactionHashKeyId\r\n" +
+                "INNER JOIN KeyImages KI ON ST.KeyImageId=KI.KeyImageId\r\n" +
+                "WHERE KI.Value=@KeyImage";
+
+            var hash = await DataContext.QueryFirstOrDefaultAsync<StealthTransactionHashKey>(
+                sql,
+                new { KeyImage = keyImage },
+                cancellationToken: cancellationToken);
+
+            return hash?.Hash;
         }
     }
 }

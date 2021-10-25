@@ -20,7 +20,6 @@ using O10.Core;
 using O10.Core.Translators;
 using O10.Core.Logging;
 using O10.Node.DataLayer.DataServices.Notifications;
-using O10.Core.ExtensionMethods;
 
 namespace O10.Node.DataLayer.Specific.Stealth
 {
@@ -57,7 +56,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
 
                 var addCompletionWrapper = new TaskCompletionWrapper<IPacketBase>(packet);
                 Service
-                    .AddStealthBlock(stealth.Payload.Transaction.KeyImage, stealth.Payload.Transaction.TransactionType, stealth.Payload.Transaction.DestinationKey, stealth.ToJson(), hash)
+                    .AddTransaction(stealth.Payload.Transaction.KeyImage, stealth.Payload.Transaction.TransactionType, stealth.Payload.Transaction.DestinationKey, stealth.ToJson(), hash)
                     .ContinueWith((t, o) =>
                     {
                         var w = ((Tuple<TaskCompletionWrapper<IPacketBase>, IKey>)o).Item1;
@@ -85,24 +84,24 @@ namespace O10.Node.DataLayer.Specific.Stealth
                 ? throw new ArgumentNullException(nameof(key))
                 : key switch 
                 { 
-                    CombinedHashKey combinedHashKey => await Get(combinedHashKey),
-                    HashKey hashKey => Get(hashKey),
+                    CombinedHashKey combinedHashKey => await Get(combinedHashKey, cancellationToken),
+                    HashKey hashKey => await Get(hashKey, cancellationToken),
                     _ => throw new DataKeyNotSupportedException(key) 
                 };
 
-        private async Task<IEnumerable<IPacketBase>> Get(CombinedHashKey combinedHashKey)
+        private async Task<IEnumerable<IPacketBase>> Get(CombinedHashKey combinedHashKey, CancellationToken cancellationToken)
         {
-            var stealth = Service.GetTransaction(combinedHashKey.CombinedBlockHeight, combinedHashKey.Hash);
+            var stealth = await Service.GetTransaction(combinedHashKey.CombinedBlockHeight, combinedHashKey.Hash, cancellationToken);
 
             if (stealth == null)
             {
                 Task.Delay(200).Wait();
-                stealth = Service.GetTransaction(combinedHashKey.CombinedBlockHeight, combinedHashKey.Hash);
+                stealth = await Service.GetTransaction(combinedHashKey.CombinedBlockHeight, combinedHashKey.Hash, cancellationToken);
 
                 if (stealth == null)
                 {
                     Task.Delay(200).Wait();
-                    stealth = Service.GetTransaction(combinedHashKey.CombinedBlockHeight, combinedHashKey.Hash);
+                    stealth = await Service.GetTransaction(combinedHashKey.CombinedBlockHeight, combinedHashKey.Hash, cancellationToken);
                 }
             }
 
@@ -114,19 +113,19 @@ namespace O10.Node.DataLayer.Specific.Stealth
             return new List<IPacketBase>();
         }
 
-        private IEnumerable<IPacketBase> Get(HashKey hashKey)
+        private async Task<IEnumerable<IPacketBase>> Get(HashKey hashKey, CancellationToken cancellationToken)
         {
-            var stealth = Service.GetTransaction(hashKey.Hash);
+            var stealth = await Service.GetTransaction(hashKey.Hash, cancellationToken);
 
             if (stealth == null)
             {
                 Task.Delay(200).Wait();
-                stealth = Service.GetTransaction(hashKey.Hash);
+                stealth = await Service.GetTransaction(hashKey.Hash, cancellationToken);
 
                 if (stealth == null)
                 {
                     Task.Delay(200).Wait();
-                    stealth = Service.GetTransaction(hashKey.Hash);
+                    stealth = await Service.GetTransaction(hashKey.Hash, cancellationToken);
                 }
             }
 
@@ -143,7 +142,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
             await base.Initialize(cancellationToken);
         }
 
-        public byte[] GetPacketHash(IDataKey dataKey)
+        public async Task<byte[]> GetPacketHash(IDataKey dataKey, CancellationToken cancellationToken)
         {
             if (dataKey == null)
             {
@@ -152,7 +151,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
 
             if (dataKey is KeyImageKey keyImageKey)
             {
-                return Service.GetHashByKeyImage(keyImageKey.KeyImage);
+                return await Service.GetHashByKeyImage(keyImageKey.KeyImage, cancellationToken);
             }
 
             throw new DataKeyNotSupportedException(dataKey);
@@ -162,7 +161,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
         {
             if (key is IdKey idKey && newKey is CombinedHashKey combined)
             {
-                Service.UpdateRegistryInfo(idKey.Id, combined.CombinedBlockHeight);
+                await Service.UpdateRegistryInfo(idKey.Id, combined.CombinedBlockHeight, cancellationToken);
             }
         }
     }
