@@ -54,7 +54,7 @@ namespace O10.Node.Core.DataLayer
             return wrapper;
         }
 
-        public void AddDataKey(IDataKey key, IDataKey newKey)
+        public async Task AddDataKey(IDataKey key, IDataKey newKey, CancellationToken cancellation)
         {
         }
 
