@@ -18,7 +18,7 @@ namespace O10.Node.DataLayer.Specific.O10Id.Model
 
         public long Height { get; set; }
 
-        public ushort PacketType { get; set; }
+        public int PacketType { get; set; }
 
         public string Content { get; set; }
     }

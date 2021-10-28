@@ -10,6 +10,8 @@ namespace O10.Core.ExtensionMethods
         private static readonly uint[] _lookup32Unsafe = CreateLookup32Unsafe();
         private static readonly unsafe uint* _lookup32UnsafeP = (uint*)GCHandle.Alloc(_lookup32Unsafe, GCHandleType.Pinned).AddrOfPinnedObject();
 
+        public static bool IsNotEmpty(this byte[] arr) => arr != null && arr.Length > 0;
+
         private static uint[] CreateLookup32Unsafe()
         {
             var result = new uint[256];

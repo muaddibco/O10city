@@ -116,7 +116,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
                     return t;
                 },
                 "O10TransactionHashKeyId,O10TransactionSourceId,AccountIdentityId",
-                param: new { PublicKey = $"0x{source}", Content = content, Height = height, PacketType = (short)packetType, Hash = $"0x{hash.ToHexString()}"}, cancellationToken: cancellationToken);
+                param: new { PublicKey = $"0x{source}", Content = content, Height = height, PacketType = (int)packetType, Hash = $"0x{hash.ToHexString()}"}, cancellationToken: cancellationToken);
 
             return o10Transaction;
         }

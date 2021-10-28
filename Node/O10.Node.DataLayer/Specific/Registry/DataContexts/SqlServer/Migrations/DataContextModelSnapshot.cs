@@ -15,7 +15,7 @@ namespace O10.Node.DataLayer.Specific.Registry.DataContexts.SqlServer.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "3.1.4")
+                .HasAnnotation("ProductVersion", "3.1.16")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
@@ -31,9 +31,6 @@ namespace O10.Node.DataLayer.Specific.Registry.DataContexts.SqlServer.Migrations
 
                     b.Property<byte[]>("Hash")
                         .HasColumnType("varbinary(64)");
-
-                    b.Property<string>("HashString")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<long>("Round")
                         .HasColumnType("bigint");

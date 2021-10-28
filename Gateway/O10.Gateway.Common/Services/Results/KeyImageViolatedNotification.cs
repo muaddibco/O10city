@@ -4,6 +4,6 @@ namespace O10.Gateway.Common.Services.Results
 {
     public class KeyImageViolatedNotification : NotificationBase
     {
-        public string ExistingHash { get; set; }
+        public byte[] ExistingHash { get; set; }
     }
 }

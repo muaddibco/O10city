@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace O10.Node.DataLayer.Specific.Registry.DataContexts.SQLite.Migrations
 {
@@ -16,8 +17,7 @@ namespace O10.Node.DataLayer.Specific.Registry.DataContexts.SQLite.Migrations
                     Round = table.Column<long>(nullable: false),
                     TransactionsCount = table.Column<int>(nullable: false),
                     Content = table.Column<string>(nullable: true),
-                    Hash = table.Column<string>(type: "varbinary(64)", nullable: true),
-                    HashString = table.Column<string>(nullable: true)
+                    Hash = table.Column<byte[]>(type: "varbinary(64)", nullable: true)
                 },
                 constraints: table =>
                 {

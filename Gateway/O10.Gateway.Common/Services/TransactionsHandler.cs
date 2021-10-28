@@ -117,7 +117,7 @@ namespace O10.Gateway.Common.Services
                     var packetHashResponse = AsyncUtil.RunSync(async () => await _synchronizerConfiguration.NodeApiUri.AppendPathSegments("HashByKeyImage", keyImage).GetJsonAsync<PacketHashResponse>().ConfigureAwait(false));
 
 
-                    if (!string.IsNullOrEmpty(packetHashResponse.Hash))
+                    if (packetHashResponse.Hash.IsNotEmpty())
                     {
                         _logger.Error($"It was found that key image {keyImage} already was witnessed for the packet with hash {packetHashResponse.Hash}");
                         res = false;

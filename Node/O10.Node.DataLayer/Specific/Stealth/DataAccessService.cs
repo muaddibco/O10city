@@ -81,7 +81,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
                     BlockTypesAllowed = new int[] { TransactionTypes.Stealth_KeyImageCompromised, TransactionTypes.Stealth_RevokeIdentity },
                     KeyImage = keyImage.ToByteArray(),
                     Hash = hash,
-                    BlockType = (short)blockType,
+                    BlockType = (int)blockType,
                     DestinationKey = destinationKey.ToByteArray(),
                     Content = content
                 },

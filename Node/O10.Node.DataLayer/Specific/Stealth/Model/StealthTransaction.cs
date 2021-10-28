@@ -16,7 +16,7 @@ namespace O10.Node.DataLayer.Specific.Stealth.Model
 
         public KeyImage KeyImage { get; set; }
 
-        public ushort BlockType { get; set; }
+        public int BlockType { get; set; }
 
 		[Column(TypeName = "varbinary(64)")]
         public byte[] DestinationKey { get; set; }
