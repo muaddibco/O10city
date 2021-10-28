@@ -110,9 +110,9 @@ namespace O10.Node.Core.Centralized
             }
         }
 
-        public void ProcessPacket(IPacketBase packet)
+        public async Task ProcessPacket(IPacketBase packet)
         {
-            _packetsBuffer.SendAsync(packet);
+            await _packetsBuffer.SendAsync(packet);
         }
 
         private async Task ConsumePackets(IReceivableSourceBlock<IPacketBase> source, CancellationToken cancellationToken)

@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks.Dataflow;
 using O10.Core.Logging;
 using O10.Core.Tracking;
 using O10.Transactions.Core.Ledgers;
 using O10.Network.Interfaces;
+using System.Threading.Tasks;
 
 namespace O10.Network.Handlers
 {
@@ -15,8 +15,6 @@ namespace O10.Network.Handlers
         private readonly IPacketsHandlersRegistry _packetsHandlersRegistry;
         private readonly ITrackingService _trackingService;
         private readonly ILogger _log;
-
-        private readonly ActionBlock<IPacketBase> _processBlock;
 
         public PacketHandlingFlow(int iteration,
                                   ICoreVerifiersBulkFactory coreVerifiersBulkFactory,
@@ -30,14 +28,35 @@ namespace O10.Network.Handlers
             _chainTypeValidationHandlersFactory = packetTypeHandlersFactory;
             _packetsHandlersRegistry = packetsHandlersRegistry;
             _trackingService = trackingService;
-            _processBlock = new ActionBlock<IPacketBase>(DispatchBlock);
         }
 
-        public void PostPacket(IPacketBase packet)
+        public async Task PostPacket(IPacketBase packet)
         {
-            _log.Debug(() => $"Posting to processing packet {packet.GetType().Name} [{packet.LedgerType}:{packet.Transaction?.TransactionType}]");
+            if (packet != null)
+            {
+                _log.Debug(() => $"Posting to processing packet {packet.GetType().FullName} [{packet.LedgerType}:{packet.Transaction?.TransactionType}]");
 
-            _processBlock.Post(packet);
+                //TODO: !!! need to find proper solution for the problem of checking mandatory conditions
+                if (!ValidateBlock(packet))
+                {
+                    return;
+                }
+
+                try
+                {
+                    _log.Debug(() => $"Dispatching block {packet.GetType().Name}");
+
+                    foreach (ILedgerPacketsHandler handler in _packetsHandlersRegistry.GetBulkInstances(packet.LedgerType))
+                    {
+                        _log.Debug(() => $"Dispatching block {packet.GetType().Name} to {handler.GetType().Name}");
+                        await handler.ProcessPacket(packet);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _log.Error($"Failed to dispatch packet {packet.ToString()}", ex);
+                }
+            }
         }
 
         private bool ValidateBlock(IPacketBase packet)
@@ -70,35 +89,6 @@ namespace O10.Network.Handlers
             {
                 _log.Error($"Failed to validate packet {packet}", ex);
                 return false;
-            }
-        }
-
-        private void DispatchBlock(IPacketBase packet)
-        {
-            if (packet != null)
-            {
-                _log.Debug($"Packet being dispatched is {packet.GetType().FullName}");
-
-				//TODO: !!! need to find proper solution for the problem of checking mandatory conditions
-                if (!ValidateBlock(packet))
-                {
-                    return;
-                }
-
-                try
-                {
-                    _log.Debug(() => $"Dispatching block {packet.GetType().Name}");
-
-                    foreach (ILedgerPacketsHandler handler in _packetsHandlersRegistry.GetBulkInstances(packet.LedgerType))
-					{
-                        _log.Debug(() => $"Dispatching block {packet.GetType().Name} to {handler.GetType().Name}");
-						handler.ProcessPacket(packet);
-					}
-                }
-                catch (Exception ex)
-                {
-                    _log.Error($"Failed to dispatch packet {packet.ToString()}", ex);
-                }
             }
         }
     }

@@ -15,6 +15,6 @@ namespace O10.Network.Interfaces
 
         Task Initialize(CancellationToken ct);
 
-        void ProcessPacket(IPacketBase blockBase);
+        Task ProcessPacket(IPacketBase blockBase);
     }
 }

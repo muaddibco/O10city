@@ -24,6 +24,7 @@ namespace O10.Network.Handlers
         private readonly int _maxDegreeOfParallelism;
         private readonly ITrackingService _trackingService;
         private readonly INodeConfiguration _nodeConfiguration;
+        private readonly List<Task> _tasks = new List<Task>();
         private CancellationToken _cancellationToken;
 
         public bool IsInitialized { get; private set; }
@@ -38,7 +39,7 @@ namespace O10.Network.Handlers
             _packets = new BlockingCollection<IPacketBase>();
             _nodeConfiguration = configurationService.Get<INodeConfiguration>();
 
-            _maxDegreeOfParallelism = 4;
+            _maxDegreeOfParallelism = Environment.ProcessorCount;
 
             _handlingFlowScopes = new List<IServiceScope>(_maxDegreeOfParallelism);
 
@@ -114,17 +115,16 @@ namespace O10.Network.Handlers
         {
             _log.Debug(() => "PacketsHandler starting");
 
-            List<Task> tasks = new List<Task>();
-
+            // TODO: need to add handling the case when already started
             for (int i = 0; i < _maxDegreeOfParallelism; i++)
             {
-                tasks.Add(Task.Factory.StartNew(o => Process((int)o), i, _cancellationToken, TaskCreationOptions.LongRunning, TaskScheduler.Current));
+                _tasks.Add(Process(i, _cancellationToken));
             }
 
             _log.Debug(() => "PacketsHandler started");
         }
 
-        private void Process(int iteration)
+        private async Task Process(int iteration, CancellationToken cancellationToken)
         {
             _log.Debug(() => $"Process function #{iteration} starting");
 
@@ -134,7 +134,7 @@ namespace O10.Network.Handlers
 
                 StartModules(iteration);
 
-                StartHandlingFlow(iteration);
+                await StartHandlingFlow(iteration, cancellationToken);
             }
             finally
             {
@@ -143,16 +143,16 @@ namespace O10.Network.Handlers
             }
         }
 
-        private void StartHandlingFlow(int iteration)
+        private async Task StartHandlingFlow(int iteration, CancellationToken cancellationToken)
         {
             var handlingFlow = ActivatorUtilities.CreateInstance<PacketHandlingFlow>(_handlingFlowScopes[iteration].ServiceProvider, iteration);
 
-            foreach (var packet in _packets.GetConsumingEnumerable(_cancellationToken))
+            foreach (var packet in _packets.GetConsumingEnumerable(cancellationToken))
             {
                 _log.Debug(() => $"Picked for handling flow #{iteration} packet {packet.GetType().Name}");
 
                 _trackingService.TrackMetric("MessagesQueueSize", -1);
-                handlingFlow.PostPacket(packet);
+                await handlingFlow .PostPacket(packet);
             }
         }
 

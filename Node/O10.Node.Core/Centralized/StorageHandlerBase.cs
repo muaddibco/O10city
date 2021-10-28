@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Threading;
-using System.Threading.Tasks.Dataflow;
 using O10.Transactions.Core.Enums;
 using O10.Node.DataLayer.DataServices;
 using O10.Core.Logging;
@@ -16,7 +15,6 @@ namespace O10.Node.Core.Centralized
         private readonly IRealTimeRegistryService _realTimeRegistryService;
 		private readonly ILogger _logger;
 
-		private ActionBlock<T> _storeBlock;
         private CancellationToken _cancellationToken;
 
         public StorageHandlerBase(IChainDataServicesManager chainDataServicesManager,
@@ -35,26 +33,20 @@ namespace O10.Node.Core.Centralized
         public async Task Initialize(CancellationToken ct)
         {
             _cancellationToken = ct;
-            _storeBlock = new ActionBlock<T>(StoreBlock, new ExecutionDataflowBlockOptions { CancellationToken = _cancellationToken, MaxDegreeOfParallelism = 1 });
         }
 
-        public void ProcessPacket(IPacketBase packet)
+        public async Task ProcessPacket(IPacketBase packet)
         {
-            _storeBlock.Post((T)packet);
-        }
+            _logger.Debug(() => $"Storing packet {packet.GetType().Name}");
 
-        private async Task StoreBlock(T packet)
-        {
-			_logger.LogIfDebug(() => $"Storing packet {packet.GetType().Name}");
-
-			try
-			{
+            try
+            {
                 _realTimeRegistryService.PostTransaction(await _chainDataService.Add(packet));
             }
             catch (Exception ex)
-			{
-				_logger.Error($"Storing packet {packet.GetType().Name} failed", ex);
-			}
+            {
+                _logger.Error($"Storing packet {packet.GetType().Name} failed", ex);
+            }
         }
     }
 }
