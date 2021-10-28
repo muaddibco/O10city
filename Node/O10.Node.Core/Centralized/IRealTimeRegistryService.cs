@@ -18,7 +18,7 @@ namespace O10.Node.Core.Centralized
         IEnumerable<Tuple<SynchronizationPacket, RegistryPacket>> GetRegistryConsumingEnumerable(CancellationToken cancellationToken);
 
         Task PostPackets(SynchronizationPacket aggregatedRegistrationsPacket, RegistryPacket registrationsPacket, CancellationToken cancellationToken);
-        void PostTransaction(TaskCompletionWrapper<IPacketBase> completionWrapper);
+        void PostTransaction(DataResult<IPacketBase> result);
 		long GetLowestCombinedBlockHeight();
         void RegisterInternalChainDataService(IChainDataService chainDataService);
     }

@@ -30,6 +30,22 @@ namespace O10.Node.DataLayer.Specific.Registry
             await DataContext.SaveChangesAsync(cancellationToken);
         }
 
+        public async Task AddRegistryFullBlock(long syncBlockHeight, long round, int count, string content, byte[] hash, CancellationToken cancellationToken = default)
+        {
+            string sql = "INSERT RegistryFullBlocks(SyncBlockHeight, Round, TransactionsCount, Content, Hash) VALUES(@SyncBlockHeight, @Round, @TransactionsCount, @Content, @Hash)";
+            await DataContext.ExecuteAsync(
+                sql, 
+                new 
+                {
+                    SyncBlockHeight = syncBlockHeight,
+                    Round = round,
+                    TransactionsCount = count,
+                    Content = content,
+                    Hash = hash
+                },
+                cancellationToken: cancellationToken);
+        }
+
         public async Task<IEnumerable<RegistryFullBlock>> GetAllRegistryFullBlocks()
         {
             string sql = "SELECT * FROM RegistryFullBlocks";

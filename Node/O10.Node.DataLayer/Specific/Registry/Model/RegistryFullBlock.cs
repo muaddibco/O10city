@@ -20,7 +20,5 @@ namespace O10.Node.DataLayer.Specific.Registry.Model
 
 		[Column(TypeName = "varbinary(64)")]
         public byte[] Hash { get; set; }
-
-		public string HashString { get; set; }
 	}
 }

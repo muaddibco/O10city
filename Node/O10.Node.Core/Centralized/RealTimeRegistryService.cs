@@ -15,8 +15,6 @@ using O10.Transactions.Core.Ledgers.Synchronization;
 using O10.Transactions.Core.Ledgers.Registry;
 using O10.Node.DataLayer.DataServices;
 using System.Linq;
-using O10.Core.Models;
-using O10.Node.DataLayer.DataServices.Notifications;
 using O10.Node.DataLayer.DataServices.Keys;
 using O10.Transactions.Core.Ledgers;
 
@@ -72,7 +70,7 @@ namespace O10.Node.Core.Centralized
                 }
             }
 
-			_registrationPackets.Add(new Tuple<SynchronizationPacket, RegistryPacket>(aggregatedRegistrationsPacket, registrationsPacket));
+			_registrationPackets.Add(new Tuple<SynchronizationPacket, RegistryPacket>(aggregatedRegistrationsPacket, registrationsPacket), cancellationToken);
 
 			if (_lowestCombinedBlockHeight > aggregatedRegistrationsPacket.Payload.Height)
 			{
@@ -95,37 +93,25 @@ namespace O10.Node.Core.Centralized
             }
         }
 
-        public void PostTransaction(TaskCompletionWrapper<IPacketBase> completionWrapper)
-		{
-            if (completionWrapper is null)
+        public void PostTransaction(DataResult<IPacketBase> result)
+        {
+            if (result is null)
             {
-                throw new ArgumentNullException(nameof(completionWrapper));
+                throw new ArgumentNullException(nameof(result));
             }
 
-            _logger.LogIfDebug(() => $"Posted packet {completionWrapper.State.GetType().Name}");
-
-            completionWrapper.TaskCompletion.Task.ContinueWith((t, o) => 
+            if (!(result.Key is HashAndIdKey hashAndIdKey))
             {
-                var packet = (IPacketBase)o;
-                if (t.IsCompletedSuccessfully)
-                {
-                    if(t.Result is ItemAddedNotification notification && notification.DataKey is HashAndIdKey hashAndIdKey)
-                    {
-                        _logger.LogIfDebug(() => $"Continue with a packet {packet.GetType().Name} with hash {hashAndIdKey.HashKey}");
-                        TaskCompletionSource<KeyValuePair<HashAndIdKey, IPacketBase>> taskCompletionSource = new TaskCompletionSource<KeyValuePair<HashAndIdKey, IPacketBase>>();
-                        taskCompletionSource = _packetTriggers.GetOrAdd(hashAndIdKey.HashKey, taskCompletionSource);
-                        taskCompletionSource.SetResult(new KeyValuePair<HashAndIdKey, IPacketBase>(hashAndIdKey, packet));
-                    }
-                    else
-                    {
-                        _logger.Error($"Failed to proceed with a packet {packet.GetType().Name} due to an error", t.Exception.InnerException);
-                    }
-                }
-                else
-                {
-                    _logger.Error($"Failed to proceed with registration of the packet {packet.GetType().Name} due to the error {t.Exception.InnerException.Message}", t.Exception.InnerException);
-                }
-            }, completionWrapper.State, TaskScheduler.Default);
-		}
+                throw new ArgumentException($"Key must be of the type {typeof(HashAndIdKey).Name}");
+            }
+
+            _logger.LogIfDebug(() => $"Posted packet {result.Packet.GetType().Name}");
+
+            var packet = result.Packet;
+            _logger.LogIfDebug(() => $"Continue with a packet {packet.GetType().Name} with hash {hashAndIdKey.HashKey}");
+            TaskCompletionSource<KeyValuePair<HashAndIdKey, IPacketBase>> taskCompletionSource = new TaskCompletionSource<KeyValuePair<HashAndIdKey, IPacketBase>>();
+            taskCompletionSource = _packetTriggers.GetOrAdd(hashAndIdKey.HashKey, taskCompletionSource);
+            taskCompletionSource.SetResult(new KeyValuePair<HashAndIdKey, IPacketBase>(hashAndIdKey, packet));
+        }
 	}
 }

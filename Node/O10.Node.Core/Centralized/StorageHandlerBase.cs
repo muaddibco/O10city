@@ -35,7 +35,7 @@ namespace O10.Node.Core.Centralized
         public async Task Initialize(CancellationToken ct)
         {
             _cancellationToken = ct;
-            _storeBlock = new ActionBlock<T>(StoreBlock, new ExecutionDataflowBlockOptions { BoundedCapacity = int.MaxValue,  CancellationToken = _cancellationToken, MaxDegreeOfParallelism = 1 });
+            _storeBlock = new ActionBlock<T>(StoreBlock, new ExecutionDataflowBlockOptions { CancellationToken = _cancellationToken, MaxDegreeOfParallelism = 1 });
         }
 
         public void ProcessPacket(IPacketBase packet)
@@ -43,13 +43,13 @@ namespace O10.Node.Core.Centralized
             _storeBlock.Post((T)packet);
         }
 
-        private void StoreBlock(T packet)
+        private async Task StoreBlock(T packet)
         {
 			_logger.LogIfDebug(() => $"Storing packet {packet.GetType().Name}");
 
 			try
 			{
-                _realTimeRegistryService.PostTransaction(_chainDataService.Add(packet));
+                _realTimeRegistryService.PostTransaction(await _chainDataService.Add(packet));
             }
             catch (Exception ex)
 			{

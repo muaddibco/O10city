@@ -11,7 +11,6 @@ using O10.Core.Architecture;
 using O10.Node.DataLayer.DataAccess;
 using O10.Node.DataLayer.Exceptions;
 using O10.Transactions.Core.Ledgers;
-using O10.Core.Models;
 using O10.Core.Identity;
 using Newtonsoft.Json;
 using O10.Core.Serialization;
@@ -19,7 +18,6 @@ using O10.Core.HashCalculations;
 using O10.Core;
 using O10.Core.Translators;
 using O10.Core.Logging;
-using O10.Node.DataLayer.DataServices.Notifications;
 
 namespace O10.Node.DataLayer.Specific.Stealth
 {
@@ -40,7 +38,7 @@ namespace O10.Node.DataLayer.Specific.Stealth
 
         public override LedgerType LedgerType => LedgerType.Stealth;
 
-        public override TaskCompletionWrapper<IPacketBase> Add(IPacketBase packet)
+        public override async Task<DataResult<IPacketBase>> Add(IPacketBase packet)
         {
             if (packet == null)
             {
@@ -54,25 +52,11 @@ namespace O10.Node.DataLayer.Specific.Stealth
 
                 Logger?.LogIfDebug(() => $"Storing {packet.GetType().Name} with hash [{hashKey}]: {JsonConvert.SerializeObject(packet, new ByteArrayJsonConverter())}");
 
-                var addCompletionWrapper = new TaskCompletionWrapper<IPacketBase>(packet);
-                Service
-                    .AddTransaction(stealth.Payload.Transaction.KeyImage, stealth.Payload.Transaction.TransactionType, stealth.Payload.Transaction.DestinationKey, stealth.ToJson(), hash)
-                    .ContinueWith((t, o) =>
-                    {
-                        var w = ((Tuple<TaskCompletionWrapper<IPacketBase>, IKey>)o).Item1;
-                        var h = ((Tuple<TaskCompletionWrapper<IPacketBase>, IKey>)o).Item2;
-                        if (t.IsCompletedSuccessfully)
-                        {
-                            w.TaskCompletion.SetResult(new ItemAddedNotification(new HashAndIdKey(h, t.Result.StealthTransactionId)));
-                        }
-                        else
-                        {
-                            w.TaskCompletion.SetException(t.Exception.InnerException);
-                        }
-                    }, new Tuple<TaskCompletionWrapper<IPacketBase>, IKey>(addCompletionWrapper, hashKey), TaskScheduler.Default);
+                var transaction = await Service
+                    .AddTransaction(stealth.Payload.Transaction.KeyImage, stealth.Payload.Transaction.TransactionType, stealth.Payload.Transaction.DestinationKey, stealth.ToJson(), hash);
 
                 Logger?.LogIfDebug(() => $"Storing of {packet.GetType().Name} with hash [{hashKey}] completed");
-                return addCompletionWrapper;
+                return new DataResult<IPacketBase>(new HashAndIdKey(hashKey, transaction.StealthTransactionId), packet);
             }
         
             Logger?.Error($"Attempt to store an improper packet type {packet.GetType().FullName}");

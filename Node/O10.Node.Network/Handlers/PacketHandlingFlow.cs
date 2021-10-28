@@ -30,7 +30,7 @@ namespace O10.Network.Handlers
             _chainTypeValidationHandlersFactory = packetTypeHandlersFactory;
             _packetsHandlersRegistry = packetsHandlersRegistry;
             _trackingService = trackingService;
-            _processBlock = new ActionBlock<IPacketBase>(DispatchBlock, new ExecutionDataflowBlockOptions() { MaxDegreeOfParallelism = 1, BoundedCapacity = 1000000 });
+            _processBlock = new ActionBlock<IPacketBase>(DispatchBlock);
         }
 
         public void PostPacket(IPacketBase packet)

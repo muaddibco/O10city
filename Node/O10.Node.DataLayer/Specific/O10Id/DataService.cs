@@ -17,8 +17,6 @@ using O10.Core.Serialization;
 using O10.Core.HashCalculations;
 using O10.Core;
 using O10.Transactions.Core.Ledgers;
-using O10.Node.DataLayer.DataServices.Notifications;
-using O10.Core.Models;
 using O10.Core.Identity;
 
 namespace O10.Node.DataLayer.Specific.O10Id
@@ -40,7 +38,7 @@ namespace O10.Node.DataLayer.Specific.O10Id
             _defaultHashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
         }
 
-        public override TaskCompletionWrapper<IPacketBase> Add(IPacketBase packet)
+        public override async Task<DataResult<IPacketBase>> Add(IPacketBase packet)
         {
             if (packet == null)
             {
@@ -54,21 +52,11 @@ namespace O10.Node.DataLayer.Specific.O10Id
 
                 Logger?.LogIfDebug(() => $"Storing {packet.GetType().Name} with hash [{hashKey}]: {JsonConvert.SerializeObject(packet, new ByteArrayJsonConverter())}");
 
-                var addCompletionWrapper = new TaskCompletionWrapper<IPacketBase>(packet);
-                Service
-                    .AddTransaction(statePacket.Payload.Transaction.Source, statePacket.Payload.Transaction.TransactionType, statePacket.Payload.Height, packet.ToJson(), hash, CancellationToken)
-                    .ContinueWith((t, o) => 
-                    {
-                        var w = ((Tuple<TaskCompletionWrapper<IPacketBase>, IKey>)o).Item1;
-                        var h = ((Tuple<TaskCompletionWrapper<IPacketBase>, IKey>)o).Item2;
-                        if (t.IsCompletedSuccessfully)
-                        {
-                            w.TaskCompletion.SetResult(new ItemAddedNotification(new HashAndIdKey(h, t.Result.O10TransactionId)));
-                        }
-                    }, new Tuple<TaskCompletionWrapper<IPacketBase>, IKey>(addCompletionWrapper, hashKey), TaskScheduler.Default);
+                var transaction = await Service
+                    .AddTransaction(statePacket.Payload.Transaction.Source, statePacket.Payload.Transaction.TransactionType, statePacket.Payload.Height, packet.ToJson(), hash, CancellationToken);
 
                 Logger?.LogIfDebug(() => $"Storing of {packet.GetType().Name} with hash [{hashKey}] completed");
-                return addCompletionWrapper;
+                return new DataResult<IPacketBase>(new HashAndIdKey(hashKey, transaction.O10TransactionId), packet);
             }
 
             Logger?.Error($"Attempt to store an improper packet type {packet.GetType().FullName}");

@@ -6,7 +6,6 @@ using O10.Node.DataLayer.DataServices.Keys;
 using O10.Core.Logging;
 using O10.Core.Translators;
 using O10.Transactions.Core.Ledgers;
-using O10.Core.Models;
 using O10.Core.Identity;
 using System.Threading.Tasks;
 
@@ -32,7 +31,7 @@ namespace O10.Node.DataLayer.DataAccess
         protected CancellationToken CancellationToken { get; private set; }
         public abstract LedgerType LedgerType { get; }
 
-        public abstract TaskCompletionWrapper<IPacketBase> Add(IPacketBase item);
+        public abstract Task<DataResult<IPacketBase>> Add(IPacketBase item);
         public abstract Task<IEnumerable<IPacketBase>> Get(IDataKey key, CancellationToken cancellationToken);
         
         public virtual async Task Initialize(CancellationToken cancellationToken)

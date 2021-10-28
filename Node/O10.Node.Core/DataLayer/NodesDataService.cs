@@ -9,9 +9,8 @@ using O10.Core.ExtensionMethods;
 using System;
 using O10.Network.Topology;
 using O10.Core.Persistency;
-using O10.Core.Models;
-using O10.Core.Notifications;
 using System.Threading.Tasks;
+using O10.Node.DataLayer.DataServices;
 
 namespace O10.Node.Core.DataLayer
 {
@@ -39,19 +38,16 @@ namespace O10.Node.Core.DataLayer
             _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
         }
 
-        public TaskCompletionWrapper<NodeEntity> Add(NodeEntity item)
+        public async Task<DataResult<NodeEntity>> Add(NodeEntity item)
         {
             if (item is null)
             {
                 throw new ArgumentNullException(nameof(item));
             }
 
-            _dataAccessService.AddNode(item.Key, (byte)item.NodeRole, item.IPAddress);
+            await _dataAccessService.AddNode(item.Key, (byte)item.NodeRole, item.IPAddress);
 
-            var wrapper = new TaskCompletionWrapper<NodeEntity>(item);
-            wrapper.TaskCompletion.SetResult(new SucceededNotification());
-
-            return wrapper;
+            return new DataResult<NodeEntity>(null, item);
         }
 
         public async Task AddDataKey(IDataKey key, IDataKey newKey, CancellationToken cancellation)
