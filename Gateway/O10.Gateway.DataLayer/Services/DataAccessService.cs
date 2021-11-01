@@ -11,7 +11,6 @@ using O10.Core;
 using O10.Core.Architecture;
 using O10.Core.Configuration;
 using O10.Core.ExtensionMethods;
-using O10.Core.HashCalculations;
 using O10.Core.Logging;
 using O10.Transactions.Core.Enums;
 using O10.Core.Identity;
@@ -208,79 +207,6 @@ namespace O10.Gateway.DataLayer.Services
             return false;
         }
 
-        public bool GetLastSyncBlock(out ulong height, out byte[] hash)
-        {
-            if (Monitor.TryEnter(_sync, _lockTimeout))
-            {
-                try
-                {
-                    SyncBlock syncBlock = _dataContext.SyncBlocks.OrderByDescending(b => b.SyncBlockId).FirstOrDefault();
-
-                    if (syncBlock != null)
-                    {
-                        height = (ulong)syncBlock.SyncBlockId;
-                        hash = syncBlock.Hash.HexStringToByteArray();
-                        return true;
-                    }
-
-                }
-                finally
-                {
-                    Monitor.Exit(_sync);
-                }
-            }
-            else
-            {
-                _logger.Warning("Failed to acquire lock at GetLastSyncBlock");
-            }
-
-            height = 0;
-            hash = null;
-            return false;
-        }
-
-        //public void StoreIncomingTransactionalBlock(StateIncomingStoreInput storeInput)
-        //{
-        //    if (storeInput is null)
-        //    {
-        //        throw new ArgumentNullException(nameof(storeInput));
-        //    }
-
-        //    StatePacket transactionalIncomingBlock = new StatePacket
-        //    {
-        //        WitnessId = storeInput.WitnessId,
-        //        Height = storeInput.BlockHeight,
-        //        BlockType = storeInput.TransactionType,
-        //        Content = storeInput.Content,
-        //        Source = GetOrAddAddress(storeInput.Source) ?? throw new ArgumentException($"{nameof(storeInput.Source)} is missing"),
-        //        Target = GetOrAddAddress(storeInput.Destination),
-        //        TransactionKey = GetOrAddUtxoTransactionKey(storeInput.TransactionKey),
-        //        Output = GetOrAddUtxoOutput(storeInput.Commitment, storeInput.Destination, storeInput.OriginatingCommitment),
-        //        ThisBlockHash = GetOrAddPacketHash(
-        //                            _identityKeyProvider.GetKey(_hashCalculation.CalculateHash(storeInput.Content)),
-        //                            storeInput.CombinedRegistryBlockHeight),
-        //        IsVerified = true,
-        //        IsValid = true,
-        //        IsTransition = storeInput.TransactionKey != null
-        //    };
-
-        //    if (Monitor.TryEnter(_sync, _lockTimeout))
-        //    {
-        //        try
-        //        {
-        //            _dataContext.TransactionalPackets.Add(transactionalIncomingBlock);
-        //        }
-        //        finally
-        //        {
-        //            Monitor.Exit(_sync);
-        //        }
-        //    }
-        //    else
-        //    {
-        //        _logger.Warning("Failed to acquire lock at StoreIncomingTransactionalBlock");
-        //    }
-        //}
-
         public void StoreStateTransaction(StateIncomingStoreInput storeInput)
         {
             if (storeInput is null)
@@ -418,25 +344,6 @@ namespace O10.Gateway.DataLayer.Services
             }, 1000, cancelToken: cts.Token);
 
             return await taskCompletion.Task.ConfigureAwait(false);
-        }
-
-        public void StoreRegistryFullBlock(ulong height, byte[] content)
-        {
-            if (Monitor.TryEnter(_sync, _lockTimeout))
-            {
-                try
-                {
-                    _dataContext.RegistryFullBlocks.Add(new RegistryFullBlockData { CombinedBlockHeight = (long)height, Content = content });
-                }
-                finally
-                {
-                    Monitor.Exit(_sync);
-                }
-            }
-            else
-            {
-                _logger.Warning("Failed to acquire lock at StoreRegistryFullBlock");
-            }
         }
 
         public TaskCompletionSource<WitnessPacket> StoreWitnessPacket(long syncBlockHeight, long round, long combinedBlockHeight, LedgerType referencedLedgerType, ushort referencedPacketType, IKey referencedBodyHash, IKey referencedDestinationKey, IKey referencedDestinationKey2, IKey referencedTransactionKey, IKey referencedKeyImage)
@@ -603,11 +510,6 @@ namespace O10.Gateway.DataLayer.Services
             }
         }
 
-        public int GetTotalUtxoOutputsAmount()
-        {
-            return _utxoOutputsIndiciesMap.Count;
-        }
-
 		public byte[][] GetRootAttributeCommitments(byte[] issuer, int amount)
 		{
             string issuerStr = issuer.ToHexString();
@@ -691,95 +593,6 @@ namespace O10.Gateway.DataLayer.Services
 
             return outputs;
 		}
-
-        /// <summary>
-        /// Returns content of RegistryFulBlocks and height of corresponding CombinedBlocks
-        /// </summary>
-        /// <param name="heightStart"></param>
-        /// <param name="heights"></param>
-        /// <param name="contents"></param>
-        /// <returns></returns>
-        public bool GetRegistryFullBlocks(ulong heightStart, out ulong[] heights, out byte[][][] contents)
-        {
-            if (Monitor.TryEnter(_sync, _lockTimeout))
-            {
-                try
-                {
-                    IEnumerable<RegistryCombinedBlock> registryCombinedBlocks = _dataContext.RegistryCombinedBlocks.Where(r => r.RegistryCombinedBlockId >= (long)heightStart);
-
-                    if (registryCombinedBlocks == null || !registryCombinedBlocks.Any())
-                    {
-                        heights = null;
-                        contents = null;
-                        return false;
-                    }
-
-                    contents = GetRegistryBlocksContent(registryCombinedBlocks);
-
-                    heights = registryCombinedBlocks.Select(c => (ulong)c.RegistryCombinedBlockId).ToArray();
-
-                    return true;
-
-                }
-                finally
-                {
-                    Monitor.Exit(_sync);
-                }
-            }
-            else
-            {
-                _logger.Warning("Failed to acquire lock at GetRegistryFullBlocks");
-            }
-
-            heights = null;
-            contents = null;
-            return false;
-        }
-
-        private byte[][][] GetRegistryBlocksContent(IEnumerable<RegistryCombinedBlock> registryCombinedBlocks)
-        {
-            byte[][][] contents = new byte[registryCombinedBlocks.Count()][][];
-            int i = 0;
-            foreach (RegistryCombinedBlock registryCombinedBlock in registryCombinedBlocks)
-            {
-                IEnumerable<RegistryFullBlockData> registryFullBlocks = _dataContext.RegistryFullBlocks.Where(r => r.CombinedBlockHeight == registryCombinedBlock.RegistryCombinedBlockId);
-
-                if (registryFullBlocks != null)
-                {
-                    contents[i] = new byte[registryFullBlocks.Count()][];
-
-                    int j = 0;
-                    foreach (RegistryFullBlockData registryFullBlock in registryFullBlocks)
-                    {
-                        contents[i][j++] = registryFullBlock.Content;
-                    }
-
-                    i++;
-                }
-            }
-
-            return contents;
-        }
-
-		internal void WipeAll()
-        {
-            if (Monitor.TryEnter(_sync, _lockTimeout))
-            {
-                try
-                {
-                    _dataContext.Database.EnsureDeleted();
-                    _dataContext.Database.EnsureCreated();
-                }
-                finally
-                {
-                    Monitor.Exit(_sync);
-                }
-            }
-            else
-            {
-                _logger.Warning("Failed to acquire lock at WipeAll");
-            }
-        }
 
         public void StoreRootAttributeIssuance(IKey issuer, IKey issuanceCommitment, IKey rootCommitment, long combinedBlockHeight)
         {
@@ -1080,39 +893,6 @@ namespace O10.Gateway.DataLayer.Services
             else
             {
                 _logger.Warning("Failed to acquire lock at GetUtxoIncomingBlock");
-            }
-
-            return null;
-        }
-
-        public StealthTransaction? GetStealthTransaction(long combinedRegistryBlockHeight, string hashString)
-        {
-            if (Monitor.TryEnter(_sync, _lockTimeout))
-            {
-                try
-                {
-                    var packetHash = _dataContext.PacketHashes.Local.FirstOrDefault(h => h.AggregatedTransactionsHeight == combinedRegistryBlockHeight && h.Hash == hashString);
-
-                    if(packetHash != null)
-                    {
-                        StealthTransaction stealthPacket = _dataContext.StealthTransactions.Local.FirstOrDefault(t => t.Hash?.TransactionHashId == packetHash.TransactionHashId);
-
-                        if (stealthPacket == null)
-                        {
-                            stealthPacket = _dataContext.StealthTransactions.Include(p => p.Hash).FirstOrDefault(t => t.Hash != null && t.Hash.TransactionHashId == packetHash.TransactionHashId);
-                        }
-
-                        return stealthPacket;
-                    }
-                }
-                finally
-                {
-                    Monitor.Exit(_sync);
-                }
-            }
-            else
-            {
-                _logger.Warning($"Failed to acquire lock at {nameof(GetStealthTransaction)}");
             }
 
             return null;

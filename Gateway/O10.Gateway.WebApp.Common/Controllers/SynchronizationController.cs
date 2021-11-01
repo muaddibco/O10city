@@ -259,7 +259,7 @@ namespace O10.Gateway.WebApp.Common.Controllers
         }*/
 
         [HttpGet("Transaction")]
-        public IActionResult GetTransactionBySourceAndHeight([FromQuery] string source, [FromQuery] string transactionHash)
+        public IActionResult GetTransactionBySourceAndHash([FromQuery] string source, [FromQuery] string transactionHash)
         {
             var transaction = _dataAccessService.GetStateTransaction(source, transactionHash);
 
