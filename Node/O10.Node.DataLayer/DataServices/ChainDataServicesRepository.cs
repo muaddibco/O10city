@@ -5,18 +5,18 @@ using O10.Core.Architecture;
 
 namespace O10.Node.DataLayer.DataServices
 {
-    [RegisterDefaultImplementation(typeof(IChainDataServicesManager), Lifetime = LifetimeManagement.Scoped)]
-    public class ChainDataServicesManager : IChainDataServicesManager
+    [RegisterDefaultImplementation(typeof(IChainDataServicesRepository), Lifetime = LifetimeManagement.Scoped)]
+    public class ChainDataServicesRepository : IChainDataServicesRepository
     {
         private readonly IEnumerable<IChainDataService> _chainDataServices;
-        public ChainDataServicesManager(IEnumerable<IChainDataService> chainDataServices)
+        public ChainDataServicesRepository(IEnumerable<IChainDataService> chainDataServices)
         {
             _chainDataServices = chainDataServices;
         }
 
-		public IEnumerable<IChainDataService> GetAll() => _chainDataServices;
+		public IEnumerable<IChainDataService> GetInstances() => _chainDataServices;
 
-		public IChainDataService GetChainDataService(LedgerType chainType)
+		public IChainDataService GetInstance(LedgerType chainType)
         {
             return _chainDataServices.FirstOrDefault(c => c.LedgerType == chainType);
         }

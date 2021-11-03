@@ -15,18 +15,23 @@ using System.Net.Http;
 using O10.Core.Serialization;
 using O10.Transactions.Core.DTOs;
 using O10.Core.Persistency;
+using O10.Network.Handlers;
 
 namespace O10.Node.Worker.Services
 {
     [RegisterDefaultImplementation(typeof(INotificationsService), Lifetime = LifetimeManagement.Scoped)]
-	public class NotificationsRestService : INotificationsService
+	public class NotificationsRestService : INotificationsService, IDisposable
 	{
 		private readonly IRealTimeRegistryService _realTimeRegistryService;
         private readonly DataAccessService _dataAccessService;
 		private readonly ILogger _logger;
 		private List<string> _gatewayUris;
+        private bool _disposedValue;
 
-		public NotificationsRestService(IRealTimeRegistryService realTimeRegistryService, IDataAccessServiceRepository dataAccessServiceRepository, ILoggerService loggerService)
+        public NotificationsRestService(IRealTimeRegistryService realTimeRegistryService,
+                                        IHandlingFlowContext handlingFlowContext,
+                                        IDataAccessServiceRepository dataAccessServiceRepository,
+                                        ILoggerService loggerService)
 		{
             if (dataAccessServiceRepository is null)
             {
@@ -35,11 +40,13 @@ namespace O10.Node.Worker.Services
 
             _dataAccessService = dataAccessServiceRepository.GetInstance<DataAccessService>();
 			_realTimeRegistryService = realTimeRegistryService;
-			_logger = loggerService.GetLogger(nameof(NotificationsRestService));
-		}
+            _logger = loggerService.GetLogger($"{nameof(NotificationsRestService)}#{handlingFlowContext.Index}");
+            _logger.Debug(() => $"Creating {nameof(NotificationsRestService)}");
+        }
 
-		public async Task Initialize(CancellationToken cancellationToken)
+        public async Task Initialize(CancellationToken cancellationToken)
 		{
+			_logger.Debug(() => $"Initializing {nameof(NotificationsRestService)} started...");
 			await UpdateGateways(cancellationToken);
 
 			if(_gatewayUris.Count == 0)
@@ -47,7 +54,7 @@ namespace O10.Node.Worker.Services
 				_logger.Warning("No gateways registered yet");
 			}
 
-			Task.Factory.StartNew(c =>
+			Task.Factory.StartNew(async c =>
 			{
 				using var httpClientHandler = new HttpClientHandler
 				{
@@ -57,6 +64,7 @@ namespace O10.Node.Worker.Services
 
 				using FlurlClient flurlClient = new FlurlClient(httpClient);
 
+				_logger.Debug(() => $"Starting consuming registry packets...");
 				foreach (var item in _realTimeRegistryService.GetRegistryConsumingEnumerable((CancellationToken)c))
 				{
 					try
@@ -74,26 +82,17 @@ namespace O10.Node.Worker.Services
 							_logger.LogIfDebug(() => $"Sending to gateway {gatewayUri} packet {JsonConvert.SerializeObject(rtPackage, new ByteArrayJsonConverter(), new KeyJsonConverter())}");
                             try
                             {
-                                gatewayUri.WithClient(flurlClient).AppendPathSegment("PackageUpdate").PostJsonAsync(rtPackage).ContinueWith(t =>
+								var response = await gatewayUri.WithClient(flurlClient).AppendPathSegment("PackageUpdate").PostJsonAsync(rtPackage);
                                 {
-                                    if (t.IsCompletedSuccessfully)
+                                    if (response.ResponseMessage.IsSuccessStatusCode)
                                     {
-										_logger.Debug($"Posting PackageUpdate to {t.Result.ResponseMessage.RequestMessage.RequestUri} succeeded");
+										_logger.Debug($"Posting PackageUpdate to {response.ResponseMessage.RequestMessage.RequestUri} succeeded");
 									}
 									else
                                     {
-										_logger.Error($"Posting PackageUpdate ended with HttpStatus {t.Result.ResponseMessage.StatusCode}, reason phrase \"{t.Result.ResponseMessage.ReasonPhrase}\" and content \"{t.Result.ResponseMessage.Content.ReadAsStringAsync().Result}\"", t.Exception);
-
-										if(t.Exception?.InnerExceptions != null)
-										{
-											foreach (var ex in t.Exception.InnerExceptions)
-											{
-												_logger.Error($"Failure during posting package to {t.Result.ResponseMessage.RequestMessage.RequestUri}", ex);
-											}
-										}
+										_logger.Error($"Posting PackageUpdate ended with HttpStatus {response.ResponseMessage.StatusCode}, reason phrase \"{response.ResponseMessage.ReasonPhrase}\" and content \"{response.ResponseMessage.Content.ReadAsStringAsync().Result}\"");
 									}
-
-                                }, TaskScheduler.Default);
+                                };
                             }
                             catch (Exception ex)
                             {
@@ -106,7 +105,8 @@ namespace O10.Node.Worker.Services
 						_logger.Error("Failure during propagating package", ex);
 					}
 				}
-			}, cancellationToken, cancellationToken, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+			}, cancellationToken, cancellationToken, TaskCreationOptions.LongRunning, TaskScheduler.Default).ConfigureAwait(false);
+			_logger.Debug(() => $"Initializing {nameof(NotificationsRestService)} completed");
 		}
 
 		public async Task UpdateGateways(CancellationToken cancellationToken) => _gatewayUris = (await _dataAccessService.GetGateways(cancellationToken)).Select(g => g.BaseUri).ToList();
@@ -137,5 +137,34 @@ namespace O10.Node.Worker.Services
                 }
             }
         }
-	}
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposedValue)
+            {
+                if (disposing)
+                {
+                    _logger.Debug(() => $"Stopping {nameof(NotificationsRestService)}...");
+                }
+
+                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+                // TODO: set large fields to null
+                _disposedValue = true;
+            }
+        }
+
+        // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+        // ~NotificationsRestService()
+        // {
+        //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        //     Dispose(disposing: false);
+        // }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+    }
 }

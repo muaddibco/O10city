@@ -9,38 +9,40 @@ using O10.Core.ExtensionMethods;
 using O10.Core.HashCalculations;
 using O10.Core.Identity;
 using O10.Core.Logging;
-using O10.Transactions.Core.Ledgers.Synchronization.Transactions;
 using O10.Transactions.Core.Ledgers.Registry.Transactions;
 using O10.Transactions.Core.Ledgers.Synchronization;
 using O10.Transactions.Core.Ledgers.Registry;
 using O10.Node.DataLayer.DataServices;
-using System.Linq;
 using O10.Node.DataLayer.DataServices.Keys;
 using O10.Transactions.Core.Ledgers;
+using O10.Network.Handlers;
 
 namespace O10.Node.Core.Centralized
 {
     [RegisterDefaultImplementation(typeof(IRealTimeRegistryService), Lifetime = LifetimeManagement.Scoped)]
-    public class RealTimeRegistryService : IRealTimeRegistryService
+    public class RealTimeRegistryService : IRealTimeRegistryService, IDisposable
     {
 		private readonly IIdentityKeyProvider _identityKeyProvider;
 		private readonly BlockingCollection<Tuple<SynchronizationPacket, RegistryPacket>> _registrationPackets = new BlockingCollection<Tuple<SynchronizationPacket, RegistryPacket>>();
-		private readonly ConcurrentDictionary<IKey, TaskCompletionSource<KeyValuePair<HashAndIdKey, IPacketBase>>> _packetTriggers = new ConcurrentDictionary<IKey, TaskCompletionSource<KeyValuePair<HashAndIdKey, IPacketBase>>>(new KeyEqualityComparer());
-		private readonly HashSet<IChainDataService> _chainDataServices = new HashSet<IChainDataService>();
+		private static readonly ConcurrentDictionary<IKey, TaskCompletionSource<KeyValuePair<HashAndIdKey, IPacketBase>>> _packetTriggers = new ConcurrentDictionary<IKey, TaskCompletionSource<KeyValuePair<HashAndIdKey, IPacketBase>>>(new KeyEqualityComparer());
 		private readonly IHashCalculation _hashCalculation;
         private readonly ILogger _logger;
-		private long _lowestCombinedBlockHeight = long.MaxValue;
+        private readonly IChainDataServicesRepository _chainDataServicesRepository;
+        private long _lowestCombinedBlockHeight = long.MaxValue;
+        private bool _disposedValue;
 
-		public RealTimeRegistryService(IHashCalculationsRepository hashCalculationsRepository, IIdentityKeyProvidersRegistry identityKeyProvidersRegistry, ILoggerService loggerService)
+        public RealTimeRegistryService(
+            IHashCalculationsRepository hashCalculationsRepository,
+            IChainDataServicesRepository chainDataServicesRepository,
+            IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
+            IHandlingFlowContext handlingFlowContext,
+            ILoggerService loggerService)
 		{
 			_hashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
 			_identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
-            _logger = loggerService.GetLogger(nameof(RealTimeRegistryService));
-		}
-
-		public void RegisterInternalChainDataService(IChainDataService chainDataService)
-        {
-			_chainDataServices.Add(chainDataService);
+            _logger = loggerService.GetLogger($"{nameof(RealTimeRegistryService)}#{handlingFlowContext.Index}");
+            _logger.Debug(() => $"Creating {nameof(RealTimeRegistryService)}");
+            _chainDataServicesRepository = chainDataServicesRepository;
         }
 
 		public long GetLowestCombinedBlockHeight() => _lowestCombinedBlockHeight;
@@ -54,20 +56,42 @@ namespace O10.Node.Core.Centralized
         {
 			var registryTransaction = registrationsPacket.Transaction<FullRegistryTransaction>();
 
-			_logger.Debug($"Received combined and registryFullBlock with {registryTransaction.Witnesses.Length} Witnesses. Wait for transaction packets...");
+			_logger.Debug(() => $"Received combined and registryFullBlock with {registryTransaction.Witnesses.Length} Witnesses. Going to wait for transactions themselves...");
 
 			foreach (var witness in registryTransaction.Witnesses)
 			{
-				if(witness.Payload.Transaction is RegisterTransaction transaction && _chainDataServices.Any(c => c.LedgerType == transaction.ReferencedLedgerType))
+                try
                 {
-                    var hashString = transaction.Parameters[RegisterTransaction.REFERENCED_BODY_HASH];
-                    var hash = hashString.HexStringToByteArray();
-                    TaskCompletionSource<KeyValuePair<HashAndIdKey, IPacketBase>> taskCompletionSource = new TaskCompletionSource<KeyValuePair<HashAndIdKey, IPacketBase>>();
-                    _logger.LogIfDebug(() => $"Adding Witness TaskCompletionSource by hash {hashString}");
-                    taskCompletionSource = _packetTriggers.GetOrAdd(_identityKeyProvider.GetKey(hash), taskCompletionSource);
+                    if (!(witness.Payload.Transaction is RegisterTransaction transaction))
+                    {
+                        _logger.Error($"Obtained witness payload is '{witness.Payload.Transaction.GetType().FullName}' while it was expected '{typeof(RegisterTransaction).FullName}' only!");
+                        continue;
+                    }
 
-                    await WaitForPacketStoredAndUpdateIt(aggregatedRegistrationsPacket, taskCompletionSource, cancellationToken);
+                    _logger.Debug(() => $"Processing witness for the transaction of type '{transaction.ReferencedLedgerType}' and with hash {transaction.Parameters[RegisterTransaction.TRANSACTION_HASH]}");
+
+                    IChainDataService chainDataService;
+                    if ((chainDataService = _chainDataServicesRepository.GetInstance(transaction.ReferencedLedgerType)) != null)
+                    {
+                        var hashString = transaction.Parameters[RegisterTransaction.TRANSACTION_HASH];
+                        var hash = hashString.HexStringToByteArray();
+                        var taskCompletionSource = _packetTriggers.GetOrAdd(_identityKeyProvider.GetKey(hash), new TaskCompletionSource<KeyValuePair<HashAndIdKey, IPacketBase>>());
+
+                        _logger.Debug(() => $"Waiting for storing the packet with hash {hashString}");
+                        var res = await taskCompletionSource.Task;
+                        _logger.Debug(() => $"Packet with hash {hashString} stored");
+                        await chainDataService.AddDataKey(res.Key, new CombinedHashKey(aggregatedRegistrationsPacket.Payload.Height, res.Key.HashKey), cancellationToken);
+                    }
+                    else
+                    {
+                        _logger.Error($"No data service found for the transaction of type '{transaction.ReferencedLedgerType}'!");
+                    }
+
                 }
+                catch (Exception ex)
+                {
+                    _logger.Error($"Failure during processing transaction witness\r\n{witness.ToJson()}", ex);
+                }            
             }
 
 			_registrationPackets.Add(new Tuple<SynchronizationPacket, RegistryPacket>(aggregatedRegistrationsPacket, registrationsPacket), cancellationToken);
@@ -76,21 +100,6 @@ namespace O10.Node.Core.Centralized
 			{
 				_lowestCombinedBlockHeight = aggregatedRegistrationsPacket.Payload.Height;
 			}
-        }
-
-        private async Task WaitForPacketStoredAndUpdateIt(SynchronizationPacket aggregatedRegistrationsPacket, TaskCompletionSource<KeyValuePair<HashAndIdKey, IPacketBase>> taskCompletionSource, CancellationToken cancellationToken)
-        {
-            try
-            {
-                var res = await taskCompletionSource.Task;
-                await _chainDataServices
-                    .First(s => s.LedgerType == res.Value.LedgerType)
-                    .AddDataKey(res.Key, new CombinedHashKey(aggregatedRegistrationsPacket.Payload.Height, res.Key.HashKey), cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                _logger.Error($"Failed to update the height of {nameof(AggregatedRegistrationsTransaction)} due to an error", ex);
-            }
         }
 
         public void PostTransaction(DataResult<IPacketBase> result)
@@ -105,13 +114,41 @@ namespace O10.Node.Core.Centralized
                 throw new ArgumentException($"Key must be of the type {typeof(HashAndIdKey).Name}");
             }
 
-            _logger.LogIfDebug(() => $"Posted packet {result.Packet.GetType().Name}");
+            _logger.Debug(() => $"Posted packet {result.Packet.GetType().Name}");
 
             var packet = result.Packet;
-            _logger.LogIfDebug(() => $"Continue with a packet {packet.GetType().Name} with hash {hashAndIdKey.HashKey}");
-            TaskCompletionSource<KeyValuePair<HashAndIdKey, IPacketBase>> taskCompletionSource = new TaskCompletionSource<KeyValuePair<HashAndIdKey, IPacketBase>>();
-            taskCompletionSource = _packetTriggers.GetOrAdd(hashAndIdKey.HashKey, taskCompletionSource);
+            _logger.Debug(() => $"Releasing trigger of the packet with hash {hashAndIdKey.HashKey}");
+            var taskCompletionSource = _packetTriggers.GetOrAdd(hashAndIdKey.HashKey, new TaskCompletionSource<KeyValuePair<HashAndIdKey, IPacketBase>>());
             taskCompletionSource.SetResult(new KeyValuePair<HashAndIdKey, IPacketBase>(hashAndIdKey, packet));
         }
-	}
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposedValue)
+            {
+                if (disposing)
+                {
+                    _logger.Debug(() => $"Stopping {nameof(RealTimeRegistryService)}...");
+                }
+
+                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+                // TODO: set large fields to null
+                _disposedValue = true;
+            }
+        }
+
+        // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+        // ~RealTimeRegistryService()
+        // {
+        //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        //     Dispose(disposing: false);
+        // }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+    }
 }

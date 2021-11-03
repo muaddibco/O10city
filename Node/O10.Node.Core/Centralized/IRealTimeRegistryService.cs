@@ -20,6 +20,5 @@ namespace O10.Node.Core.Centralized
         Task PostPackets(SynchronizationPacket aggregatedRegistrationsPacket, RegistryPacket registrationsPacket, CancellationToken cancellationToken);
         void PostTransaction(DataResult<IPacketBase> result);
 		long GetLowestCombinedBlockHeight();
-        void RegisterInternalChainDataService(IChainDataService chainDataService);
     }
 }

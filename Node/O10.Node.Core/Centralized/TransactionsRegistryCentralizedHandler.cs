@@ -24,11 +24,12 @@ using O10.Crypto.Models;
 using O10.Transactions.Core.Ledgers.Registry.Transactions;
 using O10.Core.Identity;
 using O10.Network.Interfaces;
+using O10.Network.Handlers;
 
 namespace O10.Node.Core.Centralized
 {
     [RegisterExtension(typeof(ILedgerPacketsHandler), Lifetime = LifetimeManagement.Scoped)]
-    public class TransactionsRegistryCentralizedHandler : ILedgerPacketsHandler
+    public class TransactionsRegistryCentralizedHandler : ILedgerPacketsHandler, IDisposable
     {
         public const string NAME = "TransactionsRegistryCentralized";
 
@@ -49,22 +50,25 @@ namespace O10.Node.Core.Centralized
         private bool _isInitialized;
         private BufferBlock<IPacketBase> _packetsBuffer;
         private SynchronizationPacket _lastCombinedBlock;
+        private bool _disposedValue;
 
         public TransactionsRegistryCentralizedHandler(IRealTimeRegistryService realTimeRegistryService,
                                                       IStatesRepository statesRepository,
                                                       IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
-                                                      IChainDataServicesManager chainDataServicesManager,
+                                                      IChainDataServicesRepository chainDataServicesManager,
                                                       IHashCalculationsRepository hashCalculationsRepository,
+                                                      IHandlingFlowContext handlingFlowContext,
                                                       ILoggerService loggerService)
         {
             _realTimeRegistryService = realTimeRegistryService;
             _synchronizationContext = statesRepository.GetInstance<ISynchronizationContext>();
             _nodeContext = statesRepository.GetInstance<INodeContext>();
             _identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
-            _synchronizationChainDataService = chainDataServicesManager.GetChainDataService(LedgerType.Synchronization);
-            _registryChainDataService = chainDataServicesManager.GetChainDataService(LedgerType.Registry);
+            _synchronizationChainDataService = chainDataServicesManager.GetInstance(LedgerType.Synchronization);
+            _registryChainDataService = chainDataServicesManager.GetInstance(LedgerType.Registry);
             _defaultTransactionHashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
-            _logger = loggerService.GetLogger(nameof(TransactionsRegistryCentralizedHandler));
+            _logger = loggerService.GetLogger($"{nameof(TransactionsRegistryCentralizedHandler)}#{handlingFlowContext.Index}");
+            _logger.Debug(() => $"Creating {nameof(TransactionsRegistryCentralizedHandler)}...");
         }
 
         public async Task Initialize(CancellationToken ct)
@@ -146,8 +150,6 @@ namespace O10.Node.Core.Centralized
                                 packets.Where(p => p is RegistryPacket).Cast<RegistryPacket>().ToArray(), 
                                 _synchronizationContext.LastBlockDescriptor?.BlockHeight ?? 0, 
                                 lastCombinedBlockHeight);
-						//RegistryShortBlock registryShortBlock = CreateRegistryShortBlock((FullRegistryTransaction)registryFullBlock.Body);
-						//SignRegistryBlocks(registryFullBlock, registryShortBlock);
 
                         fullRegistrationsPacket.Signature = (SingleSourceSignature)_nodeContext.SigningService.Sign(fullRegistrationsPacket.Payload);
 
@@ -211,34 +213,6 @@ namespace O10.Node.Core.Centralized
             return transactionsFullBlock;
         }
 
-        //private RegistryPacket CreateRegistryShortBlock(FullRegistryTransaction transactionsFullBlock)
-        //{
-        //    RegistryPacket registryShortBlock = new RegistryPacket
-        //    {
-        //        Body = new ShortRegistryTransaction
-        //        {
-        //            SyncHeight = transactionsFullBlock.SyncHeight,
-        //            Height = transactionsFullBlock.Height,
-        //        }
-        //        WitnessStateKeys = transactionsFullBlock.StateWitnesses.Select(w => new WitnessStateKey { PublicKey = w.Source, Height = w.Height }).ToArray(),
-        //        WitnessUtxoKeys = transactionsFullBlock.StealthWitnesses.Select(w => new WitnessUtxoKey { KeyImage = w.KeyImage }).ToArray()
-        //    };
-
-        //    _logger.Debug($"Created RegistryShortBlock[{registryShortBlock.SyncHeight}:{registryShortBlock.Height}]: {registryShortBlock.WitnessStateKeys.Length} : {registryShortBlock.WitnessUtxoKeys.Length}");
-
-        //    return registryShortBlock;
-        //}
-
-        //private void SignRegistryBlocks(RegistryPacket transactionsFullBlock, RegistryPacket transactionsShortBlock)
-        //{
-        //    transactionsShortBlock.Signature = (SingleSourceSignature)_nodeContext.SigningService.Sign(transactionsShortBlock.Body);
-
-        //    ((FullRegistryTransaction)transactionsFullBlock.Body).ShortBlockHash = _defaultTransactionHashCalculation.CalculateHash(transactionsShortBlock.ToByteArray());
-        //    transactionsFullBlock.Signature = (SingleSourceSignature)_nodeContext.SigningService.Sign(transactionsFullBlock.Body);
-
-        //    _logger.Debug($"Sending FullBlock with {((FullRegistryTransaction)transactionsFullBlock.Body).Witnesses.Length} transactions and ShortBlock with {transactionsShortBlock.WitnessStateKeys.Length + transactionsShortBlock.WitnessUtxoKeys.Length} keys at round {transactionsFullBlock.Height}");
-        //}
-
         private SynchronizationPacket CreateCombinedBlock(params RegistryPacket[] registryFullBlocks)
         {
             lock (_synchronizationContext)
@@ -265,6 +239,35 @@ namespace O10.Node.Core.Centralized
 
                 return synchronizationRegistryCombinedBlock;
             }
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposedValue)
+            {
+                if (disposing)
+                {
+                    _logger.Debug(() => $"Stopping {nameof(TransactionsRegistryCentralizedHandler)}...");
+                }
+
+                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+                // TODO: set large fields to null
+                _disposedValue = true;
+            }
+        }
+
+        // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+        // ~TransactionsRegistryCentralizedHandler()
+        // {
+        //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        //     Dispose(disposing: false);
+        // }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
         }
     }
 }

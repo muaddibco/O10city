@@ -5,7 +5,7 @@ namespace O10.Transactions.Core.Ledgers.Registry.Transactions
 {
     public class RegisterTransaction : RegistryTransactionBase
     {
-        public const string REFERENCED_BODY_HASH = "ReferencedBodyHash";
+        public const string TRANSACTION_HASH = "TransactionHash";
         public override ushort TransactionType => TransactionTypes.Registry_RegisterEx;
 
         public LedgerType ReferencedLedgerType { get; set; }

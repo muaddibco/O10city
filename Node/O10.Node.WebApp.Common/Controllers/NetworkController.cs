@@ -30,7 +30,7 @@ namespace O10.Node.WebApp.Common.Controllers
 	public class NetworkController : ControllerBase
 	{
 		private readonly IPacketsHandler _packetsHandler;
-        private readonly IChainDataServicesManager _chainDataServicesManager;
+        private readonly IChainDataServicesRepository _chainDataServicesManager;
         private readonly IChainDataService _transactionalDataService;
 		private readonly IStealthDataService _stealthDataService;
 		private readonly IChainDataService _synchronizationDataService;
@@ -40,7 +40,7 @@ namespace O10.Node.WebApp.Common.Controllers
 		private readonly ISynchronizationContext _synchronizationContext;
 
 		public NetworkController(IPacketsHandler packetsHandler,
-                           IChainDataServicesManager chainDataServicesManager,
+                           IChainDataServicesRepository chainDataServicesManager,
                            IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
                            IHashCalculationsRepository hashCalculationsRepository,
                            IStatesRepository statesRepository,
@@ -48,9 +48,9 @@ namespace O10.Node.WebApp.Common.Controllers
 		{
 			_packetsHandler = packetsHandler;
             _chainDataServicesManager = chainDataServicesManager;
-            _transactionalDataService = chainDataServicesManager.GetChainDataService(LedgerType.O10State);
-			_stealthDataService = (IStealthDataService)chainDataServicesManager.GetChainDataService(LedgerType.Stealth);
-			_synchronizationDataService = chainDataServicesManager.GetChainDataService(LedgerType.Synchronization);
+            _transactionalDataService = chainDataServicesManager.GetInstance(LedgerType.O10State);
+			_stealthDataService = (IStealthDataService)chainDataServicesManager.GetInstance(LedgerType.Stealth);
+			_synchronizationDataService = chainDataServicesManager.GetInstance(LedgerType.Synchronization);
 			_identityKeyProvider = identityKeyProvidersRegistry.GetInstance();
 			_hashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
 			_synchronizationContext = statesRepository.GetInstance<ISynchronizationContext>();
@@ -118,7 +118,7 @@ namespace O10.Node.WebApp.Common.Controllers
 			IKey hashKey = _identityKeyProvider.GetKey(hash.HexStringToByteArray());
 			try
 			{
-				var dataService = _chainDataServicesManager.GetChainDataService(ledgerType);
+				var dataService = _chainDataServicesManager.GetInstance(ledgerType);
 				if(dataService == null)
                 {
 					return BadRequest($"Ledger Type {ledgerType} is not supported");

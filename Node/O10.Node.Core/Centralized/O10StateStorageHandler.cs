@@ -12,7 +12,7 @@ namespace O10.Node.Core.Centralized
     {
         public const string NAME = "O10StateStorage";
 
-        public O10StateStorageHandler(IChainDataServicesManager chainDataServicesManager,
+        public O10StateStorageHandler(IChainDataServicesRepository chainDataServicesManager,
                                            IRealTimeRegistryService realTimeRegistryService,
                                            ILoggerService loggerService)
             : base(chainDataServicesManager, realTimeRegistryService, loggerService)

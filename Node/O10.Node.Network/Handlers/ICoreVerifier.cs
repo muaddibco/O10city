@@ -4,7 +4,7 @@ using O10.Transactions.Core.Ledgers;
 namespace O10.Network.Handlers
 {
     [ExtensionPoint]
-    internal interface ICoreVerifier
+    public interface ICoreVerifier
     {
         bool VerifyBlock(IPacketBase packet);
     }

@@ -17,11 +17,11 @@ namespace O10.Node.Core.Centralized
 
         private CancellationToken _cancellationToken;
 
-        public StorageHandlerBase(IChainDataServicesManager chainDataServicesManager,
+        public StorageHandlerBase(IChainDataServicesRepository chainDataServicesManager,
                                   IRealTimeRegistryService realTimeRegistryService,
                                   ILoggerService loggerService)
         {
-            _chainDataService = chainDataServicesManager.GetChainDataService(LedgerType);
+            _chainDataService = chainDataServicesManager.GetInstance(LedgerType);
             _realTimeRegistryService = realTimeRegistryService;
 			_logger = loggerService.GetLogger(GetType().Name);
 		}

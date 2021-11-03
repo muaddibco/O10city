@@ -12,7 +12,7 @@ namespace O10.Node.Core.Centralized
     {
         public const string NAME = "StealthStorage";
 
-        public StealthStorageHandler(IChainDataServicesManager chainDataServicesManager,
+        public StealthStorageHandler(IChainDataServicesRepository chainDataServicesManager,
                                      IRealTimeRegistryService realTimeRegistryService,
                                      ILoggerService loggerService)
 			: base(chainDataServicesManager, realTimeRegistryService, loggerService)

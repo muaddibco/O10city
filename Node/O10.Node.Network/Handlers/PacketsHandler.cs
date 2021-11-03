@@ -16,7 +16,7 @@ using O10.Core.ExtensionMethods;
 namespace O10.Network.Handlers
 {
     [RegisterDefaultImplementation(typeof(IPacketsHandler), Lifetime = LifetimeManagement.Singleton)]
-    internal class PacketsHandler : IPacketsHandler
+    internal class PacketsHandler : IPacketsHandler, IDisposable
     {
         private readonly ILogger _log;
         private readonly BlockingCollection<IPacketBase> _packets;
@@ -54,6 +54,12 @@ namespace O10.Network.Handlers
             if (!IsInitialized)
             {
                 _cancellationToken = ct;
+
+                _cancellationToken.Register(() => 
+                { 
+                    _handlingFlowScopes.ForEach(s => s.Dispose());
+                    _handlingFlowScopes.Clear();
+                });
 
                 _handlingFlowScopes.AsyncParallelForEach(async s =>
                 {
@@ -116,25 +122,26 @@ namespace O10.Network.Handlers
             _log.Debug(() => "PacketsHandler starting");
 
             // TODO: need to add handling the case when already started
-            for (int i = 0; i < _maxDegreeOfParallelism; i++)
+            _handlingFlowScopes.ForEach(s =>
             {
-                _tasks.Add(Process(i, _cancellationToken));
-            }
+                _tasks.Add(Process(s, _cancellationToken));
+            });
 
             _log.Debug(() => "PacketsHandler started");
         }
 
-        private async Task Process(int iteration, CancellationToken cancellationToken)
+        private async Task Process(IServiceScope serviceScope, CancellationToken cancellationToken)
         {
-            _log.Debug(() => $"Process function #{iteration} starting");
+            var handlingFlow = serviceScope.ServiceProvider.GetRequiredService<IHandlingFlowContext>();
+            _log.Debug(() => $"Process function #{handlingFlow.Index} starting");
 
             try
             {
                 _trackingService.TrackMetric("ParallelProcesses", 1);
 
-                StartModules(iteration);
+                StartModules(serviceScope);
 
-                await StartHandlingFlow(iteration, cancellationToken);
+                await StartHandlingFlow(serviceScope, cancellationToken);
             }
             finally
             {
@@ -143,26 +150,31 @@ namespace O10.Network.Handlers
             }
         }
 
-        private async Task StartHandlingFlow(int iteration, CancellationToken cancellationToken)
+        private async Task StartHandlingFlow(IServiceScope serviceScope, CancellationToken cancellationToken)
         {
-            var handlingFlow = ActivatorUtilities.CreateInstance<PacketHandlingFlow>(_handlingFlowScopes[iteration].ServiceProvider, iteration);
+            var handlingFlow = serviceScope.ServiceProvider.GetRequiredService<IPacketHandlingFlow>();
 
             foreach (var packet in _packets.GetConsumingEnumerable(cancellationToken))
             {
-                _log.Debug(() => $"Picked for handling flow #{iteration} packet {packet.GetType().Name}");
-
                 _trackingService.TrackMetric("MessagesQueueSize", -1);
-                await handlingFlow .PostPacket(packet);
+                await handlingFlow.PostPacket(packet);
             }
         }
 
-        private void StartModules(int iteration)
+        private static void StartModules(IServiceScope serviceScope)
         {
-            var modulesRepo = _handlingFlowScopes[iteration].ServiceProvider.GetRequiredService<IModulesRepository>();
+            var modulesRepo = serviceScope.ServiceProvider.GetRequiredService<IModulesRepository>();
             foreach (IModule module in modulesRepo.GetBulkInstances())
             {
                 module.StartModule();
             }
+        }
+
+        public void Dispose()
+        {
+            _packets.Dispose();
+            _handlingFlowScopes.ForEach(s => s.Dispose());
+            _handlingFlowScopes.Clear();
         }
     }
 }

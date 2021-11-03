@@ -9,10 +9,10 @@ namespace O10.Node.DataLayer.DataServices
     [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Scoped)]
 	public class DataServicesInitializer : InitializerBase
 	{
-		private readonly IChainDataServicesManager _chainDataServicesManager;
+		private readonly IChainDataServicesRepository _chainDataServicesManager;
 		private readonly ILogger _logger;
 
-		public DataServicesInitializer(IChainDataServicesManager chainDataServicesManager, ILoggerService loggerService)
+		public DataServicesInitializer(IChainDataServicesRepository chainDataServicesManager, ILoggerService loggerService)
 		{
 			_chainDataServicesManager = chainDataServicesManager;
 			_logger = loggerService.GetLogger(nameof(DataServicesInitializer));
@@ -22,11 +22,11 @@ namespace O10.Node.DataLayer.DataServices
 
 		protected override async Task InitializeInner(CancellationToken cancellationToken)
 		{
-			foreach (var chainDataService in _chainDataServicesManager.GetAll())
+			foreach (var chainDataService in _chainDataServicesManager.GetInstances())
 			{
 				try
 				{
-					chainDataService.Initialize(cancellationToken);
+					await chainDataService.Initialize(cancellationToken);
 				}
 				catch (System.Exception ex)
 				{

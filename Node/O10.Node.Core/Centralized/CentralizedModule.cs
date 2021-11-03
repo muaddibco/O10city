@@ -16,7 +16,7 @@ namespace O10.Node.Core.Centralized
         private readonly IPacketsHandlersRegistry _packetsHandlersRegistry;
 		private readonly INotificationsService _notificationsService;
 		private readonly IRealTimeRegistryService _realTimeRegistryService;
-        private readonly IChainDataServicesManager _chainDataServicesManager;
+        private readonly IChainDataServicesRepository _chainDataServicesManager;
         private readonly IIdentityKeyProvidersRegistry _identityKeyProvidersRegistry;
         private readonly IHashCalculationsRepository _hashCalculationsRepository;
 
@@ -25,7 +25,7 @@ namespace O10.Node.Core.Centralized
                                  IPacketsHandlersRegistry packetsHandlersRegistry,
                                  INotificationsService notificationsService,
                                  IRealTimeRegistryService realTimeRegistryService,
-                                 IChainDataServicesManager chainDataServicesManager,
+                                 IChainDataServicesRepository chainDataServicesManager,
                                  IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
                                  IHashCalculationsRepository hashCalculationsRepository) : base(loggerService)
         {

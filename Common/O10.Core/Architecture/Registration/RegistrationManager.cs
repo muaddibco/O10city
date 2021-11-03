@@ -116,13 +116,13 @@ namespace O10.Core.Architecture.Registration
 			{
                 foreach (var r in typesRegistratorsManager.GetAllRegistrators())
 				{
-                    _log?.Info($"Register using regiatrator {r.GetType().FullName}");
+                    _log?.Info($"Register using registrator {r.GetType().FullName}");
 					r.Register(this);
 				}
             
                 foreach (var r in typesRegistratorsManager.GetAllRegistrators())
                 {
-                    _log?.Info($"PostRegister using regiatrator {r.GetType().FullName}");
+                    _log?.Info($"PostRegister using registrator {r.GetType().FullName}");
                     r.PostRegister(_container, this);
                 }
             }

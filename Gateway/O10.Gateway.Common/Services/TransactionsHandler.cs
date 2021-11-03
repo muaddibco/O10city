@@ -119,7 +119,7 @@ namespace O10.Gateway.Common.Services
 
                     if (packetHashResponse.Hash.IsNotEmpty())
                     {
-                        _logger.Error($"It was found that key image {keyImage} already was witnessed for the packet with hash {packetHashResponse.Hash}");
+                        _logger.Error($"It was found that key image {keyImage} already was witnessed for the packet with hash {packetHashResponse.Hash.ToHexString()}");
                         res = false;
                         _completions[packet].SetResult(new KeyImageViolatedNotification { ExistingHash = packetHashResponse.Hash });
                         _completions.Remove(packet);

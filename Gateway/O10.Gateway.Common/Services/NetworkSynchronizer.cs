@@ -97,7 +97,7 @@ namespace O10.Gateway.Common.Services
 				return;
             }
 
-			_logger.LogIfDebug(() => $"Sending to Node {_synchronizerConfiguration.NodeApiUri} packet {wrapper.State.GetType().Name}");
+			_logger.LogIfDebug(() => $"Sending to Node {_synchronizerConfiguration.NodeApiUri} packet {wrapper.State.GetType().Name} with a transaction {wrapper.State.Transaction.GetType().FullName}");
 
             try
             {
