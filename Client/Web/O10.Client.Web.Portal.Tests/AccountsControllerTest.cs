@@ -1,16 +1,15 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using NSubstitute;
-using O10.Network.Tests.Fixtures;
 using O10.Client.Web.Portal.Controllers;
 using O10.Client.Web.Portal.Helpers;
-using O10.Client.Web.Portal.Services;
 using Xunit;
 using O10.Client.Web.DataContracts;
+using O10.Client.Common.Interfaces;
 
 namespace O10.Client.Web.Portal.Test
 {
-    public class AccountsControllerTest : IClassFixture<DependencyInjectionFixture>
+    public class AccountsControllerTest
     {
         private readonly AccountsController _accountsController;
         private IAccountsService _accountsService;
