@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reactive.Subjects;
-using System.Threading.Tasks.Dataflow;
 using O10.Core.Architecture;
-
 using O10.Core.Logging;
 using O10.Core.States;
 
@@ -13,12 +10,10 @@ namespace O10.Core.Synchronization
     [RegisterExtension(typeof(IState), Lifetime = LifetimeManagement.Singleton)]
     public class SynchronizationContext : ISynchronizationContext
     {
-        private readonly Subject<string> _synchronizationSublect;
         private readonly ILogger _logger;
 
         public SynchronizationContext(ILoggerService loggerService)
         {
-            _synchronizationSublect = new Subject<string>();
             _logger = loggerService.GetLogger(nameof(SynchronizationContext));
         }
 
@@ -58,11 +53,6 @@ namespace O10.Core.Synchronization
             }
         }
 
-        public IDisposable SubscribeOnStateChange(ITargetBlock<string> targetBlock)
-        {
-            return _synchronizationSublect.Subscribe(targetBlock.AsObserver());
-        }
-
         public void UpdateLastSyncBlockDescriptor(SynchronizationDescriptor synchronizationDescriptor)
         {
             if (synchronizationDescriptor == null)
@@ -79,8 +69,6 @@ namespace O10.Core.Synchronization
                 {
                     PrevBlockDescriptor = LastBlockDescriptor;
                     LastBlockDescriptor = synchronizationDescriptor;
-
-                    _synchronizationSublect.OnNext(nameof(LastBlockDescriptor));
                 }
             }
         }

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks.Dataflow;
-using O10.Core.Architecture;
+﻿using O10.Core.Architecture;
 
 namespace O10.Core.States
 {
@@ -8,7 +6,5 @@ namespace O10.Core.States
     public interface IState
     {
         string Name { get; }
-
-        IDisposable SubscribeOnStateChange(ITargetBlock<string> targetBlock);
     }
 }

@@ -4,7 +4,6 @@ using O10.Core;
 using O10.Core.Architecture;
 using O10.Core.Communication;
 using O10.Core.Logging;
-using O10.Core.States;
 using O10.Network.Topology;
 using O10.Node.Core.DataLayer;
 
@@ -13,14 +12,12 @@ namespace O10.Node.Core.Common
     [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Scoped)]
     public class CommonTopologyInitializer : InitializerBase
     {
-        private readonly INeighborhoodState _neighborhoodState;
         private readonly INodesDataService _nodesDataService;
 		private readonly INodesResolutionService _nodesResolutionService;
 		private readonly ILogger _logger;
 
-        public CommonTopologyInitializer(IStatesRepository statesRepository, INodesDataService nodesDataService, INodesResolutionService nodesResolutionService, ILoggerService loggerService)
+        public CommonTopologyInitializer(INodesDataService nodesDataService, INodesResolutionService nodesResolutionService, ILoggerService loggerService)
         {
-            _neighborhoodState = statesRepository.GetInstance<INeighborhoodState>();
             _nodesDataService = nodesDataService;
 			_nodesResolutionService = nodesResolutionService;
 			_logger = loggerService.GetLogger(nameof(CommonTopologyInitializer));
@@ -32,7 +29,6 @@ namespace O10.Node.Core.Common
         {
             foreach (var node in await _nodesDataService.Get(null, cancellationToken))
             {
-                _neighborhoodState.AddNeighbor(node.Key);
 				_nodesResolutionService.AddNode(new NodeAddress(node.Key, node.IPAddress), node.NodeRole);
 			}
         }

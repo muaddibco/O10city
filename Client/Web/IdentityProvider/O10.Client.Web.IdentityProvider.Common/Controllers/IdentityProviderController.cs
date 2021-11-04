@@ -379,10 +379,7 @@ namespace O10.Server.IdentityProvider.Common.Controllers
 		{
 			MailjetClient mailjetClient = new MailjetClient(
 					AzureHelper.GetSecretValue(APIPUBLICKEY, _azureConfiguration.AzureADCertThumbprint, _azureConfiguration.AzureADApplicationId, _azureConfiguration.KeyVaultName),
-					AzureHelper.GetSecretValue(APISECRETKEY, _azureConfiguration.AzureADCertThumbprint, _azureConfiguration.AzureADApplicationId, _azureConfiguration.KeyVaultName))
-			{
-				Version = ApiVersion.V3_1
-			};
+					AzureHelper.GetSecretValue(APISECRETKEY, _azureConfiguration.AzureADCertThumbprint, _azureConfiguration.AzureADApplicationId, _azureConfiguration.KeyVaultName));
 
 			MailjetRequest request = new MailjetRequest
 			{
