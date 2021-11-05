@@ -1,14 +1,15 @@
 #See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-buster-slim AS base
+FROM mcr.microsoft.com/dotnet/aspnet:5.0-buster-slim AS base
 WORKDIR /app
 EXPOSE 80
 EXPOSE 443
 
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1-buster AS build
+FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
 WORKDIR /src
 COPY ["Node/O10.Node.WebApp/O10.Node.WebApp.csproj", "Node/O10.Node.WebApp/"]
 COPY ["Node/O10.Node.Core/O10.Node.Core.csproj", "Node/O10.Node.Core/"]
+COPY ["Common/Persistency/O10.Core.Persistency/O10.Core.Persistency.csproj", "Common/Persistency/O10.Core.Persistency/"]
 COPY ["Common/O10.Transactions.Core/O10.Transactions.Core.csproj", "Common/O10.Transactions.Core/"]
 COPY ["Common/Crypto/O10.Crypto/O10.Crypto.csproj", "Common/Crypto/O10.Crypto/"]
 COPY ["Common/Crypto/HashLib/CoreHashLib/CoreHashLib.csproj", "Common/Crypto/HashLib/CoreHashLib/"]
