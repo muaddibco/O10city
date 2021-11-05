@@ -33,7 +33,7 @@ namespace O10.Core.Persistency
 
         public IDataContext Initialize(string connectionString)
         {
-            _sqlClientListener = new SqlClientListener();
+            //_sqlClientListener = new SqlClientListener();
             ConnectionString = connectionString;
             return this;
         }
@@ -102,7 +102,7 @@ namespace O10.Core.Persistency
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             base.OnConfiguring(optionsBuilder);
-            optionsBuilder.UseLoggerFactory(_myLoggerFactory);
+            //optionsBuilder.UseLoggerFactory(_myLoggerFactory);
         }
     }
 }
