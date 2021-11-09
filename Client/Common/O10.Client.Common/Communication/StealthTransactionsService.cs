@@ -3,28 +3,25 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Threading.Tasks;
-using System.Threading.Tasks.Dataflow;
 using O10.Transactions.Core.Ledgers.Stealth.Internal;
 using O10.Client.Common.Dtos.UniversalProofs;
 using O10.Client.Common.Identities;
 using O10.Client.Common.Interfaces;
 using O10.Client.Common.Interfaces.Inputs;
 using O10.Core.Architecture;
-using O10.Core.Cryptography;
 using O10.Core.HashCalculations;
 using O10.Core.Identity;
 using O10.Core.Logging;
 using O10.Crypto.ConfidentialAssets;
 using O10.Core.Notifications;
 using O10.Transactions.Core.DTOs;
-using O10.Crypto.Models;
-using System.Linq;
 using O10.Transactions.Core.Ledgers.Stealth.Transactions;
 using O10.Client.Common.Communication.LedgerWriters;
 using O10.Client.DataLayer.Model;
 using O10.Client.DataLayer.Services;
 using O10.Core.ExtensionMethods;
 using LanguageExt;
+using O10.Crypto.Models;
 
 namespace O10.Client.Common.Communication
 {

@@ -25,12 +25,10 @@
 
   <ItemGroup>
     <PackageReference Include="Cyberboss.AspNetCore.AsyncInitializer" Version="1.2.0" />
-    <PackageReference Include="Flurl.Http" Version="3.2.0" />
     <PackageReference Include="Log4Net.Async.Standard" Version="3.1.0" />
     <PackageReference Include="Microsoft.ApplicationInsights.Log4NetAppender" Version="2.18.0" />
     <PackageReference Include="Microsoft.AspNetCore.AzureKeyVault.HostingStartup" Version="2.0.4" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="5.0.11" />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="5.0.11" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.NewtonsoftJson" Version="5.0.11" />
     <PackageReference Include="Microsoft.AspNetCore.SpaServices.Extensions" Version="5.0.11" />
     <PackageReference Include="Microsoft.AspNetCore.ApiAuthorization.IdentityServer" Version="5.0.11" />
@@ -39,15 +37,11 @@
     <PackageReference Include="Microsoft.Azure.Services.AppAuthentication" Version="1.6.2" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.11.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.Metrics" Version="3.3.3" />
-    <PackageReference Include="Microsoft.DotNet.PlatformAbstractions" Version="3.1.6" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="5.0.11" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="5.0.11">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Primitives" Version="5.0.1" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.11.1" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Telegram.Bot" Version="16.0.2" />
   </ItemGroup>
 
@@ -55,6 +49,7 @@
     <ProjectReference Include="..\..\..\Common\Crypto\Chaos.NaCl\Chaos.NaCl.csproj" />
     <ProjectReference Include="..\..\..\Common\Crypto\HashLib\CoreHashLib\CoreHashLib.csproj" />
     <ProjectReference Include="..\..\..\Common\Crypto\O10.Crypto\O10.Crypto.csproj" />
+    <ProjectReference Include="..\..\..\Common\O10.Diagnostics.HealthCheck\O10.Diagnostics.HealthCheck.csproj" />
     <ProjectReference Include="..\..\..\Common\O10.Transactions.Core\O10.Transactions.Core.csproj" />
     <ProjectReference Include="..\..\..\Common\O10.Core\O10.Core.csproj" />
     <ProjectReference Include="..\..\..\Common\O10.Tracking.ApplicationInsights\O10.Tracking.ApplicationInsights.csproj" />

@@ -20,16 +20,12 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Primitives" Version="5.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="5.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="5.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.AzureKeyVault" Version="3.1.20" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="5.0.0" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.11.1" />
     <PackageReference Include="Log4Net.Async.Standard" Version="3.1.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.11.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.Metrics" Version="3.3.3" />
-    <PackageReference Include="System.Memory" Version="4.5.4" />
   </ItemGroup>
 
   <ItemGroup>
@@ -37,6 +33,7 @@
     <ProjectReference Include="..\..\Common\Crypto\HashLib\CoreHashLib\CoreHashLib.csproj" />
     <ProjectReference Include="..\..\Common\Crypto\O10.Crypto\O10.Crypto.csproj" />
     <ProjectReference Include="..\..\Common\O10.Core\O10.Core.csproj" />
+    <ProjectReference Include="..\..\Common\O10.Diagnostics.HealthCheck\O10.Diagnostics.HealthCheck.csproj" />
     <ProjectReference Include="..\..\Common\O10.Transactions.Core\O10.Transactions.Core.csproj" />
     <ProjectReference Include="..\O10.Node.Core\O10.Node.Core.csproj" />
     <ProjectReference Include="..\O10.Node.DataLayer\O10.Node.DataLayer.csproj" />

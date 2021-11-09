@@ -15,13 +15,13 @@ using O10.Core.Identity;
 using O10.Core.Logging;
 using O10.Core.Models;
 using O10.Core.States;
-using O10.Core.Synchronization;
 using O10.Network.Handlers;
 using O10.Transactions.Core.DTOs;
 using O10.Transactions.Core.Ledgers;
 using O10.Crypto.Models;
 using System.Threading.Tasks;
 using System.Threading;
+using O10.Network.Synchronization;
 
 namespace O10.Node.WebApp.Common.Controllers
 {

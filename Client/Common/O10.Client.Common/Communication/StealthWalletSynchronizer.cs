@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using O10.Transactions.Core.Ledgers.O10State;
-using O10.Transactions.Core.Ledgers.Stealth;
 using O10.Client.Common.Interfaces;
 using O10.Client.DataLayer.Model;
 using O10.Client.DataLayer.Services;
@@ -9,7 +7,6 @@ using O10.Core.ExtensionMethods;
 using O10.Core.Logging;
 using O10.Core.Architecture;
 using O10.Client.Common.Communication.Notifications;
-using O10.Transactions.Core.Ledgers;
 using O10.Crypto.Models;
 using O10.Transactions.Core.Ledgers.O10State.Transactions;
 using O10.Transactions.Core.Ledgers.Stealth.Transactions;

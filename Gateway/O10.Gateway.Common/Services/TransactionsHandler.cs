@@ -21,7 +21,6 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using O10.Transactions.Core.Ledgers;
 using O10.Transactions.Core.Exceptions;
-using FizzWare.NBuilder;
 using O10.Transactions.Core.Ledgers.Stealth.Transactions;
 
 namespace O10.Gateway.Common.Services

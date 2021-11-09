@@ -13,7 +13,6 @@ using O10.Client.Web.Common.Services;
 using O10.Client.Common.Integration;
 using O10.Client.Web.DataContracts.SchemeResolution;
 using System.Threading.Tasks;
-using O10.Client.DataLayer.Model.ServiceProviders;
 
 namespace O10.Client.Web.Portal.Controllers
 {

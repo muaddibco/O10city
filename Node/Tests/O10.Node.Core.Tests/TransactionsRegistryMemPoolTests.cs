@@ -12,13 +12,13 @@ using O10.Core.HashCalculations;
 using O10.Core.Identity;
 using O10.Core.Logging;
 using O10.Core.States;
-using O10.Core.Synchronization;
 using O10.Crypto.ConfidentialAssets;
 using O10.Crypto.HashCalculations;
 using O10.Node.Core.Registry;
 using Xunit;
 using O10.Crypto.Models;
 using O10.Transactions.Core.Ledgers;
+using O10.Network.Synchronization;
 
 namespace O10.Node.Core.Tests
 {

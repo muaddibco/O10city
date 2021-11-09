@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using O10.Client.Common.Interfaces;
 using O10.Core;
-using O10.Core.Cryptography;
 using O10.Core.HashCalculations;
 using O10.Core.Identity;
 using O10.Core.Logging;

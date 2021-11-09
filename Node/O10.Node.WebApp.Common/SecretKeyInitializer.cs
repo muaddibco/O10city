@@ -2,7 +2,6 @@
 using System.Threading;
 using O10.Core;
 using O10.Core.Architecture;
-using O10.Core.Cryptography;
 using O10.Core.Logging;
 using O10.Core.ExtensionMethods;
 using System.Threading.Tasks;
@@ -14,11 +13,12 @@ using System.Net;
 using O10.Core.States;
 using O10.Node.Core.Common;
 using O10.Node.WebApp.Common.Configuration;
-using O10.Network.Topology;
+using O10.Node.Network.Topology;
 using O10.Node.Core.DataLayer;
 using O10.Node.Core.DataLayer.DataContexts;
 using O10.Crypto.Services;
 using O10.Core.Persistency;
+using O10.Crypto.Models;
 
 namespace O10.Node.WebApp.Common
 {

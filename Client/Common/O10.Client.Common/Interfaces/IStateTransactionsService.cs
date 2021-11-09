@@ -1,9 +1,8 @@
 ﻿using O10.Client.Common.Entities;
 using O10.Core.Architecture;
-using O10.Core.Cryptography;
 using O10.Core.Identity;
+using O10.Crypto.Models;
 using O10.Transactions.Core.Ledgers.O10State.Transactions;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace O10.Client.Common.Interfaces

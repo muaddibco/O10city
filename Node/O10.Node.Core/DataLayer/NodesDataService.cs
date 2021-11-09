@@ -7,7 +7,7 @@ using O10.Core.Architecture;
 using O10.Core.Identity;
 using O10.Core.ExtensionMethods;
 using System;
-using O10.Network.Topology;
+using O10.Node.Network.Topology;
 using O10.Core.Persistency;
 using System.Threading.Tasks;
 using O10.Node.DataLayer.DataServices;

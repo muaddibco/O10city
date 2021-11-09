@@ -3,7 +3,7 @@ using O10.Core.Identity;
 using O10.Core.Translators;
 using O10.Core.ExtensionMethods;
 using O10.Node.Core.DataLayer.DataContexts;
-using O10.Network.Topology;
+using O10.Node.Network.Topology;
 
 namespace O10.Node.Core.DataLayer
 {

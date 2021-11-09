@@ -1,8 +1,6 @@
-﻿using O10.Core.Cryptography;
-using O10.Core.Identity;
-using System;
+﻿using O10.Core.Identity;
+using O10.Crypto.Models;
 using System.Collections.Generic;
-using System.Text;
 
 namespace O10.Client.Common.Dtos.UniversalProofs
 {

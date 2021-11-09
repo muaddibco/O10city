@@ -1,5 +1,4 @@
-﻿using O10.Core;
-using O10.Core.Models;
+﻿using O10.Core.Models;
 using O10.Crypto.Models;
 using System.Threading.Tasks.Dataflow;
 

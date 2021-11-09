@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using O10.Client.Common.Entities;
 using O10.Client.DataLayer.Enums;
 
 namespace O10.Client.Web.Portal.Scenarios.Models

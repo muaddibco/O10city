@@ -1,9 +1,6 @@
-﻿using Newtonsoft.Json;
-using O10.Core.Models;
-using O10.Core.Serialization;
+﻿using O10.Core.Models;
 using O10.Crypto.Models;
 using O10.Transactions.Core.Enums;
-using System.Collections.Generic;
 
 namespace O10.Transactions.Core.Ledgers
 {

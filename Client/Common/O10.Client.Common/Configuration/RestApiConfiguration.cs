@@ -1,7 +1,6 @@
 ﻿using O10.Core.Architecture;
 
 using O10.Core.Configuration;
-using O10.Core.ExtensionMethods;
 
 namespace O10.Client.Common.Configuration
 {

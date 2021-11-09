@@ -15,6 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Common\O10.Transactions.Core\O10.Transactions.Core.csproj" />
     <ProjectReference Include="..\..\Common\O10.Core\O10.Core.csproj" />
+    <ProjectReference Include="..\..\Gateway\O10.Gateway.Api\O10.Gateway.Api.csproj" />
     <ProjectReference Include="..\O10.Node.Network\O10.Node.Network.csproj" />
     <ProjectReference Include="..\O10.Node.Core\O10.Node.Core.csproj" />
     <ProjectReference Include="..\O10.Node.DataLayer\O10.Node.DataLayer.csproj" />

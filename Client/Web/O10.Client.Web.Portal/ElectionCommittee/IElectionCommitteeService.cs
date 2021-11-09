@@ -1,8 +1,8 @@
 ﻿using O10.Client.Web.DataContracts.ElectionCommittee;
 using O10.Client.Web.Portal.ElectionCommittee.Models;
 using O10.Core.Architecture;
-using O10.Core.Cryptography;
 using O10.Core.Identity;
+using O10.Crypto.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 

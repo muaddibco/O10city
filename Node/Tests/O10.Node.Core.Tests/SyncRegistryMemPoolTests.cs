@@ -20,6 +20,7 @@ using O10.Tests.Core;
 using Xunit;
 using O10.Crypto.Models;
 using O10.Transactions.Core.Ledgers;
+using O10.Network.Synchronization;
 
 namespace O10.Node.Core.Tests
 {

@@ -1,4 +1,4 @@
-﻿using O10.Core.Cryptography;
+﻿using O10.Crypto.Models;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Ledgers.O10State.Internal;
 

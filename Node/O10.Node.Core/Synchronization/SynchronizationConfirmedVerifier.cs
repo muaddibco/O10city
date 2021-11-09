@@ -1,12 +1,12 @@
 ﻿using O10.Transactions.Core.Enums;
 using O10.Core.Architecture;
 using O10.Core.States;
-using O10.Core.Synchronization;
 using O10.Core;
 using O10.Network.Handlers;
 using O10.Transactions.Core.Ledgers;
 using O10.Transactions.Core.Ledgers.Synchronization.Transactions;
 using O10.Transactions.Core.Ledgers.Synchronization;
+using O10.Network.Synchronization;
 
 namespace O10.Node.Core.Synchronization
 {

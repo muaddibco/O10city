@@ -5,8 +5,6 @@ using O10.Core.Architecture;
 using O10.Transactions.Core.Ledgers.Synchronization;
 using O10.Transactions.Core.Ledgers.Registry;
 using O10.Node.DataLayer.DataServices;
-using O10.Core.Models;
-using O10.Core.Identity;
 using O10.Transactions.Core.Ledgers;
 using System.Threading.Tasks;
 

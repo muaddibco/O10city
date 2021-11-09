@@ -10,10 +10,10 @@ using O10.Client.DataLayer.AttributesScheme;
 using O10.Client.DataLayer.Model;
 using O10.Core;
 using O10.Core.Architecture;
-using O10.Core.Cryptography;
 using O10.Core.ExtensionMethods;
 using O10.Core.Identity;
 using O10.Crypto.ConfidentialAssets;
+using O10.Crypto.Models;
 
 namespace O10.Client.Common.Crypto
 {

@@ -10,14 +10,13 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0" />
     <PackageReference Include="Microsoft.Azure.KeyVault" Version="3.0.5" />
-    <PackageReference Include="Flurl" Version="3.0.2" />
-    <PackageReference Include="Flurl.Http" Version="3.2.0" />
     <PackageReference Include="Microsoft.Azure.NotificationHubs" Version="4.1.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\Common\O10.Transactions.Core\O10.Transactions.Core.csproj" />
     <ProjectReference Include="..\..\Common\O10.Core\O10.Core.csproj" />
+    <ProjectReference Include="..\O10.Gateway.Api\O10.Gateway.Api.csproj" />
     <ProjectReference Include="..\O10.Gateway.Common\O10.Gateway.Common.csproj" />
     <ProjectReference Include="..\O10.Gateway.DataLayer\O10.Gateway.DataLayer.csproj" />
   </ItemGroup>

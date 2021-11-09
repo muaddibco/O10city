@@ -1,20 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
-using O10.Transactions.Core.Ledgers.O10State;
 using O10.Transactions.Core.Ledgers.O10State.Internal;
 using O10.Client.Common.Entities;
 using O10.Client.Common.Interfaces;
 using O10.Core.Architecture;
-using O10.Core.Cryptography;
 using O10.Core.ExtensionMethods;
 using O10.Core.HashCalculations;
 using O10.Core.Identity;
 using O10.Core.Logging;
 using O10.Crypto.ConfidentialAssets;
-using O10.Core;
 using System.Threading.Tasks;
 using O10.Core.Notifications;
 using O10.Transactions.Core.Ledgers.O10State.Transactions;
+using O10.Crypto.Models;
 
 namespace O10.Client.Common.Communication
 {

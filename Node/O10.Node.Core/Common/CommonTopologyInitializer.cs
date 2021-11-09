@@ -2,9 +2,8 @@
 using System.Threading.Tasks;
 using O10.Core;
 using O10.Core.Architecture;
-using O10.Core.Communication;
 using O10.Core.Logging;
-using O10.Network.Topology;
+using O10.Node.Network.Topology;
 using O10.Node.Core.DataLayer;
 
 namespace O10.Node.Core.Common

@@ -1,5 +1,5 @@
 ﻿using O10.Core.Architecture;
-using O10.Core.Cryptography;
+using O10.Crypto.Models;
 using System;
 using System.Threading.Tasks;
 

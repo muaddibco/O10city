@@ -12,7 +12,6 @@ using System.Linq;
 using Microsoft.Azure.CognitiveServices.Vision.Face.Models;
 using O10.Client.Web.Common.Dtos.Biometric;
 using O10.Crypto.ConfidentialAssets;
-using O10.Core.Cryptography;
 using O10.Client.DataLayer.AttributesScheme;
 using O10.Client.Web.Portal.Services.Inherence;
 using O10.Client.Common.Entities;
@@ -21,6 +20,7 @@ using O10.Core.Logging;
 using System.Diagnostics.Contracts;
 using O10.Client.Web.Portal.Properties;
 using System.Collections.Generic;
+using O10.Crypto.Models;
 
 namespace O10.Client.Web.Portal.Controllers
 {

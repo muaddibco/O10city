@@ -1,10 +1,10 @@
 ﻿#nullable enable
 using Newtonsoft.Json;
 using System.Collections.Generic;
-using O10.Core.Cryptography;
 using O10.Core.Identity;
 using O10.Core.Serialization;
 using System.Linq;
+using O10.Crypto.Models;
 
 namespace O10.Client.Common.Dtos.UniversalProofs
 {

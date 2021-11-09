@@ -1,8 +1,6 @@
 ﻿using O10.Client.Common.Dtos.UniversalProofs;
 using O10.Crypto.ConfidentialAssets;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace O10.Client.Common.Interfaces

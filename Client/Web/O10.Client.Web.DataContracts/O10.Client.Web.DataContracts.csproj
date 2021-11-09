@@ -8,10 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\..\..\Common\O10.Core\O10.Core.csproj" />
     <ProjectReference Include="..\..\Common\O10.Client.Common\O10.Client.Common.csproj" />
   </ItemGroup>

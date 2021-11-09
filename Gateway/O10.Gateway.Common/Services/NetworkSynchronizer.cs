@@ -10,7 +10,6 @@ using O10.Gateway.DataLayer.Model;
 using O10.Gateway.DataLayer.Services;
 using O10.Core;
 using O10.Core.Architecture;
-using O10.Core.Communication;
 using O10.Core.Configuration;
 using O10.Core.ExtensionMethods;
 using O10.Core.HashCalculations;
@@ -33,6 +32,7 @@ using O10.Gateway.Common.Services.LedgerSynchronizers;
 using O10.Transactions.Core.Ledgers.Synchronization;
 using O10.Transactions.Core.Ledgers.Registry;
 using O10.Crypto.Models;
+using O10.Gateway.Api;
 
 namespace O10.Gateway.Common.Services
 {
@@ -126,44 +126,6 @@ namespace O10.Gateway.Common.Services
 				_logger.Error("Failure during sending packet to node", ex);
 				wrapper.TaskCompletion.SetException(ex);
             }
-		}
-
-		public async Task<bool> SendData(int transactionType, IPacketProvider packetProviderTransaction, IPacketProvider packetProviderWitness)
-		{
-			// 1. check transaction integrit
-			try
-			{
-				using EscapeHelper escapeHelper = new EscapeHelper();
-				byte[] esapedTransaction = escapeHelper.GetEscapedBodyBytes(packetProviderTransaction.GetBytes());
-				byte[] esapedWitness = escapeHelper.GetEscapedBodyBytes(packetProviderWitness.GetBytes());
-
-				var response1 = await _synchronizerConfiguration.NodeApiUri.PostStringAsync(esapedTransaction.ToHexString()).ConfigureAwait(false);
-				if (response1.ResponseMessage.IsSuccessStatusCode)
-				{
-					_logger.Debug($"Transaction packet posted to Node");
-				}
-				else
-				{
-					_logger.Error($"Transaction packet posted to Node with HttpStatusCode: {response1.StatusCode}, reason: \"{response1.ResponseMessage.ReasonPhrase}\", content: \"{response1.ResponseMessage.Content.ReadAsStringAsync().Result}\"");
-				}
-
-				var response2 = await _synchronizerConfiguration.NodeApiUri.PostStringAsync(esapedWitness.ToHexString()).ConfigureAwait(false);
-				if (response2.ResponseMessage.IsSuccessStatusCode)
-				{
-					_logger.Debug($"Witness packet posted to Node");
-				}
-				else
-				{
-					_logger.Error($"Witness packet posted to Node with HttpStatusCode: {response2.StatusCode}, reason: \"{response2.ResponseMessage.ReasonPhrase}\", content: \"{response2.ResponseMessage.Content.ReadAsStringAsync().Result}\"");
-				}
-
-				return response1.ResponseMessage.IsSuccessStatusCode && response2.ResponseMessage.IsSuccessStatusCode;
-			}
-			catch (Exception ex)
-			{
-				_logger.Error("Failed to send packet due to error", ex);
-				return false;
-			}
 		}
 
 		public void Initialize(CancellationToken cancellationToken)

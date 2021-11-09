@@ -2,7 +2,6 @@
 using O10.Crypto.Models;
 using O10.Gateway.DataLayer.Model;
 using O10.Transactions.Core.Enums;
-using O10.Transactions.Core.Ledgers;
 using O10.Transactions.Core.Ledgers.Registry.Transactions;
 using System.Threading.Tasks;
 

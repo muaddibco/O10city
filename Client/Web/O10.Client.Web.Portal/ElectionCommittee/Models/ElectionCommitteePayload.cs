@@ -1,8 +1,8 @@
 ﻿using Newtonsoft.Json;
 using O10.Client.Common.Dtos.UniversalProofs;
-using O10.Core.Cryptography;
 using O10.Core.Identity;
 using O10.Core.Serialization;
+using O10.Crypto.Models;
 
 namespace O10.Client.Web.Portal.ElectionCommittee.Models
 {

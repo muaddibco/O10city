@@ -12,7 +12,6 @@ using O10.Transactions.Core.DTOs;
 using O10.Transactions.Core.Ledgers;
 using O10.Crypto.Models;
 using O10.Core.Identity;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace O10.Client.Common.Interfaces

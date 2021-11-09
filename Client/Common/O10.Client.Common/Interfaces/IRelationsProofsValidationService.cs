@@ -1,8 +1,4 @@
-﻿using System.Threading.Tasks;
-using O10.Transactions.Core.Ledgers.Stealth;
-using O10.Client.Common.Entities;
-using O10.Client.Common.Interfaces.Inputs;
-using O10.Core.Architecture;
+﻿using O10.Core.Architecture;
 using System;
 
 namespace O10.Client.Common.Interfaces

@@ -20,7 +20,6 @@ using O10.Client.Common.Entities;
 using O10.Core;
 using Flurl.Http;
 using O10.Server.IdentityProvider.Common.Configuration;
-using O10.Core.Cryptography;
 using Microsoft.AspNetCore.SignalR;
 using O10.Server.IdentityProvider.Common.Hubs;
 using O10.Client.DataLayer.AttributesScheme;
@@ -30,6 +29,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using O10.Core.Identity;
+using O10.Crypto.Models;
 
 namespace O10.Server.IdentityProvider.Common.Controllers
 {

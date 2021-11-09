@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json;
-using O10.Crypto.Models;
-using O10.Transactions.Core.Enums;
+﻿using O10.Crypto.Models;
 
 namespace O10.Transactions.Core.Ledgers.O10State.Transactions
 {

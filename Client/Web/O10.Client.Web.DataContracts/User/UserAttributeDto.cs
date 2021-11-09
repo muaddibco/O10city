@@ -1,7 +1,4 @@
-﻿using Newtonsoft.Json.Converters;
-using System.Text.Json.Serialization;
-
-namespace O10.Client.Web.DataContracts.User
+﻿namespace O10.Client.Web.DataContracts.User
 {
     public class UserAttributeDto
     {

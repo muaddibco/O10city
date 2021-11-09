@@ -1,23 +1,16 @@
-﻿using O10.Transactions.Core.Ledgers.Stealth;
-using O10.Client.Common.Interfaces;
+﻿using O10.Client.Common.Interfaces;
 using O10.Core.Architecture;
 
 using O10.Crypto.ConfidentialAssets;
 using O10.Core.ExtensionMethods;
-using O10.Client.Common.Interfaces.Inputs;
-using System;
-using O10.Client.Common.Entities;
-using O10.Client.DataLayer.AttributesScheme;
 using System.Threading.Tasks;
-using O10.Core;
-using O10.Core.Cryptography;
-using O10.Transactions.Core.Ledgers.Stealth.Internal;
 using O10.Core.Configuration;
 using O10.Client.Common.Configuration;
 using O10.Client.DataLayer.Services;
 using O10.Core.Logging;
 using Newtonsoft.Json;
 using O10.Core.Serialization;
+using O10.Crypto.Models;
 
 namespace O10.Client.Common.Services
 {

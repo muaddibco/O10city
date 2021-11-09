@@ -14,17 +14,16 @@ using O10.Client.DataLayer.Model;
 using O10.Client.Web.Portal.Services.Idps;
 using O10.Client.Common.Entities;
 using O10.Client.Web.Portal.Exceptions;
-using O10.Transactions.Core.Ledgers.O10State;
 using O10.Client.DataLayer.AttributesScheme;
 using O10.Client.Web.Portal.Services;
 using O10.Core.Translators;
 using O10.Client.DataLayer.ElectionCommittee;
 using O10.Crypto.ConfidentialAssets;
-using O10.Core.Cryptography;
 using System.Collections.Concurrent;
 using Microsoft.Extensions.DependencyInjection;
 using O10.Transactions.Core.Ledgers.O10State.Transactions;
 using O10.Client.Web.DataContracts.ElectionCommittee;
+using O10.Crypto.Models;
 
 namespace O10.Client.Web.Portal.ElectionCommittee
 {

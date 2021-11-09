@@ -11,7 +11,6 @@ using O10.Client.Web.Common.Configuration;
 using O10.Core.Architecture;
 using O10.Core.Configuration;
 using O10.Core.ExtensionMethods;
-using O10.Core.Cryptography;
 using Microsoft.AspNetCore.SignalR;
 using O10.Core.Logging;
 using Newtonsoft.Json;

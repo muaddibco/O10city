@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using O10.Core.Architecture;
-using O10.Core.Communication;
 using O10.Core.Models;
 using O10.Transactions.Core.DTOs;
 using O10.Transactions.Core.Interfaces;
@@ -21,7 +20,6 @@ namespace O10.Gateway.Common.Services
 
         ITargetBlock<TaskCompletionWrapper<IPacketBase>> PipeIn { get; }
 
-		Task<bool> SendData(int transactionType, IPacketProvider packetProviderTransaction, IPacketProvider packetProviderWitness);
 		void SendPacket(TaskCompletionWrapper<IPacketBase> packetWrapper);
 
         void Initialize(CancellationToken cancellationToken);

@@ -11,8 +11,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Configuration\**" />
     <Compile Remove="Enums\**" />
+    <EmbeddedResource Remove="Configuration\**" />
     <EmbeddedResource Remove="Enums\**" />
+    <None Remove="Configuration\**" />
     <None Remove="Enums\**" />
   </ItemGroup>
 
@@ -21,7 +24,6 @@
     <PackageReference Include="Flurl.Http" Version="3.2.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.11.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.Metrics" Version="3.3.3" />
-    <PackageReference Include="System.Memory" Version="4.5.4" />
   </ItemGroup>
 
   <ItemGroup>
@@ -56,10 +58,6 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Configuration\" />
   </ItemGroup>
 
 </Project>

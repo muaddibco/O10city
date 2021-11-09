@@ -2,9 +2,6 @@
 using O10.Client.Common.Interfaces;
 using O10.Client.Web.Portal.Services;
 using O10.Core.ExtensionMethods;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using O10.Client.Common.Entities;

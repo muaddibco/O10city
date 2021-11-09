@@ -1,6 +1,6 @@
 ﻿using O10.Core.Architecture;
-using O10.Core.Cryptography;
 using O10.Core.Identity;
+using O10.Crypto.Models;
 using O10.Transactions.Core.DTOs;
 using System.Linq;
 using System.Threading.Tasks;

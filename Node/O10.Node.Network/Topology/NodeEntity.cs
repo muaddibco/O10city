@@ -2,7 +2,7 @@
 using O10.Core.Identity;
 using O10.Core.Models;
 
-namespace O10.Network.Topology
+namespace O10.Node.Network.Topology
 {
     public class NodeEntity : SerializableEntity
     {

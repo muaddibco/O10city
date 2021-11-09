@@ -1,12 +1,12 @@
 ﻿using System;
 using O10.Client.Common.Interfaces;
 using O10.Core.Architecture;
-using O10.Core.Cryptography;
 using O10.Core.ExtensionMethods;
 using O10.Core.Identity;
 using O10.Core.Logging;
 using O10.Crypto.ConfidentialAssets;
 using O10.Crypto.Exceptions;
+using O10.Crypto.Models;
 using O10.Crypto.Services;
 
 namespace O10.Client.Common.Crypto

@@ -1,4 +1,4 @@
-﻿namespace O10.Network.Topology
+﻿namespace O10.Node.Network.Topology
 {
     public enum NodeRole : byte
     {

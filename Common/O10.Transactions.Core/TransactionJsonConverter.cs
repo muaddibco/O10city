@@ -3,8 +3,6 @@ using Newtonsoft.Json.Linq;
 using O10.Crypto.Models;
 using O10.Transactions.Core.Enums;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace O10.Transactions.Core
 {

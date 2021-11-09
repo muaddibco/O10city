@@ -1,6 +1,4 @@
-﻿using O10.Core.Cryptography;
-using O10.Transactions.Core.Enums;
-using System;
+﻿using O10.Transactions.Core.Enums;
 
 namespace O10.Transactions.Core.Ledgers.Stealth.Transactions
 {

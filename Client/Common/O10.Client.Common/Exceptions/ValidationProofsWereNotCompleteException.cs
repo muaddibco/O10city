@@ -1,6 +1,5 @@
 ﻿using Newtonsoft.Json;
 using System;
-using O10.Core.Logging;
 using O10.Client.Common.Properties;
 using O10.Client.Common.Entities;
 using O10.Core.Serialization;

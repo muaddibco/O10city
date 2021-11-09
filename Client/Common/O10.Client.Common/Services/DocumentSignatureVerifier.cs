@@ -4,13 +4,13 @@ using System.Threading.Tasks;
 using O10.Client.Common.Interfaces;
 using O10.Client.Common.Interfaces.Outputs;
 using O10.Core.Architecture;
-using O10.Core.Cryptography;
 using O10.Core.ExtensionMethods;
 using O10.Core.Logging;
 using O10.Crypto.ConfidentialAssets;
 using O10.Core.Serialization;
 using O10.Transactions.Core.Ledgers.O10State.Transactions;
 using O10.Core.Identity;
+using O10.Crypto.Models;
 
 namespace O10.Client.Common.Services
 {

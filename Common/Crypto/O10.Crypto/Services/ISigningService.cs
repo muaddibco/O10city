@@ -1,9 +1,8 @@
 ﻿using O10.Core.Architecture;
 using O10.Core.Identity;
-using O10.Crypto.Models;
 using System;
 
-namespace O10.Core.Cryptography
+namespace O10.Crypto.Models
 {
     [ExtensionPoint]
     public interface ISigningService

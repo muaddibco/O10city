@@ -82,7 +82,7 @@ namespace O10.Client.Mobile.Base.Services
 
                 clientCryptoService.Initialize(secretSpendKey, secretViewKey);
                 transactionsService.Initialize(accountId, clientCryptoService, RelationsBindingService);
-                transactionsService.GetSourcePipe<Tuple<string, IPacketProvider, IPacketProvider>>().LinkTo(GatewayService.PipeInTransactions);
+                transactionsService.PipeOutTransactions.LinkTo(GatewayService.PipeInTransactions);
 
                 _cancellationTokenSource = cancellationTokenSource;
                 ClientCryptoService = clientCryptoService;

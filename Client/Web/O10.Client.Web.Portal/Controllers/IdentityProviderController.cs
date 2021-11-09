@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using O10.Client.Common.Entities;
 using O10.Client.Common.Interfaces;
-using O10.Client.DataLayer.Enums;
 using O10.Client.DataLayer.Model;
 using O10.Client.DataLayer.Services;
 using O10.Client.Web.Portal.Services;
@@ -17,7 +16,6 @@ using O10.Client.Web.Common.Services;
 using O10.Client.Web.Common.Dtos.Biometric;
 using System.Threading.Tasks;
 using O10.Client.DataLayer.AttributesScheme;
-using O10.Core.Cryptography;
 using O10.Crypto.ConfidentialAssets;
 using O10.Client.DataLayer.Model.Scenarios;
 using O10.Core.Logging;
@@ -28,7 +26,6 @@ using O10.Client.Common.ExternalIdps.BlinkId;
 using O10.Client.Web.Portal.ExternalIdps.Validators;
 using O10.Client.Web.Portal.Exceptions;
 using System.Collections.ObjectModel;
-using O10.Transactions.Core.Ledgers.O10State;
 using O10.Client.Web.DataContracts.IdentityProvider;
 using Microsoft.AspNetCore.SignalR;
 using O10.Client.Web.Common.Hubs;
@@ -37,6 +34,7 @@ using O10.Client.Common.Integration;
 using O10.Client.Web.Portal.Services.Idps;
 using Microsoft.Extensions.DependencyInjection;
 using O10.Transactions.Core.Ledgers.O10State.Transactions;
+using O10.Crypto.Models;
 
 namespace O10.Client.Web.Portal.Controllers
 {

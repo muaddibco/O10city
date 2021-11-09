@@ -2,7 +2,6 @@
 using System.Threading;
 using O10.Core;
 using O10.Core.Architecture;
-using O10.Core.Cryptography;
 using O10.Core.Logging;
 using O10.Core.ExtensionMethods;
 using O10.Core.Configuration;
@@ -65,7 +64,7 @@ namespace O10.Gateway.Common.Services
             try
             {
                 byte[] secretKey = GetSecret(_secretConfiguration.SecretName).HexStringToByteArray();
-                ISigningService signingService = _signingServicesRepository.GetInstance("Ed25519SigningService");
+                var signingService = _signingServicesRepository.GetInstance("Ed25519SigningService");
                 signingService.Initialize(secretKey);
                 _gatewayContext.Initialize(signingService);
             }

@@ -2,8 +2,6 @@
 using Newtonsoft.Json.Serialization;
 using O10.Crypto.Models;
 using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace O10.Transactions.Core
 {

@@ -1,8 +1,4 @@
-﻿using O10.Core.Cryptography;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using O10.Crypto.Models;
 
 namespace O10.Client.Web.Portal.ElectionCommittee.Models
 {

@@ -15,6 +15,7 @@ using O10.Tests.Core.Fixtures;
 using Xunit.Abstractions;
 using O10.Crypto.Services;
 using Chaos.NaCl.Internal.Ed25519Ref10;
+using O10.Crypto.Models;
 
 namespace O10.Crypto.Tests
 {

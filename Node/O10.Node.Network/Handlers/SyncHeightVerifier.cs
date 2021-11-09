@@ -3,11 +3,11 @@ using O10.Core.Architecture;
 using O10.Core.Logging;
 using O10.Core.HashCalculations;
 using O10.Core.States;
-using O10.Core.Synchronization;
 using O10.Core;
 using O10.Transactions.Core.Ledgers;
 using O10.Transactions.Core.Ledgers.Registry.Transactions;
 using O10.Transactions.Core.Ledgers.Registry;
+using O10.Network.Synchronization;
 
 namespace O10.Network.Handlers
 {

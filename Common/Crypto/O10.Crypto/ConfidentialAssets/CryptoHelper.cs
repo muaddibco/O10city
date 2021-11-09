@@ -10,10 +10,10 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using O10.Core;
-using O10.Core.Cryptography;
 using O10.Core.ExtensionMethods;
 using O10.Crypto.ExtensionMethods;
 using O10.Core.Identity;
+using O10.Crypto.Models;
 
 namespace O10.Crypto.ConfidentialAssets
 {

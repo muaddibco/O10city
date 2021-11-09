@@ -10,7 +10,7 @@
 //using O10.Transactions.Core.Interfaces;
 //using O10.Transactions.Core.Serializers;
 //using O10.Network.Interfaces;
-//using O10.Network.Topology;
+//using O10.Node.Network.Topology;
 //using O10.Core.Architecture;
 //using O10.Core.HashCalculations;
 //using O10.Core.Identity;

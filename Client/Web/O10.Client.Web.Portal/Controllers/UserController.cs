@@ -21,7 +21,6 @@ using Microsoft.AspNetCore.SignalR;
 using System.Web;
 using O10.Client.Web.Common.Hubs;
 using O10.Client.Web.Common.Dtos.Biometric;
-using O10.Core.Cryptography;
 using System.Threading.Tasks;
 using O10.Transactions.Core.Ledgers.Stealth.Internal;
 using O10.Client.DataLayer.AttributesScheme;
@@ -37,11 +36,11 @@ using O10.Core.Identity;
 using O10.Client.Common.Dtos.UniversalProofs;
 using O10.Client.Web.Portal.Exceptions;
 using O10.Client.Web.Portal.ElectionCommittee.Models;
-using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using O10.Core.Serialization;
 using O10.Transactions.Core.DTOs;
 using O10.Client.Web.DataContracts.ElectionCommittee;
+using O10.Crypto.Models;
 
 namespace O10.Client.Web.Portal.Controllers
 {

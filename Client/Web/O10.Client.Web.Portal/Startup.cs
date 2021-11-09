@@ -23,7 +23,6 @@ using Newtonsoft.Json.Serialization;
 using Newtonsoft.Json.Converters;
 using Cyberboss.AspNetCore.AsyncInitializer;
 using O10.Transactions.Core;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using O10.Core.Serialization;
 using O10.Client.Web.Portal.Services;
 

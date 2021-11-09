@@ -1,12 +1,12 @@
 ﻿using Chaos.NaCl;
 using O10.Client.Common.Interfaces;
 using O10.Core.Architecture;
-using O10.Core.Cryptography;
 using O10.Core.ExtensionMethods;
 using O10.Core.HashCalculations;
 using O10.Core.Identity;
 using O10.Core.Logging;
 using O10.Crypto.ConfidentialAssets;
+using O10.Crypto.Models;
 using O10.Crypto.Services;
 using System.Collections.Generic;
 

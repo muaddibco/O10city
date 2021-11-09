@@ -3,7 +3,6 @@ using O10.Core.Architecture;
 using O10.Core.HashCalculations;
 using O10.Core.Identity;
 using O10.Core.Logging;
-using O10.Core.Models;
 using O10.Core.Translators;
 using O10.Crypto.Models;
 using O10.Gateway.Common.Exceptions;

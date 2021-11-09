@@ -1,10 +1,8 @@
 ﻿using O10.Client.Common.Interfaces;
 using O10.Core.Architecture;
-using O10.Core.Cryptography;
 using O10.Core.Logging;
 using O10.Core.Models;
 using O10.Crypto.Models;
-using O10.Crypto.Services;
 using O10.Transactions.Core.Enums;
 using O10.Transactions.Core.Ledgers;
 using O10.Transactions.Core.Ledgers.O10State;
