@@ -16,7 +16,6 @@
     <PackageReference Include="Isopoh.Cryptography.Argon2" Version="1.1.10" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="3.11.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.Metrics" Version="3.3.3" />
-    <PackageReference Include="System.Memory" Version="4.5.4" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\O10.Core\O10.Core.csproj" />

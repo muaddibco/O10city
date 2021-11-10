@@ -33,7 +33,7 @@
     <ProjectReference Include="..\..\Common\Crypto\HashLib\CoreHashLib\CoreHashLib.csproj" />
     <ProjectReference Include="..\..\Common\Crypto\O10.Crypto\O10.Crypto.csproj" />
     <ProjectReference Include="..\..\Common\O10.Core\O10.Core.csproj" />
-    <ProjectReference Include="..\..\Common\O10.Diagnostics.HealthCheck\O10.Diagnostics.HealthCheck.csproj" />
+    <ProjectReference Include="..\..\Common\O10.Tracking.HealthCheck\O10.Tracking.HealthCheck.csproj" />
     <ProjectReference Include="..\..\Common\O10.Transactions.Core\O10.Transactions.Core.csproj" />
     <ProjectReference Include="..\O10.Node.Core\O10.Node.Core.csproj" />
     <ProjectReference Include="..\O10.Node.DataLayer\O10.Node.DataLayer.csproj" />
