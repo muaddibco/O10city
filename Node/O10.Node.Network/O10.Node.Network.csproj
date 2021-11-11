@@ -17,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Common\O10.Tracking.Core\O10.Tracking.Core.csproj" />
     <ProjectReference Include="..\..\Common\O10.Transactions.Core\O10.Transactions.Core.csproj" />
     <ProjectReference Include="..\..\Common\O10.Core\O10.Core.csproj" />
   </ItemGroup>

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using O10.Core.Logging;
-using O10.Core.Tracking;
+using O10.Tracking.Core;
 using O10.Transactions.Core.Ledgers;
 using O10.Network.Interfaces;
 using System.Threading.Tasks;

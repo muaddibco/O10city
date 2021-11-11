@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Threading.Tasks;
 using O10.Core.Architecture;
 using O10.Core.Models;
-using O10.Core.Tracking;
+using O10.Tracking.Core;
 
 namespace O10.Gateway.WebApp.Common.Services
 {

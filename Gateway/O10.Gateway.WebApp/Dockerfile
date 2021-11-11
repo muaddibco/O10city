@@ -13,6 +13,7 @@ COPY ["Common/O10.Transactions.Core/O10.Transactions.Core.csproj", "Common/O10.T
 COPY ["Common/Crypto/O10.Crypto/O10.Crypto.csproj", "Common/Crypto/O10.Crypto/"]
 COPY ["Common/Crypto/HashLib/CoreHashLib/CoreHashLib.csproj", "Common/Crypto/HashLib/CoreHashLib/"]
 COPY ["Common/Crypto/Chaos.NaCl/Chaos.NaCl.csproj", "Common/Crypto/Chaos.NaCl/"]
+COPY ["Common/O10.Tracking.Core/O10.Tracking.Core.csproj", "Common/O10.Tracking.Core/"]
 COPY ["Common/O10.Tracking.ApplicationInsights/O10.Tracking.ApplicationInsights.csproj", "Common/O10.Tracking.ApplicationInsights/"]
 COPY ["Common/O10.Tracking.HealthCheck/O10.Tracking.HealthCheck.csproj", "Common/O10.Tracking.HealthCheck/"]
 COPY ["Gateway/O10.Gateway.DataLayer/O10.Gateway.DataLayer.csproj", "Gateway/O10.Gateway.DataLayer/"]

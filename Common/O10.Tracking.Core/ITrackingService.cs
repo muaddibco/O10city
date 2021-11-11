@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using O10.Core.Architecture;
 
-namespace O10.Core.Tracking
+namespace O10.Tracking.Core
 {
     [ServiceContract]
     public interface ITrackingService

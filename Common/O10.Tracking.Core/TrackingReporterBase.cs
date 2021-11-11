@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace O10.Core.Tracking
+namespace O10.Tracking.Core
 {
 	public abstract class TrackingReporterBase : ITrackingReporter
 	{

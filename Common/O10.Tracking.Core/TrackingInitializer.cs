@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using O10.Core;
 using O10.Core.Architecture;
-
 using O10.Core.Configuration;
 
-namespace O10.Core.Tracking
+namespace O10.Tracking.Core
 {
     [RegisterExtension(typeof(IInitializer), Lifetime = LifetimeManagement.Scoped)]
     public class TrackingInitializer : InitializerBase

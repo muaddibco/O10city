@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using O10.Core.Architecture;
-
 using O10.Core.Configuration;
-using O10.Core.Tracking;
 
-namespace O10.Core.PerformanceCounters
+namespace O10.Tracking.Core
 {
 
     [RegisterDefaultImplementation(typeof(ITrackingService), Lifetime = LifetimeManagement.Singleton)]

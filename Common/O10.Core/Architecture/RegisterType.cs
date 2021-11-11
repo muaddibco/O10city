@@ -5,7 +5,7 @@ using O10.Core.ExtensionMethods;
 namespace O10.Core.Architecture
 {
     /// <summary>
-    /// Marks type to be regstered within Unity Container
+    /// Marks type to be regstered within Container
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = true)]
     public class RegisterType : Attribute

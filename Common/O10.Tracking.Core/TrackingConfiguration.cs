@@ -1,8 +1,7 @@
 ﻿using O10.Core.Architecture;
-
 using O10.Core.Configuration;
 
-namespace O10.Core.Tracking
+namespace O10.Tracking.Core
 {
     [RegisterExtension(typeof(IConfigurationSection), Lifetime = LifetimeManagement.Singleton)]
     public class TrackingConfiguration : ConfigurationSectionBase

@@ -2,7 +2,7 @@
 using System.Threading.Tasks.Dataflow;
 using System.Threading;
 using O10.Core.Models;
-using O10.Core.Tracking;
+using O10.Tracking.Core;
 using System.Collections.Generic;
 using System.Globalization;
 using O10.Core.Logging;

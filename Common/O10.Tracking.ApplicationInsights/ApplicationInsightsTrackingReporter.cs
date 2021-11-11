@@ -3,9 +3,8 @@ using Microsoft.ApplicationInsights.Extensibility;
 using System;
 using System.Collections.Generic;
 using O10.Core.Architecture;
-
 using O10.Core.Configuration;
-using O10.Core.Tracking;
+using O10.Tracking.Core;
 using O10.Tracking.ApplicationInsights.Configuration;
 
 namespace O10.Tracking.ApplicationInsights
