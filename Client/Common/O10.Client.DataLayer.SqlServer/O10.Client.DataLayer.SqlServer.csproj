@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk" ToolsVersion="Current">
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <FileUpgradeFlags>40</FileUpgradeFlags>
     <OldToolsVersion>2.0</OldToolsVersion>
     <AssemblyName>O10.Client.DataLayer.SqlServer</AssemblyName>
