@@ -36,7 +36,7 @@ namespace O10.Client.Common.Services
         /// <returns></returns>
         public async Task<DocumentSignatureVerification> Verify(byte[] documentCreator, byte[] documentHash, byte[] documentRecordTransactionHash, byte[] signatureTransactionHash)
         {
-            DocumentSignatureVerification res = new DocumentSignatureVerification();
+            DocumentSignatureVerification res = new();
 
             var packetInfoDocumentSignRecord = await _gatewayService.GetTransaction(documentCreator.ToHexString(), signatureTransactionHash).ConfigureAwait(false);
             var packetInfoDocumentRecord = await _gatewayService.GetTransaction(documentCreator.ToHexString(), documentRecordTransactionHash).ConfigureAwait(false);

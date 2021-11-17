@@ -16,11 +16,11 @@ using O10.Core.HashCalculations;
 using O10.Core;
 using O10.Client.Web.Portal.Services;
 using O10.Client.DataLayer.Entities;
-using O10.Client.Common.Entities;
 using O10.Client.Common.Dtos.UniversalProofs;
 using O10.Client.DataLayer.Model.ServiceProviders;
 using O10.Client.Web.DataContracts;
 using System.Threading.Tasks;
+using O10.Client.Common.Dtos;
 
 namespace O10.Client.Web.Portal.Controllers
 {
@@ -63,7 +63,7 @@ namespace O10.Client.Web.Portal.Controllers
         public IActionResult GetSessionInfo(long spId, string origin)
         {
             string nonce = CryptoHelper.GetRandomSeed().ToHexString();
-            AccountDescriptor spAccount = _accountsService.GetById(spId);
+            AccountDescriptorDTO spAccount = _accountsService.GetById(spId);
 
             if(!string.IsNullOrEmpty(origin) &&  !_corsPolicyAccessor.GetPolicy("Public").Origins.Contains(origin))
             {
@@ -194,14 +194,14 @@ namespace O10.Client.Web.Portal.Controllers
         [HttpGet("Action")]
         public IActionResult GetActionInfo([FromQuery(Name = "t")] ActionTypeDto actionType, [FromQuery(Name = "pk")] string publicKey, [FromQuery(Name = "sk")] string sessionKey, [FromQuery(Name = "rk")] string registrationKey)
         {
-            AccountDescriptor spAccount = _accountsService.GetByPublicKey(publicKey.HexStringToByteArray());
+            AccountDescriptorDTO spAccount = _accountsService.GetByPublicKey(publicKey.HexStringToByteArray());
             bool isRegistered = false;
             var requiredValidations = new Dictionary<string, ValidationTypeDto>();
             var permittedRelations = new Dictionary<string, List<string>>();
             var existingRelations = new HashSet<string>();
             string[] details = Array.Empty<string>();
 
-            ActionDetailsDto actionInfo = new ActionDetailsDto
+            ActionDetailsDto actionInfo = new()
             {
                 ActionType = actionType,
                 AccountInfo = spAccount.AccountInfo,

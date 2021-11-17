@@ -88,15 +88,6 @@ namespace O10.Client.Web.Portal.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Execution context not started yet for the account with accountId &apos;{0}&apos;.
-        /// </summary>
-        internal static string ERR_EXECUTIONCONTEXT_NOTSTARTED {
-            get {
-                return ResourceManager.GetString("ERR_EXECUTIONCONTEXT_NOTSTARTED", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Failed to transfer Root Attribute.
         /// </summary>
         internal static string ERR_FAILED_TRANSFER_ROOT_ATTR {

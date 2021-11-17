@@ -14,13 +14,13 @@ using O10.Client.Web.Common.Dtos.Biometric;
 using O10.Crypto.ConfidentialAssets;
 using O10.Client.DataLayer.AttributesScheme;
 using O10.Client.Web.Portal.Services.Inherence;
-using O10.Client.Common.Entities;
 using O10.Client.Web.Portal.Exceptions;
 using O10.Core.Logging;
 using System.Diagnostics.Contracts;
 using O10.Client.Web.Portal.Properties;
 using System.Collections.Generic;
 using O10.Crypto.Models;
+using O10.Client.Common.Dtos;
 
 namespace O10.Client.Web.Portal.Controllers
 {
@@ -65,7 +65,7 @@ namespace O10.Client.Web.Portal.Controllers
         [HttpDelete("RegisterPerson")]
         public async Task<IActionResult> UnregisterPerson([FromQuery] string issuer, [FromQuery] string commitment)
         {
-            PersonFaceData personFaceData = new PersonFaceData
+            PersonFaceData personFaceData = new()
             {
                 PersonGroupId = _portalConfiguration.DemoMode ? _portalConfiguration.FacePersonGroupId.ToLower() : issuer.ToLower(),
                 Name = commitment,
@@ -82,7 +82,7 @@ namespace O10.Client.Web.Portal.Controllers
 
         [AllowAnonymous]
         [HttpPost("RegisterPerson")]
-        public async Task<IActionResult> RegisterPerson([FromBody] BiometricPersonDataDto biometricPersonData)
+        public async Task<IActionResult> RegisterPerson([FromBody] BiometricPersonDataDTO biometricPersonData)
         {
             byte[] imageContent = null;
 
@@ -201,7 +201,7 @@ namespace O10.Client.Web.Portal.Controllers
                         return BadRequest("Provided face images do not match one to another");
                     }
 
-                    PersonFaceData rootFaceData = new PersonFaceData
+                    PersonFaceData rootFaceData = new()
                     {
                         PersonGroupId = personGroupId,
                         Name = registrationKey,
@@ -247,7 +247,7 @@ namespace O10.Client.Web.Portal.Controllers
 
             Guid guid = _dataAccessService.FindPersonGuid(registrationKey);
 
-            PersonFaceData personFaceData = new PersonFaceData
+            PersonFaceData personFaceData = new()
             {
                 PersonGroupId = personGroupId,
                 Name = registrationKey,
@@ -322,7 +322,7 @@ namespace O10.Client.Web.Portal.Controllers
 
         [AllowAnonymous]
         [HttpPost("VerifyPersonFace")]
-        public async Task<IActionResult> VerifyPersonFace([FromBody] BiometricVerificationDataDto verificationDataDto)
+        public async Task<IActionResult> VerifyPersonFace([FromBody] BiometricVerificationDataDTO verificationDataDto)
         {
             string personGroupId = _portalConfiguration.DemoMode ? _portalConfiguration.FacePersonGroupId.ToLower() : verificationDataDto.Issuer;
             byte[] imageContent = Convert.FromBase64String(verificationDataDto.ImageString);
@@ -390,7 +390,7 @@ namespace O10.Client.Web.Portal.Controllers
             byte[] assetId = await _assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_PASSPORTPHOTO, biometricPersonData.ImageSource, null).ConfigureAwait(false);
             byte[] sourceImageCommitment = biometricPersonData.SourceImageCommitment.HexStringToByteArray();
 
-            SurjectionProof surjectionProof = new SurjectionProof
+            SurjectionProof surjectionProof = new()
             {
                 AssetCommitments = new byte[][] { biometricPersonData.SourceImageProofCommitment.HexStringToByteArray() },
                 Rs = new BorromeanRingSignature
@@ -444,7 +444,7 @@ namespace O10.Client.Web.Portal.Controllers
             string personGroupId = _portalConfiguration.DemoMode ? _portalConfiguration.FacePersonGroupId.ToLower() : issuer?.ToLower();
             IList<Person> people = await _facesService.GetPersons(personGroupId).ConfigureAwait(false);
 
-            var persons = people.Select(p => new PersonDto
+            var persons = people.Select(p => new PersonDTO
             {
                 Name = p.Name,
                 UserData = p.UserData,

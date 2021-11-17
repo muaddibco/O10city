@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\O10.Client.IdentityProvider.External.API\O10.Client.IdentityProvider.External.API.csproj" />
+  </ItemGroup>
+
+</Project>

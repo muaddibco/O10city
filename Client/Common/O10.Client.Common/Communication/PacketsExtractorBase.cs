@@ -22,7 +22,7 @@ namespace O10.Client.Common.Communication
         private readonly IPropagatorBlock<TaskCompletionWrapper<TransactionBase>, TaskCompletionWrapper<TransactionBase>> _propagator;
         private readonly IPropagatorBlock<WitnessPackage, WitnessPackage> _propagatorProcessed;
         private readonly ITargetBlock<WitnessPackageWrapper> _pipeIn;
-        private readonly SemaphoreSlim _witnessProcessingSemaphore = new SemaphoreSlim(1);
+        private readonly SemaphoreSlim _witnessProcessingSemaphore = new(1);
         protected readonly IClientCryptoService _clientCryptoService;
 
         public PacketsExtractorBase(
@@ -49,8 +49,8 @@ namespace O10.Client.Common.Communication
 
                 try
                 {
-                    List<Task> allPacketsProcessedTasks = new List<Task>();
-                    List<PacketWitness> witnessesToMe = new List<PacketWitness>();
+                    List<Task> allPacketsProcessedTasks = new();
+                    List<PacketWitness> witnessesToMe = new();
                     bool res = true;
                     try
                     {

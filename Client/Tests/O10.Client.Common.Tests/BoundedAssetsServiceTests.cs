@@ -8,7 +8,6 @@ using O10.Crypto.ConfidentialAssets;
 using O10.Crypto.HashCalculations;
 using Xunit;
 using Xunit.Abstractions;
-using O10.Client.Common.Entities;
 using O10.Core.Identity;
 using O10.Client.Common.Crypto;
 using O10.Client.Common.Services;
@@ -21,6 +20,7 @@ using O10.Client.Common.Configuration;
 using O10.Client.Common.Dtos.UniversalProofs;
 using System.Collections.Generic;
 using O10.Client.Common.Exceptions;
+using O10.Client.Common.Dtos;
 
 namespace O10.Client.Common.Tests
 {
@@ -204,7 +204,7 @@ namespace O10.Client.Common.Tests
 
             var attributeFirstNameProofs = await boundedAssetsService.GetAssociatedAttributeProofs(associatedAssetInput, rootAssetInput, AttributesSchemes.ATTR_SCHEME_NAME_FIRSTNAME).ConfigureAwait(false);
             
-            ValidationCriteria validationFirstName = new ValidationCriteria
+            ValidationCriteriaDTO validationFirstName = new ValidationCriteriaDTO
             {
                 SchemeName = AttributesSchemes.ATTR_SCHEME_NAME_FIRSTNAME,
                 ValidationType = DataLayer.Enums.ValidationType.MatchValue,
@@ -219,7 +219,7 @@ namespace O10.Client.Common.Tests
                 Attributes = new List<AttributeProofs> { attributeFirstNameProofs }
             };
 
-            var validationCriterias = new List<ValidationCriteria> { validationFirstName };
+            var validationCriterias = new List<ValidationCriteriaDTO> { validationFirstName };
 
             RootIssuer rootIssuer = new RootIssuer
             {
@@ -274,7 +274,7 @@ namespace O10.Client.Common.Tests
 
             var attributeFirstNameProofs = await boundedAssetsService.GetAssociatedAttributeProofs(associatedChildAssetInput, associatedRootAssetInput, AttributesSchemes.ATTR_SCHEME_NAME_FIRSTNAME).ConfigureAwait(false);
 
-            ValidationCriteria validationFirstName = new ValidationCriteria
+            ValidationCriteriaDTO validationFirstName = new ValidationCriteriaDTO
             {
                 SchemeName = AttributesSchemes.ATTR_SCHEME_NAME_FIRSTNAME,
                 ValidationType = DataLayer.Enums.ValidationType.MatchValue,
@@ -282,7 +282,7 @@ namespace O10.Client.Common.Tests
                 GroupIdCriterion = null
             };
 
-            ValidationCriteria validationDrivingLicense = new ValidationCriteria
+            ValidationCriteriaDTO validationDrivingLicense = new ValidationCriteriaDTO
             {
                 SchemeName = AttributesSchemes.ATTR_SCHEME_NAME_DRIVINGLICENSE,
                 ValidationType = DataLayer.Enums.ValidationType.MatchValue,
@@ -312,7 +312,7 @@ namespace O10.Client.Common.Tests
                 }
             };
 
-            var validationCriterias = new List<ValidationCriteria> { validationFirstName, validationDrivingLicense };
+            var validationCriterias = new List<ValidationCriteriaDTO> { validationFirstName, validationDrivingLicense };
 
 
             await proofsValidationService.CheckAssociatedProofs(rootIssuer, validationCriterias).ConfigureAwait(false);

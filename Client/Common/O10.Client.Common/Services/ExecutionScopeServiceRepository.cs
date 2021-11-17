@@ -1,4 +1,5 @@
 ﻿using O10.Client.Common.Interfaces;
+using O10.Client.DataLayer.Enums;
 using O10.Core.Architecture;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,9 +16,9 @@ namespace O10.Client.Common.Services
             _executionScopeServices = executionScopeServices;
         }
 
-        public IExecutionScopeService GetInstance(string key)
+        public IExecutionScopeService? GetInstance(AccountType key)
         {
-            return _executionScopeServices.FirstOrDefault(s => s.Name == key);
+            return _executionScopeServices.FirstOrDefault(s => s.AccountType == key);
         }
     }
 }

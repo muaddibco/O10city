@@ -9,6 +9,7 @@ using O10.Core.Architecture;
 using O10.Core.HashCalculations;
 using System.Threading.Tasks;
 using O10.Client.DataLayer.AttributesScheme;
+using O10.Client.Common.Dtos;
 
 namespace O10.Client.Common.Identities
 {
@@ -26,7 +27,7 @@ namespace O10.Client.Common.Identities
 
         public IEnumerable<(string validationType, string validationDescription)> GetAssociatedValidationTypes()
         {
-            List<(string validationType, string validationDescription)> values = new List<(string validationType, string validationDescription)>();
+            List<(string validationType, string validationDescription)> values = new();
 
             foreach (var enumValueObj in Enum.GetValues(typeof(ValidationType)))
             {
@@ -40,12 +41,12 @@ namespace O10.Client.Common.Identities
 
         public async Task<List<IdentityAttributeValidationDescriptor>> GetIdentityAttributeValidationDescriptors(string issuer, bool activeOnly)
         {
-            IEnumerable<Entities.AttributeDefinition> attributeSchemes = await _schemeResolverService.ResolveAttributeSchemes(issuer, activeOnly).ConfigureAwait(false);
-            List<IdentityAttributeValidationDescriptor> identityAttributeValidationDescriptors = new List<IdentityAttributeValidationDescriptor>();
+            IEnumerable<AttributeDefinitionDTO> attributeSchemes = await _schemeResolverService.ResolveAttributeSchemes(issuer, activeOnly).ConfigureAwait(false);
+            List<IdentityAttributeValidationDescriptor> identityAttributeValidationDescriptors = new();
             foreach (var item in attributeSchemes)
             {
                 IdentityAttributeValidationDescriptor identityAttributeValidationDescriptor =
-                    new IdentityAttributeValidationDescriptor
+                    new()
                     {
                         SchemeName = item.SchemeName,
                         SchemeAlias = item.Alias,

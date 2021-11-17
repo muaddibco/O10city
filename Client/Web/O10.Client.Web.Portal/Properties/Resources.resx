@@ -126,9 +126,6 @@
   <data name="ERR_CERT_NOT_FOUND" xml:space="preserve">
     <value>Certificate with the thumbprint '{0}' not found at storage '{1}'.</value>
   </data>
-  <data name="ERR_EXECUTIONCONTEXT_NOTSTARTED" xml:space="preserve">
-    <value>Execution context not started yet for the account with accountId '{0}'</value>
-  </data>
   <data name="ERR_FAILED_TRANSFER_ROOT_ATTR" xml:space="preserve">
     <value>Failed to transfer Root Attribute</value>
   </data>

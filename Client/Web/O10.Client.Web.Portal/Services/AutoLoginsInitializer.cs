@@ -15,10 +15,10 @@ namespace O10.Client.Web.Portal.Services
     public class AutoLoginsInitializer : InitializerBase
     {
         private readonly IDataAccessService _dataAccessService;
-        private readonly IExecutionContextManager _executionContextManager;
+        private readonly IWebExecutionContextManager _executionContextManager;
         private readonly ILogger _logger;
 
-        public AutoLoginsInitializer(IDataAccessService dataAccessService, IExecutionContextManager executionContextManager, ILoggerService loggerService)
+        public AutoLoginsInitializer(IDataAccessService dataAccessService, IWebExecutionContextManager executionContextManager, ILoggerService loggerService)
         {
             _dataAccessService = dataAccessService;
             _executionContextManager = executionContextManager;
@@ -39,7 +39,17 @@ namespace O10.Client.Web.Portal.Services
                 {
                     try
                     {
-                        _executionContextManager.InitializeStateExecutionServices(autoLogin.Account.AccountId, autoLogin.SecretKey);
+                        switch (autoLogin.Account.AccountType)
+                        {
+                            case DataLayer.Enums.AccountType.IdentityProvider:
+                                _executionContextManager.InitializeIdentityProviderExecutionServices(autoLogin.Account.AccountId, autoLogin.SecretKey);
+                                break;
+                            case DataLayer.Enums.AccountType.ServiceProvider:
+                                _executionContextManager.InitializeServiceProviderExecutionServices(autoLogin.Account.AccountId, autoLogin.SecretKey);
+                                break;
+                            default:
+                                throw new Exception($"Unsupported AutoLogin account type {autoLogin.Account.AccountType}");
+                        }
 
                         _logger.Info($"[{autoLogin.Account.AccountId}]: Account {autoLogin.Account.AccountInfo} with id {autoLogin.Account.AccountId} successfully auto logged in");
                         succeeded = true;

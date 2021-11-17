@@ -19,7 +19,7 @@ namespace O10.Client.Common.Communication
     {
         private SignalrHubConnection? _hubConnection;
 
-        private readonly BlockingCollection<WitnessPackage> _witnessPackages = new BlockingCollection<WitnessPackage>();
+        private readonly BlockingCollection<WitnessPackage> _witnessPackages = new();
 
         public SignalRWitnessPackagesProvider(IGatewayService gatewayService, IDataAccessService dataAccessService, ILoggerService loggerService)
             : base(gatewayService, dataAccessService, loggerService)
@@ -128,7 +128,7 @@ namespace O10.Client.Common.Communication
                 _logger.Info($"Local height of aggregated transactions {_lastObtainedCombinedBlockHeight} adjusted to {w.CombinedBlockHeight}");
                 _lastObtainedCombinedBlockHeight = w.CombinedBlockHeight;
 
-                WitnessPackageWrapper wrapper = new WitnessPackageWrapper(w);
+                WitnessPackageWrapper wrapper = new(w);
                 await Propagator.SendAsync(wrapper).ConfigureAwait(false);
 
                 _logger.LogIfDebug(() => $"====> waiting for completion of processing witness package at {w.CombinedBlockHeight}...");

@@ -1,5 +1,6 @@
-﻿using O10.Client.Common.Communication;
-using O10.Client.Common.Interfaces;
+﻿using O10.Client.Common.Interfaces;
+using O10.Client.Stealth;
+using O10.Client.Stealth.Ingress;
 
 namespace O10.Client.Web.Saml.Common.Services
 {
@@ -7,7 +8,7 @@ namespace O10.Client.Web.Saml.Common.Services
 	{
 		public IWitnessPackagesProvider WitnessPackagesProvider { get; set; }
 		public IStealthClientCryptoService ClientCryptoService { get; set; }
-		public StealthPacketsExtractor PacketsExtractor { get; set; }
+		public PacketsExtractor PacketsExtractor { get; set; }
 		public SamlIdpService SamlIdpService { get; set; }
 		public SamlIdpWitnessPackageUpdater WitnessPackageUpdater { get; set; }
 	}

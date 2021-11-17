@@ -11,7 +11,7 @@ using O10.Core.ExtensionMethods;
 using O10.Core.Logging;
 using System;
 using System.Threading.Tasks;
-using O10.Client.Common.Entities;
+using O10.Client.Common.Dtos;
 
 namespace O10.Server.IdentityProvider.Common.Services
 {

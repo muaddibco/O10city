@@ -29,4 +29,7 @@
     <ProjectReference Include="..\..\..\Common\Tests\O10.Tests.Core\O10.Tests.Core.csproj" />
     <ProjectReference Include="..\..\..\Common\O10.Core\O10.Core.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Fixtures\" />
+  </ItemGroup>
 </Project>

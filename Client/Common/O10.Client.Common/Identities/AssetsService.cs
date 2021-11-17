@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using O10.Client.Common.Entities;
+using O10.Client.Common.Dtos;
 using O10.Client.Common.Exceptions;
 using O10.Client.Common.Interfaces;
 using O10.Client.DataLayer.AttributesScheme;
@@ -69,7 +69,7 @@ namespace O10.Client.Common.Identities
                 case AttributesSchemes.ATTR_SCHEME_NAME_RELATIONGROUP:
                     return -2;
                 default:
-                    AttributeDefinition attributeScheme = await _schemeResolverService.ResolveAttributeScheme(issuer, schemeName).ConfigureAwait(false);
+                    AttributeDefinitionDTO attributeScheme = await _schemeResolverService.ResolveAttributeScheme(issuer, schemeName).ConfigureAwait(false);
                     if (attributeScheme == null)
                     {
                         throw new NoSchemeDefinedException(schemeName, issuer);
@@ -88,7 +88,7 @@ namespace O10.Client.Common.Identities
             return attributeScheme?.SchemeName;
         }
 
-        public async Task<AttributeDefinition> GetAttributeDefinition(byte[] assetId, string issuer)
+        public async Task<AttributeDefinitionDTO> GetAttributeDefinition(byte[] assetId, string issuer)
         {
             long schemeId = BitConverter.ToInt64(assetId, 24);
 
@@ -143,12 +143,12 @@ namespace O10.Client.Common.Identities
             return blindedCommitment;
         }
 
-        public async Task<AttributeDefinition> GetRootAttributeDefinition(string issuer)
+        public async Task<AttributeDefinitionDTO> GetRootAttributeDefinition(string issuer)
         {
             return await _schemeResolverService.GetRootAttributeScheme(issuer).ConfigureAwait(false);
         }
 
-        public async Task<AttributeDefinition> GetRootAttributeDefinition(IKey issuer)
+        public async Task<AttributeDefinitionDTO> GetRootAttributeDefinition(IKey issuer)
         {
             if (issuer is null)
             {
@@ -158,14 +158,14 @@ namespace O10.Client.Common.Identities
             return await GetRootAttributeDefinition(issuer.ToString()).ConfigureAwait(false);
         }
 
-        public async Task<IEnumerable<AttributeDefinition>> GetAssociatedAttributeDefinitions(string issuer)
+        public async Task<IEnumerable<AttributeDefinitionDTO>> GetAssociatedAttributeDefinitions(string issuer)
         {
             var attributeSchemes = await _schemeResolverService.ResolveAttributeSchemes(issuer).ConfigureAwait(false);
 
             return attributeSchemes.Where(a => !a.IsRoot && AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD != a.SchemeName);
         }
 
-        public async Task<IEnumerable<AttributeDefinition>> GetAssociatedAttributeDefinitions(IKey issuer)
+        public async Task<IEnumerable<AttributeDefinitionDTO>> GetAssociatedAttributeDefinitions(IKey issuer)
         {
             if (issuer is null)
             {

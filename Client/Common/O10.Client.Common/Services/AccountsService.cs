@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 using O10.Core.ExtensionMethods;
-using O10.Client.Common.Entities;
 using O10.Client.DataLayer.Enums;
 using O10.Client.DataLayer.Services;
 using O10.Crypto.ConfidentialAssets;
@@ -16,6 +15,7 @@ using O10.Core.HashCalculations;
 using System.Linq;
 using O10.Client.DataLayer.Model;
 using O10.Core.Translators;
+using O10.Client.Common.Dtos;
 
 namespace O10.Client.Common.Services
 {
@@ -38,7 +38,7 @@ namespace O10.Client.Common.Services
             _hashCalculation = hashCalculationsRepository.Create(Globals.DEFAULT_HASH);
         }
 
-        public AccountDescriptor Authenticate(long accountId, string password)
+        public AccountDescriptorDTO Authenticate(long accountId, string password)
         {
             Account account = _dataAccessService.GetAccount(accountId);
 
@@ -54,9 +54,9 @@ namespace O10.Client.Common.Services
             return res;
         }
 
-        private AccountDescriptor AuthenticateStateAccount(AuthenticationInput authenticationInput)
+        private AccountDescriptorDTO AuthenticateStateAccount(AuthenticationInput authenticationInput)
         {
-            AccountDescriptor accountDescriptor = null;
+            AccountDescriptorDTO accountDescriptor = null;
             bool res = IsPasswordValid(authenticationInput.Account, authenticationInput.Password);
             if (res)
             {
@@ -73,9 +73,9 @@ namespace O10.Client.Common.Services
             return accountDescriptor;
         }
 
-        private AccountDescriptor? AuthenticateStealthAccount(AuthenticationInput authenticationInput)
+        private AccountDescriptorDTO? AuthenticateStealthAccount(AuthenticationInput authenticationInput)
         {
-            AccountDescriptor? accountDescriptor = null;
+            AccountDescriptorDTO? accountDescriptor = null;
 
             bool res = IsPasswordValid(authenticationInput.Account, authenticationInput.Password);
             if (res)
@@ -88,9 +88,9 @@ namespace O10.Client.Common.Services
             return accountDescriptor;
         }
 
-        protected AccountDescriptor TranslateToAccountDescriptor(Account? account, byte[]? pwdHash = null)
+        protected AccountDescriptorDTO TranslateToAccountDescriptor(Account? account, byte[]? pwdHash = null)
         {
-            var accountDescriptor = _translatorsRepository.GetInstance<Account, AccountDescriptor>()?.Translate(account);
+            var accountDescriptor = _translatorsRepository.GetInstance<Account, AccountDescriptorDTO>()?.Translate(account);
             if (accountDescriptor != null && pwdHash != null)
             {
                 accountDescriptor.SecretSpendKey = CryptoHelper.SumScalars(account.SecretSpendKey, pwdHash);
@@ -101,11 +101,11 @@ namespace O10.Client.Common.Services
             return accountDescriptor;
         }
 
-        public AccountDescriptor? FindByAlias(string alias)
+        public AccountDescriptorDTO? FindByAlias(string alias)
         {
             var account = _dataAccessService.FindAccountByAlias(alias);
 
-            var accountDescriptor = _translatorsRepository.GetInstance<Account, AccountDescriptor>()?.Translate(account);
+            var accountDescriptor = _translatorsRepository.GetInstance<Account, AccountDescriptorDTO>()?.Translate(account);
 
             return accountDescriptor;
         }
@@ -147,13 +147,13 @@ namespace O10.Client.Common.Services
         public void Delete(long accountId) =>
             _dataAccessService.RemoveAccount(accountId);
 
-        public List<AccountDescriptor> GetAll() =>
+        public List<AccountDescriptorDTO> GetAll() =>
             _dataAccessService.GetAccounts().Select(a => TranslateToAccountDescriptor(a)).ToList();
 
-        public AccountDescriptor GetById(long accountId) =>
+        public AccountDescriptorDTO GetById(long accountId) =>
             TranslateToAccountDescriptor(_dataAccessService.GetAccount(accountId));
 
-        public void Update(AccountDescriptor user, string password = null) => throw new NotImplementedException();
+        public void Update(AccountDescriptorDTO user, string password = null) => throw new NotImplementedException();
 
         #region Private Functions
 

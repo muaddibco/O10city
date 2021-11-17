@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using O10.Core.ExtensionMethods;
-using O10.Client.Common.Entities;
 using O10.Client.Common.Interfaces;
 using O10.Client.DataLayer.Enums;
 using O10.Client.DataLayer.Services;
@@ -19,6 +18,7 @@ using O10.Client.Web.Portal.Services;
 using System.Collections.Concurrent;
 using O10.Client.Web.Portal.Scenarios.Exceptions;
 using O10.Core.Logging;
+using O10.Client.Common.Dtos;
 
 namespace O10.Client.Web.Portal.Scenarios.Services
 {
@@ -26,17 +26,17 @@ namespace O10.Client.Web.Portal.Scenarios.Services
     public class ScenarioRunner : IScenarioRunner
     {
         private readonly IScenariosConfiguration _scenariosConfiguration;
-        private readonly Dictionary<int, ScenarioDefinition> _scenarios = new Dictionary<int, ScenarioDefinition>();
+        private readonly Dictionary<int, ScenarioDefinition> _scenarios = new();
         private readonly IAccountsService _accountsService;
         private readonly IAssetsService _assetsService;
         private readonly IDataAccessService _dataAccessService;
-        private readonly IExecutionContextManager _executionContextManager;
+        private readonly IWebExecutionContextManager _executionContextManager;
         private readonly ConcurrentDictionary<string, ScenarioMonitoringData> _activeScenarios;
         private readonly ILogger _logger;
 
         public ScenarioRunner(IConfigurationService configurationService, IAccountsService accountsService,
             IAssetsService assetsService, IDataAccessService dataAccessService,
-            IExecutionContextManager executionContextManager, ILoggerService loggerService)
+            IWebExecutionContextManager executionContextManager, ILoggerService loggerService)
         {
             _scenariosConfiguration = configurationService?.Get<IScenariosConfiguration>();
             _accountsService = accountsService;
@@ -207,11 +207,16 @@ namespace O10.Client.Web.Portal.Scenarios.Services
 
                     foreach (var scenarioAccount in scenarioAccounts)
                     {
-                        AccountDescriptor account = _accountsService.GetById(scenarioAccount.AccountId);
-                        if (account.AccountType == AccountTypeDTO.IdentityProvider || account.AccountType == AccountTypeDTO.ServiceProvider)
+                        AccountDescriptorDTO account = _accountsService.GetById(scenarioAccount.AccountId);
+                        AccountDescriptorDTO accountDescriptor = _accountsService.Authenticate(scenarioAccount.AccountId, "qqq");
+                        switch (account.AccountType)
                         {
-                            AccountDescriptor accountDescriptor = _accountsService.Authenticate(scenarioAccount.AccountId, "qqq");
-                            _executionContextManager.InitializeStateExecutionServices(accountDescriptor.AccountId, accountDescriptor.SecretSpendKey);
+                            case AccountTypeDTO.IdentityProvider:
+                                _executionContextManager.InitializeIdentityProviderExecutionServices(accountDescriptor.AccountId, accountDescriptor.SecretSpendKey);
+                                break;
+                            case AccountTypeDTO.ServiceProvider:
+                                _executionContextManager.InitializeServiceProviderExecutionServices(accountDescriptor.AccountId, accountDescriptor.SecretSpendKey);
+                                break;
                         }
                     }
                 }
@@ -290,8 +295,8 @@ namespace O10.Client.Web.Portal.Scenarios.Services
             {
                 long accountId = _accountsService.Create(AccountTypeDTO.ServiceProvider, scenarioAccount.AccountInfo, "qqq", true);
                 _dataAccessService.AddScenarionSessionAccount(scenarioSessionId, accountId);
-                AccountDescriptor accountDescriptor = _accountsService.Authenticate(accountId, "qqq");
-                _executionContextManager.InitializeStateExecutionServices(accountId, accountDescriptor.SecretSpendKey);
+                AccountDescriptorDTO accountDescriptor = _accountsService.Authenticate(accountId, "qqq");
+                _executionContextManager.InitializeServiceProviderExecutionServices(accountId, accountDescriptor.SecretSpendKey);
 
                 if (scenarioAccount.RelationGroups != null)
                 {
@@ -314,8 +319,8 @@ namespace O10.Client.Web.Portal.Scenarios.Services
             {
                 long accountId = _accountsService.Create(AccountTypeDTO.IdentityProvider, scenarioAccount.AccountInfo, "qqq", true);
                 _dataAccessService.AddScenarionSessionAccount(scenarioSessionId, accountId);
-                AccountDescriptor accountDescriptor = _accountsService.Authenticate(accountId, "qqq");
-                _executionContextManager.InitializeStateExecutionServices(accountId, accountDescriptor.SecretSpendKey);
+                AccountDescriptorDTO accountDescriptor = _accountsService.Authenticate(accountId, "qqq");
+                _executionContextManager.InitializeServiceProviderExecutionServices(accountId, accountDescriptor.SecretSpendKey);
 
                 foreach (var attributeScheme in scenarioAccount.IdentityScheme)
                 {
@@ -336,7 +341,7 @@ namespace O10.Client.Web.Portal.Scenarios.Services
             }
         }
 
-        private IEnumerable<(string attributeName, string content)> GetAttribitesAndContent(ScenarionIdentity identity, AccountDescriptor account)
+        private IEnumerable<(string attributeName, string content)> GetAttribitesAndContent(ScenarionIdentity identity, AccountDescriptorDTO account)
         {
             IEnumerable<(string attributeName, string content)> attrs;
 
@@ -415,14 +420,14 @@ namespace O10.Client.Web.Portal.Scenarios.Services
         private string FuncPublicViewKey(string[] args)
         {
             string accountNameStr = args[0];
-            AccountDescriptor account = _accountsService.GetAll().FirstOrDefault(a => a.AccountInfo == accountNameStr);
+            AccountDescriptorDTO account = _accountsService.GetAll().FirstOrDefault(a => a.AccountInfo == accountNameStr);
             return account?.PublicSpendKey.ToHexString();
         }
 
         private string FuncPublicSpendKey(string[] args)
         {
             string accountNameStr = args[0];
-            AccountDescriptor account = _accountsService.GetAll().FirstOrDefault(a => a.AccountInfo == accountNameStr);
+            AccountDescriptorDTO account = _accountsService.GetAll().FirstOrDefault(a => a.AccountInfo == accountNameStr);
             return account?.PublicSpendKey.ToHexString();
         }
 

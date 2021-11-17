@@ -8,7 +8,6 @@ using O10.Client.Web.Portal.Services;
 using O10.Core.ExtensionMethods;
 using O10.Client.Web.Common.Services;
 using O10.Client.Web.DataContracts.User;
-using O10.Client.Common.Entities;
 using O10.Client.DataLayer.Services;
 using O10.Client.DataLayer.Model.Scenarios;
 using System.Collections.Generic;
@@ -26,6 +25,8 @@ using O10.Core.Serialization;
 using O10.Core.Configuration;
 using O10.Client.Common.Configuration;
 using System.Threading.Tasks;
+using O10.Client.Stealth;
+using O10.Client.Common.Dtos;
 
 namespace O10.Client.Web.Portal.Controllers
 {
@@ -35,7 +36,7 @@ namespace O10.Client.Web.Portal.Controllers
     public class AccountsController : ControllerBase
     {
         private readonly IAccountsServiceEx _accountsService;
-        private readonly IExecutionContextManager _executionContextManager;
+        private readonly IWebExecutionContextManager _executionContextManager;
         private readonly IDataAccessService _dataAccessService;
         private readonly ITranslatorsRepository _translatorsRepository;
         private readonly IIntegrationIdPRepository _integrationIdPRepository;
@@ -44,7 +45,7 @@ namespace O10.Client.Web.Portal.Controllers
         private readonly ILogger _logger;
 
         public AccountsController(IAccountsServiceEx accountsService,
-                                  IExecutionContextManager executionContextManager,
+                                  IWebExecutionContextManager executionContextManager,
                                   IConfigurationService configurationService,
                                   IDataAccessService dataAccessService,
                                   ILoggerService loggerService,
@@ -76,7 +77,7 @@ namespace O10.Client.Web.Portal.Controllers
         public IActionResult FindAccount(string accountAlias)
         {
             var accountDescriptor = _accountsService.FindByAlias(accountAlias);
-            var accountDto = _translatorsRepository.GetInstance<AccountDescriptor, AccountDto>().Translate(accountDescriptor);
+            var accountDto = _translatorsRepository.GetInstance<AccountDescriptorDTO, AccountDto>().Translate(accountDescriptor);
 
             return Ok(accountDto);
         }
@@ -85,7 +86,7 @@ namespace O10.Client.Web.Portal.Controllers
         public IActionResult FindAccountBySecrets([FromBody] DisclosedSecretsDto disclosedSecrets)
         {
             var accountDescriptor = _accountsService.GetBySecrets(disclosedSecrets.SecretSpendKey.HexStringToByteArray(), disclosedSecrets.SecretViewKey.HexStringToByteArray(), disclosedSecrets.Password);
-            var accountDto = _translatorsRepository.GetInstance<AccountDescriptor, AccountDto>().Translate(accountDescriptor);
+            var accountDto = _translatorsRepository.GetInstance<AccountDescriptorDTO, AccountDto>().Translate(accountDescriptor);
 
             return Ok(accountDto);
         }
@@ -102,16 +103,22 @@ namespace O10.Client.Web.Portal.Controllers
                 throw new AccountAuthenticationFailedException(accountId);
             }
 
-            if (accountDescriptor.AccountType == AccountTypeDTO.User)
+            switch (accountDescriptor.AccountType)
             {
-                _executionContextManager.InitializeUtxoExecutionServices(accountDescriptor.AccountId, accountDescriptor.SecretSpendKey, accountDescriptor.SecretViewKey, accountDescriptor.PwdHash);
-                var persistency = _executionContextManager.ResolveExecutionServices(accountId);
-                var relationsBindingService = persistency.Scope.ServiceProvider.GetService<IBoundedAssetsService>();
-                relationsBindingService.Initialize(accountDto.Password, false);
-            }
-            else
-            {
-                _executionContextManager.InitializeStateExecutionServices(accountDescriptor.AccountId, accountDescriptor.SecretSpendKey);
+                case AccountTypeDTO.User:
+                    _executionContextManager.InitializeUserExecutionServices(accountDescriptor.AccountId, accountDescriptor.SecretSpendKey, accountDescriptor.SecretViewKey, accountDescriptor.PwdHash);
+                    var persistency = _executionContextManager.ResolveExecutionServices(accountId);
+                    var relationsBindingService = persistency.Scope.ServiceProvider.GetService<IBoundedAssetsService>();
+                    relationsBindingService.Initialize(accountDto.Password, false);
+                    break;
+
+                case AccountTypeDTO.IdentityProvider:
+                    _executionContextManager.InitializeIdentityProviderExecutionServices(accountDescriptor.AccountId, accountDescriptor.SecretSpendKey);
+                    break;
+
+                case AccountTypeDTO.ServiceProvider:
+                    _executionContextManager.InitializeServiceProviderExecutionServices(accountDescriptor.AccountId, accountDescriptor.SecretSpendKey);
+                    break;
             }
 
             var forLog = new
@@ -127,7 +134,7 @@ namespace O10.Client.Web.Portal.Controllers
 
             _logger.LogIfDebug(() => $"[{accountId}]: Authenticated account {JsonConvert.SerializeObject(forLog)}");
 
-            return Ok(_translatorsRepository.GetInstance<AccountDescriptor, AccountDto>().Translate(accountDescriptor));
+            return Ok(_translatorsRepository.GetInstance<AccountDescriptorDTO, AccountDto>().Translate(accountDescriptor));
         }
 
         [HttpPost("{accountId}/Sync")]
@@ -159,20 +166,26 @@ namespace O10.Client.Web.Portal.Controllers
             try
             {
                 var account = _dataAccessService.GetAccount(accountId);
-                var accountDescriptor = _translatorsRepository.GetInstance<Account, AccountDescriptor>()?.Translate(account);
+                var accountDescriptor = _translatorsRepository.GetInstance<Account, AccountDescriptorDTO>()?.Translate(account);
 
                 if (accountDescriptor == null)
                 {
                     throw new AccountNotFoundException(accountId);
                 }
 
-                if (accountDescriptor.AccountType == AccountTypeDTO.User)
+                switch (accountDescriptor.AccountType)
                 {
-                    _executionContextManager.InitializeUtxoExecutionServices(accountDescriptor.AccountId, accountDescriptor.SecretSpendKey, accountDescriptor.SecretViewKey, accountDescriptor.PwdHash);
-                }
-                else
-                {
-                    _executionContextManager.InitializeStateExecutionServices(accountDescriptor.AccountId, accountDescriptor.SecretSpendKey);
+                    case AccountTypeDTO.User:
+                        _executionContextManager.InitializeUserExecutionServices(accountDescriptor.AccountId, accountDescriptor.SecretSpendKey, accountDescriptor.SecretViewKey, accountDescriptor.PwdHash);
+                        break;
+
+                    case AccountTypeDTO.IdentityProvider:
+                        _executionContextManager.InitializeIdentityProviderExecutionServices(accountDescriptor.AccountId, accountDescriptor.SecretSpendKey);
+                        break;
+
+                    case AccountTypeDTO.ServiceProvider:
+                        _executionContextManager.InitializeServiceProviderExecutionServices(accountDescriptor.AccountId, accountDescriptor.SecretSpendKey);
+                        break;
                 }
 
                 var forLog = new
@@ -188,7 +201,7 @@ namespace O10.Client.Web.Portal.Controllers
 
                 _logger.LogIfDebug(() => $"[{accountId}]: Authenticated account {JsonConvert.SerializeObject(forLog)}");
 
-                return Ok(_translatorsRepository.GetInstance<AccountDescriptor, AccountDto>().Translate(accountDescriptor));
+                return Ok(_translatorsRepository.GetInstance<AccountDescriptorDTO, AccountDto>().Translate(accountDescriptor));
             }
             catch (Exception ex)
             {
@@ -232,7 +245,7 @@ namespace O10.Client.Web.Portal.Controllers
             {
                 long accountId = _accountsService.Create(accountDto.AccountType, accountDto.AccountInfo, accountDto.Password);
                 var accountDescriptor = _accountsService.GetById(accountId);
-                return Ok(_translatorsRepository.GetInstance<AccountDescriptor, AccountDto>().Translate(accountDescriptor));
+                return Ok(_translatorsRepository.GetInstance<AccountDescriptorDTO, AccountDto>().Translate(accountDescriptor));
             }
             catch (Exception ex)
             {
@@ -250,7 +263,7 @@ namespace O10.Client.Web.Portal.Controllers
 
                 var accounts = _accountsService.GetAll()
                     .Where(a => scenarioAccounts.Any(sa => sa.AccountId == a.AccountId))
-                    .Select(a => _translatorsRepository.GetInstance<AccountDescriptor, AccountDto>().Translate(a));
+                    .Select(a => _translatorsRepository.GetInstance<AccountDescriptorDTO, AccountDto>().Translate(a));
 
                 return Ok(accounts);
             }
@@ -258,7 +271,7 @@ namespace O10.Client.Web.Portal.Controllers
             {
                 var accounts = _accountsService.GetAll()
                     .Where(a => (withPrivate || !a.IsPrivate) && (ofTypeOnly == 0 || (int)a.AccountType == ofTypeOnly))
-                    .Select(a => _translatorsRepository.GetInstance<AccountDescriptor, AccountDto>().Translate(a));
+                    .Select(a => _translatorsRepository.GetInstance<AccountDescriptorDTO, AccountDto>().Translate(a));
 
                 return Ok(accounts);
             }
@@ -268,7 +281,7 @@ namespace O10.Client.Web.Portal.Controllers
         public IActionResult GetById(long accountId)
         {
             var accountDescriptor = _accountsService.GetById(accountId);
-            var accountDto = _translatorsRepository.GetInstance<AccountDescriptor, AccountDto>().Translate(accountDescriptor);
+            var accountDto = _translatorsRepository.GetInstance<AccountDescriptorDTO, AccountDto>().Translate(accountDescriptor);
             
             if(accountDto == null)
             {
@@ -284,7 +297,7 @@ namespace O10.Client.Web.Portal.Controllers
             var account = _accountsService.DuplicateAccount(sourceAccountId, targetAccountId);
 
             return account.Match<IActionResult>(
-                a => Ok(_translatorsRepository.GetInstance<AccountDescriptor, AccountDto>().Translate(a)), 
+                a => Ok(_translatorsRepository.GetInstance<AccountDescriptorDTO, AccountDto>().Translate(a)), 
                 () => BadRequest());
         }
 
@@ -315,7 +328,7 @@ namespace O10.Client.Web.Portal.Controllers
             _accountsService.Override(AccountTypeDTO.User, accountId, accountOverride.SecretSpendKey.HexStringToByteArray(), accountOverride.SecretViewKey.HexStringToByteArray(), accountOverride.Password, accountOverride.LastCombinedBlockHeight);
 
             _executionContextManager.UnregisterExecutionServices(accountId);
-            return Ok(_translatorsRepository.GetInstance<AccountDescriptor, AccountDto>().Translate(_accountsService.GetById(accountId)));
+            return Ok(_translatorsRepository.GetInstance<AccountDescriptorDTO, AccountDto>().Translate(_accountsService.GetById(accountId)));
         }
 
         [HttpPost("{accountId}/Reset")]
@@ -326,7 +339,7 @@ namespace O10.Client.Web.Portal.Controllers
                 throw new ArgumentNullException(nameof(authenticateAccount));
             }
 
-            AccountDescriptor accountDescriptor = _accountsService.Authenticate(accountId, authenticateAccount.Password);
+            AccountDescriptorDTO accountDescriptor = _accountsService.Authenticate(accountId, authenticateAccount.Password);
 
             if (accountDescriptor != null)
             {
@@ -335,16 +348,22 @@ namespace O10.Client.Web.Portal.Controllers
 
                 accountDescriptor = _accountsService.Authenticate(accountId, authenticateAccount.Password);
 
-                if (accountDescriptor.AccountType == AccountTypeDTO.User)
+                switch (accountDescriptor.AccountType)
                 {
-                    _executionContextManager.InitializeUtxoExecutionServices(accountId, accountDescriptor.SecretSpendKey, accountDescriptor.SecretViewKey, accountDescriptor.PwdHash);
-                }
-                else
-                {
-                    _executionContextManager.InitializeStateExecutionServices(accountId, accountDescriptor.SecretSpendKey);
+                    case AccountTypeDTO.User:
+                        _executionContextManager.InitializeUserExecutionServices(accountId, accountDescriptor.SecretSpendKey, accountDescriptor.SecretViewKey, accountDescriptor.PwdHash);
+                        break;
+
+                    case AccountTypeDTO.IdentityProvider:
+                        _executionContextManager.InitializeIdentityProviderExecutionServices(accountId, accountDescriptor.SecretSpendKey);
+                        break;
+
+                    case AccountTypeDTO.ServiceProvider:
+                        _executionContextManager.InitializeServiceProviderExecutionServices(accountId, accountDescriptor.SecretSpendKey);
+                        break;
                 }
 
-                return Ok(_translatorsRepository.GetInstance<AccountDescriptor, AccountDto>().Translate(accountDescriptor));
+                return Ok(_translatorsRepository.GetInstance<AccountDescriptorDTO, AccountDto>().Translate(accountDescriptor));
             }
             else
             {

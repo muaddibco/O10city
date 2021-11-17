@@ -13,7 +13,7 @@ namespace O10.Client.Web.Portal.Services
         string PublicSpendKey { get; }
         string PublicViewKey { get; }
 
-        void Initialize(IExecutionContextManager executionContextManager, CancellationToken cancellationToken);
+        void Initialize(IWebExecutionContextManager executionContextManager, CancellationToken cancellationToken);
 
         bool PushRelationProofsData(string sessionKey, RelationProofsData relationProofSession);
 

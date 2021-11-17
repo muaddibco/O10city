@@ -24,10 +24,10 @@ using Flurl;
 using Flurl.Http;
 using O10.Client.Common.Interfaces.Inputs;
 using Newtonsoft.Json;
-using O10.Client.Common.Entities;
 using O10.Core.Identity;
 using O10.Crypto.ConfidentialAssets;
 using System.IO;
+using O10.Client.Common.Dtos;
 
 namespace O10.Client.Web.Portal.Controllers
 {
@@ -123,7 +123,7 @@ namespace O10.Client.Web.Portal.Controllers
         [HttpGet("IdentityAttributeValidationDescriptors")]
         public async Task<IActionResult> GetIdentityAttributeValidationDescriptors(long accountId)
         {
-            AccountDescriptor account = _accountsService.GetById(accountId);
+            AccountDescriptorDTO account = _accountsService.GetById(accountId);
 
             return Ok(await _identityAttributesService.GetIdentityAttributeValidationDescriptors(account.PublicSpendKey.ToHexString(), true).ConfigureAwait(false));
         }
@@ -184,7 +184,7 @@ namespace O10.Client.Web.Portal.Controllers
         [HttpGet("{accountId}/RelationGroups")]
         public IActionResult GetRelationGroups(long accountId)
         {
-            List<RelationGroupDto> employeeGroups = new List<RelationGroupDto>();
+            List<RelationGroupDto> employeeGroups = new();
 
             employeeGroups = _dataAccessService.GetRelationGroups(accountId).Select(g => new RelationGroupDto { GroupId = g.RelationGroupId, GroupName = g.GroupName }).ToList();
 
@@ -240,7 +240,7 @@ namespace O10.Client.Web.Portal.Controllers
             SpDocument document = _dataAccessService.GetSpDocument(accountId, documentDto.DocumentId);
 
             var persistency = _executionContextManager.ResolveExecutionServices(accountId);
-            var transactionsService = persistency.Scope.ServiceProvider.GetService<IStateTransactionsService>();
+            var transactionsService = persistency.Scope.ServiceProvider.GetService<IServiceProviderTransactionsService>();
             transactionsService.IssueDocumentRecord(document.Hash.HexStringToByteArray(), document.AllowedSigners?.Select(s => s.GroupCommitment.HexStringToByteArray()).ToArray());
 
             return Ok(documentDto);
@@ -258,7 +258,7 @@ namespace O10.Client.Web.Portal.Controllers
             SpDocument document = _dataAccessService.GetSpDocument(accountId, documentId);
 
             var persistency = _executionContextManager.ResolveExecutionServices(accountId);
-            var transactionsService = persistency.Scope.ServiceProvider.GetService<IStateTransactionsService>();
+            var transactionsService = persistency.Scope.ServiceProvider.GetService<IServiceProviderTransactionsService>();
             transactionsService.IssueDocumentRecord(document.Hash.HexStringToByteArray(), document.AllowedSigners.Select(s => s.GroupCommitment.HexStringToByteArray()).ToArray());
 
             return Ok(allowedSigner);
@@ -271,7 +271,7 @@ namespace O10.Client.Web.Portal.Controllers
             SpDocument document = _dataAccessService.GetSpDocument(accountId, documentId);
 
             var persistency = _executionContextManager.ResolveExecutionServices(accountId);
-            var transactionsService = persistency.Scope.ServiceProvider.GetService<IStateTransactionsService>();
+            var transactionsService = persistency.Scope.ServiceProvider.GetService<IServiceProviderTransactionsService>();
             transactionsService.IssueDocumentRecord(document.Hash.HexStringToByteArray(), document.AllowedSigners.Select(s => s.GroupCommitment.HexStringToByteArray()).ToArray());
 
             return Ok();
@@ -395,13 +395,13 @@ namespace O10.Client.Web.Portal.Controllers
         [HttpPost("UserTransaction")]
         public async Task<IActionResult> PushUserTransaction(long accountId, [FromBody] SpUserTransactionRequestDto spUserTransactionRequest)
         {
-            AccountDescriptor account = _accountsService.GetById(accountId);
+            AccountDescriptorDTO account = _accountsService.GetById(accountId);
             string transactionKey = Guid.NewGuid().ToString();
             long registrationId = spUserTransactionRequest.RegistrationId;
             long userTransactionId = _dataAccessService.AddSpUserTransaction(accountId, registrationId, transactionKey, spUserTransactionRequest.Description);
             var registration = _dataAccessService.GetServiceProviderRegistration(registrationId);
 
-            TransactionConsentRequest consentRequest = new TransactionConsentRequest
+            TransactionConsentRequest consentRequest = new()
             {
                 RegistrationCommitment = registration.Commitment.ToHexString(),
                 TransactionId = transactionKey,

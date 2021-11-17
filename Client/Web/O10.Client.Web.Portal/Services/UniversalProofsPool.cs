@@ -13,8 +13,8 @@ namespace O10.Client.Web.Portal.Services
     [RegisterDefaultImplementation(typeof(IUniversalProofsPool), Lifetime = LifetimeManagement.Singleton)]
     public class UniversalProofsPool : IUniversalProofsPool
     {
-        private readonly ConcurrentDictionary<IKey, TaskCompletionSource<UniversalProofs>> _universalProofs = new ConcurrentDictionary<IKey, TaskCompletionSource<UniversalProofs>>(new KeyEqualityComparer());
-        private readonly ConcurrentDictionary<IKey, Task> _universalProofsMonitor = new ConcurrentDictionary<IKey, Task>();
+        private readonly ConcurrentDictionary<IKey, TaskCompletionSource<UniversalProofs>> _universalProofs = new(new KeyEqualityComparer());
+        private readonly ConcurrentDictionary<IKey, Task> _universalProofsMonitor = new();
 
         private readonly ILogger _logger;
 
@@ -60,7 +60,7 @@ namespace O10.Client.Web.Portal.Services
 
             _logger.LogIfDebug(() => $"Storing {nameof(universalProofs)} with {nameof(universalProofs.KeyImage)}={universalProofs.KeyImage} and {nameof(universalProofs.SessionKey)}={universalProofs.SessionKey}");
 
-            TaskCompletionSource<UniversalProofs> taskCompletionSource = new TaskCompletionSource<UniversalProofs>();
+            TaskCompletionSource<UniversalProofs> taskCompletionSource = new();
             taskCompletionSource.SetResult(universalProofs);
             _universalProofs.AddOrUpdate(universalProofs.KeyImage, taskCompletionSource, (k, v) =>
             {

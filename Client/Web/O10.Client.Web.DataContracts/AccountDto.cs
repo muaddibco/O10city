@@ -1,4 +1,4 @@
-﻿using O10.Client.Common.Entities;
+﻿using O10.Client.Common.Dtos;
 
 namespace O10.Client.Web.DataContracts
 {

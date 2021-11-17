@@ -6,7 +6,6 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks.Dataflow;
-using O10.Client.Common.Entities;
 using O10.Client.Common.Interfaces;
 using O10.Client.Common.Interfaces.Inputs;
 using O10.Client.DataLayer.Model.ConsentManagement;
@@ -24,6 +23,8 @@ using O10.Client.Web.Portal.Hubs;
 using Microsoft.Extensions.DependencyInjection;
 using O10.Core.Notifications;
 using O10.Crypto.Models;
+using O10.Client.Stealth;
+using O10.Client.Common.Dtos;
 
 namespace O10.Client.Web.Portal.Services
 {
@@ -37,16 +38,16 @@ namespace O10.Client.Web.Portal.Services
         private readonly IHubContext<ConsentManagementHub> _hubContext;
         private readonly IAzureConfiguration _azureConfiguration;
         private readonly ILogger _logger;
-        private readonly ConcurrentDictionary<string, RelationProofsSession> _relationProofSessions = new ConcurrentDictionary<string, RelationProofsSession>();
-        private readonly ConcurrentDictionary<string, ProofsSession> _proofsSessions = new ConcurrentDictionary<string, ProofsSession>();
-        private readonly ConcurrentDictionary<string, TransactionConsentRequest> _consentRequests = new ConcurrentDictionary<string, TransactionConsentRequest>();
-        private readonly ConcurrentDictionary<string, List<string>> _consentsPerRegistration = new ConcurrentDictionary<string, List<string>>();
-        private readonly ConcurrentDictionary<string, string> _consentRequestsByConfirmKey = new ConcurrentDictionary<string, string>();
-        private readonly ConcurrentDictionary<string, string> _consentRequestsByDeclineKey = new ConcurrentDictionary<string, string>();
-        private readonly ConcurrentDictionary<string, string> _consentRequestsByKeyImage = new ConcurrentDictionary<string, string>();
+        private readonly ConcurrentDictionary<string, RelationProofsSession> _relationProofSessions = new();
+        private readonly ConcurrentDictionary<string, ProofsSession> _proofsSessions = new();
+        private readonly ConcurrentDictionary<string, TransactionConsentRequest> _consentRequests = new();
+        private readonly ConcurrentDictionary<string, List<string>> _consentsPerRegistration = new();
+        private readonly ConcurrentDictionary<string, string> _consentRequestsByConfirmKey = new();
+        private readonly ConcurrentDictionary<string, string> _consentRequestsByDeclineKey = new();
+        private readonly ConcurrentDictionary<string, string> _consentRequestsByKeyImage = new();
 
         private IStealthClientCryptoService _clientCryptoService;
-        private IExecutionContextManager _executionContextManager;
+        private IWebExecutionContextManager _executionContextManager;
         private long _accountId;
 
         public ConsentManagementService(IDataAccessService dataAccessService, IAccountsService accountsService,
@@ -111,7 +112,7 @@ namespace O10.Client.Web.Portal.Services
 
         public ITargetBlock<NotificationBase> PipeInNotifications { get; }
 
-        public void Initialize(IExecutionContextManager executionContextManager, CancellationToken cancellationToken)
+        public void Initialize(IWebExecutionContextManager executionContextManager, CancellationToken cancellationToken)
         {
             _executionContextManager = executionContextManager;
             ConsentManagementSettings settings = _dataAccessService.GetConsentManagementSettings();
@@ -120,7 +121,7 @@ namespace O10.Client.Web.Portal.Services
                 settings = CreateNewConsentManagementServiceAccount();
             }
 
-            AccountDescriptor accountDescriptor = _accountsService.Authenticate(settings.AccountId, GetDefaultConsentManagementPassword());
+            AccountDescriptorDTO accountDescriptor = _accountsService.Authenticate(settings.AccountId, GetDefaultConsentManagementPassword());
             if (accountDescriptor == null)
             {
                 settings = CreateNewConsentManagementServiceAccount();
@@ -133,7 +134,7 @@ namespace O10.Client.Web.Portal.Services
 
             _accountId = accountDescriptor.AccountId;
 
-            var persistency = _executionContextManager.InitializeUtxoExecutionServices(
+            var persistency = _executionContextManager.InitializeUserExecutionServices(
                 accountDescriptor.AccountId,
                 accountDescriptor.SecretSpendKey,
                 accountDescriptor.SecretViewKey,
@@ -232,7 +233,7 @@ namespace O10.Client.Web.Portal.Services
 
         public IEnumerable<TransactionConsentRequest> GetTransactionConsentRequests(string registrationCommitment)
         {
-            List<TransactionConsentRequest> consentRequests = new List<TransactionConsentRequest>();
+            List<TransactionConsentRequest> consentRequests = new();
 
             if (_consentsPerRegistration.TryGetValue(registrationCommitment, out List<string> transactionIds))
             {

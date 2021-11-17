@@ -133,6 +133,15 @@ namespace O10.Client.Common.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Execution context not started yet for the account with accountId &apos;{0}&apos;.
+        /// </summary>
+        internal static string ERR_EXECUTIONCONTEXT_NOTSTARTED {
+            get {
+                return ResourceManager.GetString("ERR_EXECUTIONCONTEXT_NOTSTARTED", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to IdP registration failed, details: {0}.
         /// </summary>
         internal static string ERR_INTEGRATION_IDP_REGISTER_FAILED {

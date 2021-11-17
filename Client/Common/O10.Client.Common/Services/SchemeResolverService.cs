@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using O10.Client.Common.Entities;
 using O10.Client.Common.Interfaces;
 using O10.Core.Architecture;
 
@@ -12,6 +11,7 @@ using O10.Core.Configuration;
 using O10.Client.Common.Configuration;
 using O10.Core.Logging;
 using Newtonsoft.Json;
+using O10.Client.Common.Dtos;
 
 namespace O10.Client.Common.Services
 {
@@ -69,14 +69,14 @@ namespace O10.Client.Common.Services
         }
 
 
-        public async Task<AttributeDefinition?> ResolveAttributeScheme(string issuer, long schemeId)
+        public async Task<AttributeDefinitionDTO?> ResolveAttributeScheme(string issuer, long schemeId)
         {
             if (!Uri.IsWellFormedUriString(_restApiConfiguration.SchemaResolutionUri, UriKind.Absolute))
             {
                 throw new SchemeResolverServiceNotInitializedException();
             }
 
-            AttributeDefinition? attributeScheme = null;
+            AttributeDefinitionDTO? attributeScheme = null;
 
             try
             {
@@ -88,7 +88,7 @@ namespace O10.Client.Common.Services
                     .SetQueryParam("schemeId", schemeId);
 
                 await _restClientService.Request(url)
-                    .GetJsonAsync<AttributeDefinition>()
+                    .GetJsonAsync<AttributeDefinitionDTO>()
                     .ContinueWith(t =>
                     {
                         if (t.IsCompletedSuccessfully)
@@ -111,14 +111,14 @@ namespace O10.Client.Common.Services
             }
         }
 
-        public async Task<AttributeDefinition> ResolveAttributeScheme(string issuer, string schemeName)
+        public async Task<AttributeDefinitionDTO> ResolveAttributeScheme(string issuer, string schemeName)
         {
             if (!Uri.IsWellFormedUriString(_restApiConfiguration.SchemaResolutionUri, UriKind.Absolute))
             {
                 throw new SchemeResolverServiceNotInitializedException();
             }
 
-            AttributeDefinition attributeScheme = null;
+            AttributeDefinitionDTO attributeScheme = null;
 
             Url url = _restApiConfiguration.SchemaResolutionUri
                 .AppendPathSegment("AttributeDefinition2")
@@ -126,7 +126,7 @@ namespace O10.Client.Common.Services
                 .SetQueryParam("schemeName", schemeName);
 
             await _restClientService.Request(url)
-                .GetJsonAsync<AttributeDefinition>()
+                .GetJsonAsync<AttributeDefinitionDTO>()
                 .ContinueWith(t =>
                 {
                     if (t.IsCompleted && !t.IsFaulted)
@@ -138,14 +138,14 @@ namespace O10.Client.Common.Services
             return attributeScheme;
         }
 
-        public async Task<IEnumerable<AttributeDefinition>> ResolveAttributeSchemes(string issuer, bool activeOnly = false)
+        public async Task<IEnumerable<AttributeDefinitionDTO>> ResolveAttributeSchemes(string issuer, bool activeOnly = false)
         {
             if (!Uri.IsWellFormedUriString(_restApiConfiguration.SchemaResolutionUri, UriKind.Absolute))
             {
                 throw new SchemeResolverServiceNotInitializedException();
             }
 
-            List<AttributeDefinition> attributeSchemes = null;
+            List<AttributeDefinitionDTO> attributeSchemes = null;
 
             try
             {
@@ -157,7 +157,7 @@ namespace O10.Client.Common.Services
                     .SetQueryParam("activeOnly", activeOnly);
 
                 await _restClientService.Request(url)
-                    .GetJsonAsync<List<AttributeDefinition>>()
+                    .GetJsonAsync<List<AttributeDefinitionDTO>>()
                     .ContinueWith(t =>
                     {
                         if (t.IsCompletedSuccessfully)
@@ -181,14 +181,14 @@ namespace O10.Client.Common.Services
             }
         }
 
-        public async Task<AttributeDefinition> GetRootAttributeScheme(string issuer)
+        public async Task<AttributeDefinitionDTO> GetRootAttributeScheme(string issuer)
         {
             if (!Uri.IsWellFormedUriString(_restApiConfiguration.SchemaResolutionUri, UriKind.Absolute))
             {
                 throw new SchemeResolverServiceNotInitializedException();
             }
 
-            AttributeDefinition attributeScheme = null;
+            AttributeDefinitionDTO attributeScheme = null;
 
             try
             {
@@ -199,7 +199,7 @@ namespace O10.Client.Common.Services
                     .SetQueryParam("issuer", issuer);
 
                 await _restClientService.Request(url)
-                    .GetJsonAsync<AttributeDefinition>()
+                    .GetJsonAsync<AttributeDefinitionDTO>()
                     .ContinueWith(t =>
                     {
                         if (t.IsCompletedSuccessfully)
@@ -230,7 +230,7 @@ namespace O10.Client.Common.Services
                 Url url = _restApiConfiguration.SchemaResolutionUri.AppendPathSegment("GroupRelation");
 
                 await _restClientService.Request(url)
-                    .PostJsonAsync(new RegistrationKeyDescriptionStore { Issuer = issuer, AssetId = assetId, Key = groupOwnerKey, Description = groupName })
+                    .PostJsonAsync(new RegistrationKeyDescriptionStoreDTO { Issuer = issuer, AssetId = assetId, Key = groupOwnerKey, Description = groupName })
                     .ContinueWith(t =>
                     {
                         if (!t.IsCompletedSuccessfully)
@@ -247,9 +247,9 @@ namespace O10.Client.Common.Services
             }
         }
 
-        public async Task<IEnumerable<RegistrationKeyDescriptionStore>> GetGroupRelations(string issuer, string assetId)
+        public async Task<IEnumerable<RegistrationKeyDescriptionStoreDTO>> GetGroupRelations(string issuer, string assetId)
         {
-            IEnumerable<RegistrationKeyDescriptionStore> groupRelations = null;
+            IEnumerable<RegistrationKeyDescriptionStoreDTO> groupRelations = null;
             try
             {
                 _logger.Debug($"{nameof(GetGroupRelations)}({issuer}, {assetId})");
@@ -259,7 +259,7 @@ namespace O10.Client.Common.Services
                         .SetQueryParams(new { issuer, assetId });
 
                 await _restClientService.Request(url)
-                    .GetJsonAsync<IEnumerable<RegistrationKeyDescriptionStore>>()
+                    .GetJsonAsync<IEnumerable<RegistrationKeyDescriptionStoreDTO>>()
                     .ContinueWith(t =>
                     {
                         if (t.IsCompletedSuccessfully)
@@ -287,12 +287,12 @@ namespace O10.Client.Common.Services
             bool res = false;
             _logger.Debug($"{nameof(StoreRegistrationCommitment)}({issuer}, {assetId}, {commtiment}, {description})");
             Url url = _restApiConfiguration.SchemaResolutionUri.AppendPathSegment("RegistrationCommitment");
-            var body = new RegistrationKeyDescriptionStore { Issuer = issuer, AssetId = assetId, Key = commtiment, Description = description };
+            var body = new RegistrationKeyDescriptionStoreDTO { Issuer = issuer, AssetId = assetId, Key = commtiment, Description = description };
 
             try
             {
                 await url
-                    .PostJsonAsync(new RegistrationKeyDescriptionStore { Issuer = issuer, AssetId = assetId, Key = commtiment, Description = description })
+                    .PostJsonAsync(new RegistrationKeyDescriptionStoreDTO { Issuer = issuer, AssetId = assetId, Key = commtiment, Description = description })
                     .ConfigureAwait(false);
 
                 res = true;
@@ -305,9 +305,9 @@ namespace O10.Client.Common.Services
             return res;
         }
 
-        public async Task<IEnumerable<RegistrationKeyDescriptionStore>> GetRegistrationCommitments(string issuer, string assetId)
+        public async Task<IEnumerable<RegistrationKeyDescriptionStoreDTO>> GetRegistrationCommitments(string issuer, string assetId)
         {
-            IEnumerable<RegistrationKeyDescriptionStore> result = null;
+            IEnumerable<RegistrationKeyDescriptionStoreDTO> result = null;
             try
             {
                 _logger.Debug($"{nameof(GetRegistrationCommitments)}({issuer}, {assetId})");
@@ -317,7 +317,7 @@ namespace O10.Client.Common.Services
                         .SetQueryParams(new { issuer, assetId });
 
                 await _restClientService.Request(url)
-                        .GetJsonAsync<IEnumerable<RegistrationKeyDescriptionStore>>()
+                        .GetJsonAsync<IEnumerable<RegistrationKeyDescriptionStoreDTO>>()
                         .ContinueWith(t =>
                         {
                             if (t.IsCompletedSuccessfully)

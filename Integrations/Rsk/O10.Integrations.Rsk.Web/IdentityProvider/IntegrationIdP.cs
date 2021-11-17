@@ -3,6 +3,7 @@ using Nethereum.Hex.HexConvertors.Extensions;
 using Nethereum.RPC.Eth.DTOs;
 using Nethereum.Web3;
 using Nethereum.Web3.Accounts;
+using O10.Client.Common.Dtos;
 using O10.Client.Common.Integration;
 using O10.Client.Common.Interfaces;
 using O10.Client.DataLayer.Services;
@@ -117,7 +118,7 @@ namespace O10.Integrations.Rsk.Web
             return actionStatus;
         }
 
-        public async Task<ActionStatus> StoreScheme(long accountId, Client.Common.Entities.AttributeDefinition[] attributeDefinitions)
+        public async Task<ActionStatus> StoreScheme(long accountId, Client.Common.Dtos.AttributeDefinitionDTO[] attributeDefinitions)
         {
             ActionStatus actionStatus = new ActionStatus
             {

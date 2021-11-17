@@ -114,7 +114,7 @@ namespace O10.Client.Common.Services
                     foreach (var witnessPackage in witnessPackages)
                     {
                         _logger.LogIfDebug(() => $"{nameof(ObtainWitnessesRange)} - witnessPackage = {JsonConvert.SerializeObject(witnessPackage, new ByteArrayJsonConverter())}");
-                        WitnessPackageWrapper wrapper = new WitnessPackageWrapper(witnessPackage);
+                        WitnessPackageWrapper wrapper = new(witnessPackage);
                         await Propagator.SendAsync(wrapper).ConfigureAwait(false);
 
                         _logger.LogIfDebug(() => $"====> {nameof(ObtainWitnessesRange)} - waiting for completion of processing witness package at {witnessPackage.CombinedBlockHeight}...");

@@ -1,12 +1,12 @@
 ﻿using System.Collections.Generic;
 using O10.Client.Common.Configuration;
-using O10.Client.Common.Entities;
 using O10.Client.Common.Interfaces;
 using O10.Core.Architecture;
 
 using O10.Core.Configuration;
 using Flurl.Http;
 using System.Threading.Tasks;
+using O10.Client.Common.Dtos;
 
 namespace O10.Client.Common.Services
 {
@@ -22,11 +22,11 @@ namespace O10.Client.Common.Services
             _restClientService = restClientService;
         }
 
-        public async Task<IEnumerable<InherenceServiceInfo>> GetInherenceServices()
+        public async Task<IEnumerable<InherenceServiceInfoDTO>> GetInherenceServices()
         {
             var res = await _restClientService
                 .Request(_restApiConfiguration.InherenceUri)
-                .GetJsonAsync<IEnumerable<InherenceServiceInfo>>()
+                .GetJsonAsync<IEnumerable<InherenceServiceInfoDTO>>()
                 .ConfigureAwait(false);
 
             return res;

@@ -1,69 +1,31 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using O10.Client.Common.Interfaces;
 using O10.Core.Architecture;
-using O10.Core.Logging;
-using O10.Client.Web.Common.Services;
-using O10.Client.Web.Portal.Exceptions;
-using O10.Client.Common.Services;
+using O10.Client.Stealth;
+using O10.Client.State;
+using O10.Client.Common.Services.ExecutionScope;
+using O10.Client.DataLayer.Enums;
 
 namespace O10.Client.Web.Portal.Services
 {
-    [RegisterDefaultImplementation(typeof(IExecutionContextManager), Lifetime = LifetimeManagement.Singleton)]
-    public class ExecutionContextManager : IExecutionContextManager
+    [RegisterDefaultImplementation(typeof(IWebExecutionContextManager), Lifetime = LifetimeManagement.Singleton)]
+    public class ExecutionContextManager : IWebExecutionContextManager
     {
-        private readonly Dictionary<long, Persistency> _persistencyItems = new Dictionary<long, Persistency>();
-        private readonly Dictionary<long, ICollection<IDisposable>> _accountIdCancellationList;
         private readonly IServiceProvider _serviceProvider;
-        private readonly ILogger _logger;
+        private readonly IExecutionContextManager _executionContextManager;
 
 
-        public ExecutionContextManager(IServiceProvider serviceProvider, ILoggerService loggerService)
+        public ExecutionContextManager(IServiceProvider serviceProvider, IExecutionContextManager executionContextManager)
         {
-            _accountIdCancellationList = new Dictionary<long, ICollection<IDisposable>>();
             _serviceProvider = serviceProvider;
-            _logger = loggerService.GetLogger(nameof(ExecutionContextManager));
+            _executionContextManager = executionContextManager;
         }
 
-        public Persistency InitializeStateExecutionServices(long accountId, byte[] secretKey, IUpdater updater = null)
+        private ScopePersistency InitializeStateExecutionServices(AccountType accountType, long accountId, byte[] secretKey, IUpdater updater)
         {
-            lock (_persistencyItems)
-            {
-                if (_persistencyItems.ContainsKey(accountId))
-                {
-                    _logger.Info($"[{accountId}]: Account with id {accountId} already registered at StatePersistency");
-                    return _persistencyItems[accountId];
-                }
-
-                _logger.Info($"[{accountId}]: >============================================================================");
-                _logger.Info($"[{accountId}]: {nameof(InitializeStateExecutionServices)} for account with id {accountId}");
-
-                try
-                {
-                    var state = new Persistency(accountId, _serviceProvider);
-                    state.Scope.ServiceProvider.GetService<IUpdaterRegistry>().RegisterInstance(updater ?? CreateStateUpdater(state.Scope.ServiceProvider, accountId, state.CancellationTokenSource.Token));
-                    var scopeService = state.Scope.ServiceProvider.GetService<IExecutionScopeServiceRepository>().GetInstance("State");
-                    var scopeParams = scopeService.GetScopeInitializationParams<StateScopeInitializationParams>();
-                    scopeParams.AccountId = accountId;
-                    scopeParams.SecretKey = secretKey;
-                    scopeService.Initiliaze(scopeParams);
-
-                    _persistencyItems.Add(accountId, state);
-                    return state;
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error($"[{accountId}]: Failure during {nameof(InitializeStateExecutionServices)} for account with id {accountId}", ex);
-                    throw;
-                }
-                finally
-                {
-                    _logger.Info($"[{accountId}]: <============================================================================");
-                }
-            }
+            return _executionContextManager.InitializeExecutionServices(accountType, new StateScopeInitializationParams { AccountId = accountId, SecretKey = secretKey }, updater);
         }
 
         private static IUpdater CreateStateUpdater(IServiceProvider serviceProvider, long accountId, CancellationToken cancellationToken)
@@ -73,41 +35,29 @@ namespace O10.Client.Web.Portal.Services
             return updater;
         }
 
-        public Persistency InitializeUtxoExecutionServices(long accountId, byte[] secretSpendKey, byte[] secretViewKey, byte[] pwdSecretKey, IUpdater updater = null)
+        public ScopePersistency InitializeServiceProviderExecutionServices(long accountId, byte[] secretKey, IUpdater? updater = null)
         {
-            lock (_persistencyItems)
-            {
-                if (_persistencyItems.ContainsKey(accountId))
+            return InitializeStateExecutionServices(AccountType.ServiceProvider, accountId, secretKey, updater ?? CreateStateUpdater(_serviceProvider, accountId, CancellationToken.None));
+        }
+
+        public ScopePersistency InitializeIdentityProviderExecutionServices(long accountId, byte[] secretKey, IUpdater? updater = null)
+        {
+            return InitializeStateExecutionServices(AccountType.IdentityProvider, accountId, secretKey, updater);
+        }
+
+
+        public ScopePersistency InitializeUserExecutionServices(long accountId, byte[] secretSpendKey, byte[] secretViewKey, byte[] pwdSecretKey, IUpdater? updater = null)
+        {
+            return _executionContextManager.InitializeExecutionServices(
+                AccountType.User,
+                new StealthScopeInitializationParams
                 {
-                    _logger.Info($"[{accountId}]: account already registered at UtxoPersistency");
-                    return _persistencyItems[accountId];
-                }
-
-                _logger.Info($"[{accountId}]: {nameof(InitializeUtxoExecutionServices)}");
-
-                try
-                {
-                    var state = new Persistency(accountId, _serviceProvider);
-                    state.Scope.ServiceProvider.GetService<IUpdaterRegistry>().RegisterInstance(updater ?? CreateStealthUpdater(state.Scope.ServiceProvider, accountId, state.CancellationTokenSource.Token));
-                    var scopeService = state.Scope.ServiceProvider.GetService<IExecutionScopeServiceRepository>().GetInstance("Stealth");
-                    var scopeParams = scopeService.GetScopeInitializationParams<UtxoScopeInitializationParams>();
-                    scopeParams.AccountId = accountId;
-                    scopeParams.SecretSpendKey = secretSpendKey;
-                    scopeParams.SecretViewKey = secretViewKey;
-                    scopeParams.PwdSecretKey = pwdSecretKey;
-                    scopeService.Initiliaze(scopeParams);
-
-                    _persistencyItems.Add(accountId, state);
-
-                    return state;
-                }
-                catch (Exception ex)
-                {
-                    _logger.Error($"[{accountId}]: Failure during {nameof(InitializeUtxoExecutionServices)}", ex);
-
-                    throw;
-                }
-            }
+                    AccountId = accountId,
+                    SecretSpendKey = secretSpendKey,
+                    SecretViewKey = secretViewKey,
+                    PwdSecretKey = pwdSecretKey
+                },
+                updater?? CreateStealthUpdater(_serviceProvider, accountId, CancellationToken.None));
         }
 
         private static IUpdater CreateStealthUpdater(IServiceProvider serviceProvider, long accountId, CancellationToken cancellationToken)
@@ -117,48 +67,19 @@ namespace O10.Client.Web.Portal.Services
             return updater;
         }
 
-        public void Clean(long accountId)
+        public ScopePersistency ResolveExecutionServices(long accountId)
         {
-            if (_accountIdCancellationList.ContainsKey(accountId))
-            {
-                _accountIdCancellationList[accountId].ToList().ForEach(t => t.Dispose());
-
-                if (_persistencyItems.ContainsKey(accountId))
-                {
-                    _persistencyItems.Remove(accountId);
-                }
-            }
-        }
-
-        public Persistency ResolveExecutionServices(long accountId)
-        {
-            if (!_persistencyItems.ContainsKey(accountId))
-            {
-                throw new ExecutionContextNotStartedException(accountId);
-            }
-
-            return _persistencyItems[accountId];
+            return _executionContextManager.ResolveExecutionServices(accountId);
         }
 
         public bool IsStarted(long accountId)
         {
-            return _persistencyItems.ContainsKey(accountId);
+            return _executionContextManager.IsStarted(accountId);
         }
 
         public void UnregisterExecutionServices(long accountId)
         {
-            _logger.Info($"[{accountId}]: Stopping services for account");
-
-            if (_persistencyItems.ContainsKey(accountId))
-            {
-                var persistency = _persistencyItems[accountId];
-                persistency.CancellationTokenSource.Cancel();
-                persistency.Scope.Dispose();
-
-                _persistencyItems.Remove(accountId);
-            }
-
-            Clean(accountId);
+            _executionContextManager.UnregisterExecutionServices(accountId);
         }
     }
 }

@@ -54,7 +54,7 @@ namespace O10.Client.Web.Portal.Test
         [Fact]
         public void InitializeStateExecutionServicesSucceeded()
         {
-            _executionContextManager.InitializeStateExecutionServices(1, Array.Empty<byte>());
+            _executionContextManager.InitializeServiceProviderExecutionServices(1, Array.Empty<byte>());
 
             Assert.True(true);
         }

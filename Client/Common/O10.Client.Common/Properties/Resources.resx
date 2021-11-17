@@ -141,6 +141,9 @@
   <data name="ERR_COMMITMENT_ELIGIBILITY_VERIFICATION_FAILED" xml:space="preserve">
     <value>Commitment eligibility verification failed</value>
   </data>
+  <data name="ERR_EXECUTIONCONTEXT_NOTSTARTED" xml:space="preserve">
+    <value>Execution context not started yet for the account with accountId '{0}'</value>
+  </data>
   <data name="ERR_INTEGRATION_IDP_REGISTER_FAILED" xml:space="preserve">
     <value>IdP registration failed, details: {0}</value>
   </data>

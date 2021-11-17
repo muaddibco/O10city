@@ -44,7 +44,7 @@ namespace O10.Client.Web.Portal.Controllers
         {
             string sessionKey = _consentManagementService.InitiateRelationProofsSession(proofsRequest);
 
-            ProofsChallenge proofsChallenge = new ProofsChallenge
+            ProofsChallenge proofsChallenge = new()
             {
                 Key = key,
                 PublicSpendKey = _consentManagementService.PublicSpendKey,

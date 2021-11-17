@@ -10,9 +10,9 @@ namespace O10.Client.Web.Portal.Services
     public class ConsentManagementInitializer : InitializerBase
     {
         private readonly IConsentManagementService _consentManagementService;
-        private readonly IExecutionContextManager _executionContextManager;
+        private readonly IWebExecutionContextManager _executionContextManager;
 
-        public ConsentManagementInitializer(IConsentManagementService consentManagementService, IExecutionContextManager executionContextManager)
+        public ConsentManagementInitializer(IConsentManagementService consentManagementService, IWebExecutionContextManager executionContextManager)
         {
             _consentManagementService = consentManagementService;
             _executionContextManager = executionContextManager;

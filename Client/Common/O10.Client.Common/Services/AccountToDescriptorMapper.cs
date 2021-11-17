@@ -1,4 +1,4 @@
-﻿using O10.Client.Common.Entities;
+﻿using O10.Client.Common.Dtos;
 using O10.Client.DataLayer.Model;
 using O10.Core.Architecture;
 using O10.Core.Translators;
@@ -6,16 +6,16 @@ using O10.Core.Translators;
 namespace O10.Client.Common.Services
 {
     [RegisterExtension(typeof(ITranslator), Lifetime = LifetimeManagement.Singleton)]
-    public class AccountToDescriptorTranslator : TranslatorBase<Account, AccountDescriptor>
+    public class AccountToDescriptorTranslator : TranslatorBase<Account, AccountDescriptorDTO>
     {
-        public override AccountDescriptor Translate(Account account)
+        public override AccountDescriptorDTO Translate(Account account)
         {
             if (account == null)
             {
                 return null;
             }
 
-            return new AccountDescriptor
+            return new AccountDescriptorDTO
             {
                 AccountType = (AccountTypeDTO)account.AccountType,
                 SecretSpendKey = account.SecretSpendKey,

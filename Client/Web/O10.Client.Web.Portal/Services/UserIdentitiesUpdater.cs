@@ -8,7 +8,6 @@ using O10.Client.DataLayer.Services;
 using System.Threading.Tasks.Dataflow;
 using System.Globalization;
 using O10.Client.DataLayer.Model;
-using O10.Client.Common.Entities;
 using System.Threading.Tasks;
 using O10.Core.Logging;
 using System;
@@ -22,6 +21,8 @@ using O10.Crypto.Models;
 using O10.Transactions.Core.Ledgers.O10State.Transactions;
 using O10.Client.Web.DataContracts;
 using O10.Client.Web.Common.Extensions;
+using O10.Client.Stealth;
+using O10.Client.Common.Dtos;
 
 namespace O10.Client.Web.Portal.Services
 {
@@ -116,7 +117,7 @@ namespace O10.Client.Web.Portal.Services
         private async Task RecoverRegistrations(TransferAssetToStealthTransaction transaction, byte[] assetId)
         {
             _logger.Debug($"{nameof(RecoverRegistrations)}");
-            IEnumerable<RegistrationKeyDescriptionStore> userRegistrations = await _schemeResolverService.GetRegistrationCommitments(transaction.Source.ToString(), assetId.ToHexString()).ConfigureAwait(false);
+            IEnumerable<RegistrationKeyDescriptionStoreDTO> userRegistrations = await _schemeResolverService.GetRegistrationCommitments(transaction.Source.ToString(), assetId.ToHexString()).ConfigureAwait(false);
             if(userRegistrations == null)
             {
                 return;
@@ -129,7 +130,7 @@ namespace O10.Client.Web.Portal.Services
 
                 if (registrationId > 0)
                 {
-                    UserRegistrationDto userRegistrationDto = new UserRegistrationDto
+                    UserRegistrationDto userRegistrationDto = new()
                     {
                         UserRegistrationId = registrationId.ToString(),
                         Commitment = userRegistration.Key,
@@ -145,7 +146,7 @@ namespace O10.Client.Web.Portal.Services
         private async Task RecoverRelations(TransferAssetToStealthTransaction transaction, byte[] assetId)
         {
             _logger.Debug($"{nameof(RecoverRelations)}");
-            IEnumerable<RegistrationKeyDescriptionStore> groupRelations = await _schemeResolverService.GetGroupRelations(transaction.Source.ToString(), assetId.ToHexString()).ConfigureAwait(false);
+            IEnumerable<RegistrationKeyDescriptionStoreDTO> groupRelations = await _schemeResolverService.GetGroupRelations(transaction.Source.ToString(), assetId.ToHexString()).ConfigureAwait(false);
             if(groupRelations == null)
             {
                 return;
@@ -158,7 +159,7 @@ namespace O10.Client.Web.Portal.Services
 
                 if (groupRelationId > 0)
                 {
-                    GroupRelationDto groupRelationDto = new GroupRelationDto
+                    GroupRelationDto groupRelationDto = new()
                     {
                         GroupRelationId = groupRelationId,
                         GroupOwnerName = groupOwnerName,
@@ -223,7 +224,7 @@ namespace O10.Client.Web.Portal.Services
 
         private async Task NotifyAttributeUpdate(UserRootAttribute userAttribute)
         {
-            UserAttributeDto userAttributeDto = new UserAttributeDto
+            UserAttributeDto userAttributeDto = new()
             {
                 SchemeName = userAttribute.SchemeName,
                 IssuerAddress = userAttribute.Source,

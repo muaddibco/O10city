@@ -2,8 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Linq;
-using O10.Client.Common.Entities;
 using O10.Client.Web.Portal.Services.Inherence;
+using O10.Client.Common.Dtos;
 
 namespace O10.Client.Web.Portal.Controllers
 {
@@ -20,11 +20,11 @@ namespace O10.Client.Web.Portal.Controllers
 
         [AllowAnonymous]
         [HttpGet]
-        public ActionResult<List<InherenceServiceInfo>> GetInherenceServices()
+        public ActionResult<List<InherenceServiceInfoDTO>> GetInherenceServices()
         {
             return Ok(_inherenceServicesManager.GetAll()?
                 .Select(s =>
-                new InherenceServiceInfo
+                new InherenceServiceInfoDTO
                 {
                     Name = s.Name,
                     Alias = s.Alias,

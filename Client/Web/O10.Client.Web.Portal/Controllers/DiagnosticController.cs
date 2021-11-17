@@ -29,7 +29,7 @@ namespace O10.Client.Web.Portal.Controllers
         public async Task<ActionResult<IEnumerable<InfoMessage>>> GetInfo()
         {
             string version = Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyFileVersionAttribute>().Version;
-            List<InfoMessage> portalInfo = new List<InfoMessage> { new InfoMessage { Context = "Portal", InfoType = "Version", Message = version } };
+            List<InfoMessage> portalInfo = new() { new InfoMessage { Context = "Portal", InfoType = "Version", Message = version } };
             IEnumerable<InfoMessage> gatewayInfo;
             try
             {

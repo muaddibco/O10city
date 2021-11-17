@@ -16,7 +16,6 @@ using Newtonsoft.Json.Linq;
 using O10.Server.IdentityProvider.Common.Models;
 using O10.IdentityProvider.DataLayer.Model;
 using O10.Server.IdentityProvider.Common.Services;
-using O10.Client.Common.Entities;
 using O10.Core;
 using Flurl.Http;
 using O10.Server.IdentityProvider.Common.Configuration;
@@ -30,6 +29,7 @@ using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using O10.Core.Identity;
 using O10.Crypto.Models;
+using O10.Client.Common.Dtos;
 
 namespace O10.Server.IdentityProvider.Common.Controllers
 {
@@ -72,7 +72,7 @@ namespace O10.Server.IdentityProvider.Common.Controllers
 		[HttpPost("RegisterWithEmail")]
 		public async Task<IActionResult> RegisterWithEmail([FromBody] ActivationEmail activationEmail)
 		{
-			AccountDescriptor account = _accountsService.GetById(_executionContext.GetContext().AccountId);
+			AccountDescriptorDTO account = _accountsService.GetById(_executionContext.GetContext().AccountId);
 			string email = Uri.UnescapeDataString(activationEmail.Email);
 			byte[] assetId = await _assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_EMAIL, email, account.PublicSpendKey.ToHexString()).ConfigureAwait(false);
 
@@ -108,7 +108,7 @@ namespace O10.Server.IdentityProvider.Common.Controllers
             {
                 try
                 {
-					AccountDescriptor account = _accountsService.GetById(_executionContext.GetContext().AccountId);
+					AccountDescriptorDTO account = _accountsService.GetById(_executionContext.GetContext().AccountId);
                     bool proceed = true;
 
 					byte[] assetIdEmail = await _assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_EMAIL, requestBody.Content, account.PublicSpendKey.ToHexString()).ConfigureAwait(false);
@@ -146,7 +146,7 @@ namespace O10.Server.IdentityProvider.Common.Controllers
                     if (proceed)
                     {
 						var persistency = _executionContext.GetContext();
-						var transactionsService = persistency.Scope.ServiceProvider.GetService<IStateTransactionsService>();
+						var transactionsService = persistency.Scope.ServiceProvider.GetService<IIdentityProviderTransactionsService>();
 						byte[] issuanceBlindingFactor = CryptoHelper.GetRandomSeed();
 						var packet = await transactionsService.IssueBlindedAsset2(assetIdEmail, issuanceBlindingFactor).ConfigureAwait(false);
 
@@ -175,7 +175,7 @@ namespace O10.Server.IdentityProvider.Common.Controllers
                         //}
 
                         await transactionsService.TransferAssetToStealth2(assetIdEmail, packet.AssetCommitment.ToByteArray(),
-                            new ConfidentialAccount
+                            new ConfidentialAccountDTO
                             {
                                 PublicSpendKey = requestBody.PublicSpendKey.HexStringToByteArray(),
                                 PublicViewKey = requestBody.PublicViewKey.HexStringToByteArray()
@@ -213,7 +213,7 @@ namespace O10.Server.IdentityProvider.Common.Controllers
 		[HttpDelete("Attribute")]
 		public async Task<IActionResult> DeleteAttribute(string mail)
 		{
-			AccountDescriptor account = _accountsService.GetById(_executionContext.GetContext().AccountId);
+			AccountDescriptorDTO account = _accountsService.GetById(_executionContext.GetContext().AccountId);
 			byte[] assetId = await _assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_EMAIL, mail, account.PublicSpendKey.ToHexString()).ConfigureAwait(false);
 			UserRecord userRecord = _dataAccessService.RemoveAssetRegistration(assetId.ToHexString());
 
@@ -221,9 +221,9 @@ namespace O10.Server.IdentityProvider.Common.Controllers
 		}
 
 		[HttpPost("IssueAttribute/{sessionKey}")]
-        public async Task<IActionResult> IssueAttribute(string sessionKey, [FromBody] IdentityBaseData sessionData)
+        public async Task<IActionResult> IssueAttribute(string sessionKey, [FromBody] IdentityBaseDataDTO sessionData)
         {
-			AccountDescriptor account = _accountsService.GetById(_executionContext.GetContext().AccountId);
+			AccountDescriptorDTO account = _accountsService.GetById(_executionContext.GetContext().AccountId);
 			byte[] assetId = await _assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_EMAIL, sessionData.Content, account.PublicSpendKey.ToHexString()).ConfigureAwait(false);
 			UserRecord userRecord = _dataAccessService.GetAssetRegistration(assetId.ToHexString());
 			BlindingFactorsRecord blindingFactors = _dataAccessService.GetBlindingFactors(userRecord.IssuanceBlindingRecordId);
@@ -261,18 +261,18 @@ namespace O10.Server.IdentityProvider.Common.Controllers
 				if (faceComparisonSucceeded)
 				{
 					var persistency = _executionContext.GetContext();
-					var transactionsService = persistency.Scope.ServiceProvider.GetService<IStateTransactionsService>();
+					var transactionsService = persistency.Scope.ServiceProvider.GetService<IIdentityProviderTransactionsService>();
 					transactionsService.TransferAssetToStealth2(assetId, issuanceCommitment,
-						new ConfidentialAccount
+						new ConfidentialAccountDTO
                         {
 							PublicSpendKey = sessionData.PublicSpendKey.HexStringToByteArray(),
 							PublicViewKey = sessionData.PublicViewKey.HexStringToByteArray()
 						});
 
 					await _hubContext.Clients.Group(sessionKey).SendAsync("AttributeIssued").ConfigureAwait(false);
-                    IEnumerable<AttributeDefinition> attributeDefinitions = _coreDataAccessService
+                    IEnumerable<AttributeDefinitionDTO> attributeDefinitions = _coreDataAccessService
                         .GetAttributesSchemeByIssuer(account.PublicSpendKey.ToHexString(), true)
-						.Select(a => new AttributeDefinition
+						.Select(a => new AttributeDefinitionDTO
                         {
 								SchemeId = a.IdentitiesSchemeId,
 								AttributeName = a.AttributeName,
@@ -282,13 +282,13 @@ namespace O10.Server.IdentityProvider.Common.Controllers
 								IsActive = a.IsActive,
 								IsRoot = a.CanBeRoot
 							});
-                    AttributeValue attributeValue = new AttributeValue
+                    AttributeValueDTO attributeValue = new AttributeValueDTO
                     {
 						Value = sessionData.Content,
 						Definition = attributeDefinitions.FirstOrDefault(d => d.AttributeName == AttributesSchemes.ATTR_SCHEME_NAME_EMAIL)
 					};
 
-					return base.Ok(new List<AttributeValue> { attributeValue });
+					return base.Ok(new List<AttributeValueDTO> { attributeValue });
 				}
                 else
                 {
@@ -314,7 +314,7 @@ namespace O10.Server.IdentityProvider.Common.Controllers
 		[HttpGet("IsAccountExist")]
 		public async Task<IActionResult> GetIsAccountExist([FromQuery] string email)
 		{
-			AccountDescriptor account = _accountsService.GetById(_executionContext.GetContext().AccountId);
+			AccountDescriptorDTO account = _accountsService.GetById(_executionContext.GetContext().AccountId);
 			byte[] assetId = await _assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_EMAIL, email, account.PublicSpendKey.ToHexString()).ConfigureAwait(false);
 			UserRecord userRecord = _dataAccessService.GetAssetRegistration(assetId.ToHexString());
 
@@ -322,10 +322,10 @@ namespace O10.Server.IdentityProvider.Common.Controllers
 		}
 
 		[HttpGet("RegistrationDetails/{sessionKey}")]
-		public ActionResult<IssuerActionDetails> GetRegistrationDetails(string sessionKey)
+		public ActionResult<IssuerActionDetailsDTO> GetRegistrationDetails(string sessionKey)
 		{
-			AccountDescriptor account = _accountsService.GetById(_executionContext.GetContext().AccountId);
-			IssuerActionDetails registrationDetails = new IssuerActionDetails
+			AccountDescriptorDTO account = _accountsService.GetById(_executionContext.GetContext().AccountId);
+			IssuerActionDetailsDTO registrationDetails = new IssuerActionDetailsDTO
 			{
 				Issuer = account.PublicSpendKey.ToHexString(),
 				IssuerAlias = account.AccountInfo,
@@ -336,10 +336,10 @@ namespace O10.Server.IdentityProvider.Common.Controllers
 		}
 
 		[HttpGet("ReissuanceDetails/{sessionKey}")]
-		public ActionResult<IssuerActionDetails> GetReissuanceDetails(string sessionKey)
+		public ActionResult<IssuerActionDetailsDTO> GetReissuanceDetails(string sessionKey)
 		{
-			AccountDescriptor account = _accountsService.GetById(_executionContext.GetContext().AccountId);
-			IssuerActionDetails registrationDetails = new IssuerActionDetails
+			AccountDescriptorDTO account = _accountsService.GetById(_executionContext.GetContext().AccountId);
+			IssuerActionDetailsDTO registrationDetails = new IssuerActionDetailsDTO
 			{
 				Issuer = account.PublicSpendKey.ToHexString(),
 				IssuerAlias = account.AccountInfo,
@@ -366,7 +366,7 @@ namespace O10.Server.IdentityProvider.Common.Controllers
 															   byte[] rootAssetId,
 															   byte[] blindingPointValue,
 															   byte[] blindingPointRoot,
-															   IStateTransactionsService transactionsService)
+															   IIdentityProviderTransactionsService transactionsService)
         {
             byte[] assetId = await _assetsService.GenerateAssetId(attributeSchemeName, content, issuer).ConfigureAwait(false);
 			byte[] rootCommitment = _assetsService.GetCommitmentBlindedByPoint(rootAssetId, blindingPointRoot);

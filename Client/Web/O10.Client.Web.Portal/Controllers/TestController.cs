@@ -4,7 +4,7 @@ using O10.Client.Web.Portal.Services;
 using O10.Core.ExtensionMethods;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
-using O10.Client.Common.Entities;
+using O10.Client.Common.Dtos;
 
 namespace O10.Client.Web.Portal.Controllers
 {
@@ -32,8 +32,8 @@ namespace O10.Client.Web.Portal.Controllers
         {
             var persistency = _executionContextManager.ResolveExecutionServices(accountId);
             var serviceProvider = persistency.Scope.ServiceProvider;
-            var transactionsService = serviceProvider.GetService<IStateTransactionsService>();
-            ConfidentialAccount targetAccount = new ConfidentialAccount
+            var transactionsService = serviceProvider.GetService<IIdentityProviderTransactionsService>();
+            ConfidentialAccountDTO targetAccount = new()
             {
                 PublicSpendKey = targetPublicSpendKey.HexStringToByteArray(),
                 PublicViewKey = targetPublicViewKey.HexStringToByteArray()

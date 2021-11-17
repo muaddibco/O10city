@@ -7,13 +7,14 @@ using O10.Core.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading.Tasks;
 using O10.Transactions.Core.Enums;
+using O10.Client.Common.Services.ExecutionScope;
 
 namespace O10.Server.IdentityProvider.Common.Services
 {
     [RegisterDefaultImplementation(typeof(IExecutionContext), Lifetime = LifetimeManagement.Singleton)]
 	public class ExecutionContext : IExecutionContext
 	{
-		private Persistency _persistency;
+		private ScopePersistency _persistency;
 		private readonly IServiceProvider _serviceProvider;
 		private readonly ILogger _logger;
 
@@ -28,13 +29,13 @@ namespace O10.Server.IdentityProvider.Common.Services
 			_logger.Info($"{nameof(Initialize)} for account with id {accountId}");
 
 
-			_persistency = new Persistency(accountId, _serviceProvider);
+			_persistency = new ScopePersistency(accountId, _serviceProvider);
 
 			try
 			{
-				IStateTransactionsService transactionsService = _persistency.Scope.ServiceProvider.GetService<IStateTransactionsService>();
-				IStateClientCryptoService clientCryptoService = _persistency.Scope.ServiceProvider.GetService<IStateClientCryptoService>();
-				ILedgerWriterRepository ledgerWriterRepository = _persistency.Scope.ServiceProvider.GetService<ILedgerWriterRepository>();
+				var transactionsService = _persistency.Scope.ServiceProvider.GetService<IIdentityProviderTransactionsService>();
+				var clientCryptoService = _persistency.Scope.ServiceProvider.GetService<IStateClientCryptoService>();
+				var ledgerWriterRepository = _persistency.Scope.ServiceProvider.GetService<ILedgerWriterRepository>();
 
 				clientCryptoService.Initialize(secretKey);
 
@@ -51,6 +52,6 @@ namespace O10.Server.IdentityProvider.Common.Services
 			}
 		}
 
-		public Persistency GetContext() => _persistency;
+		public ScopePersistency GetContext() => _persistency;
 	}
 }

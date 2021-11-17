@@ -50,13 +50,15 @@
     <ProjectReference Include="..\..\..\Common\Crypto\O10.Crypto\O10.Crypto.csproj" />
     <ProjectReference Include="..\..\..\Common\O10.Tracking.HealthCheck\O10.Tracking.HealthCheck.csproj" />
     <ProjectReference Include="..\..\..\Common\O10.Transactions.Core\O10.Transactions.Core.csproj" />
-    <ProjectReference Include="..\..\..\Common\O10.Core\O10.Core.csproj" />
     <ProjectReference Include="..\..\..\Common\O10.Tracking.ApplicationInsights\O10.Tracking.ApplicationInsights.csproj" />
     <ProjectReference Include="..\..\..\Integrations\Rsk\O10.Integrations.Rsk.Web\O10.Integrations.Rsk.Web.csproj" />
-    <ProjectReference Include="..\..\Common\O10.Client.Common\O10.Client.Common.csproj" />
     <ProjectReference Include="..\..\Common\O10.Client.DataLayer.SQLite\O10.Client.DataLayer.SQLite.csproj" />
     <ProjectReference Include="..\..\Common\O10.Client.DataLayer.SqlServer\O10.Client.DataLayer.SqlServer.csproj" />
     <ProjectReference Include="..\..\Common\O10.Client.DataLayer\O10.Client.DataLayer.csproj" />
+    <ProjectReference Include="..\..\Common\O10.Client.IdentityProvider.BlinkID\O10.Client.IdentityProvider.BlinkID.csproj" />
+    <ProjectReference Include="..\..\Common\O10.Client.IdentityProvider\O10.Client.IdentityProvider.csproj" />
+    <ProjectReference Include="..\..\Common\O10.Client.ServiceProvider\O10.Client.ServiceProvider.csproj" />
+    <ProjectReference Include="..\..\Common\O10.Client.Stealth\O10.Client.Stealth.csproj" />
     <ProjectReference Include="..\IdentityProvider\O10.Client.Web.IdentityProvider.DataLayer.SQLite\O10.Client.Web.IdentityProvider.DataLayer.SQLite.csproj" />
     <ProjectReference Include="..\IdentityProvider\O10.Client.Web.IdentityProvider.DataLayer.SqlServer\O10.Client.Web.IdentityProvider.DataLayer.SqlServer.csproj" />
     <ProjectReference Include="..\IdentityProvider\O10.Client.Web.IdentityProvider.DataLayer\O10.Client.Web.IdentityProvider.DataLayer.csproj" />
@@ -471,7 +473,6 @@
   <ItemGroup>
     <Folder Include="ClientApp\src\karma\" />
     <Folder Include="Connected Services\" />
-    <Folder Include="HealthCheck\" />
   </ItemGroup>
 
   <ItemGroup>

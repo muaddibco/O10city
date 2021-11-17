@@ -32,7 +32,7 @@ namespace O10.Client.Common.Communication
     public class GatewayService : IGatewayService
     {
         private string _gatewayUri;
-        private readonly object _sync = new object();
+        private readonly object _sync = new();
         private bool _isInitialized;
         private readonly ILogger _logger;
         private readonly IRestClientService _restClientService;
@@ -153,7 +153,7 @@ namespace O10.Client.Common.Communication
                         if (response.ExistingHash.IsNotEmpty())
                         {
                             _logger.Error($"Failed to send transaction {p.State.GetType().Name} because key image {((StealthPacket)p.State).Payload.Transaction.KeyImage} was already witnessed");
-                            KeyImageCorruptedNotification keyImageCorrupted = new KeyImageCorruptedNotification
+                            KeyImageCorruptedNotification keyImageCorrupted = new()
                             {
                                 KeyImage = ((StealthPacket)p.State).Payload.Transaction.KeyImage.ToByteArray(),
                                 ExistingHash = response.ExistingHash

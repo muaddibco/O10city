@@ -16,13 +16,13 @@ namespace O10.Client.Web.Portal.Controllers
     {
         private readonly IElectionCommitteeService _electionCommitteeService;
         private readonly IDataAccessService _dataAccessService;
-        private readonly IExecutionContextManager _executionContextManager;
+        private readonly IWebExecutionContextManager _executionContextManager;
         private readonly ILogger _logger;
 
         public ElectionCommitteeController(
             IElectionCommitteeService electionCommitteeService,
             IDataAccessService dataAccessService,
-            IExecutionContextManager executionContextManager,
+            IWebExecutionContextManager executionContextManager,
             ILoggerService loggerService)
         {
             _electionCommitteeService = electionCommitteeService;
@@ -61,7 +61,7 @@ namespace O10.Client.Web.Portal.Controllers
             var account = _dataAccessService.GetAccount(pollModel.AccountId);
             if(poll.State == PollState.Started)
             {
-                _executionContextManager.InitializeStateExecutionServices(account.AccountId, account.SecretSpendKey);
+                _executionContextManager.InitializeIdentityProviderExecutionServices(account.AccountId, account.SecretSpendKey);
                 _electionCommitteeService.IssueVotersRegistrations(pollId, request.SourceAccountId);
             }
             else

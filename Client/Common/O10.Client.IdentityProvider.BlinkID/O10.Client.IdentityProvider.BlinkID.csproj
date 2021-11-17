@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\O10.Client.IdentityProvider.BlinkID.API\O10.Client.IdentityProvider.BlinkID.API.csproj" />
+    <ProjectReference Include="..\O10.Client.IdentityProvider.External\O10.Client.IdentityProvider.External.csproj" />
+    <ProjectReference Include="..\O10.Client.IdentityProvider\O10.Client.IdentityProvider.csproj" />
+  </ItemGroup>
+
+</Project>

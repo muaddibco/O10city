@@ -25,13 +25,13 @@ namespace O10.Client.Common.Identities
         private readonly IFaceClient _faceClient = new FaceClient(new ApiKeyServiceClientCredentials(_subscriptionKey));
         private readonly ILogger _logger;
         private readonly IDataAccessService _externalDataAccessService;
-        private readonly object _sync = new object();
+        private readonly object _sync = new();
         private bool _isInitialized;
         private byte[] _expandedSecretKey;
         private byte[] _publicKey;
 
-        private readonly ConcurrentDictionary<string, PersonGroup> _personGroups = new ConcurrentDictionary<string, PersonGroup>();
-        private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, Person>> _personsByGroup = new ConcurrentDictionary<string, ConcurrentDictionary<string, Person>>();
+        private readonly ConcurrentDictionary<string, PersonGroup> _personGroups = new();
+        private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, Person>> _personsByGroup = new();
 
         public FacesService(ILoggerService loggerService, IDataAccessService externalDataAccessService)
         {
@@ -188,7 +188,7 @@ namespace O10.Client.Common.Identities
                 if ((person.PersistedFaceIds?.Count ?? 0) == 0)
                 {
                     _logger.LogIfDebug(() => $"No faces detected for person with {nameof(person.PersonId)}={person.PersonId}. New face adding.");
-                    using MemoryStream ms = new MemoryStream(facesData.ImageContent);
+                    using MemoryStream ms = new(facesData.ImageContent);
 
                     PersistedFace persistedFace = await _faceClient.PersonGroupPerson.AddFaceFromStreamAsync(facesData.PersonGroupId, person.PersonId, ms, facesData.UserData).ConfigureAwait(false);
                 }
@@ -262,7 +262,7 @@ namespace O10.Client.Common.Identities
                     }
 
                     _logger.LogIfDebug(() => $"{nameof(ReplacePersonFace)}, adding persisted face for person {person.PersonId}");
-                    using MemoryStream ms = new MemoryStream(facesData.ImageContent);
+                    using MemoryStream ms = new(facesData.ImageContent);
 
                     PersistedFace persistedFace = await _faceClient.PersonGroupPerson.AddFaceFromStreamAsync(facesData.PersonGroupId, person.PersonId, ms, facesData.UserData).ConfigureAwait(false);
                     _logger.LogIfDebug(() => $"{nameof(ReplacePersonFace)}, persisted face for person {person.PersonId} with {nameof(persistedFace.PersistedFaceId)}={persistedFace.PersistedFaceId} added");
@@ -289,7 +289,7 @@ namespace O10.Client.Common.Identities
 
         public async Task<Tuple<bool, double>> VerifyPerson(string personGroupId, Guid personId, string imagePath)
         {
-            Tuple<bool, double> res = new Tuple<bool, double>(false, 0);
+            Tuple<bool, double> res = new(false, 0);
 
             using (Stream imageFileStream = File.OpenRead(imagePath))
             {
@@ -320,7 +320,7 @@ namespace O10.Client.Common.Identities
 
             try
             {
-                using MemoryStream imageStream = new MemoryStream(imageBytes);
+                using MemoryStream imageStream = new(imageBytes);
 
                 IList<DetectedFace> detectedFaces = await _faceClient.Face.DetectWithStreamAsync(imageStream).ConfigureAwait(false);
 
@@ -344,8 +344,8 @@ namespace O10.Client.Common.Identities
 
         public async Task<bool> VerifyFaces(byte[] face1, byte[] face2)
         {
-            using (MemoryStream ms1 = new MemoryStream(face1))
-            using (MemoryStream ms2 = new MemoryStream(face2))
+            using (MemoryStream ms1 = new(face1))
+            using (MemoryStream ms2 = new(face2))
             {
                 IList<DetectedFace> detectedFaces1 = await _faceClient.Face.DetectWithStreamAsync(ms1).ConfigureAwait(false);
                 Guid detectedFaceGuid1 = detectedFaces1.Single(f => f.FaceId.HasValue).FaceId.Value;

@@ -21,8 +21,8 @@ namespace O10.Client.Common.Communication
         }
         public IFlurlRequest Request(string uri)
         {
-            HttpClient httpClient = new HttpClient(_httpClientHandlerCreationService.GetInsecureHandler());
-            FlurlClient flurlClient = new FlurlClient(httpClient);
+            HttpClient httpClient = new(_httpClientHandlerCreationService.GetInsecureHandler());
+            FlurlClient flurlClient = new(httpClient);
             flurlClient.Configure(s =>
             {
                 var jsonSettings = new JsonSerializerSettings

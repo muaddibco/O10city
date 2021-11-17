@@ -67,13 +67,13 @@ namespace O10.Client.Common.Services
                 throw new ArgumentNullException(nameof(inputCommitments));
             }
 
-            Random random = new Random(BitConverter.ToInt32(ownedCommitment, 0));
+            Random random = new(BitConverter.ToInt32(ownedCommitment, 0));
             int totalAssets = inputCommitments.Length;
             byte[] commitment = ownedCommitment;
             actualAssetPos = random.Next(totalAssets);
             outputCommitments = new byte[totalAssets][];
 
-            List<int> pickedPositions = new List<int>();
+            List<int> pickedPositions = new();
 
             for (int i = 0; i < totalAssets; i++)
             {

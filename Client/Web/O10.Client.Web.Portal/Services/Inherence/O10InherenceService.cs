@@ -3,7 +3,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using O10.Client.Common.Entities;
 using O10.Client.Common.Interfaces;
 using O10.Client.DataLayer.Model.Inherence;
 using O10.Client.DataLayer.Services;
@@ -23,6 +22,7 @@ using O10.Core.Serialization;
 using O10.Core.Notifications;
 using O10.Crypto.Models;
 using O10.Transactions.Core.Ledgers.Stealth.Transactions;
+using O10.Client.Common.Dtos;
 
 namespace O10.Client.Web.Portal.Services.Inherence
 {
@@ -37,7 +37,7 @@ namespace O10.Client.Web.Portal.Services.Inherence
         private readonly IProofsValidationService _spValidationsService;
         private readonly IHubContext<O10InherenceHub> _o10InherenceHubContext;
         private readonly IAzureConfiguration _azureConfiguration;
-        private readonly IExecutionContextManager _executionContextManager;
+        private readonly IWebExecutionContextManager _executionContextManager;
         private readonly IUniversalProofsPool _universalProofsPool;
         private readonly IIdentityKeyProvider _identityKeyProvider;
         private readonly ILogger _logger;
@@ -47,7 +47,7 @@ namespace O10.Client.Web.Portal.Services.Inherence
                               IAccountsService accountsService,
                               IConfigurationService configurationService,
                               IProofsValidationService spValidationsService,
-                              IExecutionContextManager executionContextManager,
+                              IWebExecutionContextManager executionContextManager,
                               IUniversalProofsPool universalProofsPool,
                               IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
                               IHubContext<O10InherenceHub> o10InherenceHubContext,
@@ -116,7 +116,7 @@ namespace O10.Client.Web.Portal.Services.Inherence
             AccountId = inherenceSetting.AccountId;
             _logger.LogIfDebug(() => $"[{AccountId}]: {nameof(Initialize)} proceeding");
 
-            AccountDescriptor accountDescriptor = _accountsService.Authenticate(inherenceSetting.AccountId, GetDefaultO10InherencePassword());
+            AccountDescriptorDTO accountDescriptor = _accountsService.Authenticate(inherenceSetting.AccountId, GetDefaultO10InherencePassword());
             if (accountDescriptor == null)
             {
                 _dataAccessService.RemoveInherenceSetting(Name);
@@ -129,8 +129,7 @@ namespace O10.Client.Web.Portal.Services.Inherence
             }
 
             _logger.Info($"[{AccountId}]: Invoking InitializeStateExecutionServices");
-            var persistency = _executionContextManager.InitializeStateExecutionServices(
-                accountDescriptor.AccountId, accountDescriptor.SecretSpendKey, this);
+            var persistency = _executionContextManager.InitializeIdentityProviderExecutionServices(accountDescriptor.AccountId, accountDescriptor.SecretSpendKey, this);
 
             _clientCryptoService = persistency.Scope.ServiceProvider.GetService<IStateClientCryptoService>();
 

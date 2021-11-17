@@ -2,7 +2,6 @@
 using O10.Core.ExtensionMethods;
 using O10.Client.DataLayer.Services;
 using O10.Client.DataLayer.Model;
-using O10.Client.Common.Entities;
 using System.Collections.Generic;
 using System.Linq;
 using O10.Client.DataLayer.AttributesScheme;
@@ -13,6 +12,7 @@ using O10.Client.Web.Common.Services;
 using O10.Client.Common.Integration;
 using O10.Client.Web.DataContracts.SchemeResolution;
 using System.Threading.Tasks;
+using O10.Client.Common.Dtos;
 
 namespace O10.Client.Web.Portal.Controllers
 {
@@ -47,10 +47,10 @@ namespace O10.Client.Web.Portal.Controllers
 
         [HttpGet("AttributeDefinitions")]
         [AllowAnonymous]
-        public ActionResult<List<AttributeDefinition>> GetAttributeDefinitions(string issuer, bool activeOnly)
+        public ActionResult<List<AttributeDefinitionDTO>> GetAttributeDefinitions(string issuer, bool activeOnly)
         {
             return Ok(_dataAccessService.GetAttributesSchemeByIssuer(issuer, activeOnly)
-                .Select(a => new AttributeDefinition
+                .Select(a => new AttributeDefinitionDTO
                 {
                     SchemeId = a.IdentitiesSchemeId,
                     AttributeName = a.AttributeName,
@@ -64,14 +64,14 @@ namespace O10.Client.Web.Portal.Controllers
 
         [HttpGet("AttributeDefinition")]
         [AllowAnonymous]
-        public ActionResult<AttributeDefinition> GetAttributeDefinition(string issuer, long schemeId)
+        public ActionResult<AttributeDefinitionDTO> GetAttributeDefinition(string issuer, long schemeId)
         {
-            AttributeDefinition attributeDefinition = null;
+            AttributeDefinitionDTO attributeDefinition = null;
             IdentitiesScheme identitiesScheme = _dataAccessService.GetAttributesSchemeByIssuer(issuer).FirstOrDefault(a => a.IdentitiesSchemeId == schemeId);
 
             if (identitiesScheme != null)
             {
-                attributeDefinition = new AttributeDefinition
+                attributeDefinition = new AttributeDefinitionDTO
                 {
                     SchemeId = identitiesScheme.IdentitiesSchemeId,
                     AttributeName = identitiesScheme.AttributeName,
@@ -88,14 +88,14 @@ namespace O10.Client.Web.Portal.Controllers
 
         [HttpGet("AttributeDefinition2")]
         [AllowAnonymous]
-        public ActionResult<AttributeDefinition> GetAttributeDefinition(string issuer, string schemeName)
+        public ActionResult<AttributeDefinitionDTO> GetAttributeDefinition(string issuer, string schemeName)
         {
-            AttributeDefinition attributeDefinition = null;
+            AttributeDefinitionDTO attributeDefinition = null;
             IdentitiesScheme identitiesScheme = _dataAccessService.GetAttributesSchemeByIssuer(issuer).FirstOrDefault(a => a.AttributeSchemeName == schemeName);
 
             if (identitiesScheme != null)
             {
-                attributeDefinition = new AttributeDefinition
+                attributeDefinition = new AttributeDefinitionDTO
                 {
                     SchemeId = identitiesScheme.IdentitiesSchemeId,
                     AttributeName = identitiesScheme.AttributeName,
@@ -112,17 +112,17 @@ namespace O10.Client.Web.Portal.Controllers
 
         [HttpGet("RootAttributeDefinition")]
         [AllowAnonymous]
-        public ActionResult<AttributeDefinition> GetRootAttributeDefinition(string issuer)
+        public ActionResult<AttributeDefinitionDTO> GetRootAttributeDefinition(string issuer)
         {
             try
             {
                 _logger.Debug($"{nameof(GetRootAttributeDefinition)}({issuer})");
-                AttributeDefinition attributeDefinition = null;
+                AttributeDefinitionDTO attributeDefinition = null;
                 IdentitiesScheme identitiesScheme = _dataAccessService.GetRootIdentityScheme(issuer);
 
                 if (identitiesScheme != null)
                 {
-                    attributeDefinition = new AttributeDefinition
+                    attributeDefinition = new AttributeDefinitionDTO
                     {
                         SchemeId = identitiesScheme.IdentitiesSchemeId,
                         AttributeName = identitiesScheme.AttributeName,
@@ -146,11 +146,11 @@ namespace O10.Client.Web.Portal.Controllers
 
         [HttpPut("AttributeDefinitions")]
         [AllowAnonymous]
-        public async Task<ActionResult<AttributeDefinitionsResponse>> SetAttributeDefinitions(string issuer, [FromBody] AttributeDefinition[] attributeDefinitions)
+        public async Task<ActionResult<AttributeDefinitionsResponse>> SetAttributeDefinitions(string issuer, [FromBody] AttributeDefinitionDTO[] attributeDefinitions)
         {
             IEnumerable<IdentitiesScheme> identitiesSchemes = _dataAccessService.GetAttributesSchemeByIssuer(issuer).Where(a => a.AttributeSchemeName != AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD);
 
-            List<AttributeDefinition> newAttributeDefinitions = attributeDefinitions.Where(a => !identitiesSchemes.Any(i => i.AttributeSchemeName == a.SchemeName)).ToList();
+            List<AttributeDefinitionDTO> newAttributeDefinitions = attributeDefinitions.Where(a => !identitiesSchemes.Any(i => i.AttributeSchemeName == a.SchemeName)).ToList();
 
             newAttributeDefinitions.ForEach(a =>
             {
@@ -167,7 +167,7 @@ namespace O10.Client.Web.Portal.Controllers
                 _dataAccessService.ActivateAttribute(a.IdentitiesSchemeId);
             });
 
-            AttributeDefinition rootAttributeDefinition = attributeDefinitions.FirstOrDefault(a => a.IsRoot);
+            AttributeDefinitionDTO rootAttributeDefinition = attributeDefinitions.FirstOrDefault(a => a.IsRoot);
 
             if (rootAttributeDefinition != null)
             {
@@ -182,12 +182,12 @@ namespace O10.Client.Web.Portal.Controllers
 
             ActionStatus integrationActionStatus = await StoreDefinitionsToIntegratedLayer(issuer, accountDescriptor).ConfigureAwait(false);
 
-            AttributeDefinitionsResponse response = new AttributeDefinitionsResponse
+            AttributeDefinitionsResponse response = new()
             {
                 IntegrationActionStatus = integrationActionStatus,
                 AttributeDefinitions = _dataAccessService.GetAttributesSchemeByIssuer(issuer, true)
                 .Where(a => a.AttributeSchemeName != AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD)
-                .Select(a => new AttributeDefinition
+                .Select(a => new AttributeDefinitionDTO
                 {
                     SchemeId = a.IdentitiesSchemeId,
                     AttributeName = a.AttributeName,
@@ -202,7 +202,7 @@ namespace O10.Client.Web.Portal.Controllers
             return response;
         }
 
-        private async Task<ActionStatus> StoreDefinitionsToIntegratedLayer(string issuer, AccountDescriptor accountDescriptor)
+        private async Task<ActionStatus> StoreDefinitionsToIntegratedLayer(string issuer, AccountDescriptorDTO accountDescriptor)
         {
             ActionStatus integrationActionStatus = null;
 
@@ -214,7 +214,7 @@ namespace O10.Client.Web.Portal.Controllers
                 {
                     var definitions = _dataAccessService.GetAttributesSchemeByIssuer(issuer, true)
                         .Select(
-                            a => new AttributeDefinition
+                            a => new AttributeDefinitionDTO
                             {
                                 SchemeId = a.IdentitiesSchemeId,
                                 AttributeName = a.AttributeName,
@@ -233,9 +233,9 @@ namespace O10.Client.Web.Portal.Controllers
 
         [HttpGet("SchemeItems")]
         [AllowAnonymous]
-        public ActionResult<SchemeItem[]> GetAllSchemeItems()
+        public ActionResult<SchemeItemDTO[]> GetAllSchemeItems()
         {
-            return AttributesSchemes.AttributeSchemes.Select(a => new SchemeItem
+            return AttributesSchemes.AttributeSchemes.Select(a => new SchemeItemDTO
             {
                 Name = a.Name,
                 Description = a.Description,
@@ -246,9 +246,9 @@ namespace O10.Client.Web.Portal.Controllers
 
         [HttpGet("ServiceProviderRelationGroups")]
         [AllowAnonymous]
-        public ActionResult<List<ServiceProviderRelationGroups>> GetServiceProviderRelationGroups()
+        public ActionResult<List<ServiceProviderRelationGroupsDTO>> GetServiceProviderRelationGroups()
         {
-            List<ServiceProviderRelationGroups> serviceProviderRelationGroupsList = new List<ServiceProviderRelationGroups>();
+            List<ServiceProviderRelationGroupsDTO> serviceProviderRelationGroupsList = new();
             List<Account> accounts = _dataAccessService.GetAccountsByType(AccountType.ServiceProvider);
             foreach (var account in accounts)
             {
@@ -256,7 +256,7 @@ namespace O10.Client.Web.Portal.Controllers
 
                 if (relationGroupNames != null && relationGroupNames.Length > 0)
                 {
-                    ServiceProviderRelationGroups serviceProviderRelationGroups = new ServiceProviderRelationGroups
+                    ServiceProviderRelationGroupsDTO serviceProviderRelationGroups = new()
                     {
                         Alias = account.AccountInfo,
                         PublicSpendKey = account.PublicSpendKey.ToHexString(),
@@ -273,7 +273,7 @@ namespace O10.Client.Web.Portal.Controllers
 
         [HttpPost("GroupRelation")]
         [AllowAnonymous]
-        public IActionResult AddGroupRelation([FromBody] RegistrationKeyDescriptionStore content)
+        public IActionResult AddGroupRelation([FromBody] RegistrationKeyDescriptionStoreDTO content)
         {
             _dataAccessService.AddGroupRelation(content.Key, content.Description, content.AssetId, content.Issuer);
 
@@ -282,10 +282,10 @@ namespace O10.Client.Web.Portal.Controllers
 
         [HttpGet("GroupRelations")]
         [AllowAnonymous]
-        public ActionResult<List<RegistrationKeyDescriptionStore>> GetGroupRelations(string issuer, string assetId)
+        public ActionResult<List<RegistrationKeyDescriptionStoreDTO>> GetGroupRelations(string issuer, string assetId)
         {
             return Ok(_dataAccessService.GetGroupRelations(assetId, issuer)
-                .Select(r => new RegistrationKeyDescriptionStore
+                .Select(r => new RegistrationKeyDescriptionStoreDTO
                 {
                     AssetId = r.AssetId,
                     Issuer = r.Issuer,
@@ -296,7 +296,7 @@ namespace O10.Client.Web.Portal.Controllers
 
         [HttpPost("RegistrationCommitment")]
         [AllowAnonymous]
-        public IActionResult AddRegistrationCommitment([FromBody] RegistrationKeyDescriptionStore content)
+        public IActionResult AddRegistrationCommitment([FromBody] RegistrationKeyDescriptionStoreDTO content)
         {
             _dataAccessService.AddRegistrationCommitment(content.Key, content.Description, content.AssetId, content.Issuer);
 
@@ -305,10 +305,10 @@ namespace O10.Client.Web.Portal.Controllers
 
         [HttpGet("RegistrationCommitments")]
         [AllowAnonymous]
-        public ActionResult<List<RegistrationKeyDescriptionStore>> GetRegistrationCommitments(string issuer, string assetId)
+        public ActionResult<List<RegistrationKeyDescriptionStoreDTO>> GetRegistrationCommitments(string issuer, string assetId)
         {
             return Ok(_dataAccessService.GetRegistrationCommitments(assetId, issuer)
-                .Select(r => new RegistrationKeyDescriptionStore
+                .Select(r => new RegistrationKeyDescriptionStoreDTO
                 {
                     AssetId = r.AssetId,
                     Issuer = r.Issuer,

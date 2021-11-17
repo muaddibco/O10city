@@ -30,7 +30,6 @@ using O10.Core;
 using O10.Core.Logging;
 using Newtonsoft.Json;
 using O10.Core.HashCalculations;
-using O10.Client.Common.Entities;
 using O10.Client.Web.Portal.Configuration;
 using O10.Core.Identity;
 using O10.Client.Common.Dtos.UniversalProofs;
@@ -41,6 +40,9 @@ using O10.Core.Serialization;
 using O10.Transactions.Core.DTOs;
 using O10.Client.Web.DataContracts.ElectionCommittee;
 using O10.Crypto.Models;
+using O10.Client.Stealth.Egress;
+using O10.Client.Stealth;
+using O10.Client.Common.Dtos;
 
 namespace O10.Client.Web.Portal.Controllers
 {
@@ -103,7 +105,7 @@ namespace O10.Client.Web.Portal.Controllers
             var scope = _executionContextManager.ResolveExecutionServices(accountId).Scope;
             var assetsService = scope.ServiceProvider.GetService<IAssetsService>();
             IEnumerable<UserRootAttribute> userRootAttributes = _dataAccessService.GetUserAttributes(accountId);
-            List<UserAttributeSchemeDto> userAttributeSchemes = new List<UserAttributeSchemeDto>();
+            List<UserAttributeSchemeDto> userAttributeSchemes = new();
 
             foreach (var rootAttribute in userRootAttributes)
             {
@@ -339,7 +341,7 @@ namespace O10.Client.Web.Portal.Controllers
             byte[] lastCommitment = rootAttribute.LastCommitment;
             byte[] lastDestinationKey = rootAttribute.LastDestinationKey;
 
-            RequestInput requestInput = new RequestInput
+            RequestInput requestInput = new()
             {
                 AssetId = assetId,
                 EligibilityBlindingFactor = originalBlindingFactor,
@@ -383,7 +385,7 @@ namespace O10.Client.Web.Portal.Controllers
             byte[] sourceImageCommitment = CryptoHelper.GetAssetCommitment(sourceImageBlindingFactor, sourceImageAssetId);
             SurjectionProof surjectionProof = CryptoHelper.CreateNewIssuanceSurjectionProof(sourceImageCommitment, new byte[][] { sourceImageAssetId }, 0, sourceImageBlindingFactor);
 
-            BiometricPersonDataForSignatureDto biometricPersonDataForSignature = new BiometricPersonDataForSignatureDto
+            BiometricPersonDataForSignatureDto biometricPersonDataForSignature = new()
             {
                 ImageSource = imageAttr.Content,
                 ImageTarget = userAttributeTransfer.ImageContent,
@@ -526,7 +528,7 @@ namespace O10.Client.Web.Portal.Controllers
                 return BadRequest("Mission is missing");
             }
 
-            UniversalProofs universalProofs = new UniversalProofs
+            UniversalProofs universalProofs = new()
             {
                 SessionKey = request.SessionKey,
                 Mission = (UniversalProofsMission)request.Mission
@@ -766,7 +768,7 @@ namespace O10.Client.Web.Portal.Controllers
             byte[] lastDestinationKey = userRootAttribute.LastDestinationKey;
 
 
-            T requestInput = new T
+            T requestInput = new()
             {
                 AssetId = assetId,
                 EligibilityBlindingFactor = originalBlindingFactor,
@@ -788,7 +790,7 @@ namespace O10.Client.Web.Portal.Controllers
         [HttpGet("{accountId}/Details")]
         public IActionResult GetUserDetails(long accountId)
         {
-            AccountDescriptor account = _accountsService.GetById(accountId);
+            AccountDescriptorDTO account = _accountsService.GetById(accountId);
 
             if (account != null)
             {
@@ -826,9 +828,9 @@ namespace O10.Client.Web.Portal.Controllers
         {
             var scope = _executionContextManager.ResolveExecutionServices(accountId).Scope;
             var assetsService = scope.ServiceProvider.GetService<IAssetsService>();
-            IssuerActionDetails registrationDetails = null;
+            IssuerActionDetailsDTO registrationDetails = null;
 
-            await requestForIdentity.Target.DecodeFromString64().GetJsonAsync<IssuerActionDetails>().ContinueWith(t =>
+            await requestForIdentity.Target.DecodeFromString64().GetJsonAsync<IssuerActionDetailsDTO>().ContinueWith(t =>
             {
                 if (t.IsCompleted && !t.IsFaulted)
                 {
@@ -841,7 +843,7 @@ namespace O10.Client.Web.Portal.Controllers
                 return BadRequest();
             }
 
-            AccountDescriptor account = _accountsService.GetById(accountId);
+            AccountDescriptorDTO account = _accountsService.GetById(accountId);
             string email = Uri.UnescapeDataString(requestForIdentity.IdCardContent);
             byte[] assetId = await assetsService.GenerateAssetId(AttributesSchemes.ATTR_SCHEME_NAME_EMAIL, email, registrationDetails.Issuer).ConfigureAwait(false);
             byte[] sessionBlindingFactor = CryptoHelper.ReduceScalar32(CryptoHelper.FastHash256(Encoding.ASCII.GetBytes(requestForIdentity.Passphrase)));
@@ -932,7 +934,7 @@ namespace O10.Client.Web.Portal.Controllers
                 byte[] rootAssetId = assetsService.GenerateAssetId(rootAttributeDefinition.SchemeId, rootAttributeContent);
                 _logger.Debug($"rootAssetId = {rootAssetId?.ToHexString()??"NULL"}");
 
-                IssueAttributesRequestDTO request = new IssueAttributesRequestDTO
+                IssueAttributesRequestDTO request = new()
                 {
                     Attributes = await GenerateAttributeValuesAsync(assetsService, attributes, rootAssetId, rootAttributeDefinition.AttributeName, issuer, blindingPointRootToRoot).ConfigureAwait(false),
                     PublicSpendKey = attributesIssuanceRequest.MasterRootAttributeId == null ? account.PublicSpendKey.ToHexString() : null,
@@ -963,7 +965,7 @@ namespace O10.Client.Web.Portal.Controllers
                         Value = rootAssetId.ToHexString()
                     });
 
-                    request.Protection = new IssuanceProtection
+                    request.Protection = new IssuanceProtectionDTO
                     {
                         SessionCommitment = sessionCommitment.ToHexString(),
                         SignatureE = surjectionProof.Rs.E.ToHexString(),
@@ -978,7 +980,7 @@ namespace O10.Client.Web.Portal.Controllers
                     .IdentityProviderUri
                     .AppendPathSegments("IssueIdpAttributes", issuer)
                     .PostJsonAsync(request)
-                    .ReceiveJson<IEnumerable<AttributeValue>>()
+                    .ReceiveJson<IEnumerable<AttributeValueDTO>>()
                     .ConfigureAwait(false);
 
 
@@ -1045,7 +1047,7 @@ namespace O10.Client.Web.Portal.Controllers
             try
             {
                 string actionDetailsUri = requestForIdentity.Target.DecodeFromString64();
-                IssuerActionDetails actionDetails = await GetActionDetails(actionDetailsUri).ConfigureAwait(false);
+                IssuerActionDetailsDTO actionDetails = await GetActionDetails(actionDetailsUri).ConfigureAwait(false);
 
                 if (actionDetails == null)
                 {
@@ -1053,7 +1055,7 @@ namespace O10.Client.Web.Portal.Controllers
                     return BadRequest();
                 }
 
-                AccountDescriptor account = _accountsService.GetById(accountId);
+                AccountDescriptorDTO account = _accountsService.GetById(accountId);
 
                 var rootAttributeDefinition = await assetsService.GetRootAttributeDefinition(actionDetails.Issuer).ConfigureAwait(false);
                 byte[] rootAssetId = assetsService.GenerateAssetId(rootAttributeDefinition.SchemeId, Uri.UnescapeDataString(requestForIdentity.IdCardContent));
@@ -1068,12 +1070,12 @@ namespace O10.Client.Web.Portal.Controllers
                 byte[] diffBlindingFactor = CryptoHelper.GetDifferentialBlindingFactor(sessionBlindingFactor, blindingFactor);
                 SurjectionProof surjectionProof = CryptoHelper.CreateSurjectionProof(sessionCommitment, new byte[][] { protectionAssetCommitment }, 0, diffBlindingFactor);
 
-                IdentityBaseData identityRequest = new IdentityBaseData
+                IdentityBaseDataDTO identityRequest = new()
                 {
                     PublicSpendKey = account.PublicSpendKey.ToHexString(),
                     PublicViewKey = account.PublicViewKey.ToHexString(),
                     Content = requestForIdentity.IdCardContent,
-                    Protection = new IssuanceProtection
+                    Protection = new IssuanceProtectionDTO
                     {
                         SessionCommitment = sessionCommitment.ToHexString(),
                         SignatureE = surjectionProof.Rs.E.ToHexString(),
@@ -1129,13 +1131,13 @@ namespace O10.Client.Web.Portal.Controllers
             }
         }
 
-        private async Task<IssuerActionDetails> GetActionDetails(string uri)
+        private async Task<IssuerActionDetailsDTO> GetActionDetails(string uri)
         {
-            IssuerActionDetails actionDetails = null;
+            IssuerActionDetailsDTO actionDetails = null;
 
             //string[] authorizationValues = Request.Headers["Authorization"].ToString().Split(" ");
 
-            await uri.GetJsonAsync<IssuerActionDetails>().ContinueWith(t =>
+            await uri.GetJsonAsync<IssuerActionDetailsDTO>().ContinueWith(t =>
             {
                 if (t.IsCompletedSuccessfully)
                 {
@@ -1216,7 +1218,7 @@ namespace O10.Client.Web.Portal.Controllers
 
             if (actionDecoded.StartsWith("spp://"))
             {
-                UriBuilder uriBuilder = new UriBuilder(actionDecoded);
+                UriBuilder uriBuilder = new(actionDecoded);
                 actionType = HttpUtility.ParseQueryString(uriBuilder.Query)["t"];
             }
             else if (actionDecoded.StartsWith("saml://"))
@@ -1271,7 +1273,7 @@ namespace O10.Client.Web.Portal.Controllers
             {
                 //actionDecoded = actionDecoded.Replace("spp://", "");
 
-                UriBuilder uriBuilder = new UriBuilder(actionDecoded);
+                UriBuilder uriBuilder = new(actionDecoded);
                 NameValueCollection queryParams = HttpUtility.ParseQueryString(uriBuilder.Query);
                 ActionTypeDto actionType = (ActionTypeDto)int.Parse(queryParams["t"]);
 
@@ -1539,7 +1541,7 @@ namespace O10.Client.Web.Portal.Controllers
 
         private async Task<List<string>> GetRequiredValidations(IAssetsService assetsService, List<Tuple<string, ValidationType>> validations, string issuer)
         {
-            List<string> requiredValidations = new List<string>();
+            List<string> requiredValidations = new();
             var attributeDescriptions = await assetsService.GetAssociatedAttributeDefinitions(issuer).ConfigureAwait(false);
             IEnumerable<(string validationType, string validationDescription)> validationDescriptions = _identityAttributesService.GetAssociatedValidationTypes();
 
@@ -1561,12 +1563,12 @@ namespace O10.Client.Web.Portal.Controllers
         [HttpGet("{accountId}/Secrets")]
         public ActionResult<UserActionCodeDto> DiscloseSecrets(long accountId, string password)
         {
-            AccountDescriptor accountDescriptor = _accountsService.Authenticate(accountId, password);
+            AccountDescriptorDTO accountDescriptor = _accountsService.Authenticate(accountId, password);
 
             if (accountDescriptor != null)
             {
                 accountDescriptor = _accountsService.GetById(accountId); // this is in order to avoid summing hash of password with secret keys
-                DisclosedSecretsDto accountOverrideDto = new DisclosedSecretsDto()
+                DisclosedSecretsDto accountOverrideDto = new()
                 {
                     SecretSpendKey = accountDescriptor.SecretSpendKey.ToHexString(),
                     SecretViewKey = accountDescriptor.SecretViewKey.ToHexString(),
@@ -1594,7 +1596,7 @@ namespace O10.Client.Web.Portal.Controllers
         [HttpGet("PhotoRequired")]
         public async Task<IActionResult> GetPhotoRequired(string target)
         {
-            IssuerActionDetails actionDetails = await GetActionDetails(target.DecodeFromString64()).ConfigureAwait(false);
+            IssuerActionDetailsDTO actionDetails = await GetActionDetails(target.DecodeFromString64()).ConfigureAwait(false);
 
             var attributeSchemes = await _schemeResolverService.ResolveAttributeSchemes(actionDetails.Issuer).ConfigureAwait(false);
 
@@ -1645,7 +1647,7 @@ namespace O10.Client.Web.Portal.Controllers
             byte[] selectionBf = CryptoHelper.GetRandomSeed();
             byte[] selectionCommitment = CryptoHelper.BlindAssetCommitment(commitments[index].Commitment, selectionBf);
 
-            SelectionCommitmentRequest commitmentRequest = new SelectionCommitmentRequest
+            SelectionCommitmentRequest commitmentRequest = new()
             {
                 Commitment = selectionCommitment,
                 CandidateCommitments = commitments,
@@ -1659,7 +1661,7 @@ namespace O10.Client.Web.Portal.Controllers
                 .ReceiveJson<SignedEcCommitment>()
                 .ConfigureAwait(false);
 
-            EcSurjectionProofRequest surjectionProofRequest = new EcSurjectionProofRequest
+            EcSurjectionProofRequest surjectionProofRequest = new()
             {
                 EcCommitment = ecCommitment.EcCommitment,
                 CandidateCommitments = commitments.Select(c => c.Commitment).ToArray(),
@@ -1676,7 +1678,7 @@ namespace O10.Client.Web.Portal.Controllers
 
             byte[] voterBf = CryptoHelper.SumScalars(selectionBf, bfs[index]);
 
-            ElectionCommitteePayload payload = new ElectionCommitteePayload
+            ElectionCommitteePayload payload = new()
             {
                 PollId = vote.PollId,
                 PartialBf = voterBf,
@@ -1694,7 +1696,7 @@ namespace O10.Client.Web.Portal.Controllers
             var bf = clientCryptoService.GetBlindingFactor(rootAttributePoll.LastTransactionKey);
             var rootIssuerPoll = await boundedAssetsService.GetAttributeProofs(bf, rootAttributePoll).ConfigureAwait(false);
 
-            UniversalProofs universalProofs = new UniversalProofs
+            UniversalProofs universalProofs = new()
             {
                 SessionKey = ecCommitment.EcCommitment.ToHexString(),
                 Mission = UniversalProofsMission.Vote,
@@ -1703,7 +1705,7 @@ namespace O10.Client.Web.Portal.Controllers
                 Payload = payload
             };
 
-            RequestInput requestInput = new RequestInput
+            RequestInput requestInput = new()
             {
                 AssetId = rootAttributePoll.AssetId,
                 Issuer = rootAttributePoll.Source.HexStringToByteArray(),

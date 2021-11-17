@@ -12,7 +12,6 @@ using O10.Core.Logging;
 using O10.Client.Web.DataContracts.IdentityProvider;
 using O10.Client.DataLayer.Model;
 using O10.Client.Web.Portal.Services.Idps;
-using O10.Client.Common.Entities;
 using O10.Client.Web.Portal.Exceptions;
 using O10.Client.DataLayer.AttributesScheme;
 using O10.Client.Web.Portal.Services;
@@ -24,6 +23,7 @@ using Microsoft.Extensions.DependencyInjection;
 using O10.Transactions.Core.Ledgers.O10State.Transactions;
 using O10.Client.Web.DataContracts.ElectionCommittee;
 using O10.Crypto.Models;
+using O10.Client.Common.Dtos;
 
 namespace O10.Client.Web.Portal.ElectionCommittee
 {
@@ -37,10 +37,10 @@ namespace O10.Client.Web.Portal.ElectionCommittee
         private readonly IIdentityKeyProvider _identityKeyProvider;
         private readonly ITranslatorsRepository _translatorsRepository;
         private readonly ISchemeResolverService _schemeResolverService;
-        private readonly IExecutionContextManager _executionContextManager;
+        private readonly IWebExecutionContextManager _executionContextManager;
         private readonly ILogger _logger;
 
-        private readonly Dictionary<long, ConcurrentDictionary<IKey, TaskCompletionSource<bool>>> _castedVotes = new Dictionary<long, ConcurrentDictionary<IKey, TaskCompletionSource<bool>>>();
+        private readonly Dictionary<long, ConcurrentDictionary<IKey, TaskCompletionSource<bool>>> _castedVotes = new();
 
         public ElectionCommitteeService(
             IDataAccessService dataAccessService, 
@@ -50,7 +50,7 @@ namespace O10.Client.Web.Portal.ElectionCommittee
             IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
             ITranslatorsRepository translatorsRepository,
             ISchemeResolverService schemeResolverService,
-            IExecutionContextManager executionContextManager,
+            IWebExecutionContextManager executionContextManager,
             ILoggerService loggerService)
         {
             _dataAccessService = dataAccessService;
@@ -72,7 +72,7 @@ namespace O10.Client.Web.Portal.ElectionCommittee
             {
                 var account = _dataAccessService.GetAccount(poll.AccountId);
                 _castedVotes.Add(poll.EcPollRecordId, new ConcurrentDictionary<IKey, TaskCompletionSource<bool>>(new Key32()));
-                _executionContextManager.InitializeStateExecutionServices(account.AccountId, account.SecretSpendKey);
+                _executionContextManager.InitializeIdentityProviderExecutionServices(account.AccountId, account.SecretSpendKey);
             }
         }
 
@@ -92,8 +92,8 @@ namespace O10.Client.Web.Portal.ElectionCommittee
             var accountSource = _accountsService.GetById(issuerAccountId);
             var issuer = account.PublicSpendKey.ToHexString();
             var persistency = _executionContextManager.ResolveExecutionServices(poll.AccountId);
-            IEnumerable<AttributeDefinition> attributeDefinitions = _dataAccessService.GetAttributesSchemeByIssuer(issuer, true)
-                .Select(a => new AttributeDefinition
+            IEnumerable<AttributeDefinitionDTO> attributeDefinitions = _dataAccessService.GetAttributesSchemeByIssuer(issuer, true)
+                .Select(a => new AttributeDefinitionDTO
                 {
                     SchemeId = a.IdentitiesSchemeId,
                     AttributeName = a.AttributeName,
@@ -112,14 +112,14 @@ namespace O10.Client.Web.Portal.ElectionCommittee
                 try
                 {
                     var identityTarget = _dataAccessService.GetIdentityTarget(identitySource.IdentityId);
-                    var targetAccount = new ConfidentialAccount
+                    var targetAccount = new ConfidentialAccountDTO
                     {
                         PublicSpendKey = identityTarget.PublicSpendKey.HexStringToByteArray(),
                         PublicViewKey = identityTarget.PublicViewKey.HexStringToByteArray()
                     };
                     var rootAttr = identitySource.Attributes.FirstOrDefault(a => a.AttributeName == rootScheme.AttributeName);
 
-                    List<AttributeIssuanceDetails> attributeIssuances = new List<AttributeIssuanceDetails>
+                    List<AttributeIssuanceDetails> attributeIssuances = new()
                     {
                         new AttributeIssuanceDetails
                         {
@@ -149,8 +149,8 @@ namespace O10.Client.Web.Portal.ElectionCommittee
             var account = _accountsService.GetById(accountId);
             var issuer = account.PublicSpendKey.ToHexString();
 
-            var attributeDefitions = new List<AttributeDefinition> { 
-                new AttributeDefinition
+            var attributeDefitions = new List<AttributeDefinitionDTO> { 
+                new AttributeDefinitionDTO
                 {
                     IsRoot = true,
                     AttributeName = "VoterNumber",
@@ -316,7 +316,7 @@ namespace O10.Client.Web.Portal.ElectionCommittee
         public IEnumerable<PollResult> CalculateResults(long pollId)
         {
             var poll = _dataAccessService.GetEcPoll(pollId, true, true);
-            Dictionary<byte[], PollResult> votes = new Dictionary<byte[], PollResult>(new Byte32EqualityComparer());
+            Dictionary<byte[], PollResult> votes = new(new Byte32EqualityComparer());
 
             foreach (var candidate in poll.Candidates)
             {
@@ -349,7 +349,7 @@ namespace O10.Client.Web.Portal.ElectionCommittee
 
         #region Private Functions
 
-        private Identity CreateIdentityInDb(AccountDescriptor account, IEnumerable<AttributeIssuanceDetails> issuanceInputDetails)
+        private Identity CreateIdentityInDb(AccountDescriptorDTO account, IEnumerable<AttributeIssuanceDetails> issuanceInputDetails)
         {
             var rootAttributeDetails = issuanceInputDetails.First(a => a.Definition.IsRoot);
             Identity identity = _dataAccessService.GetIdentityByAttribute(account.AccountId, rootAttributeDetails.Definition.AttributeName, rootAttributeDetails.Value.Value);
@@ -366,18 +366,18 @@ namespace O10.Client.Web.Portal.ElectionCommittee
 
         async Task<IssuanceDetailsDto> IssueIdpAttributesAsRoot(
             string issuer,
-            ConfidentialAccount confidentialAccount,
+            ConfidentialAccountDTO confidentialAccount,
             Identity identity,
             IEnumerable<AttributeIssuanceDetails> attributeIssuanceDetails,
-            AccountDescriptor account,
+            AccountDescriptorDTO account,
             IServiceProvider serviceProvider)
         {
-            IssuanceDetailsDto issuanceDetails = new IssuanceDetailsDto();
+            IssuanceDetailsDto issuanceDetails = new();
 
             IEnumerable<IdentitiesScheme> identitiesSchemes = _dataAccessService.GetAttributesSchemeByIssuer(issuer, true);
 
             var rootAttributeDetails = attributeIssuanceDetails.First(a => a.Definition.IsRoot);
-            var transactionsService = serviceProvider.GetService<IStateTransactionsService>();
+            var transactionsService = serviceProvider.GetService<IIdentityProviderTransactionsService>();
 
             byte[] rootAssetId = await _assetsService.GenerateAssetId(rootAttributeDetails.Definition.SchemeName, rootAttributeDetails.Value.Value, issuer).ConfigureAwait(false);
             IdentityAttribute rootAttribute = identity.Attributes.FirstOrDefault(a => a.AttributeName == rootAttributeDetails.Definition.AttributeName);
@@ -408,9 +408,9 @@ namespace O10.Client.Web.Portal.ElectionCommittee
 
             return issuanceDetails;
         }
-        private async Task<IEnumerable<IssuanceDetailsDto.IssuanceDetailsAssociated>> IssueAssociatedAttributes(Dictionary<long, AttributeIssuanceDetails> attributes, IStateTransactionsService transactionsService, string issuer, byte[] rootAssetId = null)
+        private async Task<IEnumerable<IssuanceDetailsDto.IssuanceDetailsAssociated>> IssueAssociatedAttributes(Dictionary<long, AttributeIssuanceDetails> attributes, IIdentityProviderTransactionsService transactionsService, string issuer, byte[] rootAssetId = null)
         {
-            List<IssuanceDetailsDto.IssuanceDetailsAssociated> issuanceDetails = new List<IssuanceDetailsDto.IssuanceDetailsAssociated>();
+            List<IssuanceDetailsDto.IssuanceDetailsAssociated> issuanceDetails = new();
 
             if (attributes.Any(kv => kv.Value.Definition.IsRoot))
             {
@@ -453,7 +453,7 @@ namespace O10.Client.Web.Portal.ElectionCommittee
                                                       byte[] blindingPointValue,
                                                       byte[] blindingPointRoot,
                                                       string issuer,
-                                                      IStateTransactionsService transactionsService)
+                                                      IIdentityProviderTransactionsService transactionsService)
         {
             byte[] assetId = await _assetsService.GenerateAssetId(schemeName, content, issuer).ConfigureAwait(false);
             

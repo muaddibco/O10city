@@ -5,17 +5,17 @@ using System.Linq;
 
 namespace O10.Client.Common.Services
 {
-    [RegisterDefaultImplementation(typeof(IWalletSynchronizersRepository), Lifetime = LifetimeManagement.Scoped)]
-    public class WalletSynchronizersRepository : IWalletSynchronizersRepository
+    [RegisterDefaultImplementation(typeof(ISynchronizersRepository), Lifetime = LifetimeManagement.Scoped)]
+    public class WalletSynchronizersRepository : ISynchronizersRepository
     {
-        private readonly IEnumerable<IWalletSynchronizer> _walletSynchronizers;
+        private readonly IEnumerable<ISynchronizer> _walletSynchronizers;
 
-        public WalletSynchronizersRepository(IEnumerable<IWalletSynchronizer> walletSynchronizers)
+        public WalletSynchronizersRepository(IEnumerable<ISynchronizer> walletSynchronizers)
         {
             _walletSynchronizers = walletSynchronizers;
         }
 
-        public IWalletSynchronizer GetInstance(string key)
+        public ISynchronizer GetInstance(string key)
         {
             return _walletSynchronizers.FirstOrDefault(s => s.Name == key);
         }

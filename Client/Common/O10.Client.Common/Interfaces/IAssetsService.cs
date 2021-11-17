@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using O10.Client.Common.Entities;
+using O10.Client.Common.Dtos;
 using O10.Core.Architecture;
 using O10.Core.Identity;
 
@@ -16,7 +16,7 @@ namespace O10.Client.Common.Interfaces
         Task<long> GetSchemeId(string schemeName, string issuer);
 
         Task<string?> GetAttributeSchemeName(byte[] assetId, string issuer);
-        Task<AttributeDefinition> GetAttributeDefinition(byte[] assetId, string issuer);
+        Task<AttributeDefinitionDTO> GetAttributeDefinition(byte[] assetId, string issuer);
 
         void GetBlindingPoint(byte[] bindingKey, byte[] rootAssetId, out byte[] blindingPoint, out byte[] blindingFactor);
         void GetBlindingPointAndFactor(byte[] bindingKey, byte[] rootAssetId, byte[] assetId, out byte[] blindingPoint, out byte[] blindingFactor);
@@ -27,9 +27,9 @@ namespace O10.Client.Common.Interfaces
 
         byte[] GetCommitmentBlindedByPoint(byte[] assetId, byte[] blindingPoint);
 
-        Task<AttributeDefinition> GetRootAttributeDefinition(string issuer);
-        Task<AttributeDefinition> GetRootAttributeDefinition(IKey issuer);
-        Task<IEnumerable<AttributeDefinition>> GetAssociatedAttributeDefinitions(string issuer);
-        Task<IEnumerable<AttributeDefinition>> GetAssociatedAttributeDefinitions(IKey issuer);
+        Task<AttributeDefinitionDTO> GetRootAttributeDefinition(string issuer);
+        Task<AttributeDefinitionDTO> GetRootAttributeDefinition(IKey issuer);
+        Task<IEnumerable<AttributeDefinitionDTO>> GetAssociatedAttributeDefinitions(string issuer);
+        Task<IEnumerable<AttributeDefinitionDTO>> GetAssociatedAttributeDefinitions(IKey issuer);
     }
 }

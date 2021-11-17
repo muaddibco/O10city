@@ -23,7 +23,6 @@ using O10.Client.Web.Portal.ElectionCommittee;
 using O10.Client.Web.Portal.ElectionCommittee.Models;
 using O10.Core.Architecture;
 using O10.Client.Common.Exceptions;
-using O10.Client.Common.Entities;
 using O10.Core.Serialization;
 using O10.Core.Notifications;
 using O10.Crypto.Models;
@@ -32,6 +31,7 @@ using O10.Client.DataLayer.Model.ServiceProviders;
 using O10.Transactions.Core.Ledgers.O10State.Transactions;
 using O10.Client.Web.Common.Extensions;
 using System.Collections.Concurrent;
+using O10.Client.Common.Dtos;
 
 namespace O10.Client.Web.Portal.Services
 {
@@ -46,14 +46,14 @@ namespace O10.Client.Web.Portal.Services
         private readonly IDataAccessService _dataAccessService;
         private readonly IIdentityAttributesService _identityAttributesService;
         private readonly IGatewayService _gatewayService;
-        private readonly IStateTransactionsService _transactionsService;
+        private readonly IServiceProviderTransactionsService _transactionsService;
         private readonly IProofsValidationService _proofsValidationService;
         private readonly IHubContext<IdentitiesHub> _idenitiesHubContext;
         private readonly IConsentManagementService _consentManagementService;
         private readonly IUniversalProofsPool _universalProofsPool;
         private readonly IElectionCommitteeService _electionCommitteeService;
         private readonly IIdentityKeyProvider _identityKeyProvider;
-        private readonly ConcurrentDictionary<IKey, string> _keyImageToSessonKeyMap = new ConcurrentDictionary<IKey, string>(new KeyEqualityComparer());
+        private readonly ConcurrentDictionary<IKey, string> _keyImageToSessonKeyMap = new(new KeyEqualityComparer());
 
         public ServiceProviderUpdater(
                                 IStateClientCryptoService clientCryptoService,
@@ -62,7 +62,7 @@ namespace O10.Client.Web.Portal.Services
                                 IDataAccessService dataAccessService,
                                 IIdentityAttributesService identityAttributesService,
                                 IGatewayService gatewayService,
-                                IStateTransactionsService transactionsService,
+                                IServiceProviderTransactionsService transactionsService,
                                 IProofsValidationService proofsValidationService,
                                 IIdentityKeyProvidersRegistry identityKeyProvidersRegistry,
                                 IHubContext<IdentitiesHub> idenitiesHubContext,
@@ -500,10 +500,10 @@ namespace O10.Client.Web.Portal.Services
             });
         }
 
-        private static IEnumerable<ValidationCriteria> ToValidationCriterias(IEnumerable<SpIdenitityValidation> spIdenitityValidations) => 
+        private static IEnumerable<ValidationCriteriaDTO> ToValidationCriterias(IEnumerable<SpIdenitityValidation> spIdenitityValidations) => 
             spIdenitityValidations
             .Select(v => 
-                new ValidationCriteria { SchemeName = v.SchemeName, ValidationType = v.ValidationType, NumericCriterion = v.NumericCriterion, GroupIdCriterion = v.GroupIdCriterion }
+                new ValidationCriteriaDTO { SchemeName = v.SchemeName, ValidationType = v.ValidationType, NumericCriterion = v.NumericCriterion, GroupIdCriterion = v.GroupIdCriterion }
                 );
 
         private void ProcessTransferAsset(TransferAssetTransaction transferAsset)

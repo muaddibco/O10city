@@ -27,9 +27,9 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\Common\O10.Transactions.Core\O10.Transactions.Core.csproj" />
     <ProjectReference Include="..\..\..\Common\Crypto\O10.Crypto\O10.Crypto.csproj" />
-    <ProjectReference Include="..\..\..\Common\O10.Core\O10.Core.csproj" />
-    <ProjectReference Include="..\..\Common\O10.Client.Common\O10.Client.Common.csproj" />
     <ProjectReference Include="..\..\Common\O10.Client.DataLayer\O10.Client.DataLayer.csproj" />
+    <ProjectReference Include="..\..\Common\O10.Client.IdentityProvider\O10.Client.IdentityProvider.csproj" />
+    <ProjectReference Include="..\..\Common\O10.Client.ServiceProvider\O10.Client.ServiceProvider.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,5 +1,5 @@
-﻿using O10.Client.Common.Dtos.UniversalProofs;
-using O10.Client.Common.Entities;
+﻿using O10.Client.Common.Dtos;
+using O10.Client.Common.Dtos.UniversalProofs;
 using O10.Client.Common.Exceptions;
 using O10.Client.Common.Interfaces;
 using O10.Client.DataLayer.AttributesScheme;
@@ -89,7 +89,7 @@ namespace O10.Client.Common.Services
             }
         }
 
-        public async Task<bool> CheckAssociatedProofs(RootIssuer rootIssuer, IEnumerable<ValidationCriteria> validationCriterias)
+        public async Task<bool> CheckAssociatedProofs(RootIssuer rootIssuer, IEnumerable<ValidationCriteriaDTO> validationCriterias)
         {
             if (rootIssuer is null)
             {

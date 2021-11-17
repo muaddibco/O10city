@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using O10.Client.Common.Entities;
 using O10.Client.Common.Interfaces;
 using O10.Client.DataLayer.Model;
 using O10.Client.DataLayer.Services;
@@ -22,8 +21,6 @@ using O10.Core.Logging;
 using Newtonsoft.Json;
 using O10.Core.Translators;
 using O10.Client.Common.ExternalIdps;
-using O10.Client.Common.ExternalIdps.BlinkId;
-using O10.Client.Web.Portal.ExternalIdps.Validators;
 using O10.Client.Web.Portal.Exceptions;
 using System.Collections.ObjectModel;
 using O10.Client.Web.DataContracts.IdentityProvider;
@@ -35,6 +32,10 @@ using O10.Client.Web.Portal.Services.Idps;
 using Microsoft.Extensions.DependencyInjection;
 using O10.Transactions.Core.Ledgers.O10State.Transactions;
 using O10.Crypto.Models;
+using O10.Client.Common.Dtos;
+using O10.Client.Common.Services.ExecutionScope;
+using O10.Client.IdentityProvider.BlinkID.API;
+using O10.Client.IdentityProvider.External;
 
 namespace O10.Client.Web.Portal.Controllers
 {
@@ -111,7 +112,7 @@ namespace O10.Client.Web.Portal.Controllers
         [HttpGet("ById/{accountId}")]
         public IActionResult GetById(long accountId)
         {
-            AccountDescriptor account = _accountsService.GetById(accountId);
+            AccountDescriptorDTO account = _accountsService.GetById(accountId);
 
             if (account == null)
             {
@@ -132,7 +133,7 @@ namespace O10.Client.Web.Portal.Controllers
         public async Task<IActionResult> CreateIdentity(long accountId, [FromBody] IdentityDto identity)
         {
             //StatePersistency statePersistency = _executionContextManager.ResolveStateExecutionServices(accountId);
-            AccountDescriptor account = _accountsService.GetById(accountId);
+            AccountDescriptorDTO account = _accountsService.GetById(accountId);
 
             //byte[] assetId = await _assetsService.GenerateAssetId(identity.RootAttribute.SchemeName, identity.RootAttribute.Content, account.PublicSpendKey.ToHexString()).ConfigureAwait(false);
             //statePersistency.TransactionsService.IssueBlindedAsset(assetId, 0UL.ToByteArray(32), out byte[] originatingCommitment);
@@ -146,7 +147,7 @@ namespace O10.Client.Web.Portal.Controllers
             return Ok(identity.Id);
         }
 
-        private async Task<IEnumerable<(string attributeName, string content)>> GetAttribitesAndContent(IdentityDto identity, AccountDescriptor account)
+        private async Task<IEnumerable<(string attributeName, string content)>> GetAttribitesAndContent(IdentityDto identity, AccountDescriptorDTO account)
         {
             IEnumerable<(string attributeName, string content)> attrs;
 
@@ -190,7 +191,7 @@ namespace O10.Client.Web.Portal.Controllers
             return BadRequest();
         }
 
-        private static IdentityDto GetIdentityDto(Identity identity) => new IdentityDto
+        private static IdentityDto GetIdentityDto(Identity identity) => new()
         {
             Id = identity.IdentityId.ToString(CultureInfo.InvariantCulture),
             Description = identity.Description,
@@ -216,7 +217,7 @@ namespace O10.Client.Web.Portal.Controllers
         [HttpGet("AttributesScheme")]
         public async Task<IActionResult> GetAttributesScheme(long accountId)
         {
-            AccountDescriptor account = _accountsService.GetById(accountId);
+            AccountDescriptorDTO account = _accountsService.GetById(accountId);
 
             if(account == null)
             {
@@ -229,8 +230,8 @@ namespace O10.Client.Web.Portal.Controllers
             }
 
             string issuer = account.PublicSpendKey.ToHexString();
-            IEnumerable<AttributeDefinition> attributeDefinitions = _dataAccessService.GetAttributesSchemeByIssuer(issuer, true)
-                            .Select(a => new AttributeDefinition
+            IEnumerable<AttributeDefinitionDTO> attributeDefinitions = _dataAccessService.GetAttributesSchemeByIssuer(issuer, true)
+                            .Select(a => new AttributeDefinitionDTO
                             {
                                 SchemeId = a.IdentitiesSchemeId,
                                 AttributeName = a.AttributeName,
@@ -252,7 +253,7 @@ namespace O10.Client.Web.Portal.Controllers
                 };
             }
             
-            IdentityAttributesSchemaDto schemaDto = new IdentityAttributesSchemaDto
+            IdentityAttributesSchemaDto schemaDto = new()
             {
                 RootAttribute = rootAttributeScheme,
                 AssociatedAttributes = attributeDefinitions
@@ -266,10 +267,10 @@ namespace O10.Client.Web.Portal.Controllers
 
         [AllowAnonymous]
         [HttpGet("IssuanceDetails")]
-        public ActionResult<IssuerActionDetails> GetIssuanceDetails(string issuer)
+        public ActionResult<IssuerActionDetailsDTO> GetIssuanceDetails(string issuer)
         {
-            AccountDescriptor account = _accountsService.GetByPublicKey(issuer.HexStringToByteArray());
-            IssuerActionDetails registrationDetails = new IssuerActionDetails
+            AccountDescriptorDTO account = _accountsService.GetByPublicKey(issuer.HexStringToByteArray());
+            IssuerActionDetailsDTO registrationDetails = new()
             {
                 Issuer = account.PublicSpendKey.ToHexString(),
                 IssuerAlias = account.AccountInfo,
@@ -385,10 +386,10 @@ namespace O10.Client.Web.Portal.Controllers
 
         [AllowAnonymous]
         [HttpPost("TranslateToAttributes/{issuerName}")]
-        public ActionResult<TranslationResponse> TranslateToAttributes(string issuerName, [FromBody] object json)
+        public ActionResult<ExternalIdpAttributesDTO> TranslateToAttributes(string issuerName, [FromBody] object json)
         {
             var provider = _dataAccessService.GetExternalIdentityProvider(issuerName);
-            AccountDescriptor account = _accountsService.GetById(provider.AccountId);
+            AccountDescriptorDTO account = _accountsService.GetById(provider.AccountId);
 
             var validator = _externalIdpDataValidatorsRepository.GetInstance(issuerName);
             if (validator == null)
@@ -396,7 +397,7 @@ namespace O10.Client.Web.Portal.Controllers
                 throw new Exception($"No validator found for {issuerName}");
             }
 
-            TranslationResponse response = new TranslationResponse
+            ExternalIdpAttributesDTO response = new()
             {
                 Issuer = account.PublicSpendKey.ToHexString(),
                 ActionUri = $"{Request.Scheme}://{Request.Host}".AppendPathSegments("IdentityProvider", "IssueExternalIdpAttributes", account.PublicSpendKey.ToHexString()).ToString()
@@ -422,18 +423,18 @@ namespace O10.Client.Web.Portal.Controllers
 
         [AllowAnonymous]
         [HttpPost("IssueIdpAttributes/{issuer}")]
-        public async Task<ActionResult<List<AttributeValue>>> IssueIdpAttributes(string issuer, [FromBody] IssueAttributesRequestDTO request)
+        public async Task<ActionResult<List<AttributeValueDTO>>> IssueIdpAttributes(string issuer, [FromBody] IssueAttributesRequestDTO request)
         {
             if (request is null)
             {
                 throw new ArgumentNullException(nameof(request));
             }
 
-            AccountDescriptor account = _accountsService.GetByPublicKey(issuer.HexStringToByteArray());
-            Persistency persistency = _executionContextManager.ResolveExecutionServices(account.AccountId);
+            AccountDescriptorDTO account = _accountsService.GetByPublicKey(issuer.HexStringToByteArray());
+            ScopePersistency persistency = _executionContextManager.ResolveExecutionServices(account.AccountId);
 
-            IEnumerable<AttributeDefinition> attributeDefinitions = _dataAccessService.GetAttributesSchemeByIssuer(issuer, true)
-                .Select(a => new AttributeDefinition
+            IEnumerable<AttributeDefinitionDTO> attributeDefinitions = _dataAccessService.GetAttributesSchemeByIssuer(issuer, true)
+                .Select(a => new AttributeDefinitionDTO
                 {
                     SchemeId = a.IdentitiesSchemeId,
                     AttributeName = a.AttributeName,
@@ -456,7 +457,7 @@ namespace O10.Client.Web.Portal.Controllers
             IssuanceDetailsDto issuanceDetails;
             if (!string.IsNullOrEmpty(request.PublicSpendKey) && !string.IsNullOrEmpty(request.PublicViewKey))
             {
-                ConfidentialAccount targetAccount = new ConfidentialAccount
+                ConfidentialAccountDTO targetAccount = new()
                 {
                     PublicSpendKey = request.PublicSpendKey.HexStringToByteArray(),
                     PublicViewKey = request.PublicViewKey.HexStringToByteArray()
@@ -479,16 +480,16 @@ namespace O10.Client.Web.Portal.Controllers
 
             #region Internal Functions
 
-            IReadOnlyCollection<AttributeValue> FillAttributeValues(Dictionary<string, IssueAttributesRequestDTO.AttributeValue> attributes,
-                            IEnumerable<AttributeDefinition> attributeDefinitions)
+            IReadOnlyCollection<AttributeValueDTO> FillAttributeValues(Dictionary<string, IssueAttributesRequestDTO.AttributeValue> attributes,
+                            IEnumerable<AttributeDefinitionDTO> attributeDefinitions)
             {
-                List<AttributeValue> attributeValues = new List<AttributeValue>();
+                List<AttributeValueDTO> attributeValues = new();
                 var protectionAttrDefinition = attributeDefinitions.FirstOrDefault(a => a.SchemeName == AttributesSchemes.ATTR_SCHEME_NAME_PASSWORD);
                 foreach (var attributeName in attributes.Keys.Where(a => !(protectionAttrDefinition?.AttributeName.Equals(a, StringComparison.InvariantCultureIgnoreCase) ?? false)))
                 {
                     string content = attributes[attributeName].Value;
 
-                    AttributeValue attributeValue = new AttributeValue
+                    AttributeValueDTO attributeValue = new()
                     {
                         Value = content,
                         Definition = attributeDefinitions.FirstOrDefault(d => d.AttributeName.Equals(attributeName, StringComparison.InvariantCultureIgnoreCase))
@@ -496,20 +497,20 @@ namespace O10.Client.Web.Portal.Controllers
                     attributeValues.Add(attributeValue);
                 }
 
-                return new ReadOnlyCollection<AttributeValue>(attributeValues);
+                return new ReadOnlyCollection<AttributeValueDTO>(attributeValues);
             }
 
             async Task<IssuanceDetailsDto> IssueIdpAttributesAsRoot(
                 string issuer,
-                IssuanceProtection protection,
+                IssuanceProtectionDTO protection,
                 Identity identityDB,
                 IEnumerable<AttributeIssuanceDetails> attributeIssuanceDetails,
-                AccountDescriptor account,
-                ConfidentialAccount targetAccount,
+                AccountDescriptorDTO account,
+                ConfidentialAccountDTO targetAccount,
                 IServiceProvider serviceProvider)
             {
-                var transactionsService = serviceProvider.GetService<IStateTransactionsService>();
-                IssuanceDetailsDto issuanceDetails = new IssuanceDetailsDto();
+                var transactionsService = serviceProvider.GetService<IIdentityProviderTransactionsService>();
+                IssuanceDetailsDto issuanceDetails = new();
 
                 IEnumerable<IdentitiesScheme> identitiesSchemes = _dataAccessService.GetAttributesSchemeByIssuer(issuer, true);
 
@@ -569,8 +570,8 @@ namespace O10.Client.Web.Portal.Controllers
                                                 IServiceProvider serviceProvider)
             {
 
-                IssuanceDetailsDto issuanceDetails = new IssuanceDetailsDto();
-                var transactionsService = serviceProvider.GetService<IStateTransactionsService>();
+                IssuanceDetailsDto issuanceDetails = new();
+                var transactionsService = serviceProvider.GetService<IIdentityProviderTransactionsService>();
 
                 IdentitiesScheme rootScheme = _dataAccessService.GetRootIdentityScheme(issuer);
 
@@ -596,7 +597,7 @@ namespace O10.Client.Web.Portal.Controllers
                 return issuanceDetails;
             }
 
-            static IEnumerable<AttributeIssuanceDetails> GetValidatedIssuanceDetails(IssueAttributesRequestDTO request, IEnumerable<AttributeDefinition> attributeDefinitions)
+            static IEnumerable<AttributeIssuanceDetails> GetValidatedIssuanceDetails(IssueAttributesRequestDTO request, IEnumerable<AttributeDefinitionDTO> attributeDefinitions)
             {
                 IEnumerable<string> notSupportedAttributeNames = request.Attributes.Keys.Where(k => attributeDefinitions.All(a => !a.AttributeName.Equals(k, StringComparison.InvariantCultureIgnoreCase)));
 
@@ -620,7 +621,7 @@ namespace O10.Client.Web.Portal.Controllers
                 return attributeIssuanceDetails;
             }
 
-            Identity GetOrCreateIdentityInDb(AccountDescriptor account, IEnumerable<AttributeIssuanceDetails> issuanceInputDetails)
+            Identity GetOrCreateIdentityInDb(AccountDescriptorDTO account, IEnumerable<AttributeIssuanceDetails> issuanceInputDetails)
             {
                 var rootAttributeDetails = issuanceInputDetails.First(a => a.Definition.IsRoot);
                 Identity identity = _dataAccessService.GetIdentityByAttribute(account.AccountId, rootAttributeDetails.Definition.AttributeName, rootAttributeDetails.Value.Value);
@@ -638,13 +639,13 @@ namespace O10.Client.Web.Portal.Controllers
             #endregion  Internal Functions
         }
 
-        private async Task IssueAttributesInIntegratedLayer(AccountDescriptor account, IssuanceDetailsDto issuanceDetails)
+        private async Task IssueAttributesInIntegratedLayer(AccountDescriptorDTO account, IssuanceDetailsDto issuanceDetails)
         {
             IIntegrationIdP integrationService = GetIntegrationService(account.AccountId);
 
             if (integrationService != null)
             {
-                IssuanceDetails issuanceIntegration = new IssuanceDetails
+                IssuanceDetails issuanceIntegration = new()
                 {
                     RootAttribute = new IssuanceDetails.IssuanceDetailsRoot
                     {
@@ -676,7 +677,7 @@ namespace O10.Client.Web.Portal.Controllers
         {
             IIntegrationIdP integrationService = GetIntegrationService(accountId);
             
-            ActionStatus actionStatus = new ActionStatus { ActionSucceeded = false, ErrorMsg = "No external integration registered" };
+            ActionStatus actionStatus = new() { ActionSucceeded = false, ErrorMsg = "No external integration registered" };
             
             if(integrationService != null)
             {
@@ -700,10 +701,10 @@ namespace O10.Client.Web.Portal.Controllers
             return integrationService;
         }
 
-        private IEnumerable<AttributeValue> GetAttributeValues(string issuer, Identity identity)
+        private IEnumerable<AttributeValueDTO> GetAttributeValues(string issuer, Identity identity)
         {
-            IEnumerable<AttributeDefinition> attributeDefinitions = _dataAccessService.GetAttributesSchemeByIssuer(issuer, true)
-                .Select(a => new AttributeDefinition
+            IEnumerable<AttributeDefinitionDTO> attributeDefinitions = _dataAccessService.GetAttributesSchemeByIssuer(issuer, true)
+                .Select(a => new AttributeDefinitionDTO
                 {
                     SchemeId = a.IdentitiesSchemeId,
                     AttributeName = a.AttributeName,
@@ -714,9 +715,9 @@ namespace O10.Client.Web.Portal.Controllers
                     IsRoot = a.CanBeRoot
                 });
 
-            IEnumerable<AttributeValue> attributeValues
+            IEnumerable<AttributeValueDTO> attributeValues
                 = identity.Attributes.Select(a =>
-                    new AttributeValue
+                    new AttributeValueDTO
                     {
                         Value = a.Content,
                         Definition = attributeDefinitions.FirstOrDefault(d => d.AttributeName == a.AttributeName)
@@ -730,7 +731,7 @@ namespace O10.Client.Web.Portal.Controllers
             {
                 byte[] protectionCommitment = protectionAttribute.Commitment.HexStringToByteArray();
 
-                SurjectionProof surjectionProof = new SurjectionProof
+                SurjectionProof surjectionProof = new()
                 {
                     AssetCommitments = new byte[][] { protectionCommitment },
                     Rs = new BorromeanRingSignature
@@ -747,7 +748,7 @@ namespace O10.Client.Web.Portal.Controllers
             return true;
         }
 
-        private async Task<bool> CreateRootAttributeIfNeeded(IStateTransactionsService transactionsService, IdentityAttribute rootAttribute, byte[] rootAssetId)
+        private async Task<bool> CreateRootAttributeIfNeeded(IIdentityProviderTransactionsService transactionsService, IdentityAttribute rootAttribute, byte[] rootAssetId)
         {
             bool rootAttributeIssued = false;
 
@@ -762,9 +763,9 @@ namespace O10.Client.Web.Portal.Controllers
             return rootAttributeIssued;
         }
 
-        private async Task<IEnumerable<IssuanceDetailsDto.IssuanceDetailsAssociated>> IssueAssociatedAttributes(Dictionary<long, AttributeIssuanceDetails> attributes, IStateTransactionsService transactionsService, string issuer, byte[] rootAssetId = null)
+        private async Task<IEnumerable<IssuanceDetailsDto.IssuanceDetailsAssociated>> IssueAssociatedAttributes(Dictionary<long, AttributeIssuanceDetails> attributes, IIdentityProviderTransactionsService transactionsService, string issuer, byte[] rootAssetId = null)
         {
-            List<IssuanceDetailsDto.IssuanceDetailsAssociated> issuanceDetails = new List<IssuanceDetailsDto.IssuanceDetailsAssociated>();
+            List<IssuanceDetailsDto.IssuanceDetailsAssociated> issuanceDetails = new();
 
             if (attributes.Any(kv => kv.Value.Definition.IsRoot))
             {
@@ -817,7 +818,7 @@ namespace O10.Client.Web.Portal.Controllers
                                                       byte[] blindingPointValue,
                                                       byte[] blindingPointRoot,
                                                       string issuer,
-                                                      IStateTransactionsService transactionsService)
+                                                      IIdentityProviderTransactionsService transactionsService)
         {
             byte[] assetId = await _assetsService.GenerateAssetId(schemeName, content, issuer).ConfigureAwait(false);
 
@@ -834,7 +835,7 @@ namespace O10.Client.Web.Portal.Controllers
                         = await $"{Request.Scheme}://{Request.Host.ToUriComponent()}/biometric/"
                             .AppendPathSegment("VerifyPersonFace")
                             .PostJsonAsync(
-                                new BiometricVerificationDataDto
+                                new BiometricVerificationDataDTO
                                 {
                                     KeyImage = CryptoHelper.GetRandomSeed().ToHexString(),
                                     Issuer = publicKey,
