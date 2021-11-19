@@ -15,19 +15,17 @@ namespace O10.Client.Common.Services
     {
         private readonly Dictionary<long, ScopePersistency> _persistencyItems = new();
         private readonly Dictionary<long, ICollection<IDisposable>> _accountIdCancellationList;
-        private readonly IServiceProvider _serviceProvider;
         private readonly IScopePersistencyProvider _scopePersistencyProvider;
         private readonly ILogger _logger;
 
-        public ExecutionContextManager(IServiceProvider serviceProvider, IScopePersistencyProvider scopePersistencyProvider, ILoggerService loggerService)
+        public ExecutionContextManager(IScopePersistencyProvider scopePersistencyProvider, ILoggerService loggerService)
         {
             _accountIdCancellationList = new Dictionary<long, ICollection<IDisposable>>();
-            _serviceProvider = serviceProvider;
             _scopePersistencyProvider = scopePersistencyProvider;
             _logger = loggerService.GetLogger(nameof(ExecutionContextManager));
         }
 
-        public ScopePersistency InitializeExecutionServices(AccountType accountType, ScopeInitializationParams initializationParams, IUpdater? updater = null)
+        public ScopePersistency InitializeExecutionServices(AccountType accountType, ScopeInitializationParams initializationParams, Func<IServiceProvider, IUpdater?>? getUpdater = null)
         {
             lock (_persistencyItems)
             {
@@ -42,7 +40,7 @@ namespace O10.Client.Common.Services
                 _logger.Info($"[{accountId}]: >============================================================================");
                 _logger.Info($"[{accountId}]: {nameof(InitializeExecutionServices)} for account with id {accountId}");
 
-                var state = _scopePersistencyProvider.GetScopePersistency(accountType, initializationParams, updater);
+                var state = _scopePersistencyProvider.GetScopePersistency(accountType, initializationParams, getUpdater);
 
                 _persistencyItems.Add(accountId, state);
 

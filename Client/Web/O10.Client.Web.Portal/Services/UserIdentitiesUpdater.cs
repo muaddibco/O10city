@@ -23,10 +23,13 @@ using O10.Client.Web.DataContracts;
 using O10.Client.Web.Common.Extensions;
 using O10.Client.Stealth;
 using O10.Client.Common.Dtos;
+using O10.Core.Architecture;
+using O10.Client.Stealth.Ingress;
 
 namespace O10.Client.Web.Portal.Services
 {
-    public class UserIdentitiesUpdater : IUpdater
+    [RegisterDefaultImplementation(typeof(IStealthUpdater), Lifetime = LifetimeManagement.Scoped)]
+    public class UserIdentitiesUpdater : IStealthUpdater
     {
         private readonly IStealthClientCryptoService _clientCryptoService;
         private readonly IAssetsService _assetsService;

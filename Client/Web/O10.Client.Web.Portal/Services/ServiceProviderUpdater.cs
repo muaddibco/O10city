@@ -32,11 +32,12 @@ using O10.Transactions.Core.Ledgers.O10State.Transactions;
 using O10.Client.Web.Common.Extensions;
 using System.Collections.Concurrent;
 using O10.Client.Common.Dtos;
+using O10.Client.ServiceProvider.Ingress;
 
 namespace O10.Client.Web.Portal.Services
 {
-    [RegisterExtension(typeof(IUpdater), Lifetime = LifetimeManagement.Scoped)]
-    public class ServiceProviderUpdater : IUpdater
+    [RegisterDefaultImplementation(typeof(IServiceProviderUpdater), Lifetime = LifetimeManagement.Scoped)]
+    public class ServiceProviderUpdater : IServiceProviderUpdater
     {
         private long _accountId;
         private readonly ILogger _logger;

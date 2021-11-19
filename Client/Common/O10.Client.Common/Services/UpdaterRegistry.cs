@@ -6,16 +6,16 @@ namespace O10.Client.Common.Services
     [RegisterDefaultImplementation(typeof(IUpdaterRegistry), Lifetime = LifetimeManagement.Scoped)]
     public class UpdaterRegistry : IUpdaterRegistry
     {
-        private IUpdater _updater;
+        private IUpdater? _updater;
 
-        public IUpdater GetInstance()
+        public IUpdater? GetInstance()
         {
             return _updater;
         }
 
-        public void RegisterInstance(IUpdater obj)
+        public void RegisterInstance(IUpdater? updater)
         {
-            _updater = obj;
+            _updater = updater;
         }
     }
 }

@@ -5,7 +5,6 @@ using System;
 using Microsoft.Extensions.DependencyInjection;
 using O10.Core.Logging;
 using O10.Core.Architecture;
-using System.Threading;
 using O10.Client.DataLayer.Enums;
 
 namespace O10.Client.IdentityProvider
@@ -22,15 +21,19 @@ namespace O10.Client.IdentityProvider
             _logger = loggerService.GetLogger(nameof(ScopePersistencyProvider));
         }
 
-        public ScopePersistency GetScopePersistency(AccountType accountType, ScopeInitializationParams initializationParams, IUpdater? updater = null)
+        public ScopePersistency GetScopePersistency(AccountType accountType, ScopeInitializationParams initializationParams, Func<IServiceProvider, IUpdater?>? getUpdater = null)
         {
             try
             {
                 var state = new ScopePersistency(initializationParams.AccountId, _serviceProvider);
                 
-                if(updater != null)
+                if (getUpdater != null)
                 {
-                    state.Scope.ServiceProvider.GetService<IUpdaterRegistry>()?.RegisterInstance(updater);
+                    var updater = getUpdater.Invoke(state.Scope.ServiceProvider);
+                    if (updater != null)
+                    {
+                        state.Scope.ServiceProvider.GetService<IUpdaterRegistry>()?.RegisterInstance(updater);
+                    }
                 }
 
                 var scopeService = state.Scope.ServiceProvider.GetService<IExecutionScopeServiceRepository>()?.GetInstance(accountType);

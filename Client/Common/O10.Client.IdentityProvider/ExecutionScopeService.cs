@@ -76,7 +76,7 @@ namespace O10.Client.Web.Common.Services
             _transactionsService.PipeOutTransactions.LinkTo(ledgerWriter.PipeIn);
             statePacketsExtractor.Initialize(scopeInitializationParams.AccountId);
 
-            IUpdater updater = _updaterRegistry.GetInstance();
+            var updater = _updaterRegistry.GetInstance();
 
             var walletSynchronizer = _walletSynchronizersRepository.GetInstance("State");
             walletSynchronizer.Initialize(scopeInitializationParams.AccountId);
@@ -87,8 +87,15 @@ namespace O10.Client.Web.Common.Services
             statePacketsExtractor.GetSourcePipe<WitnessPackage>()
                                  .LinkTo(walletSynchronizer.GetTargetPipe<WitnessPackage>());
 
-            walletSynchronizer.GetSourcePipe<TransactionBase>().LinkTo(
-                new ActionBlock<TransactionBase>(async p => await updater.PipeIn.SendAsync(p).ConfigureAwait(false)));
+            if (updater != null)
+            {
+                walletSynchronizer.GetSourcePipe<TransactionBase>().LinkTo(
+                    new ActionBlock<TransactionBase>(async p => await updater.PipeIn.SendAsync(p).ConfigureAwait(false)));
+            } 
+            else
+            {
+                walletSynchronizer.GetSourcePipe<TransactionBase>().LinkTo(DataflowBlock.NullTarget<TransactionBase>());
+            }
 
             await packetsProvider.Start().ConfigureAwait(false);
         }

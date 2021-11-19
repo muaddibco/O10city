@@ -20,7 +20,7 @@ namespace O10.Client.Web.Portal.Test
     {
         #region ============================================ MEMBERS ==================================================
 
-        private readonly ExecutionContextManager _executionContextManager;
+        private readonly WebExecutionContextManager _executionContextManager;
 
         private readonly IHubContext<IdentitiesHub> _identitiesHubContext;
         private readonly IAssetsService _assetsService;

@@ -7,25 +7,29 @@ using O10.Client.Stealth;
 using O10.Client.State;
 using O10.Client.Common.Services.ExecutionScope;
 using O10.Client.DataLayer.Enums;
+using O10.Client.ServiceProvider.Ingress;
+using O10.Client.Stealth.Ingress;
 
 namespace O10.Client.Web.Portal.Services
 {
     [RegisterDefaultImplementation(typeof(IWebExecutionContextManager), Lifetime = LifetimeManagement.Singleton)]
-    public class ExecutionContextManager : IWebExecutionContextManager
+    public class WebExecutionContextManager : IWebExecutionContextManager
     {
-        private readonly IServiceProvider _serviceProvider;
         private readonly IExecutionContextManager _executionContextManager;
 
 
-        public ExecutionContextManager(IServiceProvider serviceProvider, IExecutionContextManager executionContextManager)
+        public WebExecutionContextManager(IExecutionContextManager executionContextManager)
         {
-            _serviceProvider = serviceProvider;
             _executionContextManager = executionContextManager;
         }
 
-        private ScopePersistency InitializeStateExecutionServices(AccountType accountType, long accountId, byte[] secretKey, IUpdater updater)
+        private ScopePersistency InitializeStateExecutionServices(AccountType accountType, long accountId, byte[] secretKey, Func<IServiceProvider, IUpdater?>? getUpdater = null)
         {
-            return _executionContextManager.InitializeExecutionServices(accountType, new StateScopeInitializationParams { AccountId = accountId, SecretKey = secretKey }, updater);
+            return _executionContextManager
+                .InitializeExecutionServices(
+                    accountType, 
+                    new StateScopeInitializationParams { AccountId = accountId, SecretKey = secretKey },
+                    getUpdater);
         }
 
         private static IUpdater CreateStateUpdater(IServiceProvider serviceProvider, long accountId, CancellationToken cancellationToken)
@@ -37,12 +41,33 @@ namespace O10.Client.Web.Portal.Services
 
         public ScopePersistency InitializeServiceProviderExecutionServices(long accountId, byte[] secretKey, IUpdater? updater = null)
         {
-            return InitializeStateExecutionServices(AccountType.ServiceProvider, accountId, secretKey, updater ?? CreateStateUpdater(_serviceProvider, accountId, CancellationToken.None));
+            return InitializeStateExecutionServices(
+                AccountType.ServiceProvider, 
+                accountId, 
+                secretKey,
+                s =>
+                {
+                    if(updater != null)
+                    {
+                        return updater;
+                    }
+
+                    updater = s.GetService<IServiceProviderUpdater>();
+                    updater?.Initialize(accountId, CancellationToken.None);
+                    return updater;
+                });
         }
 
         public ScopePersistency InitializeIdentityProviderExecutionServices(long accountId, byte[] secretKey, IUpdater? updater = null)
         {
-            return InitializeStateExecutionServices(AccountType.IdentityProvider, accountId, secretKey, updater);
+            return InitializeStateExecutionServices(
+                AccountType.IdentityProvider, 
+                accountId, 
+                secretKey,
+                s =>
+                {
+                    return updater;
+                });
         }
 
 
@@ -57,7 +82,17 @@ namespace O10.Client.Web.Portal.Services
                     SecretViewKey = secretViewKey,
                     PwdSecretKey = pwdSecretKey
                 },
-                updater?? CreateStealthUpdater(_serviceProvider, accountId, CancellationToken.None));
+                s =>
+                {
+                    if (updater != null)
+                    {
+                        return updater;
+                    }
+
+                    updater = s.GetService<IStealthUpdater>();
+                    updater?.Initialize(accountId, CancellationToken.None);
+                    return updater;
+                });
         }
 
         private static IUpdater CreateStealthUpdater(IServiceProvider serviceProvider, long accountId, CancellationToken cancellationToken)
